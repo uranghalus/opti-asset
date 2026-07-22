@@ -12,6 +12,7 @@ use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use MongoDB\Laravel\Auth\User as Authenticatable;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 /**
  * @property int $id
@@ -30,6 +31,8 @@ use MongoDB\Laravel\Auth\User as Authenticatable;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 

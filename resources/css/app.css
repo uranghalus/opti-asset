@@ -59,6 +59,10 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+    
+    --color-sidebar-glow: var(--sidebar-glow);
+    --color-sidebar-gradient: var(--sidebar-gradient);
+    --color-sidebar-divider: var(--sidebar-divider);
 }
 
 :root {
@@ -86,15 +90,18 @@
     --chart-3: oklch(0.45 0.01 250);
     --chart-4: oklch(0.7 0.12 85);
     --chart-5: oklch(0.62 0.18 25);
-    --radius: 0.5rem;
-    --sidebar: oklch(1 0 0);
-    --sidebar-foreground: oklch(0.14 0.005 250);
-    --sidebar-primary: oklch(0.52 0.15 245);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0.003 255);
+    --sidebar-foreground: oklch(0.18 0.012 250);
+    --sidebar-primary: oklch(0.55 0.18 242);
     --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.96 0.003 250);
-    --sidebar-accent-foreground: oklch(0.14 0.005 250);
-    --sidebar-border: oklch(0.9 0.005 250);
-    --sidebar-ring: oklch(0.52 0.15 245);
+    --sidebar-accent: oklch(0.94 0.012 250);
+    --sidebar-accent-foreground: oklch(0.18 0.012 250);
+    --sidebar-border: oklch(0.92 0.006 250);
+    --sidebar-ring: oklch(0.55 0.18 242);
+    --sidebar-glow: oklch(0.55 0.18 242 / 0.08);
+    --sidebar-gradient: linear-gradient(180deg, oklch(0.985 0.003 255) 0%, oklch(0.975 0.004 255) 100%);
+    --sidebar-divider: oklch(0.88 0.008 250);
 }
 
 .dark {
@@ -122,14 +129,17 @@
     --chart-3: oklch(0.5 0.12 255);
     --chart-4: oklch(0.7 0.12 85);
     --chart-5: oklch(0.58 0.18 25);
-    --sidebar: oklch(0.1 0.025 255);
-    --sidebar-foreground: oklch(0.98 0.002 250);
-    --sidebar-primary: oklch(0.62 0.17 245);
-    --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.18 0.025 255);
-    --sidebar-accent-foreground: oklch(0.98 0.002 250);
-    --sidebar-border: oklch(0.2 0.025 255);
-    --sidebar-ring: oklch(0.62 0.17 245);
+    --sidebar: oklch(0.08 0.03 260);
+    --sidebar-foreground: oklch(0.98 0.005 260);
+    --sidebar-primary: oklch(0.7 0.2 240);
+    --sidebar-primary-foreground: oklch(0.98 0.005 260);
+    --sidebar-accent: oklch(0.12 0.03 260);
+    --sidebar-accent-foreground: oklch(0.98 0.005 260);
+    --sidebar-border: oklch(0.18 0.025 260);
+    --sidebar-ring: oklch(0.7 0.2 240);
+    --sidebar-glow: oklch(0.7 0.2 240 / 0.15);
+    --sidebar-gradient: linear-gradient(180deg, oklch(0.08 0.03 260) 0%, oklch(0.06 0.035 260) 100%);
+    --sidebar-divider: oklch(0.2 0.025 260);
 }
 
 @layer base {
@@ -209,5 +219,61 @@
     }
     .delay-500 {
         transition-delay: 500ms;
+    }
+
+    /* Premium Sidebar Styles */
+    .sidebar-gradient-bg {
+        background: var(--sidebar-gradient);
+    }
+
+    .sidebar-divider {
+        height: 1px;
+        background: var(--sidebar-divider);
+        margin: 1.5rem 0;
+    }
+
+    .sidebar-glow-effect {
+        box-shadow: 0 0 20px var(--sidebar-glow);
+        border-radius: 0.5rem;
+    }
+
+    .sidebar-item-active {
+        @apply bg-sidebar-primary/10 text-sidebar-primary-foreground;
+        background: linear-gradient(90deg, transparent 0%, var(--sidebar-primary) 4px, transparent 8px);
+        border-left: 3px solid var(--sidebar-primary);
+    }
+
+    .sidebar-item-hover {
+        @apply bg-sidebar-accent/5 hover:bg-sidebar-accent/10 transition-colors duration-200;
+    }
+
+    .sidebar-label {
+        @apply text-xs font-medium tracking-wider uppercase text-sidebar-accent-foreground/70;
+        letter-spacing: 0.05em;
+    }
+
+    .sidebar-icon-gradient {
+        background: linear-gradient(135deg, var(--sidebar-primary), var(--sidebar-accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Custom scrollbar for sidebar */
+    .sidebar-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--sidebar-accent) / 30;
+        border-radius: 3px;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: var(--sidebar-accent) / 50;
     }
 }

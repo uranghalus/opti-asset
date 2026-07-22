@@ -31,11 +31,11 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                            className="group/sidebar-item rounded-lg px-2 py-1.5 transition-all duration-150 hover:bg-sidebar-accent/70 data-[state=open]:bg-sidebar-accent/70"
                             data-test="sidebar-menu-button"
                         >
                             <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/40 group-hover/sidebar-item:text-sidebar-foreground/70 transition-colors" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

@@ -1,6 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { NotificationBell } from '@/components/notification-bell';
+import { SearchModal } from '@/components/search-modal';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +30,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
@@ -178,13 +181,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
                     <div className="ml-auto flex items-center space-x-2">
                         <div className="relative flex items-center space-x-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="group h-9 w-9 cursor-pointer"
-                            >
-                                <Search className="!size-5 opacity-80 group-hover:opacity-100" />
-                            </Button>
+                            <SearchModal />
                             <div className="ml-1 hidden gap-1 lg:flex">
                                 {rightNavItems.map((item) => (
                                     <Tooltip key={item.title}>
@@ -210,6 +207,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 ))}
                             </div>
                         </div>
+                        <NotificationBell />
+                        <ThemeToggle />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

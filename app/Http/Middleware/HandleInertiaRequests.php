@@ -41,6 +41,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Bagikan objek tenant ke frontend jika sedang berada di domain tenant
+            'tenant' => tenant() ? tenant()->only(['id', 'name']) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -22,12 +22,12 @@ export function NavFooter({
             className={`group-data-[collapsible=icon]:p-0 ${className || ''}`}
         >
             <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-0.5">
                     {items.map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild
-                                className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
+                                className="group/nav-item flex items-center gap-2 rounded-md px-2 py-1.5 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors duration-150"
                             >
                                 <a
                                     href={toUrl(item.href)}
@@ -35,9 +35,9 @@ export function NavFooter({
                                     rel="noopener noreferrer"
                                 >
                                     {item.icon && (
-                                        <item.icon className="h-5 w-5" />
+                                        <item.icon className="h-4 w-4 text-sidebar-primary/50 group-hover/nav-item:text-sidebar-primary transition-colors duration-150" />
                                     )}
-                                    <span>{item.title}</span>
+                                    <span className="text-[0.75rem] font-medium">{item.title}</span>
                                 </a>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

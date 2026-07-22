@@ -1,5 +1,4 @@
 import { Moon, Sun, Monitor } from 'lucide-react';
-import { useAppearance, type Appearance } from '@/hooks/use-appearance';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -7,6 +6,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAppearance  } from '@/hooks/use-appearance';
+import type {Appearance} from '@/hooks/use-appearance';
 
 export function ThemeToggle() {
     const { appearance, updateAppearance } = useAppearance();
@@ -32,7 +33,7 @@ export function ThemeToggle() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-white/65 hover:bg-white/10 hover:text-white">
                     {appearance === 'dark' ? (
                         <Moon className="h-4 w-4" />
                     ) : appearance === 'light' ? (

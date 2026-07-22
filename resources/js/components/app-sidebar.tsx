@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Package } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,7 +14,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { sidebarData } from '@/data/sidebar';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';

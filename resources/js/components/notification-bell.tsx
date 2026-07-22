@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Bell, AlertTriangle, Circle, ChevronDown, Eye } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Popover,
@@ -53,9 +53,9 @@ export function NotificationBell() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="relative group h-9 w-9"
+                    className="relative group h-9 w-9 text-white/65 hover:bg-white/10 hover:text-white"
                 >
-                    <Bell className="h-4 w-4 text-sidebar-foreground/50 group-hover:text-sidebar-foreground transition-colors duration-150" />
+                    <Bell className="h-4 w-4 transition-colors duration-150" />
                     {unreadCount > 0 && (
                         <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium ring-2 ring-sidebar">
                             <span className="leading-none">{Math.min(unreadCount, 99)}</span>

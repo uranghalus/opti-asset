@@ -208,7 +208,7 @@ export default function Welcome() {
                                 </span>
                             </Link>
                         ) : (
-                            <Link
+                            <a
                                 href="/auth/redirect"
                                 className="group flex items-center gap-2 rounded-full bg-[#00175A] px-5 py-2 text-sm font-medium text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#000C3D] dark:bg-[#006FCF] dark:hover:bg-[#1374D4] active:scale-[0.98]"
                             >
@@ -218,7 +218,7 @@ export default function Welcome() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                     </svg>
                                 </span>
-                            </Link>
+                            </a>
                         )}
                         <ThemeToggle />
                     </nav>
@@ -248,7 +248,7 @@ export default function Welcome() {
                             className="flex flex-col gap-4 opacity-0 sm:flex-row sm:items-center"
                             style={{ animation: 'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 500ms forwards' }}
                         >
-                            <Link
+                            <a
                                 href="/auth/redirect"
                                 className="group inline-flex items-center gap-0 rounded-full bg-[#006FCF] py-2 pr-2 pl-7 text-sm font-medium text-white shadow-[0_0_24px_rgba(0,111,207,0.25)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#1374D4] hover:shadow-[0_0_40px_rgba(0,111,207,0.35)] active:scale-[0.97]"
                             >
@@ -258,7 +258,7 @@ export default function Welcome() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                     </svg>
                                 </span>
-                            </Link>
+                            </a>
                         </div>
                     </section>
 
@@ -478,7 +478,7 @@ export default function Welcome() {
                                             Masuk menggunakan akun SSO perusahaan Anda dan mulai
                                             mengelola seluruh aset dalam hitungan menit.
                                         </p>
-                                        <Link
+                                        <a
                                             href="/auth/redirect"
                                             className="group inline-flex items-center gap-0 rounded-full bg-white py-2 pr-2 pl-8 text-sm font-medium text-[#00175A] shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/90 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] active:scale-[0.97]"
                                         >
@@ -488,7 +488,7 @@ export default function Welcome() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                                 </svg>
                                             </span>
-                                        </Link>
+                                        </a>
                                     </div>
                                 </div>
                             </div>

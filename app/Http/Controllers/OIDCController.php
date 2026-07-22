@@ -12,7 +12,6 @@ use Laravel\Socialite\Facades\Socialite;
 
 class OIDCController extends Controller
 {
-    //
     public function redirect()
     {
         return Socialite::driver('oidc')->redirect();
@@ -21,22 +20,17 @@ class OIDCController extends Controller
     public function callback(Request $request)
     {
         try {
-            // 1. Ambil profil user dari OIDC Perusahaan
             /** @var SocialiteOAuth2AbstractProvider $driver */
             $driver = Socialite::driver('oidc');
             $ssoUser = $driver->stateless()->user();
-            // dd($ssoUser);
 
-            // Data mentah (raw) dari SSO disimpan di $ssoUser->user (array)
             $rawData = $ssoUser->user ?? [];
             Log::info('OIDC Raw Data:', $rawData);
 
-            // 2. Ekstrak HANYA String Nama Department dari SSO
             $ssoDepartmentName = is_array($rawData['department'] ?? null)
                 ? ($rawData['department']['name'] ?? $rawData['department']['id'] ?? null)
                 : ($rawData['department'] ?? null);
 
-            // 3. Cari ID Department di database lokal berdasarkan nama
             $departmentId = null;
             if (! empty($ssoDepartmentName)) {
                 try {
@@ -56,12 +50,10 @@ class OIDCController extends Controller
                 }
             }
 
-            // 4. Ekstrak Position
             $position = is_array($rawData['position'] ?? null)
                 ? ($rawData['position']['name'] ?? $rawData['position']['id'] ?? json_encode($rawData['position']))
                 : ($rawData['position'] ?? null);
 
-            // 5. Cari user berdasarkan email, atau buat baru jika belum ada (Upsert)
             $user = User::updateOrCreate(
                 ['email' => $ssoUser->getEmail()],
                 [
@@ -80,13 +72,9 @@ class OIDCController extends Controller
                 throw new \RuntimeException('Gagal membuat atau menemukan user.');
             }
 
-            // 6. Login user ke dalam session Laravel
             Auth::login($user);
-
-            // 7. Regenerasi session untuk keamanan (mencegah session fixation)
             $request->session()->regenerate();
 
-            // 8. Redirect ke dashboard
             return redirect()->intended('/dashboard');
         } catch (\Exception $e) {
             Log::error('OIDC SSO Callback Error: '.$e->getMessage());
@@ -95,9 +83,6 @@ class OIDCController extends Controller
         }
     }
 
-    /**
-     * (Opsional) Fungsi untuk Logout
-     */
     public function logout(Request $request)
     {
         Auth::logout();

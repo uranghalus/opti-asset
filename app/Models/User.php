@@ -6,8 +6,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -47,31 +45,5 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
-    }
-
-    public function tenants(): BelongsToMany
-    {
-        return $this->belongsToMany(Tenant::class)
-            ->withPivot('role')
-            ->withTimestamps();
-    }
-
-    public function currentTenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        $tenant = Tenant::current();
-
-        if (! $tenant) {
-            return false;
-        }
-
-        return $this->tenants()
-            ->wherePivot('tenant_id', $tenant->getKey())
-            ->wherePivot('role', 'super_admin')
-            ->exists();
     }
 }

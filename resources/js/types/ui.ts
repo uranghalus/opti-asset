@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import type { User } from '@/types/auth';
 import type { BreadcrumbItem } from '@/types/navigation';
-import type { Tenant } from '@/types/tenant';
 
 export type SharedPageProps = {
     name: string;
@@ -9,8 +8,6 @@ export type SharedPageProps = {
         user: User | null;
     };
     sidebarOpen: boolean;
-    currentTenant: Tenant | null;
-    tenants: Tenant[];
 };
 
 export type AppLayoutProps = {

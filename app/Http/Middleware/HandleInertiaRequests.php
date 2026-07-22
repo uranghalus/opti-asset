@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,33 +42,6 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'currentTenant' => function () {
-                $tenant = Tenant::current();
-
-                if (! $tenant) {
-                    return null;
-                }
-
-                return [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domain,
-                ];
-            },
-            'tenants' => function () use ($request) {
-                $user = $request->user();
-
-                if (! $user) {
-                    return [];
-                }
-
-                return $user->tenants->map(fn (Tenant $tenant) => [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domain,
-                    'role' => $tenant->pivot->role,
-                ]);
-            },
         ];
     }
 }

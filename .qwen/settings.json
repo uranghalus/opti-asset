@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(amp)",
+      "Bash(dir)",
+      "Bash(true)",
+      "Bash(cd *)",
+      "Bash(type *)",
+      "Bash(get-content *)",
+      "Bash(select-object *)"
+    ]
+  },
+  "$version": 4
+}

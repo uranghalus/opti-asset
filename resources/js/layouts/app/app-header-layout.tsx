@@ -1,15 +1,16 @@
 import { AppContent } from '@/components/app-content';
 import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
-import type { AppLayoutProps } from '@/types';
+import type { ReactNode } from 'react';
 
 export default function AppHeaderLayout({
     children,
-    breadcrumbs,
-}: AppLayoutProps) {
+}: {
+    children: ReactNode;
+}) {
     return (
         <AppShell variant="header">
-            <AppHeader breadcrumbs={breadcrumbs} />
+            <AppHeader />
             <AppContent variant="header">{children}</AppContent>
         </AppShell>
     );

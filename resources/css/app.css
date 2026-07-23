@@ -59,7 +59,7 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
-    
+
     --color-sidebar-glow: var(--sidebar-glow);
     --color-sidebar-gradient: var(--sidebar-gradient);
     --color-sidebar-divider: var(--sidebar-divider);
@@ -100,7 +100,11 @@
     --sidebar-border: oklch(0.92 0.006 250);
     --sidebar-ring: oklch(0.55 0.18 242);
     --sidebar-glow: oklch(0.55 0.18 242 / 0.08);
-    --sidebar-gradient: linear-gradient(180deg, oklch(0.985 0.003 255) 0%, oklch(0.975 0.004 255) 100%);
+    --sidebar-gradient: linear-gradient(
+        180deg,
+        oklch(0.985 0.003 255) 0%,
+        oklch(0.975 0.004 255) 100%
+    );
     --sidebar-divider: oklch(0.88 0.008 250);
 }
 
@@ -138,7 +142,11 @@
     --sidebar-border: oklch(0.18 0.025 260);
     --sidebar-ring: oklch(0.7 0.2 240);
     --sidebar-glow: oklch(0.7 0.2 240 / 0.15);
-    --sidebar-gradient: linear-gradient(180deg, oklch(0.08 0.03 260) 0%, oklch(0.06 0.035 260) 100%);
+    --sidebar-gradient: linear-gradient(
+        180deg,
+        oklch(0.08 0.03 260) 0%,
+        oklch(0.06 0.035 260) 100%
+    );
     --sidebar-divider: oklch(0.2 0.025 260);
 }
 
@@ -156,6 +164,100 @@
     /* Premium easing */
     .ease-premium {
         transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    /* Glassmorphism sidebar — frosted translucent surface for a fresh, premium look.
+       Variables are declared on the sidebar container (desktop) and the mobile sheet
+       (the shadcn Sidebar mobile branch drops the instance class/vars). */
+    .sidebar-glass,
+    [data-slot='sidebar'][data-mobile='true'] {
+        --sidebar: transparent;
+        --sidebar-foreground: #1a1f2e;
+        --sidebar-primary: #006fcf;
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: rgba(0, 111, 207, 0.1);
+        --sidebar-accent-foreground: #00509e;
+        --sidebar-border: rgba(15, 23, 42, 0.08);
+        --sidebar-ring: #006fcf;
+        color: var(--sidebar-foreground);
+    }
+    .dark .sidebar-glass,
+    .dark [data-slot='sidebar'][data-mobile='true'] {
+        --sidebar-foreground: #e6edf7;
+        --sidebar-primary: #5aa9ec;
+        --sidebar-accent: rgba(90, 169, 236, 0.16);
+        --sidebar-accent-foreground: #a9d0f5;
+        --sidebar-border: rgba(255, 255, 255, 0.1);
+        --sidebar-ring: #5aa9ec;
+    }
+
+    /* Soft, single-hue ambient behind the app so the frosted glass reads as glass.
+       One restrained brand-blue glow (no rainbow) keeps the surface calm and premium. */
+    [data-slot='sidebar-wrapper'] {
+        position: relative;
+        background:
+            radial-gradient(
+                48% 42% at 0% 0%,
+                rgba(0, 111, 207, 0.1) 0%,
+                transparent 60%
+            ),
+            var(--background);
+    }
+    .dark [data-slot='sidebar-wrapper'] {
+        background:
+            radial-gradient(
+                48% 42% at 0% 0%,
+                rgba(90, 169, 236, 0.12) 0%,
+                transparent 60%
+            ),
+            var(--background);
+    }
+
+    /* Frosted glass surface: applied to the desktop inner surface (which sits on top
+       of .sidebar-glass) and the mobile sheet. */
+    .sidebar-glass [data-sidebar='sidebar'],
+    [data-slot='sidebar'][data-mobile='true'] {
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.72) 0%,
+            rgba(255, 255, 255, 0.55) 100%
+        );
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-right: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow:
+            inset 1px 0 0 0 rgba(255, 255, 255, 0.7),
+            8px 0 32px -16px rgba(0, 23, 90, 0.14);
+    }
+    .dark .sidebar-glass [data-sidebar='sidebar'],
+    .dark [data-slot='sidebar'][data-mobile='true'] {
+        background: linear-gradient(
+            180deg,
+            rgba(22, 30, 51, 0.7) 0%,
+            rgba(13, 19, 36, 0.55) 100%
+        );
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+            inset 1px 0 0 0 rgba(255, 255, 255, 0.06),
+            8px 0 32px -16px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Active nav item — soft brand-blue wash on the frosted surface */
+    .sidebar-nav-active {
+        background: linear-gradient(
+            90deg,
+            rgba(0, 111, 207, 0.16) 0%,
+            rgba(0, 111, 207, 0.05) 100%
+        );
+        box-shadow: inset 0 0 0 1px rgba(0, 111, 207, 0.16);
+    }
+    .dark .sidebar-nav-active {
+        background: linear-gradient(
+            90deg,
+            rgba(90, 169, 236, 0.22) 0%,
+            rgba(90, 169, 236, 0.06) 100%
+        );
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
     /* Double-Bezel outer shell */
@@ -229,7 +331,7 @@
     .sidebar-divider {
         height: 1px;
         background: var(--sidebar-divider);
-        margin: 1.5rem 0;
+        margin: 0.5rem;
     }
 
     .sidebar-glow-effect {
@@ -239,21 +341,30 @@
 
     .sidebar-item-active {
         @apply bg-sidebar-primary/10 text-sidebar-primary-foreground;
-        background: linear-gradient(90deg, transparent 0%, var(--sidebar-primary) 4px, transparent 8px);
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            var(--sidebar-primary) 4px,
+            transparent 8px
+        );
         border-left: 3px solid var(--sidebar-primary);
     }
 
     .sidebar-item-hover {
-        @apply bg-sidebar-accent/5 hover:bg-sidebar-accent/10 transition-colors duration-200;
+        @apply bg-sidebar-accent/5 transition-colors duration-200 hover:bg-sidebar-accent/10;
     }
 
     .sidebar-label {
-        @apply text-xs font-medium tracking-wider uppercase text-sidebar-accent-foreground/70;
+        @apply text-xs font-medium tracking-wider text-sidebar-accent-foreground/70 uppercase;
         letter-spacing: 0.05em;
     }
 
     .sidebar-icon-gradient {
-        background: linear-gradient(135deg, var(--sidebar-primary), var(--sidebar-accent));
+        background: linear-gradient(
+            135deg,
+            var(--sidebar-primary),
+            var(--sidebar-accent)
+        );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;

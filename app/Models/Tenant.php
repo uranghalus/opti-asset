@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
-use Stancl\Tenancy\Database\Concerns\HasDomains;
-use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
+use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
-class Tenant extends BaseTenant
+class Tenant extends SpatieTenant
 {
-    use HasDomains;
+    protected $connection = 'mongodb';
 
-    // Mendefinisikan kolom tambahan di tabel tenants
-    public static function getCustomColumns(): array
-    {
-        return [
-            'id',
-            'name', // Kolom nama perusahaan/tenant
-        ];
-    }
+    protected $fillable = [
+        'id',
+        'name',
+        'domain',
+        'database',
+    ];
+
+    protected $casts = [
+        'id' => 'string',
+    ];
 }

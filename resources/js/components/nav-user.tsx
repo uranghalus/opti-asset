@@ -14,15 +14,14 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
+import type { User } from '@/types';
 
 export function NavUser() {
-    const { auth } = usePage().props;
+    const { auth } = usePage().props as { auth?: { user?: User } };
     const { state } = useSidebar();
     const isMobile = useIsMobile();
 
-    if (!auth.user) {
-        return null;
-    }
+    const user = auth?.user;
 
     return (
         <SidebarMenu>
@@ -31,11 +30,11 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group/sidebar-item rounded-lg px-2 py-1.5 transition-all duration-150 hover:bg-sidebar-accent/70 data-[state=open]:bg-sidebar-accent/70"
+                            className="group/sidebar-item h-11 gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-2 py-1 transition-all duration-150 hover:border-sidebar-ring/30 hover:bg-sidebar-accent data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent"
                             data-test="sidebar-menu-button"
                         >
-                            <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/40 group-hover/sidebar-item:text-sidebar-foreground/70 transition-colors" />
+                            {user && <UserInfo user={user} showEmail />}
+                            <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/40 transition-colors group-hover/sidebar-item:text-sidebar-foreground/70" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -45,11 +44,11 @@ export function NavUser() {
                             isMobile
                                 ? 'bottom'
                                 : state === 'collapsed'
-                                  ? 'left'
-                                  : 'bottom'
+                                    ? 'left'
+                                    : 'bottom'
                         }
                     >
-                        <UserMenuContent user={auth.user} />
+                        {user && <UserMenuContent user={user} />}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

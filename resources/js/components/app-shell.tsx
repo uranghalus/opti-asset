@@ -9,7 +9,8 @@ type Props = {
 };
 
 export function AppShell({ children, variant = 'sidebar' }: Props) {
-    const isOpen = usePage().props.sidebarOpen;
+    const page = usePage();
+    const isOpen = page.props.sidebarOpen ?? true;
 
     if (variant === 'header') {
         return (

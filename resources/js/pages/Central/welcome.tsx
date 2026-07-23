@@ -70,7 +70,7 @@ function ThemeToggle() {
 }
 
 export default function Welcome() {
-    const { auth } = usePage().props;
+    const { auth } = usePage().props as { auth?: { user?: { id: number; name: string; email: string; avatar?: string } } };
 
     return (
         <>
@@ -195,7 +195,7 @@ export default function Welcome() {
                             </span>
                         </div>
                         <div className="h-4 w-px bg-black/[0.06] dark:bg-white/10" />
-                        {auth.user ? (
+                        {auth?.user ? (
                             <Link
                                 href="/dashboard"
                                 className="group flex items-center gap-2 rounded-full bg-[#00175A] px-5 py-2 text-sm font-medium text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#000C3D] dark:bg-[#006FCF] dark:hover:bg-[#1374D4] active:scale-[0.98]"
@@ -376,7 +376,7 @@ export default function Welcome() {
                                                         <span className="text-[11px] font-medium text-[#86888C] dark:text-white/50">Scanner Aktif</span>
                                                     </div>
                                                     <div className="flex gap-[3px]">
-                                                        {[3,1,2,1,3,1,1,2,1,3,2,1,1,3,1,2,3,1,1,2,1,3,1,2,1,3,2,1].map((w, i) => (
+                                                        {[3, 1, 2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 1, 3, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 3, 2, 1].map((w, i) => (
                                                             <div
                                                                 key={i}
                                                                 className="bg-[#1A1A1A] dark:bg-white/60"

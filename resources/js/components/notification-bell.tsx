@@ -1,5 +1,4 @@
-import { Bell, AlertTriangle, Circle, ChevronDown, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { AlertTriangle, Bell, CheckCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Popover,
@@ -8,44 +7,49 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-export function NotificationBell() {
-    const [open, setOpen] = useState(false);
-    const unreadCount = 5; // This would come from API in reality
+const notifications = [
+    {
+        id: 1,
+        title: 'Pemantauan Stok Rendah',
+        message: 'Aset PRN-00123 (Laptop Dell) stok hanya 2 unit',
+        time: '2m lalu',
+        icon: AlertTriangle,
+        type: 'warning',
+    },
+    {
+        id: 2,
+        title: 'Audit Aset Selesai',
+        message: 'Audit kuartalan Q3 2026 telah selesai',
+        time: '15m lalu',
+        icon: CheckCircle,
+        type: 'success',
+    },
+    {
+        id: 3,
+        title: 'Permohonan Mutasi Aset',
+        message: 'Tim IT memohon pemindahan 15 unit monitor ke Gedung B',
+        time: '1j lalu',
+        icon: Info,
+        type: 'info',
+    },
+    {
+        id: 4,
+        title: 'Peringatan Pemeliharaan',
+        message: 'AC Server Room jadwal pemeliharaan besok pagi',
+        time: '2j lalu',
+        icon: Info,
+        type: 'info',
+    },
+];
 
-    const notifications = [
-        {
-            id: 1,
-            title: 'Pemantauan Stok Rendah',
-            message: 'Aset PRN-00123 (Laptop Dell) stok hanya 2 unit',
-            time: '2 menit yang lalu',
-            icon: AlertTriangle,
-            type: 'warning',
-        },
-        {
-            id: 2,
-            title: 'Audit Aset Selesai',
-            message: 'Audit kuartalan Q3 2026 telah selesai',
-            time: '15 menit yang lalu',
-            icon: Bell,
-            type: 'success',
-        },
-        {
-            id: 3,
-            title: 'Permohonan Mutasi Aset',
-            message: 'Tim IT memohon pemindahan 15 unit monitor ke Gedung B',
-            time: '1 jam yang lalu',
-            icon: Circle,
-            type: 'info',
-        },
-        {
-            id: 4,
-            title: 'Peringatan Pemeliharaan',
-            message: 'AC Server Room jadwal pemeliharaan besok pagi',
-            time: '2 jam yang lalu',
-            icon: Eye,
-            type: 'info',
-        },
-    ];
+const typeColors: Record<string, { icon: string; bg: string }> = {
+    warning: { icon: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-500/15' },
+    success: { icon: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/15' },
+    info: { icon: 'text-sky-500', bg: 'bg-sky-100 dark:bg-sky-500/15' },
+};
+
+export function NotificationBell() {
+    const unreadCount = 5;
 
     return (
         <Popover>
@@ -53,76 +57,72 @@ export function NotificationBell() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="relative group h-9 w-9 text-white/65 hover:bg-white/10 hover:text-white"
+                    className="relative h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 >
-                    <Bell className="h-4 w-4 transition-colors duration-150" />
+                    <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                        <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium ring-2 ring-sidebar">
-                            <span className="leading-none">{Math.min(unreadCount, 99)}</span>
-                        </div>
+                        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold leading-none text-white dark:border-slate-900">
+                            {Math.min(unreadCount, 99)}
+                        </span>
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0 border-sidebar-border/50 bg-sidebar-card shadow-xl">
-                <div className="px-4 py-3 border-b border-sidebar-border/50 bg-sidebar">
-                    <h3 className="text-sm font-semibold text-sidebar-foreground">
-                        Notifikasi ({unreadCount} baru)
-                    </h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="p-1 rounded hover:bg-sidebar-accent/50"
-                        onClick={() => {/* mark all as read */}}
-                    >
-                        <Circle className="h-3 w-3 text-sidebar-foreground/40" />
-                    </Button>
+
+            <PopoverContent
+                align="end"
+                sideOffset={8}
+                className="w-80 rounded-xl border border-slate-200 bg-white p-0 shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:shadow-2xl dark:shadow-black/40"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                        Notifikasi
+                    </span>
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-500/15 dark:text-red-400">
+                        {unreadCount} baru
+                    </span>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto space-y-1 p-2">
-                    {notifications.length > 0 ? (
-                        notifications.map((notif) => (
+
+                {/* List */}
+                <div className="max-h-80 overflow-y-auto">
+                    {notifications.map((notif) => {
+                        const colors = typeColors[notif.type] ?? typeColors.info;
+                        return (
                             <div
                                 key={notif.id}
-                                className="flex items-start gap-3 px-2 py-2.5 rounded-lg border border-sidebar-border/30 hover:bg-sidebar-accent/50 transition-colors duration-100"
+                                className="flex items-start gap-3 border-b border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                             >
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10">
-                                    {notif.icon && (
-                                        <notif.icon
-                                            className={cn(
-                                                notif.type === 'warning' && 'text-orange-500',
-                                                notif.type === 'success' && 'text-green-500',
-                                                notif.type === 'info' && 'text-blue-500',
-                                                'text-sidebar-foreground/60',
-                                                'h-4 w-4'
-                                            )}
-                                        />
+                                <div
+                                    className={cn(
+                                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                                        colors.bg,
                                     )}
+                                >
+                                    <notif.icon className={cn('h-4 w-4', colors.icon)} />
                                 </div>
-                                <div className="flex-1 min-w-0 space-y-0.5">
-                                    <div className="flex justify-between">
-                                        <h4 className="text-sm font-medium text-sidebar-foreground truncate max-w-[200px]">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">
                                             {notif.title}
-                                        </h4>
-                                        <span className="text-xs text-sidebar-foreground/30">
+                                        </p>
+                                        <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
                                             {notif.time}
                                         </span>
                                     </div>
-                                    <p className="text-[0.7rem] text-sidebar-foreground/50 line-clamp-2">
+                                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
                                         {notif.message}
                                     </p>
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-4 text-xs text-sidebar-foreground/40">
-                            Tidak ada notifikasi baru
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
-                <div className="border-t border-sidebar-border/50 px-4 py-2.5 text-center">
+
+                {/* Footer */}
+                <div className="border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
                     <Button
                         variant="ghost"
-                        size="sm"
-                        className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                        className="w-full text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     >
                         Lihat Semua Notifikasi
                     </Button>

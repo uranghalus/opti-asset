@@ -6,8 +6,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAppearance  } from '@/hooks/use-appearance';
-import type {Appearance} from '@/hooks/use-appearance';
+import { useAppearance } from '@/hooks/use-appearance';
+import type { Appearance } from '@/hooks/use-appearance';
 
 export function ThemeToggle() {
     const { appearance, updateAppearance } = useAppearance();
@@ -33,7 +33,11 @@ export function ThemeToggle() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-white/65 hover:bg-white/10 hover:text-white">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                >
                     {appearance === 'dark' ? (
                         <Moon className="h-4 w-4" />
                     ) : appearance === 'light' ? (

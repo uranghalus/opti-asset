@@ -41,10 +41,11 @@ export function AppHeader() {
                             className="flex h-8 items-center gap-2 rounded-lg px-2 text-white/80 hover:bg-white/10 hover:text-white"
                         >
                             <Avatar className="h-6 w-6 overflow-hidden rounded-full ring-2 ring-white/20">
-                                <AvatarImage src={auth.user?.avatar} alt={auth.user?.name} />
-                                <AvatarFallback
-                                    className="rounded-full bg-[#006FCF] text-[10px] font-semibold text-white"
-                                >
+                                <AvatarImage
+                                    src={auth.user?.avatar}
+                                    alt={auth.user?.name}
+                                />
+                                <AvatarFallback className="rounded-full bg-[#006FCF] text-[10px] font-semibold text-white">
                                     {getInitials(auth.user?.name ?? '')}
                                 </AvatarFallback>
                             </Avatar>

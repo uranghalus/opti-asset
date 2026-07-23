@@ -15,7 +15,7 @@ export function StatusDonut() {
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-5 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#006FCF]">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
                         Status
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
@@ -53,8 +53,12 @@ export function StatusDonut() {
                         </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-[#1A1A1A] dark:text-white">{total}</span>
-                        <span className="text-[10px] text-[#86888C]">Total</span>
+                        <span className="text-xl font-bold text-[#1A1A1A] dark:text-white">
+                            {total}
+                        </span>
+                        <span className="text-[10px] text-[#86888C]">
+                            Total
+                        </span>
                     </div>
                 </div>
 
@@ -63,12 +67,18 @@ export function StatusDonut() {
                         const pct = ((item.value / total) * 100).toFixed(1);
 
                         return (
-                            <div key={item.name} className="flex items-center justify-between">
+                            <div
+                                key={item.name}
+                                className="flex items-center justify-between"
+                            >
                                 <span className="flex items-center gap-2 text-sm text-[#1A1A1A] dark:text-white">
-                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                    <span
+                                        className="h-2.5 w-2.5 rounded-full"
+                                        style={{ backgroundColor: item.color }}
+                                    />
                                     {item.name}
                                 </span>
-                                <span className="text-xs tabular-nums text-[#86888C]">
+                                <span className="text-xs text-[#86888C] tabular-nums">
                                     {item.value} ({pct}%)
                                 </span>
                             </div>

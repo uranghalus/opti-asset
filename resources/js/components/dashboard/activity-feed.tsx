@@ -46,7 +46,7 @@ export function ActivityFeed() {
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-4 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#00875A]">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#00875A] uppercase">
                         Aktivitas
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
@@ -78,11 +78,17 @@ export function ActivityFeed() {
                         <div className="min-w-0 flex-1">
                             <p className="text-sm leading-snug text-[#1A1A1A] dark:text-white">
                                 <span className="font-semibold">{a.name}</span>{' '}
-                                <span className="text-[#53565A] dark:text-[#B7C3D9]">{a.action}</span>{' '}
+                                <span className="text-[#53565A] dark:text-[#B7C3D9]">
+                                    {a.action}
+                                </span>{' '}
                                 <span className="font-medium">{a.target}</span>{' '}
-                                <span className="text-[#86888C]">{a.detail}</span>
+                                <span className="text-[#86888C]">
+                                    {a.detail}
+                                </span>
                             </p>
-                            <p className="mt-0.5 text-[11px] text-[#86888C]">{a.time}</p>
+                            <p className="mt-0.5 text-[11px] text-[#86888C]">
+                                {a.time}
+                            </p>
                         </div>
                     </div>
                 ))}

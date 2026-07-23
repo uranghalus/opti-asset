@@ -2,8 +2,8 @@
 
 namespace App;
 
-use Illuminate\Http\Request;
 use App\Models\Tenant;
+use Illuminate\Http\Request;
 use Spatie\Multitenancy\Contracts\IsTenant;
 use Spatie\Multitenancy\TenantFinder\TenantFinder as BaseFinder;
 
@@ -11,8 +11,25 @@ class TenantFinder extends BaseFinder
 {
     public function findForRequest(Request $request): ?IsTenant
     {
-        $host = $request->getHost();
+        if (! $request->hasSession()) {
+            return null;
+        }
 
-        return Tenant::where('domain', $host)->first();
+        $tenantId = $request->session()->get('current_tenant_id');
+
+        if ($tenantId) {
+            return Tenant::find($tenantId);
+        }
+
+        if ($request->user()?->tenant_id) {
+            $tenant = Tenant::find($request->user()->tenant_id);
+            if ($tenant) {
+                $request->session()->put('current_tenant_id', $tenant->id);
+
+                return $tenant;
+            }
+        }
+
+        return null;
     }
 }

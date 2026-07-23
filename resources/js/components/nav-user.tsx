@@ -44,8 +44,8 @@ export function NavUser() {
                             isMobile
                                 ? 'bottom'
                                 : state === 'collapsed'
-                                    ? 'left'
-                                    : 'bottom'
+                                  ? 'left'
+                                  : 'bottom'
                         }
                     >
                         {user && <UserMenuContent user={user} />}

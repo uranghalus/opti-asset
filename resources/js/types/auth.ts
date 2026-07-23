@@ -7,7 +7,13 @@ export type User = {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    tenant_id?: string | null;
     [key: string]: unknown;
+};
+
+export type TenantInfo = {
+    id: string;
+    name: string;
 };
 
 export type Auth = {

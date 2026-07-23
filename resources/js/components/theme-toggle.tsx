@@ -12,7 +12,11 @@ import type { Appearance } from '@/hooks/use-appearance';
 export function ThemeToggle() {
     const { appearance, updateAppearance } = useAppearance();
 
-    const options: { value: Appearance; label: string; icon: React.ReactNode }[] = [
+    const options: {
+        value: Appearance;
+        label: string;
+        icon: React.ReactNode;
+    }[] = [
         {
             value: 'light',
             label: 'Light',

@@ -22,7 +22,9 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 
 export function AppSidebarHeader() {
-    const { auth } = usePage().props as { auth?: { user?: { name?: string; avatar?: string } } };
+    const { auth } = usePage().props as {
+        auth?: { user?: { name?: string; avatar?: string } };
+    };
     const getInitials = useInitials();
 
     const userName = auth?.user?.name ?? '';
@@ -46,10 +48,16 @@ export function AppSidebarHeader() {
                         side="left"
                         className="flex w-72 flex-col border-r border-[#D5D9DC] bg-white p-0 dark:border-[#1e293b] dark:bg-[#0f172a]"
                     >
-                        <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+                        <SheetTitle className="sr-only">
+                            Navigation menu
+                        </SheetTitle>
                         <SheetHeader className="flex items-center justify-end border-b border-[#D5D9DC] px-4 py-3 dark:border-[#1e293b]">
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white"
+                                >
                                     <X className="h-4 w-4" />
                                 </Button>
                             </SheetTrigger>
@@ -104,7 +112,9 @@ export function AppSidebarHeader() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end">
-                        {auth?.user && <UserMenuContent user={auth.user as any} />}
+                        {auth?.user && (
+                            <UserMenuContent user={auth.user as any} />
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

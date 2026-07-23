@@ -43,8 +43,14 @@ const notifications = [
 ];
 
 const typeColors: Record<string, { icon: string; bg: string }> = {
-    warning: { icon: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-500/15' },
-    success: { icon: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/15' },
+    warning: {
+        icon: 'text-amber-500',
+        bg: 'bg-amber-100 dark:bg-amber-500/15',
+    },
+    success: {
+        icon: 'text-emerald-500',
+        bg: 'bg-emerald-100 dark:bg-emerald-500/15',
+    },
     info: { icon: 'text-sky-500', bg: 'bg-sky-100 dark:bg-sky-500/15' },
 };
 
@@ -61,7 +67,7 @@ export function NotificationBell() {
                 >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold leading-none text-white dark:border-slate-900">
+                        <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] leading-none font-bold text-white dark:border-slate-900">
                             {Math.min(unreadCount, 99)}
                         </span>
                     )}
@@ -86,7 +92,9 @@ export function NotificationBell() {
                 {/* List */}
                 <div className="max-h-80 overflow-y-auto">
                     {notifications.map((notif) => {
-                        const colors = typeColors[notif.type] ?? typeColors.info;
+                        const colors =
+                            typeColors[notif.type] ?? typeColors.info;
+
                         return (
                             <div
                                 key={notif.id}
@@ -98,7 +106,9 @@ export function NotificationBell() {
                                         colors.bg,
                                     )}
                                 >
-                                    <notif.icon className={cn('h-4 w-4', colors.icon)} />
+                                    <notif.icon
+                                        className={cn('h-4 w-4', colors.icon)}
+                                    />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-2">

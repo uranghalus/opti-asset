@@ -19,18 +19,24 @@ function GreetingHeader() {
 
     useEffect(() => {
         const hour = new Date().getHours();
-        setGreeting(hour < 12 ? 'Selamat pagi' : hour < 18 ? 'Selamat siang' : 'Selamat malam');
+        setGreeting(
+            hour < 12
+                ? 'Selamat pagi'
+                : hour < 18
+                  ? 'Selamat siang'
+                  : 'Selamat malam',
+        );
     }, []);
 
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#002A6E] via-[#00175A] to-[#000C3D] p-6 shadow-lg shadow-[#00175A]/20 sm:p-7">
             {/* Decorative brand glow */}
-            <div className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-[#006FCF]/25 blur-3xl" />
-            <div className="pointer-events-none absolute right-32 top-8 size-32 rounded-full bg-[#3B9FE8]/10 blur-2xl" />
+            <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[#006FCF]/25 blur-3xl" />
+            <div className="pointer-events-none absolute top-8 right-32 size-32 rounded-full bg-[#3B9FE8]/10 blur-2xl" />
 
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8FB4E8]">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] text-[#8FB4E8] uppercase">
                         {greeting}
                     </p>
                     <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-[28px]">

@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 
 const data = [
@@ -21,7 +29,7 @@ export function ChartOverview() {
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-5 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#006FCF]">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
                         Overview
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
@@ -34,10 +42,11 @@ export function ChartOverview() {
                             key={p}
                             variant="ghost"
                             size="sm"
-                            className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition-colors ${activePeriod === p
+                            className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+                                activePeriod === p
                                     ? 'bg-white text-[#1A1A1A] shadow-sm dark:bg-white/[0.08] dark:text-white'
                                     : 'text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white'
-                                }`}
+                            }`}
                             onClick={() => setActivePeriod(p)}
                         >
                             {p}
@@ -49,12 +58,30 @@ export function ChartOverview() {
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data}>
                         <defs>
-                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#006FCF" stopOpacity={0.15} />
-                                <stop offset="100%" stopColor="#006FCF" stopOpacity={0} />
+                            <linearGradient
+                                id="chartGradient"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                            >
+                                <stop
+                                    offset="0%"
+                                    stopColor="#006FCF"
+                                    stopOpacity={0.15}
+                                />
+                                <stop
+                                    offset="100%"
+                                    stopColor="#006FCF"
+                                    stopOpacity={0}
+                                />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ECEDEE" />
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            stroke="#ECEDEE"
+                        />
                         <XAxis
                             dataKey="period"
                             stroke="#86888C"

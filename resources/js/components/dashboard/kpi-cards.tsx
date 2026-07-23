@@ -1,4 +1,11 @@
-import { ArrowDownRight, ArrowUpRight, Package, CheckCircle, Wrench, DollarSign } from 'lucide-react';
+import {
+    ArrowDownRight,
+    ArrowUpRight,
+    Package,
+    CheckCircle,
+    Wrench,
+    DollarSign,
+} from 'lucide-react';
 
 const kpiData = [
     {
@@ -58,15 +65,33 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     const areaD = `${pathD} L${width},${height} L0,${height} Z`;
 
     return (
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0">
+        <svg
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            className="shrink-0"
+        >
             <defs>
-                <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                    id={`spark-${color.replace('#', '')}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                >
                     <stop offset="0%" stopColor={color} stopOpacity={0.2} />
                     <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
             </defs>
             <path d={areaD} fill={`url(#spark-${color.replace('#', '')})`} />
-            <path d={pathD} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d={pathD}
+                fill="none"
+                stroke={color}
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </svg>
     );
 }
@@ -88,14 +113,21 @@ export function KpiCards() {
                             style={{ backgroundColor: kpi.color }}
                         />
                         <div className="flex items-start justify-between">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: `${kpi.color}10` }}>
-                                <Icon className="h-5 w-5" style={{ color: kpi.color }} />
+                            <div
+                                className="flex h-10 w-10 items-center justify-center rounded-lg"
+                                style={{ backgroundColor: `${kpi.color}10` }}
+                            >
+                                <Icon
+                                    className="h-5 w-5"
+                                    style={{ color: kpi.color }}
+                                />
                             </div>
                             <div
-                                className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${kpi.trend === 'up'
+                                className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    kpi.trend === 'up'
                                         ? 'bg-[#00875A]/[0.08] text-[#00875A]'
                                         : 'bg-[#C52720]/[0.08] text-[#C52720]'
-                                    }`}
+                                }`}
                             >
                                 {kpi.trend === 'up' ? (
                                     <ArrowUpRight className="h-3 w-3" />
@@ -106,7 +138,7 @@ export function KpiCards() {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86888C]">
+                            <p className="text-[11px] font-semibold tracking-wide text-[#86888C] uppercase">
                                 {kpi.label}
                             </p>
                             <p className="mt-1 text-2xl font-bold tracking-tight text-[#1A1A1A] dark:text-white">
@@ -114,8 +146,13 @@ export function KpiCards() {
                             </p>
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-[#ECEDEE] pt-3 dark:border-[#1e293b]">
-                            <span className="text-[10px] text-[#86888C]">Minggu ini</span>
-                            <MiniSparkline data={kpi.sparkline} color={kpi.color} />
+                            <span className="text-[10px] text-[#86888C]">
+                                Minggu ini
+                            </span>
+                            <MiniSparkline
+                                data={kpi.sparkline}
+                                color={kpi.color}
+                            />
                         </div>
                     </div>
                 );

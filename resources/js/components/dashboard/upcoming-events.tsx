@@ -34,7 +34,7 @@ export function UpcomingEvents() {
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-4 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#B95000]">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#B95000] uppercase">
                         Jadwal
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
@@ -56,20 +56,36 @@ export function UpcomingEvents() {
                         className="flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-[#F7F8F9]/50 dark:hover:bg-white/[0.02]"
                     >
                         <div className="flex h-12 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-[#F7F8F9] dark:bg-white/[0.04]">
-                            <span className="text-[10px] font-bold uppercase text-[#006FCF]">{e.weekday}</span>
-                            <span className="text-lg font-bold leading-none text-[#1A1A1A] dark:text-white">{e.day}</span>
+                            <span className="text-[10px] font-bold text-[#006FCF] uppercase">
+                                {e.weekday}
+                            </span>
+                            <span className="text-lg leading-none font-bold text-[#1A1A1A] dark:text-white">
+                                {e.day}
+                            </span>
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-[#1A1A1A] dark:text-white">{e.title}</p>
+                            <p className="text-sm font-medium text-[#1A1A1A] dark:text-white">
+                                {e.title}
+                            </p>
                             <div className="mt-1 flex items-center gap-2">
-                                <span className="text-[11px] text-[#86888C]">{e.time}</span>
-                                <span className="text-[#D5D9DC] dark:text-[#1e293b]">·</span>
+                                <span className="text-[11px] text-[#86888C]">
+                                    {e.time}
+                                </span>
+                                <span className="text-[#D5D9DC] dark:text-[#1e293b]">
+                                    ·
+                                </span>
                                 <div className="flex -space-x-1.5">
                                     {e.attendees.map((initials, j) => (
-                                        <Avatar key={j} className="h-5 w-5 border-2 border-white dark:border-[#0f172a]">
+                                        <Avatar
+                                            key={j}
+                                            className="h-5 w-5 border-2 border-white dark:border-[#0f172a]"
+                                        >
                                             <AvatarFallback
                                                 className="text-[8px] font-bold text-white"
-                                                style={{ backgroundColor: e.colors[j] }}
+                                                style={{
+                                                    backgroundColor:
+                                                        e.colors[j],
+                                                }}
                                             >
                                                 {initials}
                                             </AvatarFallback>

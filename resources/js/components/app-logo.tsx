@@ -7,7 +7,7 @@ export default function AppLogo() {
     return (
         <>
             {/* Logo Icon Container */}
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-500/20 ring-1 ring-black/5 transition-transform duration-200 group-hover:scale-105 dark:ring-white/10">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md ring-1 shadow-blue-500/20 ring-black/5 transition-transform duration-200 group-hover:scale-105 dark:ring-white/10">
                 <AppLogoIcon className="size-5 fill-current drop-shadow-sm" />
             </div>
 

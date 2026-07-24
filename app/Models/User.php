@@ -41,7 +41,9 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
-    public function tenants()
+    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+    public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'user_tenants', 'user_id', 'tenant_id');
     }

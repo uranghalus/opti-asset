@@ -4,26 +4,13 @@ namespace App\Http\Middleware;
 
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
         $user = $request->user();
@@ -43,7 +30,7 @@ class HandleInertiaRequests extends Middleware
                 $availableTenants = Tenant::latest()->get()->map(fn (Tenant $t) => $this->mapTenant($t));
             }
         } catch (\Throwable $e) {
-            // MongoDB not available (e.g., test env)
+            Log::warning('HandleInertiaRequests: '.$e->getMessage());
         }
 
         return [

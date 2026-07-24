@@ -2,44 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreOrganizationRequest;
+use App\Http\Requests\UpdateOrganizationRequest;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class OrganizationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        try {
-            $tenants = Tenant::latest()->get();
-        } catch (\Throwable $e) {
-            $tenants = collect();
-        }
+        $perPage = min((int) $request->input('per_page', 15), 100);
+
+        $tenants = Tenant::latest()
+            ->when($request->input('search'), fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('organizations/Index', [
             'tenants' => $tenants,
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreOrganizationRequest $request)
     {
-        $validated = $request->validate([
-            'id' => 'required|string|unique:tenants,id|alpha_dash',
-            'name' => 'required|string|max:255',
-        ]);
+        $tenant = Tenant::create($request->validated());
 
-        Tenant::create($validated);
+        $request->user()->tenants()->attach($tenant->id);
 
         return redirect()->back();
     }
 
-    public function update(Request $request, Tenant $tenant)
+    public function update(UpdateOrganizationRequest $request, Tenant $tenant)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $tenant->update($validated);
+        $tenant->update($request->validated());
 
         return redirect()->back();
     }

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\TenantFinder;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Spatie\Multitenancy\Actions\MakeTenantCurrentAction;
 
 class IdentifyTenant
@@ -23,7 +24,7 @@ class IdentifyTenant
                 $this->makeTenantCurrentAction->execute($tenant);
             }
         } catch (\Throwable $e) {
-            // MongoDB not available (e.g. tests)
+            Log::warning('IdentifyTenant: '.$e->getMessage());
         }
 
         return $next($request);

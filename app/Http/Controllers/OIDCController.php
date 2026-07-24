@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateTenantAction;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -12,6 +13,10 @@ use Laravel\Socialite\Facades\Socialite;
 
 class OIDCController extends Controller
 {
+    public function __construct(
+        private CreateTenantAction $createTenant,
+    ) {}
+
     public function redirect()
     {
         return Socialite::driver('oidc')->redirect();
@@ -72,10 +77,16 @@ class OIDCController extends Controller
                 throw new \RuntimeException('Gagal membuat atau menemukan user.');
             }
 
+            if (! $user->tenant_id) {
+                $this->createTenant->execute($user);
+            }
+
+            $request->session()->put('current_tenant_id', $user->tenant_id);
+
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            return redirect()->route('dashboard');
         } catch (\Exception $e) {
             Log::error('OIDC SSO Callback Error: '.$e->getMessage());
 

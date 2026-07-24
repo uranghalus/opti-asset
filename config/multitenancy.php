@@ -62,12 +62,12 @@ return [
      *
      * Set to `null` to use the default connection.
      */
-    'tenant_database_connection_name' => 'mysql',
+    'tenant_database_connection_name' => env('TENANT_DB_CONNECTION', 'mysql'),
 
     /*
      * The connection name to reach the landlord database.
      */
-    'landlord_database_connection_name' => 'mysql',
+    'landlord_database_connection_name' => env('LANDLORD_DB_CONNECTION', 'mysql'),
 
     /*
      * This key will be used to associate the current tenant in the context

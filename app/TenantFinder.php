@@ -23,6 +23,7 @@ class TenantFinder extends BaseFinder
 
         if ($request->user()?->tenant_id) {
             $tenant = Tenant::find($request->user()->tenant_id);
+
             if ($tenant) {
                 $request->session()->put('current_tenant_id', $tenant->id);
 

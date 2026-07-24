@@ -4,15 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $connection = 'mongodb';
-
-    protected $collection = 'tb_department';
+    protected $table = 'tb_department';
 
     protected $primaryKey = 'id_department';
 

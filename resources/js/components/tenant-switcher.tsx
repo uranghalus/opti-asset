@@ -15,8 +15,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import tenant from '@/routes/tenant';
 import { cn } from '@/lib/utils';
+import tenant from '@/routes/tenant';
 
 type PageProps = {
     tenant?: { id: string; name: string } | null;

@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
 class Tenant extends SpatieTenant
 {
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
     protected $fillable = [
         'id',
         'name',
@@ -15,7 +20,7 @@ class Tenant extends SpatieTenant
         'id' => 'string',
     ];
 
-    public function users()
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_tenants', 'tenant_id', 'user_id');
     }

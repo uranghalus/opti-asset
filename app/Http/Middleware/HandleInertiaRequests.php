@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -19,16 +18,6 @@ class HandleInertiaRequests extends Middleware
     protected $rootView = 'app';
 
     /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
-    public function version(Request $request): ?string
-    {
-        return parent::version($request);
-    }
-
-    /**
      * Define the props that are shared by default.
      *
      * @see https://inertiajs.com/shared-data
@@ -37,7 +26,6 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        /** @var User|null $user */
         $user = $request->user();
 
         $currentTenant = null;
@@ -49,10 +37,10 @@ class HandleInertiaRequests extends Middleware
             if ($activeTenant) {
                 $currentTenant = $activeTenant->only(['id', 'name']);
                 $availableTenants = $user
-                    ? $user->tenants()->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])
+                    ? $user->tenants()->get()->map(fn (Tenant $t) => $this->mapTenant($t))
                     : [];
             } elseif ($user) {
-                $availableTenants = Tenant::latest()->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]);
+                $availableTenants = Tenant::latest()->get()->map(fn (Tenant $t) => $this->mapTenant($t));
             }
         } catch (\Throwable $e) {
             // MongoDB not available (e.g., test env)
@@ -68,5 +56,13 @@ class HandleInertiaRequests extends Middleware
             'availableTenants' => $availableTenants,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * @return array{id: string, name: string}
+     */
+    private function mapTenant(Tenant $tenant): array
+    {
+        return ['id' => $tenant->id, 'name' => $tenant->name];
     }
 }

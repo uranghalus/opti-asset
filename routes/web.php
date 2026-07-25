@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OIDCController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\TenantSwitchController;
@@ -14,7 +15,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::post('tenant/switch', [TenantSwitchController::class, 'switch'])->name('tenant.switch');
 

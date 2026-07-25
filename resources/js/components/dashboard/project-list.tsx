@@ -1,38 +1,25 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const projects = [
-    {
-        name: 'Pengadaan Laptop 2026',
-        type: 'Pengadaan',
-        progress: 75,
-        color: '#006FCF',
-    },
-    {
-        name: 'Migrasi Server',
-        type: 'Infrastruktur',
-        progress: 60,
-        color: '#00875A',
-    },
-    {
-        name: 'Renovasi Kantor',
-        type: 'Fasilitas',
-        progress: 90,
-        color: '#BF9B30',
-    },
-    { name: 'Upgrade Jaringan', type: 'IT', progress: 40, color: '#B95000' },
-];
+type Department = {
+    id_department: string;
+    kode_department: string;
+    nama_department: string;
+    created_at: string;
+};
 
-export function ProjectList() {
+const COLORS = ['#006FCF', '#00875A', '#BF9B30', '#B95000', '#7C3AED'];
+
+export function ProjectList({ departments }: { departments: Department[] }) {
     return (
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-4 flex items-center justify-between">
                 <div>
                     <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
-                        Proyek
+                        Departemen
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                        Daftar Proyek
+                        Daftar Departemen
                     </h3>
                 </div>
                 <Button
@@ -44,33 +31,29 @@ export function ProjectList() {
                 </Button>
             </div>
             <div className="flex flex-col gap-3">
-                {projects.map((p) => (
+                {departments.length === 0 && (
+                    <p className="py-4 text-center text-sm text-[#86888C]">
+                        Belum ada departemen.
+                    </p>
+                )}
+                {departments.map((dept, i) => (
                     <div
-                        key={p.name}
+                        key={dept.id_department}
                         className="rounded-lg border border-[#ECEDEE] p-3 transition-colors hover:bg-[#F7F8F9]/50 dark:border-[#1e293b] dark:hover:bg-white/[0.02]"
                     >
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-sm font-medium text-[#1A1A1A] dark:text-white">
-                                    {p.name}
+                                    {dept.nama_department}
                                 </p>
                                 <p className="mt-0.5 text-[11px] text-[#86888C]">
-                                    {p.type}
+                                    {dept.kode_department}
                                 </p>
                             </div>
                             <span
-                                className="text-xs font-semibold tabular-nums"
-                                style={{ color: p.color }}
-                            >
-                                {p.progress}%
-                            </span>
-                        </div>
-                        <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[#ECEDEE] dark:bg-white/[0.06]">
-                            <div
-                                className="h-full rounded-full transition-all duration-500"
+                                className="size-2 rounded-full"
                                 style={{
-                                    width: `${p.progress}%`,
-                                    backgroundColor: p.color,
+                                    backgroundColor: COLORS[i % COLORS.length],
                                 }}
                             />
                         </div>

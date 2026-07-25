@@ -1,50 +1,18 @@
 import {
     ArrowDownRight,
     ArrowUpRight,
-    Package,
+    Building2,
     CheckCircle,
-    Wrench,
-    DollarSign,
+    KeyRound,
+    Users,
 } from 'lucide-react';
 
-const kpiData = [
-    {
-        label: 'Total Aset',
-        value: '1,248',
-        change: '+5.2%',
-        trend: 'up' as const,
-        icon: Package,
-        sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
-        color: '#006FCF',
-    },
-    {
-        label: 'Aktif',
-        value: '1,089',
-        change: '+3.8%',
-        trend: 'up' as const,
-        icon: CheckCircle,
-        sparkline: [40, 38, 45, 42, 50, 48, 55, 52, 60, 58, 62, 68],
-        color: '#00875A',
-    },
-    {
-        label: 'Maintenance',
-        value: '67',
-        change: '-2.1%',
-        trend: 'down' as const,
-        icon: Wrench,
-        sparkline: [20, 25, 18, 22, 15, 20, 16, 12, 18, 14, 10, 8],
-        color: '#B95000',
-    },
-    {
-        label: 'Nilai Total',
-        value: 'Rp 12.4B',
-        change: '+8.5%',
-        trend: 'up' as const,
-        icon: DollarSign,
-        sparkline: [35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 75],
-        color: '#BF9B30',
-    },
-];
+type Stats = {
+    total_users: number;
+    total_tenants: number;
+    total_departments: number;
+    total_passkeys: number;
+};
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     const max = Math.max(...data);
@@ -96,7 +64,46 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     );
 }
 
-export function KpiCards() {
+export function KpiCards({ stats }: { stats: Stats }) {
+    const kpiData = [
+        {
+            label: 'Total Pengguna',
+            value: stats.total_users.toLocaleString('id-ID'),
+            change: '+',
+            trend: 'up' as const,
+            icon: Users,
+            sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
+            color: '#006FCF',
+        },
+        {
+            label: 'Organisasi',
+            value: stats.total_tenants.toLocaleString('id-ID'),
+            change: '+',
+            trend: 'up' as const,
+            icon: Building2,
+            sparkline: [40, 38, 45, 42, 50, 48, 55, 52, 60, 58, 62, 68],
+            color: '#00875A',
+        },
+        {
+            label: 'Departemen',
+            value: stats.total_departments.toLocaleString('id-ID'),
+            change: '+',
+            trend: 'up' as const,
+            icon: CheckCircle,
+            sparkline: [20, 25, 18, 22, 15, 20, 16, 12, 18, 14, 10, 8],
+            color: '#B95000',
+        },
+        {
+            label: 'Passkeys',
+            value: stats.total_passkeys.toLocaleString('id-ID'),
+            change: '+',
+            trend: 'up' as const,
+            icon: KeyRound,
+            sparkline: [35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 75],
+            color: '#BF9B30',
+        },
+    ];
+
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {kpiData.map((kpi) => {
@@ -107,7 +114,6 @@ export function KpiCards() {
                         key={kpi.label}
                         className="group relative overflow-hidden rounded-2xl border border-[#D5D9DC] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg hover:shadow-black/[0.06] dark:border-[#1e293b] dark:bg-[#0f172a] dark:hover:shadow-black/40"
                     >
-                        {/* Top accent bar reveals the KPI's brand color on hover */}
                         <span
                             className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
                             style={{ backgroundColor: kpi.color }}
@@ -147,7 +153,7 @@ export function KpiCards() {
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-[#ECEDEE] pt-3 dark:border-[#1e293b]">
                             <span className="text-[10px] text-[#86888C]">
-                                Minggu ini
+                                Terbaru
                             </span>
                             <MiniSparkline
                                 data={kpi.sparkline}

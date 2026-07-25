@@ -1,16 +1,27 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 
-const data = [
-    { name: 'Aktif', value: 1089, color: '#00875A' },
-    { name: 'Maintenance', value: 67, color: '#B95000' },
-    { name: 'Idle', value: 52, color: '#BF9B30' },
-    { name: 'Disposed', value: 40, color: '#C52720' },
-];
+type Stats = {
+    total_users: number;
+    total_tenants: number;
+    total_departments: number;
+    total_passkeys: number;
+};
 
-const total = data.reduce((sum, d) => sum + d.value, 0);
+export function StatusDonut({ stats }: { stats: Stats }) {
+    const data = [
+        { name: 'Pengguna', value: stats.total_users, color: '#00875A' },
+        { name: 'Organisasi', value: stats.total_tenants, color: '#B95000' },
+        {
+            name: 'Departemen',
+            value: stats.total_departments,
+            color: '#BF9B30',
+        },
+        { name: 'Passkeys', value: stats.total_passkeys, color: '#006FCF' },
+    ];
 
-export function StatusDonut() {
+    const total = data.reduce((sum, d) => sum + d.value, 0);
+
     return (
         <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
             <div className="mb-5 flex items-center justify-between">
@@ -19,7 +30,7 @@ export function StatusDonut() {
                         Status
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                        Breakdown Aset
+                        Breakdown Sistem
                     </h3>
                 </div>
                 <Button
@@ -27,7 +38,7 @@ export function StatusDonut() {
                     size="sm"
                     className="h-7 rounded-md px-2.5 text-[11px] font-medium text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white"
                 >
-                    7 Hari
+                    Saat Ini
                 </Button>
             </div>
 
@@ -64,7 +75,10 @@ export function StatusDonut() {
 
                 <div className="flex flex-1 flex-col gap-3">
                     {data.map((item) => {
-                        const pct = ((item.value / total) * 100).toFixed(1);
+                        const pct =
+                            total > 0
+                                ? ((item.value / total) * 100).toFixed(1)
+                                : '0';
 
                         return (
                             <div

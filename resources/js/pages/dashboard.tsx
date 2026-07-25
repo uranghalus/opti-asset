@@ -10,9 +10,36 @@ import { UpcomingEvents } from '@/components/dashboard/upcoming-events';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 
+type Stats = {
+    total_users: number;
+    total_tenants: number;
+    total_departments: number;
+    total_passkeys: number;
+};
+
+type User = {
+    id: number;
+    name: string;
+    email: string;
+    created_at: string;
+};
+
+type Department = {
+    id_department: string;
+    kode_department: string;
+    nama_department: string;
+    created_at: string;
+};
+
+type PageProps = {
+    stats: Stats;
+    recent_users: User[];
+    recent_departments: Department[];
+    current_tenant_id: string | null;
+};
+
 function GreetingHeader() {
     const { auth } = usePage().props;
-    console.log('Dashboard props:', JSON.stringify(auth));
     const name = auth?.user?.name?.split(' ')[0] ?? 'User';
 
     const [greeting, setGreeting] = useState('Selamat pagi');
@@ -30,7 +57,6 @@ function GreetingHeader() {
 
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#002A6E] via-[#00175A] to-[#000C3D] p-6 shadow-lg shadow-[#00175A]/20 sm:p-7">
-            {/* Decorative brand glow */}
             <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[#006FCF]/25 blur-3xl" />
             <div className="pointer-events-none absolute top-8 right-32 size-32 rounded-full bg-[#3B9FE8]/10 blur-2xl" />
 
@@ -53,7 +79,11 @@ function GreetingHeader() {
                         className="h-9 gap-1.5 rounded-lg border-white/15 bg-white/[0.06] px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/[0.12] hover:text-white"
                     >
                         <CalendarDays className="h-4 w-4 text-[#8FB4E8]" />
-                        16 Jul - 23 Jul, 2026
+                        {new Date().toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                        })}
                     </Button>
                     <Button
                         size="sm"
@@ -69,6 +99,9 @@ function GreetingHeader() {
 }
 
 export default function Dashboard() {
+    const { stats, recent_users, recent_departments } = usePage()
+        .props as unknown as PageProps;
+
     return (
         <>
             <Head title="Dashboard" />
@@ -76,20 +109,20 @@ export default function Dashboard() {
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
                 <GreetingHeader />
 
-                <KpiCards />
+                <KpiCards stats={stats} />
 
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                     <div className="lg:col-span-2">
                         <ChartOverview />
                     </div>
                     <div>
-                        <StatusDonut />
+                        <StatusDonut stats={stats} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                    <ProjectList />
-                    <ActivityFeed />
+                    <ProjectList departments={recent_departments} />
+                    <ActivityFeed users={recent_users} />
                     <UpcomingEvents />
                 </div>
             </div>

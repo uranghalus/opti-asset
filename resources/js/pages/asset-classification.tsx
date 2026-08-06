@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import {
     destroyCategory,
     destroyCluster,
@@ -229,59 +230,6 @@ function descendantBreakdown(item: ClassificationNode) {
     return breakdown;
 }
 
-function parseCsv(text: string): string[][] {
-    const rows: string[][] = [];
-    let row: string[] = [];
-    let field = '';
-    let inQuotes = false;
-    const source = text.replace(/^\uFEFF/, '');
-
-    for (let i = 0; i < source.length; i++) {
-        const char = source[i];
-
-        if (inQuotes) {
-            if (char === '"') {
-                if (source[i + 1] === '"') {
-                    field += '"';
-                    i += 1;
-                } else {
-                    inQuotes = false;
-                }
-            } else {
-                field += char;
-            }
-        } else if (char === '"') {
-            inQuotes = true;
-        } else if (char === ',') {
-            row.push(field);
-            field = '';
-        } else if (char === '\n' || char === '\r') {
-            if (char === '\r' && source[i + 1] === '\n') {
-                i += 1;
-            }
-
-            row.push(field);
-            field = '';
-
-            if (row.some((cell) => cell.trim() !== '')) {
-                rows.push(row);
-            }
-
-            row = [];
-        } else {
-            field += char;
-        }
-    }
-
-    row.push(field);
-
-    if (row.some((cell) => cell.trim() !== '')) {
-        rows.push(row);
-    }
-
-    return rows;
-}
-
 type ImportRow = {
     level: string;
     name: string;
@@ -290,17 +238,15 @@ type ImportRow = {
     parent_code: string;
 };
 
-function rowsFromCsv(text: string): ImportRow[] {
-    const rows = parseCsv(text);
-
-    if (rows.length === 0) {
+function rowsFromSheet(data: string[][]): ImportRow[] {
+    if (data.length === 0) {
         return [];
     }
 
-    const header = rows[0].map((h) => h.trim());
+    const header = data[0].map((h) => h.trim().toLowerCase());
     const indexOf = (name: string) => header.indexOf(name);
 
-    return rows
+    return data
         .slice(1)
         .map((cells) => {
             const at = (name: string) =>
@@ -309,7 +255,7 @@ function rowsFromCsv(text: string): ImportRow[] {
                     : (cells[indexOf(name)]?.trim() ?? '');
 
             return {
-                level: at('level').toLowerCase(),
+                level: at('level'),
                 name: at('name'),
                 code: at('code'),
                 description: at('description'),
@@ -641,19 +587,12 @@ export default function AssetClassification() {
 
         walk(groups, 'group', '');
 
-        const csv = lines
-            .map((row) =>
-                row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','),
-            )
-            .join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'klasifikasi-asset.csv';
-        link.click();
-        URL.revokeObjectURL(url);
+        const worksheet = XLSX.utils.aoa_to_sheet(lines);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Klasifikasi');
+        XLSX.writeFile(workbook, 'klasifikasi-asset.xlsx', {
+            bookType: 'xlsx',
+        });
 
         toast.success('Klasifikasi asset berhasil diekspor.');
     }, [groups]);
@@ -662,11 +601,27 @@ export default function AssetClassification() {
         const reader = new FileReader();
 
         reader.onload = () => {
-            const rows = rowsFromCsv(reader.result as string);
+            const workbook = XLSX.read(reader.result, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+
+            if (!sheetName) {
+                toast.error('File tidak memiliki sheet yang valid.');
+
+                return;
+            }
+
+            const sheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json<string[]>(sheet, {
+                header: 1,
+                defval: '',
+                raw: false,
+            }) as string[][];
+
+            const rows = rowsFromSheet(data);
 
             if (rows.length === 0) {
                 toast.error(
-                    'File CSV tidak valid. Pastikan ada kolom level, name.',
+                    'File tidak valid. Pastikan ada kolom level dan name.',
                 );
 
                 return;
@@ -675,7 +630,7 @@ export default function AssetClassification() {
             setImportRows(rows);
         };
 
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
     }, []);
 
     const runImport = useCallback(() => {
@@ -739,29 +694,22 @@ export default function AssetClassification() {
         <>
             <Head title="Klasifikasi Asset" />
 
-            <div
-                className="flex min-h-[100dvh] flex-col p-4 md:p-8"
-                style={{
-                    background:
-                        'radial-gradient(62% 45% at 8% 0%, color-mix(in oklch, var(--primary) 9%, transparent) 0%, transparent 60%), var(--background)',
-                }}
-            >
+            <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
+                <div
+                    aria-hidden
+                    className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(62%_45%_at_8%_0%,rgba(0,128,255,0.12),transparent_60%)] dark:bg-[radial-gradient(62%_45%_at_8%_0%,rgba(90,169,236,0.15),transparent_60%)]"
+                />
                 <div className="mx-auto w-full max-w-7xl">
                     <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="bezel-outer">
-                                <div className="bezel-inner flex size-9 items-center justify-center text-primary">
-                                    <Folder
-                                        className="size-4"
-                                        strokeWidth={1.5}
-                                    />
-                                </div>
+                            <div className="glass-card flex size-10 items-center justify-center rounded-xl text-primary shadow-sm">
+                                <Folder className="size-5" strokeWidth={1.5} />
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold tracking-tight text-foreground">
                                     Klasifikasi Asset
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="mt-0.5 text-sm text-muted-foreground">
                                     Kelola hierarki master data: Golongan →
                                     Kategori → Cluster → Sub Cluster.
                                 </p>
@@ -776,7 +724,7 @@ export default function AssetClassification() {
                                     setMultiSelect((value) => !value);
                                     setSelectedIds(new Set());
                                 }}
-                                className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                                className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
                             >
                                 <ListChecks
                                     className="size-4"
@@ -790,7 +738,7 @@ export default function AssetClassification() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                                        className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
                                     >
                                         <MoreHorizontal
                                             className="size-4"
@@ -805,7 +753,7 @@ export default function AssetClassification() {
                                 >
                                     <DropdownMenuItem onClick={handleExport}>
                                         <Download className="size-4" />
-                                        Ekspor CSV
+                                        Ekspor Excel
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         onClick={() =>
@@ -813,7 +761,7 @@ export default function AssetClassification() {
                                         }
                                     >
                                         <Upload className="size-4" />
-                                        Impor CSV
+                                        Impor Spreadsheet
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -821,9 +769,9 @@ export default function AssetClassification() {
                             <Button
                                 size="sm"
                                 onClick={() => openCreate('group', null)}
-                                className="group ease-premium h-auto gap-2 rounded-full bg-[#006FCF] px-4 py-2.5 text-white shadow-[0_10px_28px_-12px_rgba(0,111,207,0.6)] transition-all duration-300 hover:bg-[#1374D4] active:scale-[0.98] active:bg-[#00509E] dark:bg-[#006FCF] dark:text-white dark:hover:bg-[#1374D4]"
+                                className="group ease-premium h-auto gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
                             >
-                                <span className="ease-premium flex size-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
+                                <span className="ease-premium flex size-5 items-center justify-center rounded-md bg-white/20 transition-transform duration-200 group-hover:scale-110">
                                     <Plus
                                         className="size-3.5"
                                         strokeWidth={2.25}
@@ -835,7 +783,7 @@ export default function AssetClassification() {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept=".csv"
+                                accept=".csv,.xlsx,.xls,.ods"
                                 className="sr-only"
                                 onChange={(event) => {
                                     const file = event.target.files?.[0];
@@ -852,38 +800,61 @@ export default function AssetClassification() {
 
                     <div className="card-enter mt-6 grid grid-cols-2 gap-3 delay-100 md:grid-cols-4">
                         {(Object.keys(totals) as ClassificationLevel[]).map(
-                            (level) => (
-                                <div key={level} className="bezel-outer">
-                                    <div className="bezel-inner ease-premium flex items-center gap-3 p-3 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.99]">
-                                        <LevelIcon level={level} />
-                                        <div className="min-w-0">
-                                            <p className="text-xl leading-none font-semibold text-foreground tabular-nums">
-                                                {totals[level]}
-                                            </p>
-                                            <p className="mt-1 truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                                                {LEVEL_SHORT[level]}
-                                            </p>
+                            (level) => {
+                                const tint = LEVEL_TINTS[level];
+
+                                return (
+                                    <div
+                                        key={level}
+                                        className="glass-card group ease-premium relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
+                                    >
+                                        <div
+                                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
+                                            style={{
+                                                background: tint.solid,
+                                            }}
+                                        />
+                                        <div className="flex items-center gap-3 p-4 pl-5">
+                                            <div
+                                                className={cn(
+                                                    'flex size-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
+                                                    tint.bg,
+                                                )}
+                                            >
+                                                <LevelIcon
+                                                    level={level}
+                                                    size="md"
+                                                />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-2xl leading-none font-bold text-foreground tabular-nums">
+                                                    {totals[level]}
+                                                </p>
+                                                <p className="mt-1.5 truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                                    {LEVEL_SHORT[level]}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ),
+                                );
+                            },
                         )}
                     </div>
 
                     <div className="mt-6 grid gap-4 lg:grid-cols-[400px_1fr]">
-                        <section className="bezel-outer card-enter flex flex-col delay-150">
-                            <div className="bezel-inner flex min-h-[400px] flex-col overflow-hidden">
-                                <div className="relative overflow-hidden bg-[#00175A] px-4 py-3 text-white">
+                        <section className="glass-panel card-enter flex flex-col delay-150">
+                            <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem]">
+                                <div className="glass-header relative overflow-hidden px-4 py-3">
                                     <div
                                         aria-hidden
-                                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.3),transparent_60%)]"
+                                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(0,128,255,0.2),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.25),transparent_60%)]"
                                     />
                                     <div className="relative flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-sm font-semibold tracking-wide text-white">
+                                        <div className="flex items-center gap-2.5">
+                                            <h2 className="text-sm font-semibold tracking-wide text-foreground">
                                                 Struktur Klasifikasi
                                             </h2>
-                                            <span className="inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/75">
+                                            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                                                 {groups.length} golongan
                                             </span>
                                         </div>
@@ -891,7 +862,7 @@ export default function AssetClassification() {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="ease-premium size-7 text-white/70 transition-colors duration-300 hover:bg-white/10 hover:text-white"
+                                                className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
                                                 onClick={expandAll}
                                                 aria-label="Perluas semua"
                                             >
@@ -903,7 +874,7 @@ export default function AssetClassification() {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="ease-premium size-7 text-white/70 transition-colors duration-300 hover:bg-white/10 hover:text-white"
+                                                className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
                                                 onClick={collapseAll}
                                                 aria-label="Ciutkan semua"
                                             >
@@ -925,7 +896,7 @@ export default function AssetClassification() {
                                                 setQuery(event.target.value)
                                             }
                                             placeholder="Filter kode / nama..."
-                                            className="h-8 rounded-md pl-8 text-sm"
+                                            className="h-8 rounded-lg border-border bg-background/50 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
                                         />
                                         {queryActive && (
                                             <button
@@ -941,7 +912,7 @@ export default function AssetClassification() {
                                 </div>
 
                                 {multiSelect && selectedIds.size > 0 && (
-                                    <div className="flex items-center gap-2 border-b border-border bg-[#006FCF]/5 px-3 py-2">
+                                    <div className="flex items-center gap-2 border-b border-border px-3 py-2">
                                         <span className="text-xs font-medium text-foreground">
                                             {selectedIds.size} dipilih
                                         </span>
@@ -980,45 +951,58 @@ export default function AssetClassification() {
                                     aria-label="Klasifikasi Asset"
                                 >
                                     {groups.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-                                            <div className="flex size-12 items-center justify-center rounded-full bg-[#006FCF]/10 text-[#006FCF] dark:bg-[#5AA9EC]/15 dark:text-[#5AA9EC]">
+                                        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+                                            <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
                                                 <Inbox
-                                                    className="size-6"
-                                                    strokeWidth={1.5}
+                                                    className="size-7"
+                                                    strokeWidth={1.25}
                                                 />
                                             </div>
-                                            <p className="max-w-xs text-sm text-muted-foreground">
-                                                Belum ada golongan asset. Buat
-                                                yang pertama untuk memulai
-                                                hierarki klasifikasi.
-                                            </p>
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">
+                                                    Belum ada golongan asset
+                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    Buat yang pertama untuk
+                                                    memulai hierarki
+                                                    klasifikasi.
+                                                </p>
+                                            </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() =>
                                                     openCreate('group', null)
                                                 }
+                                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                                             >
                                                 <Plus className="size-4" />
                                                 Tambah Golongan
                                             </Button>
                                         </div>
                                     ) : visibleTree.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-                                            <div className="flex size-12 items-center justify-center rounded-full bg-[#006FCF]/10 text-[#006FCF] dark:bg-[#5AA9EC]/15 dark:text-[#5AA9EC]">
+                                        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+                                            <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
                                                 <Search
-                                                    className="size-6"
-                                                    strokeWidth={1.5}
+                                                    className="size-7"
+                                                    strokeWidth={1.25}
                                                 />
                                             </div>
-                                            <p className="max-w-xs text-sm text-muted-foreground">
-                                                Tidak ada hasil untuk "
-                                                {query.trim()}".
-                                            </p>
+                                            <div>
+                                                <p className="text-sm font-medium text-foreground">
+                                                    Tidak ada hasil untuk
+                                                    &ldquo;{query.trim()}&rdquo;
+                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    Coba kata kunci lain atau
+                                                    hapus filter.
+                                                </p>
+                                            </div>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => setQuery('')}
+                                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                                             >
                                                 <X className="size-4" />
                                                 Hapus filter
@@ -1150,8 +1134,8 @@ export default function AssetClassification() {
                             </div>
                         </section>
 
-                        <section className="bezel-outer card-enter flex flex-col delay-200">
-                            <div className="bezel-inner flex min-h-[400px] flex-col overflow-hidden lg:min-h-[600px]">
+                        <section className="glass-panel card-enter flex flex-col delay-200">
+                            <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:min-h-[600px]">
                                 {selectedInfo ? (
                                     <ClassificationDetailPanel
                                         level={selectedInfo.level}
@@ -1185,20 +1169,18 @@ export default function AssetClassification() {
                                     />
                                 ) : (
                                     <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
-                                        <div className="bezel-outer">
-                                            <div className="bezel-inner flex size-14 items-center justify-center text-[#006FCF] dark:text-[#5AA9EC]">
-                                                <FolderOpen
-                                                    className="size-7"
-                                                    strokeWidth={1.25}
-                                                />
-                                            </div>
+                                        <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                            <FolderOpen
+                                                className="size-8"
+                                                strokeWidth={1.25}
+                                            />
                                         </div>
                                         <div>
                                             <h2 className="text-base font-semibold text-foreground">
                                                 Pilih node dari pohon
                                                 klasifikasi
                                             </h2>
-                                            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                                            <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
                                                 Klik golongan, kategori,
                                                 cluster, atau sub cluster untuk
                                                 melihat dan mengedit detailnya.
@@ -1280,7 +1262,7 @@ export default function AssetClassification() {
                         <DialogTitle>Impor Klasifikasi Asset</DialogTitle>
                         <DialogDescription>
                             {importRows
-                                ? `${importRows.length} baris siap diimpor. Kode parent harus mengacu ke baris yang sudah ada atau berada di file yang sama.`
+                                ? `${importRows.length} baris siap diimpor dari file spreadsheet. Kode parent harus mengacu ke baris yang sudah ada atau berada di file yang sama.`
                                 : ''}
                         </DialogDescription>
                     </DialogHeader>
@@ -1463,14 +1445,14 @@ function TreeNodeRow({
 
             <div
                 className={cn(
-                    'group ease-premium flex h-10 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-sm transition-all duration-300 active:scale-[0.99]',
+                    'group ease-premium flex h-[2.625rem] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-sm transition-all duration-200 active:scale-[0.995]',
                     isSelected
-                        ? 'bg-[#006FCF]/10 font-medium text-[#006FCF] dark:bg-[#5AA9EC]/15 dark:text-[#5AA9EC]'
-                        : 'text-foreground hover:bg-muted/70',
+                        ? 'bg-primary/10 font-medium text-primary shadow-[inset_0_0_0_1px_rgba(0,111,207,0.15)]'
+                        : 'text-foreground hover:bg-muted/60',
                     isMultiSelected &&
                         !isSelected &&
-                        'bg-[#006FCF]/5 ring-1 ring-[#006FCF]/20 dark:bg-[#5AA9EC]/10',
-                    matches && 'ring-1 ring-[#006FCF]/40',
+                        'bg-primary/5 shadow-[inset_0_0_0_1px_rgba(0,111,207,0.12)]',
+                    matches && 'shadow-[inset_0_0_0_1px_rgba(0,111,207,0.3)]',
                 )}
                 style={{ paddingLeft: `${depth * 18 + 8}px` }}
                 role="treeitem"
@@ -1514,7 +1496,7 @@ function TreeNodeRow({
                             onToggleExpand(node.id);
                         }}
                         className={cn(
-                            'ease-premium flex size-6 shrink-0 items-center justify-center rounded transition-transform duration-300 hover:bg-accent',
+                            'ease-premium flex size-6 shrink-0 items-center justify-center rounded-md transition-all duration-200 hover:bg-accent',
                             isExpanded && 'rotate-90',
                         )}
                         aria-expanded={isExpanded}

@@ -134,10 +134,10 @@ export function ClassificationDetailPanel({
 
     return (
         <div className="flex h-full flex-col">
-            <div className="relative overflow-hidden bg-[#00175A] p-4 text-white">
+            <div className="glass-header relative overflow-hidden px-4 py-3">
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_100%_0%,rgba(90,169,236,0.3),transparent_60%)]"
+                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_100%_0%,rgba(0,128,255,0.25),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_100%_0%,rgba(90,169,236,0.3),transparent_60%)]"
                 />
                 <div className="relative flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
@@ -146,11 +146,11 @@ export function ClassificationDetailPanel({
                             style={{ background: tint.solid }}
                             aria-hidden
                         />
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white">
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                             {LEVEL_LABELS[level]}
                         </span>
                         {node.code && (
-                            <span className="inline-flex shrink-0 items-center rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-white/80">
+                            <span className="inline-flex shrink-0 items-center rounded-md bg-background/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                                 {node.code}
                             </span>
                         )}
@@ -159,7 +159,7 @@ export function ClassificationDetailPanel({
                         variant="ghost"
                         size="icon"
                         onClick={onClose}
-                        className="ease-premium text-white/70 transition-colors duration-300 hover:bg-white/10 hover:text-white"
+                        className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
                         aria-label="Tutup panel"
                     >
                         <X className="size-4" />
@@ -169,7 +169,7 @@ export function ClassificationDetailPanel({
 
             <div className="flex-1 overflow-y-auto p-4">
                 <nav
-                    className="mb-4 flex flex-wrap items-center gap-1 text-xs"
+                    className="mb-5 flex flex-wrap items-center gap-1 text-xs"
                     aria-label="Jalur klasifikasi"
                 >
                     {crumbs.map((crumb, index) => (
@@ -193,12 +193,12 @@ export function ClassificationDetailPanel({
 
                 <div className="mb-6 flex items-start gap-3">
                     <LevelIcon level={level} open />
-                    <div>
-                        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-bold tracking-tight text-foreground">
                             {node.name}
                         </h2>
                         {node.description && (
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                                 {node.description}
                             </p>
                         )}
@@ -208,19 +208,23 @@ export function ClassificationDetailPanel({
                 <div className="mb-6 grid grid-cols-2 gap-3">
                     <div
                         className={cn(
-                            'ease-premium rounded-xl p-3 transition-all duration-300 hover:-translate-y-0.5',
+                            'ease-premium group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
                             tint.bg,
                         )}
                     >
+                        <div
+                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
+                            style={{ background: tint.solid }}
+                        />
                         <p
                             className={cn(
-                                'text-[11px] font-medium tracking-wide uppercase',
+                                'text-[11px] font-semibold tracking-wider uppercase',
                                 tint.fg,
                             )}
                         >
                             {level === 'sub-cluster' ? 'Aset' : 'Anak'}
                         </p>
-                        <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
+                        <p className="mt-1.5 text-2xl font-bold text-foreground tabular-nums">
                             {level === 'sub-cluster'
                                 ? (node.item_count ?? 0)
                                 : node.child_count}
@@ -228,19 +232,23 @@ export function ClassificationDetailPanel({
                     </div>
                     <div
                         className={cn(
-                            'ease-premium rounded-xl p-3 transition-all duration-300 hover:-translate-y-0.5',
+                            'ease-premium group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
                             tint.bg,
                         )}
                     >
+                        <div
+                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
+                            style={{ background: tint.solid }}
+                        />
                         <p
                             className={cn(
-                                'text-[11px] font-medium tracking-wide uppercase',
+                                'text-[11px] font-semibold tracking-wider uppercase',
                                 tint.fg,
                             )}
                         >
                             Level
                         </p>
-                        <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
+                        <p className="mt-1.5 text-2xl font-bold text-foreground tabular-nums">
                             {LEVEL_ORDER.indexOf(level) + 1}
                         </p>
                     </div>
@@ -252,7 +260,7 @@ export function ClassificationDetailPanel({
                             type="button"
                             size="sm"
                             onClick={() => onAddChild(childLevel)}
-                            className="ease-premium rounded-full bg-[#006FCF] text-white shadow-[0_10px_28px_-12px_rgba(0,111,207,0.6)] transition-all duration-300 hover:bg-[#1374D4] active:scale-[0.98] active:bg-[#00509E] dark:bg-[#006FCF] dark:text-white dark:hover:bg-[#1374D4]"
+                            className="ease-premium rounded-lg bg-primary px-4 text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
                         >
                             <Plus className="size-3.5" strokeWidth={2} />
                             Tambah {CHILD_LABEL[level]}
@@ -263,7 +271,7 @@ export function ClassificationDetailPanel({
                         variant="outline"
                         size="sm"
                         onClick={onEdit}
-                        className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                        className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                     >
                         <Pencil className="size-3.5" strokeWidth={1.75} />
                         Edit
@@ -273,7 +281,7 @@ export function ClassificationDetailPanel({
                         variant="outline"
                         size="sm"
                         onClick={onDuplicate}
-                        className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                        className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                     >
                         <Copy className="size-3.5" strokeWidth={1.75} />
                         Duplikat
@@ -282,7 +290,7 @@ export function ClassificationDetailPanel({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="ease-premium rounded-full text-destructive transition-all duration-300 hover:text-destructive active:scale-[0.98]"
+                        className="ease-premium rounded-lg text-destructive transition-all duration-200 hover:bg-destructive/10 hover:text-destructive active:scale-[0.98]"
                         onClick={onDelete}
                     >
                         <Trash2 className="size-3.5" strokeWidth={1.75} />
@@ -291,7 +299,7 @@ export function ClassificationDetailPanel({
                 </div>
 
                 <div className="mt-8 border-t border-border pt-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-foreground">
                         <span
                             className="size-1.5 rounded-full"
                             style={{ background: tint.solid }}
@@ -384,14 +392,14 @@ export function ClassificationDetailPanel({
                                 type="button"
                                 variant="outline"
                                 onClick={onClose}
-                                className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                             >
                                 Batal
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={form.processing || !form.isDirty}
-                                className="ease-premium rounded-full transition-all duration-300 active:scale-[0.98]"
+                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                             >
                                 {form.processing ? (
                                     <Loader2 className="size-4 animate-spin" />

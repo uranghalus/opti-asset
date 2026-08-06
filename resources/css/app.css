@@ -260,7 +260,82 @@
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
-    /* Double-Bezel outer shell */
+    /* Glass Card — frosted translucent surface */
+    .glass-card {
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.72) 0%,
+            rgba(255, 255, 255, 0.55) 100%
+        );
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 0.5rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 1px 3px rgba(0, 23, 90, 0.06);
+    }
+
+    .dark .glass-card {
+        background: linear-gradient(
+            135deg,
+            rgba(22, 30, 51, 0.7) 0%,
+            rgba(13, 19, 36, 0.55) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Glass Panel — larger frosted surface for sections */
+    .glass-panel {
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.6) 0%,
+            rgba(255, 255, 255, 0.4) 100%
+        );
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 0.75rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.5),
+            0 4px 24px rgba(0, 23, 90, 0.08);
+    }
+
+    .dark .glass-panel {
+        background: linear-gradient(
+            135deg,
+            rgba(22, 30, 51, 0.6) 0%,
+            rgba(13, 19, 36, 0.4) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.04),
+            0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Glass Header — frosted bar for section headers */
+    .glass-header {
+        background: linear-gradient(
+            135deg,
+            rgba(0, 111, 207, 0.85) 0%,
+            rgba(0, 80, 158, 0.9) 100%
+        );
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .dark .glass-header {
+        background: linear-gradient(
+            135deg,
+            rgba(90, 169, 236, 0.2) 0%,
+            rgba(0, 111, 207, 0.15) 100%
+        );
+    }
+
+    /* Double-Bezel outer shell — kept for backward compat */
     .bezel-outer {
         background: oklch(0.96 0.003 250);
         border: 1px solid oklch(0.9 0.005 250);

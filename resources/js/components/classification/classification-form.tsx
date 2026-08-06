@@ -220,10 +220,15 @@ export function ClassificationForm({
                             type="button"
                             variant="outline"
                             onClick={onClose}
+                            className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                         >
                             Batal
                         </Button>
-                        <Button type="submit" disabled={form.processing}>
+                        <Button
+                            type="submit"
+                            disabled={form.processing}
+                            className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                        >
                             Simpan
                         </Button>
                     </SheetFooter>

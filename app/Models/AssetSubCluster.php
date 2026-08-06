@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\FlushesClassificationCache;
 use Database\Factories\AssetSubClusterFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,7 +27,7 @@ use Illuminate\Support\Carbon;
 class AssetSubCluster extends Model
 {
     /** @use HasFactory<AssetSubClusterFactory> */
-    use BelongsToTenant, HasFactory, HasUuids;
+    use BelongsToTenant, FlushesClassificationCache, HasFactory, HasUuids;
 
     protected $fillable = [
         'asset_cluster_id',

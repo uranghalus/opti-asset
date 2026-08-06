@@ -55,6 +55,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useIsProcessing } from '@/hooks/use-is-processing';
 import {
     LevelIcon,
     LEVEL_SHORT,
@@ -273,6 +274,7 @@ export default function AssetClassification() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [formState, setFormState] = useState<FormState | null>(null);
     const [deleteState, setDeleteState] = useState<DeleteState | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [multiSelect, setMultiSelect] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [dragId, setDragId] = useState<string | null>(null);
@@ -280,6 +282,8 @@ export default function AssetClassification() {
     const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
     const [importing, setImporting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const isProcessing = useIsProcessing();
 
     const queryActive = query.trim().length > 0;
     const visibleTree = useMemo(
@@ -494,17 +498,26 @@ export default function AssetClassification() {
 
         const { level: levelKey, item } = deleteState;
 
+        setDeletingId(item.id);
+
         router.delete(DESTROY[levelKey](item.id).url, {
             only: ['groups'],
             preserveState: true,
             onSuccess: () => {
                 setDeleteState(null);
+                setDeletingId(null);
 
                 if (selectedId === item.id) {
                     setSelectedId(null);
                 }
 
                 toast.success(`"${item.name}" berhasil dihapus.`);
+            },
+            onError: () => {
+                setDeletingId(null);
+                toast.error(
+                    `Gagal menghapus "${item.name}". Silakan coba lagi.`,
+                );
             },
         });
     }, [deleteState, selectedId]);
@@ -534,6 +547,7 @@ export default function AssetClassification() {
             if (index >= ids.length) {
                 setSelectedIds(new Set());
                 setMultiSelect(false);
+                setDeletingId(null);
                 toast.success(`${ids.length} item berhasil dihapus.`);
 
                 return;
@@ -548,11 +562,19 @@ export default function AssetClassification() {
                 return;
             }
 
+            setDeletingId(id);
+
             router.delete(DESTROY[info.level](id).url, {
                 only: ['groups'],
                 preserveState: true,
                 preserveScroll: true,
                 onSuccess: () => run(ids, index + 1),
+                onError: () => {
+                    setDeletingId(null);
+                    toast.error(
+                        `Gagal menghapus "${info.node.name}". Dihentikan.`,
+                    );
+                },
             });
         };
 
@@ -700,496 +722,535 @@ export default function AssetClassification() {
                     className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(62%_45%_at_8%_0%,rgba(0,128,255,0.12),transparent_60%)] dark:bg-[radial-gradient(62%_45%_at_8%_0%,rgba(90,169,236,0.15),transparent_60%)]"
                 />
                 <div className="mx-auto w-full max-w-7xl">
-                    <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="glass-card flex size-10 items-center justify-center rounded-xl text-primary shadow-sm">
-                                <Folder className="size-5" strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold tracking-tight text-foreground">
-                                    Klasifikasi Asset
-                                </h1>
-                                <p className="mt-0.5 text-sm text-muted-foreground">
-                                    Kelola hierarki master data: Golongan →
-                                    Kategori → Cluster → Sub Cluster.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                variant={multiSelect ? 'secondary' : 'outline'}
-                                size="sm"
-                                onClick={() => {
-                                    setMultiSelect((value) => !value);
-                                    setSelectedIds(new Set());
-                                }}
-                                className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
-                            >
-                                <ListChecks
-                                    className="size-4"
-                                    strokeWidth={1.75}
-                                />
-                                Multi-select
-                            </Button>
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
-                                    >
-                                        <MoreHorizontal
-                                            className="size-4"
-                                            strokeWidth={1.75}
-                                        />
-                                        Lainnya
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="end"
-                                    className="min-w-[180px]"
-                                >
-                                    <DropdownMenuItem onClick={handleExport}>
-                                        <Download className="size-4" />
-                                        Ekspor Excel
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() =>
-                                            fileInputRef.current?.click()
-                                        }
-                                    >
-                                        <Upload className="size-4" />
-                                        Impor Spreadsheet
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            <Button
-                                size="sm"
-                                onClick={() => openCreate('group', null)}
-                                className="group ease-premium h-auto gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
-                            >
-                                <span className="ease-premium flex size-5 items-center justify-center rounded-md bg-white/20 transition-transform duration-200 group-hover:scale-110">
-                                    <Plus
-                                        className="size-3.5"
-                                        strokeWidth={2.25}
-                                    />
-                                </span>
-                                Tambah Golongan
-                            </Button>
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".csv,.xlsx,.xls,.ods"
-                                className="sr-only"
-                                onChange={(event) => {
-                                    const file = event.target.files?.[0];
-
-                                    if (file) {
-                                        handleImportFile(file);
-                                    }
-
-                                    event.target.value = '';
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="card-enter mt-6 grid grid-cols-2 gap-3 delay-100 md:grid-cols-4">
-                        {(Object.keys(totals) as ClassificationLevel[]).map(
-                            (level) => {
-                                const tint = LEVEL_TINTS[level];
-
-                                return (
-                                    <div
-                                        key={level}
-                                        className="glass-card group ease-premium relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
-                                    >
-                                        <div
-                                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
-                                            style={{
-                                                background: tint.solid,
-                                            }}
-                                        />
-                                        <div className="flex items-center gap-3 p-4 pl-5">
-                                            <div
-                                                className={cn(
-                                                    'flex size-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
-                                                    tint.bg,
-                                                )}
-                                            >
-                                                <LevelIcon
-                                                    level={level}
-                                                    size="md"
-                                                />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-2xl leading-none font-bold text-foreground tabular-nums">
-                                                    {totals[level]}
-                                                </p>
-                                                <p className="mt-1.5 truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-                                                    {LEVEL_SHORT[level]}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            },
+                    <div
+                        className={cn(
+                            'ease-premium relative transition-all duration-200',
+                            isProcessing && 'pointer-events-none opacity-60',
                         )}
-                    </div>
-
-                    <div className="mt-6 grid gap-4 lg:grid-cols-[400px_1fr]">
-                        <section className="glass-panel card-enter flex flex-col delay-150">
-                            <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem]">
-                                <div className="glass-header relative overflow-hidden px-4 py-3">
-                                    <div
-                                        aria-hidden
-                                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(0,128,255,0.2),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.25),transparent_60%)]"
+                    >
+                        {isProcessing && (
+                            <div className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+                                <div className="flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg">
+                                    <Loader2 className="size-4 animate-spin" />
+                                    Memproses...
+                                </div>
+                            </div>
+                        )}
+                        <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="glass-card flex size-10 items-center justify-center rounded-xl text-primary shadow-sm">
+                                    <Folder
+                                        className="size-5"
+                                        strokeWidth={1.5}
                                     />
-                                    <div className="relative flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2.5">
-                                            <h2 className="text-sm font-semibold tracking-wide text-foreground">
-                                                Struktur Klasifikasi
-                                            </h2>
-                                            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                                                {groups.length} golongan
-                                            </span>
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold tracking-tight text-foreground">
+                                        Klasifikasi Asset
+                                    </h1>
+                                    <p className="mt-0.5 text-sm text-muted-foreground">
+                                        Kelola hierarki master data: Golongan →
+                                        Kategori → Cluster → Sub Cluster.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    variant={
+                                        multiSelect ? 'secondary' : 'outline'
+                                    }
+                                    size="sm"
+                                    onClick={() => {
+                                        setMultiSelect((value) => !value);
+                                        setSelectedIds(new Set());
+                                    }}
+                                    className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
+                                >
+                                    <ListChecks
+                                        className="size-4"
+                                        strokeWidth={1.75}
+                                    />
+                                    Multi-select
+                                </Button>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
+                                        >
+                                            <MoreHorizontal
+                                                className="size-4"
+                                                strokeWidth={1.75}
+                                            />
+                                            Lainnya
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="min-w-[180px]"
+                                    >
+                                        <DropdownMenuItem
+                                            onClick={handleExport}
+                                        >
+                                            <Download className="size-4" />
+                                            Ekspor Excel
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                fileInputRef.current?.click()
+                                            }
+                                        >
+                                            <Upload className="size-4" />
+                                            Impor Spreadsheet
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <Button
+                                    size="sm"
+                                    onClick={() => openCreate('group', null)}
+                                    className="group ease-premium h-auto gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                                >
+                                    <span className="ease-premium flex size-5 items-center justify-center rounded-md bg-white/20 transition-transform duration-200 group-hover:scale-110">
+                                        <Plus
+                                            className="size-3.5"
+                                            strokeWidth={2.25}
+                                        />
+                                    </span>
+                                    Tambah Golongan
+                                </Button>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".csv,.xlsx,.xls,.ods"
+                                    className="sr-only"
+                                    onChange={(event) => {
+                                        const file = event.target.files?.[0];
+
+                                        if (file) {
+                                            handleImportFile(file);
+                                        }
+
+                                        event.target.value = '';
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="card-enter mt-6 grid grid-cols-2 gap-3 delay-100 md:grid-cols-4">
+                            {(Object.keys(totals) as ClassificationLevel[]).map(
+                                (level) => {
+                                    const tint = LEVEL_TINTS[level];
+
+                                    return (
+                                        <div
+                                            key={level}
+                                            className="glass-card group ease-premium relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
+                                        >
+                                            <div
+                                                className="absolute top-0 left-0 h-full w-0.5 rounded-l"
+                                                style={{
+                                                    background: tint.solid,
+                                                }}
+                                            />
+                                            <div className="flex items-center gap-3 p-4 pl-5">
+                                                <div
+                                                    className={cn(
+                                                        'flex size-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
+                                                        tint.bg,
+                                                    )}
+                                                >
+                                                    <LevelIcon
+                                                        level={level}
+                                                        size="md"
+                                                    />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-2xl leading-none font-bold text-foreground tabular-nums">
+                                                        {totals[level]}
+                                                    </p>
+                                                    <p className="mt-1.5 truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                                        {LEVEL_SHORT[level]}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-0.5">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
-                                                onClick={expandAll}
-                                                aria-label="Perluas semua"
-                                            >
-                                                <ChevronsUpDown
-                                                    className="size-4"
-                                                    strokeWidth={1.75}
-                                                />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
-                                                onClick={collapseAll}
-                                                aria-label="Ciutkan semua"
-                                            >
-                                                <ChevronsDownUp
-                                                    className="size-4"
-                                                    strokeWidth={1.75}
-                                                />
-                                            </Button>
+                                    );
+                                },
+                            )}
+                        </div>
+
+                        <div className="mt-6 grid gap-4 lg:grid-cols-[400px_1fr]">
+                            <section className="glass-panel card-enter flex flex-col delay-150">
+                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem]">
+                                    <div className="glass-header relative overflow-hidden px-4 py-3">
+                                        <div
+                                            aria-hidden
+                                            className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(0,128,255,0.2),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.25),transparent_60%)]"
+                                        />
+                                        <div className="relative flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2.5">
+                                                <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                                                    Struktur Klasifikasi
+                                                </h2>
+                                                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                                    {groups.length} golongan
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-0.5">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
+                                                    onClick={expandAll}
+                                                    aria-label="Perluas semua"
+                                                >
+                                                    <ChevronsUpDown
+                                                        className="size-4"
+                                                        strokeWidth={1.75}
+                                                    />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
+                                                    onClick={collapseAll}
+                                                    aria-label="Ciutkan semua"
+                                                >
+                                                    <ChevronsDownUp
+                                                        className="size-4"
+                                                        strokeWidth={1.75}
+                                                    />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="border-b border-border px-3 py-2">
-                                    <div className="relative">
-                                        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                                        <Input
-                                            value={query}
-                                            onChange={(event) =>
-                                                setQuery(event.target.value)
-                                            }
-                                            placeholder="Filter kode / nama..."
-                                            className="h-8 rounded-lg border-border bg-background/50 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
-                                        />
-                                        {queryActive && (
-                                            <button
-                                                type="button"
-                                                className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                                onClick={() => setQuery('')}
-                                                aria-label="Bersihkan filter"
-                                            >
-                                                <X className="size-3.5" />
-                                            </button>
+                                    <div className="border-b border-border px-3 py-2">
+                                        <div className="relative">
+                                            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                value={query}
+                                                onChange={(event) =>
+                                                    setQuery(event.target.value)
+                                                }
+                                                placeholder="Filter kode / nama..."
+                                                className="h-8 rounded-lg border-border bg-background/50 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
+                                            />
+                                            {queryActive && (
+                                                <button
+                                                    type="button"
+                                                    className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => setQuery('')}
+                                                    aria-label="Bersihkan filter"
+                                                >
+                                                    <X className="size-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {multiSelect && selectedIds.size > 0 && (
+                                        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                                            <span className="text-xs font-medium text-foreground">
+                                                {selectedIds.size} dipilih
+                                            </span>
+                                            <div className="ml-auto flex items-center gap-1">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={bulkDelete}
+                                                >
+                                                    <Trash2 className="size-3.5" />
+                                                    Hapus
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => {
+                                                        setSelectedIds(
+                                                            new Set(),
+                                                        );
+                                                        setMultiSelect(false);
+                                                    }}
+                                                >
+                                                    <ListX className="size-3.5" />
+                                                    Batal
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div
+                                        className="flex-1 overflow-y-auto p-2"
+                                        style={{
+                                            maxHeight: 'calc(100dvh - 430px)',
+                                        }}
+                                        role="tree"
+                                        aria-label="Klasifikasi Asset"
+                                    >
+                                        {groups.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+                                                <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                                    <Inbox
+                                                        className="size-7"
+                                                        strokeWidth={1.25}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-foreground">
+                                                        Belum ada golongan asset
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        Buat yang pertama untuk
+                                                        memulai hierarki
+                                                        klasifikasi.
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        openCreate(
+                                                            'group',
+                                                            null,
+                                                        )
+                                                    }
+                                                    className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                                >
+                                                    <Plus className="size-4" />
+                                                    Tambah Golongan
+                                                </Button>
+                                            </div>
+                                        ) : visibleTree.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+                                                <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                                    <Search
+                                                        className="size-7"
+                                                        strokeWidth={1.25}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-foreground">
+                                                        Tidak ada hasil untuk
+                                                        &ldquo;{query.trim()}
+                                                        &rdquo;
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        Coba kata kunci lain
+                                                        atau hapus filter.
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setQuery('')}
+                                                    className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                                >
+                                                    <X className="size-4" />
+                                                    Hapus filter
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            visibleTree.map((node) => (
+                                                <TreeNodeRow
+                                                    key={node.id}
+                                                    node={node}
+                                                    depth={0}
+                                                    query={query}
+                                                    queryActive={queryActive}
+                                                    expandedIds={expandedIds}
+                                                    selectedId={selectedId}
+                                                    multiSelect={multiSelect}
+                                                    selectedIds={selectedIds}
+                                                    dragId={dragId}
+                                                    over={over}
+                                                    deletingId={deletingId}
+                                                    onSelect={(id) =>
+                                                        multiSelect
+                                                            ? toggleMultiSelectItem(
+                                                                  id,
+                                                              )
+                                                            : setSelectedId(id)
+                                                    }
+                                                    onToggleExpand={
+                                                        toggleExpand
+                                                    }
+                                                    onEdit={(target) => {
+                                                        setSelectedId(
+                                                            target.node.id,
+                                                        );
+                                                        setFormState({
+                                                            level: target.level,
+                                                            item: target.node,
+                                                        });
+                                                    }}
+                                                    onDelete={(target) =>
+                                                        setDeleteState({
+                                                            level: target.level,
+                                                            item: target.node,
+                                                        })
+                                                    }
+                                                    onDuplicate={
+                                                        handleDuplicate
+                                                    }
+                                                    onAddChild={(target) =>
+                                                        openCreate(
+                                                            childLevel(
+                                                                target.level,
+                                                            ),
+                                                            target.node.id,
+                                                        )
+                                                    }
+                                                    onDragStart={(id) =>
+                                                        setDragId(id)
+                                                    }
+                                                    onDragEnd={() => {
+                                                        setDragId(null);
+                                                        setOver(null);
+                                                    }}
+                                                    onDragOver={(node, pos) => {
+                                                        if (pos === null) {
+                                                            setOver(null);
+
+                                                            return;
+                                                        }
+
+                                                        const sourceId =
+                                                            dragId ?? '';
+
+                                                        if (
+                                                            validDrop(
+                                                                sourceId,
+                                                                node,
+                                                                pos,
+                                                            )
+                                                        ) {
+                                                            setOver({
+                                                                id: node.node
+                                                                    .id,
+                                                                pos,
+                                                            });
+
+                                                            return;
+                                                        }
+
+                                                        if (
+                                                            validDrop(
+                                                                sourceId,
+                                                                node,
+                                                                'before',
+                                                            )
+                                                        ) {
+                                                            setOver({
+                                                                id: node.node
+                                                                    .id,
+                                                                pos: 'before',
+                                                            });
+
+                                                            return;
+                                                        }
+
+                                                        if (
+                                                            validDrop(
+                                                                sourceId,
+                                                                node,
+                                                                'after',
+                                                            )
+                                                        ) {
+                                                            setOver({
+                                                                id: node.node
+                                                                    .id,
+                                                                pos: 'after',
+                                                            });
+
+                                                            return;
+                                                        }
+
+                                                        setOver(null);
+                                                    }}
+                                                    onDrop={(target, pos) => {
+                                                        if (dragId) {
+                                                            performDrop(
+                                                                dragId,
+                                                                target,
+                                                                pos,
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                            ))
                                         )}
                                     </div>
                                 </div>
+                            </section>
 
-                                {multiSelect && selectedIds.size > 0 && (
-                                    <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                                        <span className="text-xs font-medium text-foreground">
-                                            {selectedIds.size} dipilih
-                                        </span>
-                                        <div className="ml-auto flex items-center gap-1">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-xs"
-                                                onClick={bulkDelete}
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                                Hapus
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-xs"
-                                                onClick={() => {
-                                                    setSelectedIds(new Set());
-                                                    setMultiSelect(false);
-                                                }}
-                                            >
-                                                <ListX className="size-3.5" />
-                                                Batal
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div
-                                    className="flex-1 overflow-y-auto p-2"
-                                    style={{
-                                        maxHeight: 'calc(100dvh - 430px)',
-                                    }}
-                                    role="tree"
-                                    aria-label="Klasifikasi Asset"
-                                >
-                                    {groups.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-                                            <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
-                                                <Inbox
-                                                    className="size-7"
-                                                    strokeWidth={1.25}
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-foreground">
-                                                    Belum ada golongan asset
-                                                </p>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    Buat yang pertama untuk
-                                                    memulai hierarki
-                                                    klasifikasi.
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                    openCreate('group', null)
-                                                }
-                                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
-                                            >
-                                                <Plus className="size-4" />
-                                                Tambah Golongan
-                                            </Button>
-                                        </div>
-                                    ) : visibleTree.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-                                            <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
-                                                <Search
-                                                    className="size-7"
-                                                    strokeWidth={1.25}
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-foreground">
-                                                    Tidak ada hasil untuk
-                                                    &ldquo;{query.trim()}&rdquo;
-                                                </p>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    Coba kata kunci lain atau
-                                                    hapus filter.
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setQuery('')}
-                                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
-                                            >
-                                                <X className="size-4" />
-                                                Hapus filter
-                                            </Button>
-                                        </div>
+                            <section className="glass-panel card-enter flex flex-col delay-200">
+                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:min-h-[600px]">
+                                    {selectedInfo ? (
+                                        <ClassificationDetailPanel
+                                            level={selectedInfo.level}
+                                            node={selectedInfo.node}
+                                            ancestors={selectedAncestors}
+                                            parentId={
+                                                selectedInfo.parent?.id ?? null
+                                            }
+                                            onEdit={() =>
+                                                setFormState({
+                                                    level: selectedInfo.level,
+                                                    item: selectedInfo.node,
+                                                })
+                                            }
+                                            onDelete={() =>
+                                                setDeleteState({
+                                                    level: selectedInfo.level,
+                                                    item: selectedInfo.node,
+                                                })
+                                            }
+                                            onDuplicate={() =>
+                                                handleDuplicate(
+                                                    selectedInfo.node,
+                                                )
+                                            }
+                                            onAddChild={(level) =>
+                                                openCreate(
+                                                    level,
+                                                    selectedInfo.node.id,
+                                                )
+                                            }
+                                            onClose={() => setSelectedId(null)}
+                                        />
                                     ) : (
-                                        visibleTree.map((node) => (
-                                            <TreeNodeRow
-                                                key={node.id}
-                                                node={node}
-                                                depth={0}
-                                                query={query}
-                                                queryActive={queryActive}
-                                                expandedIds={expandedIds}
-                                                selectedId={selectedId}
-                                                multiSelect={multiSelect}
-                                                selectedIds={selectedIds}
-                                                dragId={dragId}
-                                                over={over}
-                                                onSelect={(id) =>
-                                                    multiSelect
-                                                        ? toggleMultiSelectItem(
-                                                              id,
-                                                          )
-                                                        : setSelectedId(id)
-                                                }
-                                                onToggleExpand={toggleExpand}
-                                                onEdit={(target) => {
-                                                    setSelectedId(
-                                                        target.node.id,
-                                                    );
-                                                    setFormState({
-                                                        level: target.level,
-                                                        item: target.node,
-                                                    });
-                                                }}
-                                                onDelete={(target) =>
-                                                    setDeleteState({
-                                                        level: target.level,
-                                                        item: target.node,
-                                                    })
-                                                }
-                                                onDuplicate={handleDuplicate}
-                                                onAddChild={(target) =>
-                                                    openCreate(
-                                                        childLevel(
-                                                            target.level,
-                                                        ),
-                                                        target.node.id,
-                                                    )
-                                                }
-                                                onDragStart={(id) =>
-                                                    setDragId(id)
-                                                }
-                                                onDragEnd={() => {
-                                                    setDragId(null);
-                                                    setOver(null);
-                                                }}
-                                                onDragOver={(node, pos) => {
-                                                    if (pos === null) {
-                                                        setOver(null);
-
-                                                        return;
-                                                    }
-
-                                                    const sourceId =
-                                                        dragId ?? '';
-
-                                                    if (
-                                                        validDrop(
-                                                            sourceId,
-                                                            node,
-                                                            pos,
-                                                        )
-                                                    ) {
-                                                        setOver({
-                                                            id: node.node.id,
-                                                            pos,
-                                                        });
-
-                                                        return;
-                                                    }
-
-                                                    if (
-                                                        validDrop(
-                                                            sourceId,
-                                                            node,
-                                                            'before',
-                                                        )
-                                                    ) {
-                                                        setOver({
-                                                            id: node.node.id,
-                                                            pos: 'before',
-                                                        });
-
-                                                        return;
-                                                    }
-
-                                                    if (
-                                                        validDrop(
-                                                            sourceId,
-                                                            node,
-                                                            'after',
-                                                        )
-                                                    ) {
-                                                        setOver({
-                                                            id: node.node.id,
-                                                            pos: 'after',
-                                                        });
-
-                                                        return;
-                                                    }
-
-                                                    setOver(null);
-                                                }}
-                                                onDrop={(target, pos) => {
-                                                    if (dragId) {
-                                                        performDrop(
-                                                            dragId,
-                                                            target,
-                                                            pos,
-                                                        );
-                                                    }
-                                                }}
-                                            />
-                                        ))
+                                        <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
+                                            <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                                <FolderOpen
+                                                    className="size-8"
+                                                    strokeWidth={1.25}
+                                                />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-base font-semibold text-foreground">
+                                                    Pilih node dari pohon
+                                                    klasifikasi
+                                                </h2>
+                                                <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                                                    Klik golongan, kategori,
+                                                    cluster, atau sub cluster
+                                                    untuk melihat dan mengedit
+                                                    detailnya.
+                                                </p>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                        </section>
-
-                        <section className="glass-panel card-enter flex flex-col delay-200">
-                            <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:min-h-[600px]">
-                                {selectedInfo ? (
-                                    <ClassificationDetailPanel
-                                        level={selectedInfo.level}
-                                        node={selectedInfo.node}
-                                        ancestors={selectedAncestors}
-                                        parentId={
-                                            selectedInfo.parent?.id ?? null
-                                        }
-                                        onEdit={() =>
-                                            setFormState({
-                                                level: selectedInfo.level,
-                                                item: selectedInfo.node,
-                                            })
-                                        }
-                                        onDelete={() =>
-                                            setDeleteState({
-                                                level: selectedInfo.level,
-                                                item: selectedInfo.node,
-                                            })
-                                        }
-                                        onDuplicate={() =>
-                                            handleDuplicate(selectedInfo.node)
-                                        }
-                                        onAddChild={(level) =>
-                                            openCreate(
-                                                level,
-                                                selectedInfo.node.id,
-                                            )
-                                        }
-                                        onClose={() => setSelectedId(null)}
-                                    />
-                                ) : (
-                                    <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
-                                        <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-sm">
-                                            <FolderOpen
-                                                className="size-8"
-                                                strokeWidth={1.25}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-base font-semibold text-foreground">
-                                                Pilih node dari pohon
-                                                klasifikasi
-                                            </h2>
-                                            <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                                Klik golongan, kategori,
-                                                cluster, atau sub cluster untuk
-                                                melihat dan mengedit detailnya.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </section>
+                            </section>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1239,6 +1300,7 @@ export default function AssetClassification() {
                             type="button"
                             variant="outline"
                             onClick={() => setDeleteState(null)}
+                            disabled={deletingId === deleteState?.item.id}
                         >
                             Batal
                         </Button>
@@ -1246,8 +1308,16 @@ export default function AssetClassification() {
                             type="button"
                             variant="destructive"
                             onClick={handleDelete}
+                            disabled={deletingId === deleteState?.item.id}
                         >
-                            Hapus
+                            {deletingId === deleteState?.item.id ? (
+                                <>
+                                    <Loader2 className="mr-2 size-4 animate-spin" />
+                                    Menghapus...
+                                </>
+                            ) : (
+                                'Hapus'
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1360,6 +1430,7 @@ type RowProps = {
     selectedIds: Set<string>;
     dragId: string | null;
     over: { id: string; pos: DropPos } | null;
+    deletingId: string | null;
     onSelect: (id: string) => void;
     onToggleExpand: (id: string) => void;
     onEdit: (info: NodeInfo) => void;
@@ -1383,6 +1454,7 @@ function TreeNodeRow({
     selectedIds,
     dragId,
     over,
+    deletingId,
     onSelect,
     onToggleExpand,
     onEdit,
@@ -1402,6 +1474,7 @@ function TreeNodeRow({
     const isDragging = dragId === node.id;
     const isOver = over?.id === node.id;
     const isExpanded = queryActive || expandedIds.has(node.id);
+    const isDeleting = deletingId === node.id;
     const info: NodeInfo = { node, parent: null, depth, level };
     const q = query.trim().toLowerCase();
     const matches =
@@ -1431,6 +1504,7 @@ function TreeNodeRow({
             className={cn(
                 'relative',
                 isDragging && 'opacity-40',
+                isDeleting && 'pointer-events-none opacity-50',
                 isOver &&
                     over?.pos === 'inside' &&
                     'z-10 rounded-lg ring-2 ring-primary/60',
@@ -1543,7 +1617,11 @@ function TreeNodeRow({
                                 onClick={(event) => event.stopPropagation()}
                                 aria-label={`Menu ${node.name}`}
                             >
-                                <GripVertical className="size-3.5" />
+                                {isDeleting ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                    <GripVertical className="size-3.5" />
+                                )}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -1594,6 +1672,7 @@ function TreeNodeRow({
                             selectedIds={selectedIds}
                             dragId={dragId}
                             over={over}
+                            deletingId={deletingId}
                             onSelect={onSelect}
                             onToggleExpand={onToggleExpand}
                             onEdit={onEdit}

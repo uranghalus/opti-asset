@@ -9,6 +9,7 @@ use App\Models\AssetSubCluster;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -26,6 +27,7 @@ class AssetClassificationTest extends TestCase
         parent::setUp();
 
         DB::statement('PRAGMA foreign_keys = ON');
+        Cache::flush();
 
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
@@ -238,6 +240,26 @@ class AssetClassificationTest extends TestCase
                 ->where('groups.0.name', 'A')
                 ->where('groups.1.name', 'B')
                 ->where('groups.2.name', 'C'));
+    }
+
+    public function test_tree_cache_is_flushed_after_write(): void
+    {
+        AssetGroup::factory()->create(['code' => '01', 'name' => 'Lama']);
+
+        $this->actingAs($this->user)
+            ->get(route('asset-classification.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('groups.0.name', 'Lama'));
+
+        $this->assertTrue(Cache::has("classification.tree.{$this->tenant->id}"));
+
+        $group = AssetGroup::firstOrFail();
+        $group->update(['name' => 'Baru']);
+
+        $this->assertFalse(Cache::has("classification.tree.{$this->tenant->id}"));
+
+        $this->actingAs($this->user)
+            ->get(route('asset-classification.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('groups.0.name', 'Baru'));
     }
 
     public function test_reorder_updates_sibling_order(): void

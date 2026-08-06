@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\FlushesClassificationCache;
 use Database\Factories\AssetGroupFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +24,7 @@ use Illuminate\Support\Carbon;
 class AssetGroup extends Model
 {
     /** @use HasFactory<AssetGroupFactory> */
-    use BelongsToTenant, HasFactory, HasUuids;
+    use BelongsToTenant, FlushesClassificationCache, HasFactory, HasUuids;
 
     protected $fillable = [
         'code',

@@ -1,4 +1,5 @@
 import { useForm } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     storeCategory,
@@ -229,6 +230,9 @@ export function ClassificationForm({
                             disabled={form.processing}
                             className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
                         >
+                            {form.processing ? (
+                                <Loader2 className="mr-2 size-4 animate-spin" />
+                            ) : null}
                             Simpan
                         </Button>
                     </SheetFooter>

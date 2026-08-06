@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Menu, Plus, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import { SearchModal } from '@/components/search-modal';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -31,7 +31,7 @@ export function AppSidebarHeader() {
     const userAvatar = auth?.user?.avatar;
 
     return (
-        <header className="flex h-16 shrink-0 items-center border-b border-[#D5D9DC] bg-white px-4 transition-[width,height] ease-linear dark:border-[#1e293b] dark:bg-[#0f172a]">
+        <header className="glass-topbar flex h-16 shrink-0 items-center border-b border-border/50 px-4 transition-[width,height] ease-linear">
             {/* Mobile menu */}
             <div className="lg:hidden">
                 <Sheet>
@@ -39,24 +39,24 @@ export function AppSidebarHeader() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 text-[#53565A] hover:bg-[#F7F8F9] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:bg-white/[0.06] dark:hover:text-white"
+                            className="h-9 w-9 text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent
                         side="left"
-                        className="flex w-72 flex-col border-r border-[#D5D9DC] bg-white p-0 dark:border-[#1e293b] dark:bg-[#0f172a]"
+                        className="flex w-72 flex-col border-r border-border/60 bg-card/80 p-0 backdrop-blur-xl"
                     >
                         <SheetTitle className="sr-only">
                             Navigation menu
                         </SheetTitle>
-                        <SheetHeader className="flex items-center justify-end border-b border-[#D5D9DC] px-4 py-3 dark:border-[#1e293b]">
+                        <SheetHeader className="flex items-center justify-end border-b border-border/60 px-4 py-3">
                             <SheetTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white"
+                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
@@ -68,7 +68,7 @@ export function AppSidebarHeader() {
 
             {/* Desktop Sidebar Trigger */}
             <div className="hidden lg:block">
-                <SidebarTrigger className="-ml-1 h-8 w-8 text-[#86888C] hover:bg-[#F7F8F9] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:bg-white/[0.06] dark:hover:text-white" />
+                <SidebarTrigger className="-ml-1 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground" />
             </div>
 
             {/* Search bar */}
@@ -78,31 +78,22 @@ export function AppSidebarHeader() {
 
             {/* Right side actions */}
             <div className="ml-auto flex items-center gap-1">
-                <Button
-                    variant="default"
-                    size="sm"
-                    className="hidden h-9 gap-1.5 rounded-lg bg-[#006FCF] px-3 text-[13px] font-semibold text-white shadow-sm shadow-[#006FCF]/20 hover:bg-[#1374D4] active:bg-[#00509E] sm:flex dark:bg-[#006FCF] dark:hover:bg-[#1374D4]"
-                >
-                    <Plus className="h-4 w-4" />
-                    <span>New Item</span>
-                </Button>
-
                 <NotificationBell />
                 <ThemeToggle />
 
                 {/* Separator */}
-                <div className="mx-2 h-6 w-px bg-[#D5D9DC] dark:bg-[#1e293b]" />
+                <div className="mx-2 h-6 w-px bg-border" />
 
                 {/* User dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"
-                            className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-[#1A1A1A] hover:bg-[#F7F8F9] hover:text-[#1A1A1A] dark:text-white dark:hover:bg-white/[0.06]"
+                            className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-foreground hover:bg-muted"
                         >
-                            <Avatar className="h-7 w-7 overflow-hidden rounded-full ring-2 ring-[#D5D9DC] dark:ring-[#1e293b]">
+                            <Avatar className="h-7 w-7 overflow-hidden rounded-full ring-2 ring-border">
                                 <AvatarImage src={userAvatar} alt={userName} />
-                                <AvatarFallback className="rounded-full bg-[#006FCF] text-[11px] font-semibold text-white">
+                                <AvatarFallback className="rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
                                     {getInitials(userName)}
                                 </AvatarFallback>
                             </Avatar>

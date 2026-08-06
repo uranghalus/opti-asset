@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OIDCController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TenantSwitchController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +50,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('organizations', [OrganizationController::class, 'store'])->name('organizations.store');
     Route::patch('organizations/{tenant}', [OrganizationController::class, 'update'])->name('organizations.update');
     Route::delete('organizations/{tenant}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
+
+    Route::get('locations', [LocationController::class, 'index'])->name('locations.index');
+    Route::post('locations', [LocationController::class, 'store'])->name('locations.store');
+    Route::patch('locations/{location}', [LocationController::class, 'update'])->name('locations.update');
+    Route::delete('locations/{location}', [LocationController::class, 'destroy'])->name('locations.destroy');
+
+    Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::patch('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    Route::put('roles/{role}/permissions', [RoleController::class, 'syncPermissions'])->name('roles.permissions.sync');
+
+    Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+    Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
+    Route::patch('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+    Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
 });
 
 Route::get('auth/redirect', [OIDCController::class, 'redirect'])->name('authsso');

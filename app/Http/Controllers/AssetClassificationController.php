@@ -9,6 +9,7 @@ use App\Models\AssetSubCluster;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -52,7 +53,23 @@ class AssetClassificationController extends Controller
 {
     public function index(): Response
     {
-        $groups = AssetGroup::query()
+        $tenantId = Tenant::current()?->id;
+
+        $groups = Cache::remember(
+            "classification.tree.{$tenantId}",
+            now()->addDay(),
+            fn () => $this->buildTree(),
+        );
+
+        return Inertia::render('asset-classification', [
+            'groups' => $groups,
+        ]);
+    }
+
+    /** @return array<int, SerializedGroup> */
+    private function buildTree(): array
+    {
+        return AssetGroup::query()
             ->withCount('categories')
             ->with([
                 'categories' => fn ($query) => $query
@@ -75,11 +92,8 @@ class AssetClassificationController extends Controller
             ->orderBy('code')
             ->get()
             ->map(fn (AssetGroup $group) => $this->serializeGroup($group))
-            ->values();
-
-        return Inertia::render('asset-classification', [
-            'groups' => $groups,
-        ]);
+            ->values()
+            ->all();
     }
 
     /** @return SerializedGroup */
@@ -140,7 +154,7 @@ class AssetClassificationController extends Controller
 
         AssetGroup::create($validated);
 
-        return back();
+        return back()->with('success', 'Golongan berhasil ditambahkan.');
     }
 
     public function updateGroup(Request $request, AssetGroup $group): RedirectResponse
@@ -158,14 +172,14 @@ class AssetClassificationController extends Controller
 
         $group->update($validated);
 
-        return back();
+        return back()->with('success', 'Golongan berhasil diperbarui.');
     }
 
     public function destroyGroup(AssetGroup $group): RedirectResponse
     {
         $group->delete();
 
-        return back();
+        return back()->with('success', 'Golongan berhasil dihapus.');
     }
 
     public function storeCategory(Request $request): RedirectResponse
@@ -186,7 +200,7 @@ class AssetClassificationController extends Controller
 
         $group->categories()->create($validated);
 
-        return back();
+        return back()->with('success', 'Kategori berhasil ditambahkan.');
     }
 
     public function updateCategory(Request $request, AssetCategory $category): RedirectResponse
@@ -204,14 +218,14 @@ class AssetClassificationController extends Controller
 
         $category->update($validated);
 
-        return back();
+        return back()->with('success', 'Kategori berhasil diperbarui.');
     }
 
     public function destroyCategory(AssetCategory $category): RedirectResponse
     {
         $category->delete();
 
-        return back();
+        return back()->with('success', 'Kategori berhasil dihapus.');
     }
 
     public function storeCluster(Request $request): RedirectResponse
@@ -232,7 +246,7 @@ class AssetClassificationController extends Controller
 
         $category->clusters()->create($validated);
 
-        return back();
+        return back()->with('success', 'Cluster berhasil ditambahkan.');
     }
 
     public function updateCluster(Request $request, AssetCluster $cluster): RedirectResponse
@@ -250,14 +264,14 @@ class AssetClassificationController extends Controller
 
         $cluster->update($validated);
 
-        return back();
+        return back()->with('success', 'Cluster berhasil diperbarui.');
     }
 
     public function destroyCluster(AssetCluster $cluster): RedirectResponse
     {
         $cluster->delete();
 
-        return back();
+        return back()->with('success', 'Cluster berhasil dihapus.');
     }
 
     public function storeSubCluster(Request $request): RedirectResponse
@@ -279,7 +293,7 @@ class AssetClassificationController extends Controller
 
         $cluster->subClusters()->create($validated);
 
-        return back();
+        return back()->with('success', 'Sub Cluster berhasil ditambahkan.');
     }
 
     public function updateSubCluster(Request $request, AssetSubCluster $subCluster): RedirectResponse
@@ -298,14 +312,14 @@ class AssetClassificationController extends Controller
 
         $subCluster->update($validated);
 
-        return back();
+        return back()->with('success', 'Sub Cluster berhasil diperbarui.');
     }
 
     public function destroySubCluster(AssetSubCluster $subCluster): RedirectResponse
     {
         $subCluster->delete();
 
-        return back();
+        return back()->with('success', 'Sub Cluster berhasil dihapus.');
     }
 
     public function reorder(Request $request): RedirectResponse

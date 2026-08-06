@@ -85,7 +85,7 @@ resources/js/
 ## Gotchas
 
 - If `ViteException: Unable to locate file in Vite manifest` → run `npm run build` or `composer dev`
-- Wayfinder types must be regenerated after route/controller changes: `php artisan wayfinder:generate`
+- Wayfinder types must be regenerated after route/controller changes: `php artisan wayfinder:generate --with-form` (the `--with-form` flag is required to match `formVariants: true` in `vite.config.ts`; without it generated routes lose `.form` variants and auth components break in `tsc`)
 - `resources/js/components/ui/*` are shadcn-generated — don't manually edit, use `npx shadcn@latest add [component]`
 - Tests enforce SQLite in-memory — no external DB needed for test suite
 - `bootstrap/ssr/` is gitignored — SSR bundle is regenerated on build

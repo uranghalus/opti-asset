@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OIDCController;
 use App\Http\Controllers\Org\DepartmentController;
@@ -63,6 +64,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('categories', [AssetCategoryController::class, 'store'])->name('categories.store');
     Route::patch('categories/{category}', [AssetCategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [AssetCategoryController::class, 'destroy'])->name('categories.destroy');
+
+    Route::get('items', [ItemController::class, 'index'])->name('items.index');
+    Route::post('items', [ItemController::class, 'store'])->name('items.store');
+    Route::patch('items/{item}', [ItemController::class, 'update'])->name('items.update');
+    Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::get('departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');

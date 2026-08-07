@@ -1,94 +1,99 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { useAppearance } from '@/hooks/use-appearance';
 
 const features = [
     {
+        code: '01',
         title: 'Manajemen Data Aset',
         description:
             'Satu sumber data terpadu untuk seluruh aset perusahaan. Lacak detail, status, dan riwayat setiap item dari pengadaan hingga pemutihan.',
-        icon: (
-            <svg
-                className="size-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
-                />
-            </svg>
-        ),
+        ops: [
+            'Kategori & klasifikasi 4 level',
+            'Riwayat & jejak audit tiap item',
+            'Multi-departemen terisolasi',
+        ],
     },
     {
+        code: '02',
         title: 'Pemindaian Barcode',
         description:
             'Temukan data aset secara instan hanya dengan memindai barcode. Proses pencarian yang cepat dan akurat untuk ribuan aset.',
-        icon: (
-            <svg
-                className="size-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"
-                />
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"
-                />
-            </svg>
-        ),
+        ops: [
+            'Scan instan tanpa ketik manual',
+            'Kode aset unik per organisasi',
+            'Akses catatan langsung dari lapangan',
+        ],
     },
     {
+        code: '03',
         title: 'Transfer Aset',
         description:
-            'Pindahkan aset antar departemen atau lokasi dengan alur persetujuan yang terstruktur dan tercatat secara otomatis.',
-        icon: (
-            <svg
-                className="size-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
-                />
-            </svg>
-        ),
+            'Pindahkan aset antar departemen atau lokasi dengan alur persetujuan yang terstruktur dan tercatat otomatis.',
+        ops: [
+            'Alur persetujuan tercatat otomatis',
+            'Lacak lokasi saat ini & riwayat',
+            'Validasi kepemilikan departemen',
+        ],
     },
     {
+        code: '04',
         title: 'Disposal Aset',
         description:
             'Kelola proses disposisi aset dari pengajuan hingga persetujuan. Pantau status dan riwayat setiap aset yang didisposisi.',
-        icon: (
-            <svg
-                className="size-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                />
-            </svg>
-        ),
+        ops: [
+            'Pengajuan disposisi berjenjang',
+            'Status & riwayat dipantau penuh',
+            'Audit jejak lengkap tiap keputusan',
+        ],
     },
 ];
+
+const steps = [
+    {
+        title: 'Pindai Barcode',
+        description:
+            'Arahkan kamera ke barcode aset. Identifikasi instan tanpa perlu mengetik apa pun ke dalam sistem.',
+    },
+    {
+        title: 'Temukan Data',
+        description:
+            'Catatan lengkap langsung muncul: lokasi, departemen pemegang, status kelayakan, dan riwayat.',
+    },
+    {
+        title: 'Kelola & Eksekusi',
+        description:
+            'Lanjutkan aksi — transfer, perawatan, atau disposisi — semua langsung tercatat dan diaudit otomatis.',
+    },
+];
+
+const scanLog = [
+    {
+        id: 'AST-2024-0847',
+        name: 'Laptop Dell Latitude 5440',
+        loc: 'Lantai 3 · IT',
+        status: 'Aktif',
+    },
+    {
+        id: 'AST-2024-0851',
+        name: 'Printer HP LaserJet Pro',
+        loc: 'Lantai 2 · Admin',
+        status: 'Aktif',
+    },
+    {
+        id: 'AST-2023-1120',
+        name: 'Meja Kerja Ergonomis',
+        loc: 'Lantai 1 · HR',
+        status: 'Dipindah',
+    },
+];
+
+const BARCODE = [
+    3, 1, 1, 1, 2, 1, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 1, 1, 2, 3, 1, 1, 1, 2,
+    1, 3, 1, 2, 1, 1, 3, 1, 1, 2, 1, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 1, 3,
+];
+const WORDS = ['Lacak', 'Pindai', 'Kelola', 'Audit'];
 
 function ThemeToggle() {
     const { appearance, updateAppearance } = useAppearance();
@@ -101,15 +106,15 @@ function ThemeToggle() {
     return (
         <button
             onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
-            className="flex size-9 items-center justify-center rounded-full border border-black/[0.06] bg-black/[0.03] text-[#53565A] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-black/[0.06] hover:text-[#1A1A1A] active:scale-[0.95] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 dark:hover:bg-white/[0.08] dark:hover:text-white"
-            aria-label="Toggle theme"
+            className="group flex size-10 items-center justify-center rounded-xl border border-white/60 bg-white/60 text-gray-700 shadow-sm backdrop-blur-xl transition-all duration-200 hover:scale-105 hover:bg-white/90 active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label="Ganti tema"
         >
             {isDark ? (
                 <svg
-                    className="size-[18px]"
+                    className="size-[18px] transition-transform duration-300 group-hover:rotate-12"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={1.75}
                     stroke="currentColor"
                 >
                     <path
@@ -120,10 +125,10 @@ function ThemeToggle() {
                 </svg>
             ) : (
                 <svg
-                    className="size-[18px]"
+                    className="size-[18px] transition-transform duration-300 group-hover:-rotate-12"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={1.75}
                     stroke="currentColor"
                 >
                     <path
@@ -137,581 +142,652 @@ function ThemeToggle() {
     );
 }
 
+function NavLink({ href, children }: { href: string; children: string }) {
+    return (
+        <a
+            href={href}
+            className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+        >
+            {children}
+        </a>
+    );
+}
+
+function ScanBar() {
+    return (
+        <div className="scan-track pointer-events-none relative flex h-1.5 items-center overflow-visible">
+            <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#0080FF]/30" />
+            <div className="scan-laser absolute top-1/2 left-0 h-[3px] w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_10px_2px_rgba(255,255,255,0.7)] dark:via-[#0080FF] dark:shadow-[0_0_10px_2px_rgba(0,128,255,0.6)]">
+                <div className="absolute inset-0 bg-white/30 blur-[6px] dark:bg-[#0080FF]/30" />
+            </div>
+        </div>
+    );
+}
+
+const ScanStatus = ({ status }: { status: string }) => (
+    <span
+        className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold ${status === 'Aktif' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'}`}
+    >
+        {status}
+    </span>
+);
+
 export default function Welcome() {
     const { auth } = usePage().props as {
         auth?: {
             user?: { id: number; name: string; email: string; avatar?: string };
         };
     };
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const ctaHref = auth?.user ? '/dashboard' : '/auth/redirect';
+    const ctaLabel = auth?.user ? 'Buka Dashboard' : 'Masuk SSO';
 
     return (
         <>
             <Head title="OptiAsset - Sistem Manajemen Aset" />
+            {/* High-end operational glassmorphism */}
+            <div className="relative min-h-[100dvh] overflow-hidden text-gray-900 dark:text-white">
+                {/* Vivid ambient field */}
+                <div className="pointer-events-none fixed inset-0 overflow-hidden bg-[#F6F8FD] dark:bg-[#05070d]">
+                    <div className="absolute -top-[20%] -left-[10%] h-[560px] w-[560px] rounded-full bg-[#0080FF]/25 blur-[130px] dark:bg-[#0080FF]/20" />
+                    <div className="absolute top-[12%] right-[-10%] h-[520px] w-[520px] rounded-full bg-[#6971ec]/25 blur-[140px] dark:bg-[#6971ec]/20" />
+                    <div className="absolute bottom-[-15%] left-[28%] h-[480px] w-[480px] rounded-full bg-[#00B3A4]/20 blur-[130px] dark:bg-[#00B3A4]/10" />
+                    <div className="absolute top-[40%] left-[-6%] h-[340px] w-[340px] rounded-full bg-[#8B00FF]/15 blur-[120px] dark:bg-[#8B00FF]/10" />
+                    <div className="absolute top-[35%] left-[42%] h-[300px] w-[300px] rounded-full bg-[#FF1493]/10 blur-[110px] dark:bg-[#FF1493]/[0.06]" />
+                    <div className="absolute right-[20%] bottom-[6%] h-[260px] w-[260px] rounded-full bg-[#FFD400]/15 blur-[110px] dark:bg-[#FFD400]/[0.08]" />
+                </div>
 
-            <div className="relative min-h-[100dvh] overflow-hidden bg-[#FDFDFC] dark:bg-[#000C3D]">
+                {/* Noise grain */}
                 <div
-                    className="pointer-events-none fixed inset-0 z-50 opacity-[0.02] dark:opacity-[0.03]"
+                    aria-hidden
+                    className="pointer-events-none fixed inset-0 z-50 opacity-[0.03] mix-blend-overlay dark:opacity-[0.05]"
                     style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
                     }}
                 />
-                <div
-                    className="pointer-events-none absolute inset-0 dark:hidden"
-                    style={{
-                        backgroundImage: `
-                            linear-gradient(rgba(0,111,207,0.06) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(0,111,207,0.06) 1px, transparent 1px)
-                        `,
-                        backgroundSize: '48px 48px',
-                    }}
-                />
-                <div
-                    className="pointer-events-none absolute inset-0 dark:hidden"
-                    style={{
-                        background:
-                            'radial-gradient(ellipse 65% 45% at 50% 40%, transparent 0%, #FDFDFC 70%)',
-                    }}
-                />
-                <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-[10%] right-[0%] h-[550px] w-[550px] rounded-full bg-[#006FCF]/[0.12] blur-[130px] dark:bg-[#006FCF]/[0.15]" />
-                    <div className="absolute -bottom-[15%] -left-[3%] h-[420px] w-[420px] rounded-full bg-[#00175A]/[0.1] blur-[110px] dark:bg-[#00175A]/[0.18]" />
-                    <div className="absolute top-[25%] right-[15%] h-[320px] w-[320px] rounded-full bg-[#BF9B30]/[0.1] blur-[100px] dark:bg-[#BF9B30]/[0.1]" />
-                    <div className="absolute -bottom-[8%] left-[30%] h-[350px] w-[350px] rounded-full bg-[#00875A]/[0.09] blur-[110px] dark:bg-[#00875A]/[0.1]" />
-                    <div className="absolute top-[8%] -left-[5%] h-[300px] w-[300px] rounded-full bg-[#0891B2]/[0.09] blur-[100px] dark:bg-[#0891B2]/[0.09]" />
-                    <div className="absolute top-[40%] left-[8%] h-[240px] w-[240px] rounded-full bg-[#E11D48]/[0.06] blur-[90px] dark:bg-[#E11D48]/[0.06]" />
-                    <div className="absolute top-[5%] left-[40%] h-[200px] w-[200px] rounded-full bg-[#7C3AED]/[0.06] blur-[80px] dark:bg-[#7C3AED]/[0.06]" />
-                    <div className="absolute right-[10%] bottom-[15%] h-[180px] w-[180px] rounded-full bg-[#F59E0B]/[0.06] blur-[70px] dark:bg-[#F59E0B]/[0.05]" />
-                </div>
-                <div className="pointer-events-none absolute inset-0 overflow-hidden dark:hidden">
-                    <div className="absolute top-[8%] right-[10%] size-[180px] rounded-full border-2 border-[#006FCF]/[0.08] bg-[#006FCF]/[0.02]" />
-                    <div className="absolute top-[25%] left-[5%] size-[120px] rounded-full border-2 border-[#00875A]/[0.08] bg-[#00875A]/[0.02]" />
-                    <div className="absolute right-[18%] bottom-[22%] size-[100px] rounded-full border-2 border-[#BF9B30]/[0.09] bg-[#BF9B30]/[0.02]" />
-                    <div className="absolute top-[45%] left-[18%] size-[80px] rounded-full border-2 border-[#E11D48]/[0.07] bg-[#E11D48]/[0.015]" />
-                    <div className="absolute top-[15%] left-[35%] size-[60px] rounded-full border-2 border-[#7C3AED]/[0.08] bg-[#7C3AED]/[0.015]" />
-                    <div className="absolute top-[15%] left-[20%] h-[80px] w-[140px] -rotate-6 rounded-2xl border-2 border-[#0891B2]/[0.07] bg-[#0891B2]/[0.02]" />
-                    <div className="absolute bottom-[28%] left-[12%] h-[60px] w-[100px] rotate-3 rounded-xl border-2 border-[#E11D48]/[0.06] bg-[#E11D48]/[0.02]" />
-                    <div className="absolute top-[35%] right-[8%] h-[50px] w-[80px] -rotate-3 rounded-xl border-2 border-[#F59E0B]/[0.07] bg-[#F59E0B]/[0.015]" />
-                    <div className="absolute top-[20%] right-[25%] flex gap-3">
-                        <div className="size-2.5 rounded-full bg-[#006FCF]/[0.2]" />
-                        <div className="mt-4 size-2 rounded-full bg-[#BF9B30]/[0.25]" />
-                        <div className="mt-1 size-1.5 rounded-full bg-[#00875A]/[0.2]" />
-                    </div>
-                    <div className="absolute bottom-[32%] left-[28%] flex gap-2.5">
-                        <div className="size-2 rounded-full bg-[#0891B2]/[0.2]" />
-                        <div className="mt-2 size-1.5 rounded-full bg-[#E11D48]/[0.18]" />
-                        <div className="mt-0.5 size-2 rounded-full bg-[#7C3AED]/[0.15]" />
-                    </div>
-                    <div className="absolute top-[55%] right-[30%] flex gap-2">
-                        <div className="size-1.5 rounded-full bg-[#F59E0B]/[0.2]" />
-                        <div className="mt-1 size-2 rounded-full bg-[#006FCF]/[0.15]" />
-                    </div>
-                    <div className="absolute top-[35%] left-[15%] h-px w-[200px] -rotate-[22deg] bg-gradient-to-r from-transparent via-[#006FCF]/[0.12] to-transparent" />
-                    <div className="absolute top-[50%] right-[10%] h-px w-[160px] rotate-[18deg] bg-gradient-to-r from-transparent via-[#00875A]/[0.1] to-transparent" />
-                    <div className="absolute top-[62%] left-[38%] h-px w-[140px] -rotate-[10deg] bg-gradient-to-r from-transparent via-[#BF9B30]/[0.1] to-transparent" />
-                    <div className="absolute top-[28%] right-[35%] h-px w-[120px] rotate-[25deg] bg-gradient-to-r from-transparent via-[#E11D48]/[0.08] to-transparent" />
-                </div>
-                <div className="pointer-events-none absolute inset-0 hidden overflow-hidden dark:block">
-                    <div className="absolute top-[10%] right-[12%] size-[160px] rounded-full border border-[#006FCF]/[0.1] bg-[#006FCF]/[0.02]" />
-                    <div className="absolute top-[30%] left-[6%] size-[120px] rounded-full border border-[#00875A]/[0.08] bg-[#00875A]/[0.02]" />
-                    <div className="absolute right-[18%] bottom-[25%] size-[90px] rounded-full border border-[#BF9B30]/[0.08] bg-[#BF9B30]/[0.015]" />
-                    <div className="absolute top-[18%] left-[30%] size-[70px] rounded-full border border-[#7C3AED]/[0.08] bg-[#7C3AED]/[0.015]" />
-                    <div className="absolute top-[22%] left-[22%] h-[70px] w-[120px] -rotate-6 rounded-2xl border border-[#0891B2]/[0.06] bg-[#0891B2]/[0.01]" />
-                    <div className="absolute right-[12%] bottom-[30%] h-[50px] w-[90px] rotate-3 rounded-xl border border-[#E11D48]/[0.05] bg-[#E11D48]/[0.01]" />
-                    <div className="absolute top-[16%] right-[28%] flex gap-3">
-                        <div className="size-2 rounded-full bg-[#006FCF]/35" />
-                        <div className="mt-3 size-1.5 rounded-full bg-[#BF9B30]/30" />
-                        <div className="size-2 rounded-full bg-[#00875A]/25" />
-                    </div>
-                    <div className="absolute bottom-[38%] left-[25%] flex gap-2">
-                        <div className="size-1.5 rounded-full bg-[#0891B2]/25" />
-                        <div className="mt-1 size-2 rounded-full bg-[#E11D48]/20" />
-                    </div>
-                    <div className="absolute top-[40%] left-[10%] h-px w-[180px] -rotate-[18deg] bg-gradient-to-r from-transparent via-[#006FCF]/[0.08] to-transparent" />
-                    <div className="absolute top-[55%] right-[15%] h-px w-[140px] rotate-[12deg] bg-gradient-to-r from-transparent via-[#BF9B30]/[0.07] to-transparent" />
-                </div>
-                <header className="relative z-10 flex justify-center pt-6 md:pt-10">
-                    <nav className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-white/70 px-2 py-2 shadow-[0_1px_3px_rgba(0,23,90,0.04)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04] dark:shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
-                        <div className="flex items-center gap-2.5 pr-2 pl-4">
-                            <AppLogoIcon className="size-7 text-[#006FCF]" />
-                            <span className="text-sm font-semibold tracking-tight text-[#1A1A1A] dark:text-white">
+
+                {/* Navbar */}
+                <header
+                    className={`sticky top-0 z-40 px-4 transition-all duration-300 md:px-6 ${scrolled ? 'pt-3' : 'pt-5'}`}
+                >
+                    <nav
+                        className={`mx-auto flex max-w-6xl items-center justify-between gap-6 rounded-2xl border px-4 py-3 backdrop-blur-2xl transition-all duration-300 ${scrolled ? 'border-white/60 bg-white/70 shadow-lg shadow-[#0B3D6B]/5 dark:border-white/10 dark:bg-[#0B1021]/80' : 'border-transparent bg-transparent'}`}
+                    >
+                        <a
+                            href="#"
+                            className="flex items-center gap-2.5 transition-transform hover:scale-105"
+                        >
+                            <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white shadow-md shadow-[#0080FF]/20">
+                                <AppLogoIcon className="size-5" />
+                            </span>
+                            <span className="font-mono text-sm font-bold tracking-tight text-gray-900 dark:text-white">
                                 OptiAsset
                             </span>
+                        </a>
+
+                        <div className="hidden items-center gap-8 md:flex">
+                            <NavLink href="#fitur">Fitur</NavLink>
+                            <NavLink href="#cara-kerja">Cara Kerja</NavLink>
+                            {auth?.user && (
+                                <NavLink href="/organizations">
+                                    Organisasi
+                                </NavLink>
+                            )}
                         </div>
-                        <div className="h-4 w-px bg-black/[0.06] dark:bg-white/10" />
-                        {auth?.user ? (
+
+                        <div className="hidden items-center gap-3 md:flex">
+                            <ThemeToggle />
                             <Link
-                                href="/dashboard"
-                                className="group flex items-center gap-2 rounded-full bg-[#00175A] px-5 py-2 text-sm font-medium text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#000C3D] active:scale-[0.98] dark:bg-[#006FCF] dark:hover:bg-[#1374D4]"
+                                href={ctaHref}
+                                className="group relative inline-flex items-center gap-2 rounded-xl bg-[#0080FF] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/40 active:translate-y-0 active:scale-95"
                             >
-                                Dashboard
-                                <span className="flex size-6 items-center justify-center rounded-full bg-white/15 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:bg-white/20">
-                                    <svg
-                                        className="size-3"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth={2}
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                        />
-                                    </svg>
-                                </span>
+                                {ctaLabel}
+                                <svg
+                                    className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={2}
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                                    />
+                                </svg>
                             </Link>
-                        ) : (
-                            <a
-                                href="/auth/redirect"
-                                className="group flex items-center gap-2 rounded-full bg-[#00175A] px-5 py-2 text-sm font-medium text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#000C3D] active:scale-[0.98] dark:bg-[#006FCF] dark:hover:bg-[#1374D4]"
-                            >
-                                Masuk
-                                <span className="flex size-6 items-center justify-center rounded-full bg-white/15 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:bg-white/20">
-                                    <svg
-                                        className="size-3"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth={2}
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                        />
-                                    </svg>
-                                </span>
-                            </a>
-                        )}
-                        <ThemeToggle />
-                    </nav>
-                </header>
-                <main className="relative z-10 mx-auto max-w-7xl px-4 pt-24 md:px-8">
-                    <section className="flex min-h-[60vh] flex-col items-center justify-end pb-20 text-center md:pb-32">
-                        <h1
-                            className="mb-8 max-w-4xl text-5xl leading-[1.05] font-semibold tracking-[-0.03em] text-[#1A1A1A] opacity-0 md:text-6xl lg:text-[4.5rem] dark:text-white"
-                            style={{
-                                animation:
-                                    'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 200ms forwards',
-                            }}
-                        >
-                            Your Assets,{' '}
-                            <span className="bg-gradient-to-r from-[#006FCF] to-[#00175A] bg-clip-text text-transparent dark:from-[#006FCF] dark:to-[#BF9B30]">
-                                Managed.
-                            </span>
-                        </h1>
-                        <p
-                            className="mb-12 max-w-lg text-lg leading-relaxed text-[#53565A] opacity-0 dark:text-[#B7C3D9]"
-                            style={{
-                                animation:
-                                    'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 350ms forwards',
-                            }}
-                        >
-                            Satu sumber data terpadu untuk melacak dan
-                            mengoptimalkan seluruh aset perusahaan.
-                        </p>
-                        <div
-                            className="flex flex-col gap-4 opacity-0 sm:flex-row sm:items-center"
-                            style={{
-                                animation:
-                                    'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 500ms forwards',
-                            }}
-                        >
-                            <a
-                                href="/auth/redirect"
-                                className="group inline-flex items-center gap-0 rounded-full bg-[#006FCF] py-2 pr-2 pl-7 text-sm font-medium text-white shadow-[0_0_24px_rgba(0,111,207,0.25)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#1374D4] hover:shadow-[0_0_40px_rgba(0,111,207,0.35)] active:scale-[0.97]"
-                            >
-                                Mulai Sekarang
-                                <span className="ml-2 flex size-9 items-center justify-center rounded-full bg-white/15 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-[1px] group-hover:scale-110 group-hover:bg-white/20">
-                                    <svg
-                                        className="size-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth={2}
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                        />
-                                    </svg>
-                                </span>
-                            </a>
                         </div>
-                    </section>
-                    <section
-                        className="mx-auto max-w-3xl opacity-0"
-                        style={{
-                            animation:
-                                'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 650ms forwards',
-                        }}
-                    >
-                        <div className="rounded-[1.5rem] border border-black/[0.06] bg-black/[0.02] p-[3px] dark:border-white/[0.06] dark:bg-white/[0.03]">
-                            <div className="rounded-[calc(1.5rem-3px)] bg-white px-8 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,23,90,0.06)] dark:bg-white/[0.03] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-center">
-                                        <div className="text-2xl font-semibold tracking-tight text-[#1A1A1A] md:text-3xl dark:text-white">
-                                            2.847
-                                        </div>
-                                        <div className="mt-1 text-xs text-[#86888C] dark:text-white/40">
-                                            Total Aset
-                                        </div>
+
+                        <div className="flex items-center gap-2 md:hidden">
+                            <ThemeToggle />
+                            <button
+                                onClick={() => setMobileOpen(!mobileOpen)}
+                                className="flex size-10 items-center justify-center rounded-xl border border-white/60 bg-white/70 text-gray-700 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                aria-label="Buka menu"
+                            >
+                                <svg
+                                    className="size-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={2}
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d={
+                                            mobileOpen
+                                                ? 'M6 18 18 6M6 6l12 12'
+                                                : 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'
+                                        }
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </nav>
+
+                    {mobileOpen && (
+                        <div className="mx-auto mt-2 max-w-6xl overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-xl backdrop-blur-2xl md:hidden dark:border-white/10 dark:bg-[#0B1021]/95">
+                            <div className="flex flex-col p-3">
+                                <a
+                                    href="#fitur"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                                >
+                                    Fitur
+                                </a>
+                                <a
+                                    href="#cara-kerja"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                                >
+                                    Cara Kerja
+                                </a>
+                                {auth?.user && (
+                                    <a
+                                        href="/organizations"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                                    >
+                                        Organisasi
+                                    </a>
+                                )}
+                                <a
+                                    href={ctaHref}
+                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0080FF] px-4 py-3 text-sm font-semibold text-white shadow-md active:scale-95"
+                                >
+                                    {ctaLabel}
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </header>
+
+                <main className="relative z-10 mx-auto max-w-6xl px-4 md:px-8">
+                    {/* Hero */}
+                    <section className="flex flex-col items-center gap-14 pt-14 pb-24 md:pt-20 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:pb-36">
+                        <div className="animate-fade-in-up flex max-w-xl flex-col items-start text-left">
+                            <span className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#0080FF]/25 bg-white/50 px-3.5 py-1.5 text-xs font-semibold text-[#0080FF] shadow-sm backdrop-blur-xl dark:border-[#6971ec]/25 dark:bg-white/5 dark:text-[#6971ec]">
+                                <span className="relative flex size-2">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0080FF] opacity-60" />
+                                    <span className="relative inline-flex size-2 rounded-full bg-[#0080FF] dark:bg-[#6971ec]" />
+                                </span>
+                                v2.0 Live Now
+                            </span>
+                            <h1 className="text-4xl leading-[1.05] font-extrabold tracking-tight md:text-6xl lg:text-[4.25rem] dark:text-white">
+                                <span className="relative inline-block h-[1.05em] overflow-hidden align-bottom">
+                                    <span className="word-roll flex flex-col">
+                                        {[...WORDS, WORDS[0]].map((word, i) => (
+                                            <span
+                                                key={`${word}-${i}`}
+                                                className="block bg-gradient-to-r from-[#0080FF] to-[#6971ec] bg-clip-text leading-[1.05] text-transparent dark:from-[#0080FF] dark:to-[#6971ec]"
+                                            >
+                                                {word}
+                                            </span>
+                                        ))}
+                                    </span>
+                                </span>{' '}
+                                setiap aset.
+                                <br />
+                                <span className="font-semibold text-gray-400 dark:text-gray-500">
+                                    Catatan lengkap
+                                </span>{' '}
+                                terkelola.
+                            </h1>
+                            <p className="mt-7 max-w-lg text-lg leading-relaxed text-gray-600 dark:text-gray-400">
+                                OptiAsset menyatukan data, lokasi, dan riwayat
+                                setiap aset dalam satu single source of truth.
+                                Pindai, temukan, kelola — secepat kilat.
+                            </p>
+                            <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <Link
+                                    href={ctaHref}
+                                    className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#0080FF] px-7 py-4 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/40 active:translate-y-0 active:scale-95"
+                                >
+                                    {auth?.user
+                                        ? 'Buka Dashboard'
+                                        : 'Mulai Sekarang'}
+                                    <svg
+                                        className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={2.5}
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                                        />
+                                    </svg>
+                                </Link>
+                                <a
+                                    href="#fitur"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/70 bg-white/40 px-7 py-3.5 text-sm font-medium text-gray-700 shadow-sm backdrop-blur-xl transition-all duration-300 hover:bg-white/80 active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                                >
+                                    Lihat Kemampuan
+                                </a>
+                            </div>
+                            <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3 font-mono text-[11px] tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <span className="inline-flex items-center gap-2">
+                                    <span className="size-1.5 rounded-full bg-emerald-500" />{' '}
+                                    SSO korporat
+                                </span>
+                                <span className="inline-flex items-center gap-2">
+                                    <span className="size-1.5 rounded-full bg-[#0080FF]" />{' '}
+                                    Multi-dept
+                                </span>
+                                <span className="inline-flex items-center gap-2">
+                                    <span className="size-1.5 rounded-full bg-amber-500" />{' '}
+                                    Real-time
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Scanner terminal */}
+                        <div className="perspective-1000 w-full max-w-lg">
+                            <div className="group relative overflow-hidden rounded-3xl border border-white/70 bg-white/40 p-5 shadow-2xl shadow-[#0B3D6B]/10 backdrop-blur-2xl transition-all duration-500 hover:-translate-y-1 hover:border-white/90 hover:shadow-[#0B3D6B]/15 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/60">
+                                <div className="pointer-events-none absolute -inset-24 rounded-full bg-gradient-to-br from-[#0080FF]/10 via-[#6971ec]/5 to-transparent opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100 dark:from-[#0080FF]/15" />
+
+                                <div className="relative flex items-center justify-between border-b border-white/60 pb-4 dark:border-white/10">
+                                    <div className="flex items-center gap-2">
+                                        <span className="size-3 rounded-full bg-[#FF5F57]/90 shadow-sm" />
+                                        <span className="size-3 rounded-full bg-[#FEBC2E]/90 shadow-sm" />
+                                        <span className="size-3 rounded-full bg-[#28C840]/90 shadow-sm" />
                                     </div>
-                                    <div className="h-10 w-px bg-[#D5D9DC] dark:bg-white/[0.08]" />
-                                    <div className="text-center">
-                                        <div className="text-2xl font-semibold tracking-tight text-[#1A1A1A] md:text-3xl dark:text-white">
-                                            Real-time
+                                    <span className="font-mono text-[10px] tracking-widest text-gray-500 dark:text-gray-500">
+                                        TERMINAL · AST-2024
+                                    </span>
+                                </div>
+
+                                <div className="relative pt-5">
+                                    <div className="relative flex h-32 items-center justify-center overflow-hidden rounded-2xl border border-white/60 bg-white/50 shadow-inner dark:border-white/[0.08] dark:bg-black/30">
+                                        <div className="flex items-end gap-[2px] opacity-90">
+                                            {BARCODE.map((w, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="bg-[#0B0B2C] dark:bg-white"
+                                                    style={{
+                                                        width: `${w}px`,
+                                                        height: '86px',
+                                                    }}
+                                                />
+                                            ))}
                                         </div>
-                                        <div className="mt-1 text-xs text-[#86888C] dark:text-white/40">
-                                            Pembaruan Data
-                                        </div>
+                                        <ScanBar />
+                                        <span className="absolute bottom-2 font-mono text-[10px] tracking-[0.3em] text-gray-500 dark:text-gray-400">
+                                            0 8475 9018 3321
+                                        </span>
                                     </div>
-                                    <div className="h-10 w-px bg-[#D5D9DC] dark:bg-white/[0.08]" />
-                                    <div className="text-center">
-                                        <div className="text-2xl font-semibold tracking-tight text-[#1A1A1A] md:text-3xl dark:text-white">
-                                            100%
-                                        </div>
-                                        <div className="mt-1 text-xs text-[#86888C] dark:text-white/40">
-                                            Visibilitas Aset
-                                        </div>
+
+                                    <div className="mt-5 space-y-3">
+                                        {scanLog.map((row, i) => (
+                                            <div
+                                                key={row.id}
+                                                className="scan-row relative flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/60 p-3 opacity-0 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.06]"
+                                                style={{
+                                                    animationDelay: `${600 + i * 200}ms`,
+                                                }}
+                                            >
+                                                <span className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#0080FF] to-[#6971ec]" />
+                                                <div className="min-w-0 pl-3">
+                                                    <div className="font-mono text-xs font-bold text-[#0080FF] dark:text-[#6971ec]">
+                                                        {row.id}
+                                                    </div>
+                                                    <div className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white">
+                                                        {row.name}
+                                                    </div>
+                                                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                                        <svg
+                                                            className="size-3"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            strokeWidth={2}
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                                            />
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                                                            />
+                                                        </svg>
+                                                        {row.loc}
+                                                    </div>
+                                                </div>
+                                                <ScanStatus
+                                                    status={row.status}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-5 flex items-center justify-between border-t border-white/60 pt-4 font-mono text-[10px] tracking-wider text-gray-500 dark:border-white/10 dark:text-gray-500">
+                                        <span>SYSTEM LOG</span>
+                                        <span className="inline-flex items-center gap-1.5 text-emerald-500">
+                                            <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />{' '}
+                                            SYNCED
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </section>
-                    <section className="mt-32 md:mt-40">
-                        <div
-                            className="mb-16 max-w-2xl opacity-0"
-                            style={{
-                                animation:
-                                    'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 200ms forwards',
-                            }}
-                        >
-                            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#006FCF]/20 bg-[#006FCF]/[0.06] px-4 py-1.5">
-                                <span className="text-[10px] font-medium tracking-[0.2em] text-[#006FCF] uppercase">
-                                    Fitur Utama
+
+                    {/* Marquee ticker */}
+                    <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/40 p-1.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
+                        <div className="marquee-track flex w-max items-center rounded-xl px-4 py-3 font-mono text-[11px] tracking-wider whitespace-nowrap uppercase">
+                            {Array.from({ length: 2 }).map((_, dup) => (
+                                <span
+                                    key={dup}
+                                    className="flex items-center"
+                                    aria-hidden={dup === 1}
+                                >
+                                    {scanLog.map((row) => (
+                                        <span
+                                            key={row.id}
+                                            className="flex items-center gap-4 pr-12"
+                                        >
+                                            <span className="text-emerald-500">
+                                                ●
+                                            </span>
+                                            <span className="font-semibold text-gray-900 dark:text-white">
+                                                {row.name}
+                                            </span>
+                                            <span className="text-[#0080FF] dark:text-[#6971ec]">
+                                                {row.id}
+                                            </span>
+                                            <span className="text-gray-400 dark:text-gray-600">
+                                                /
+                                            </span>
+                                            <span className="text-gray-500 dark:text-gray-400">
+                                                {row.loc}
+                                            </span>
+                                        </span>
+                                    ))}
                                 </span>
-                            </div>
-                            <h2 className="text-3xl font-semibold tracking-tight text-[#1A1A1A] md:text-4xl dark:text-white">
-                                Semua yang Anda butuhkan untuk mengelola aset
-                                perusahaan.
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Features */}
+                    <section id="fitur" className="scroll-mt-32 py-24 md:py-36">
+                        <div className="mb-16 flex max-w-2xl flex-col items-start">
+                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl lg:text-[3.4rem] dark:text-white">
+                                Siklus penuh aset,
+                                <br />
+                                <span className="text-gray-400 dark:text-gray-500">
+                                    terkontrol sempurna.
+                                </span>
                             </h2>
+                            <p className="mt-5 max-w-lg text-lg text-gray-600 dark:text-gray-400">
+                                Dari pengada hingga penghapusan — setiap langkah
+                                tercatat otomatis, setiap keputusan tervalidasi.
+                            </p>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2">
-                            <div
-                                className="opacity-0 md:row-span-2"
-                                style={{
-                                    animation:
-                                        'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 300ms forwards',
-                                }}
-                            >
-                                <div className="group h-full rounded-[1.5rem] border border-black/[0.06] bg-black/[0.02] p-[3px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[#006FCF]/20 hover:shadow-[0_8px_40px_rgba(0,111,207,0.08)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.05] dark:hover:shadow-[0_8px_40px_rgba(0,111,207,0.1)]">
-                                    <div className="flex h-full flex-col rounded-[calc(1.5rem-3px)] bg-white p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,23,90,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] md:p-10 dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                        <div className="mb-8 h-1 w-14 rounded-full bg-gradient-to-r from-[#006FCF] to-[#1374D4]" />
-                                        <div className="mb-6 flex size-14 items-center justify-center rounded-2xl bg-[#006FCF]/[0.08] text-[#006FCF] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:bg-[#006FCF] group-hover:text-white dark:bg-[#006FCF]/10">
-                                            {features[0].icon}
-                                        </div>
-                                        <h3 className="mb-3 text-xl font-semibold text-[#1A1A1A] dark:text-white">
-                                            {features[0].title}
-                                        </h3>
-                                        <p className="mb-10 max-w-sm text-sm leading-relaxed text-[#53565A] dark:text-[#B7C3D9]">
-                                            {features[0].description}
-                                        </p>
-                                        <div className="mt-auto">
-                                            <div className="rounded-[1.25rem] border border-black/[0.04] bg-[#F7F8F9] p-[2px] dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                                <div className="rounded-[calc(1.25rem-2px)] bg-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                                                    <div className="mb-4 flex items-center justify-between">
-                                                        <span className="text-xs font-medium text-[#86888C] dark:text-white/50">
-                                                            Contoh Data Aset
-                                                        </span>
-                                                        <span className="rounded-full bg-[#00875A]/10 px-2.5 py-0.5 text-[10px] font-medium text-[#00875A]">
-                                                            Aktif
-                                                        </span>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        {[
-                                                            {
-                                                                name: 'Laptop Dell XPS 15',
-                                                                loc: 'Lantai 3, IT',
-                                                                cat: 'Elektronik',
-                                                            },
-                                                            {
-                                                                name: 'Printer HP LaserJet',
-                                                                loc: 'Lantai 2, Admin',
-                                                                cat: 'Peripheral',
-                                                            },
-                                                            {
-                                                                name: 'Meja Kerja Ergonomis',
-                                                                loc: 'Lantai 1, HR',
-                                                                cat: 'Furniture',
-                                                            },
-                                                        ].map((item, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className="flex items-center justify-between rounded-xl border border-[#ECEDEE] bg-[#F7F8F9] px-3.5 py-3 dark:border-white/[0.04] dark:bg-white/[0.02]"
-                                                            >
-                                                                <div>
-                                                                    <div className="text-xs font-medium text-[#1A1A1A] dark:text-white">
-                                                                        {
-                                                                            item.name
-                                                                        }
-                                                                    </div>
-                                                                    <div className="mt-0.5 text-[10px] text-[#86888C] dark:text-white/40">
-                                                                        {
-                                                                            item.loc
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                                <span className="rounded-full bg-[#ECEDEE] px-2.5 py-0.5 text-[10px] text-[#53565A] dark:bg-white/[0.06] dark:text-white/50">
-                                                                    {item.cat}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                className="opacity-0"
-                                style={{
-                                    animation:
-                                        'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 420ms forwards',
-                                }}
-                            >
-                                <div className="group rounded-[1.5rem] border border-black/[0.06] bg-black/[0.02] p-[3px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[#006FCF]/20 hover:shadow-[0_8px_40px_rgba(0,111,207,0.08)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.05] dark:hover:shadow-[0_8px_40px_rgba(0,111,207,0.1)]">
-                                    <div className="rounded-[calc(1.5rem-3px)] bg-white p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,23,90,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                        <div className="mb-6 h-1 w-14 rounded-full bg-[#006FCF]" />
-                                        <div className="mb-6 flex size-14 items-center justify-center rounded-2xl bg-[#006FCF]/[0.08] text-[#006FCF] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:bg-[#006FCF] group-hover:text-white dark:bg-[#006FCF]/10">
-                                            {features[1].icon}
-                                        </div>
-                                        <h3 className="mb-2 text-xl font-semibold text-[#1A1A1A] dark:text-white">
-                                            {features[1].title}
-                                        </h3>
-                                        <p className="max-w-sm text-sm leading-relaxed text-[#53565A] dark:text-[#B7C3D9]">
-                                            {features[1].description}
-                                        </p>
-                                        <div className="mt-8">
-                                            <div className="rounded-[1.25rem] border border-black/[0.04] bg-[#F7F8F9] p-[2px] dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                                <div className="rounded-[calc(1.25rem-2px)] bg-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                                                    <div className="mb-3 flex items-center gap-2">
-                                                        <div className="size-2 rounded-full bg-[#00875A]">
-                                                            <div className="size-2 animate-ping rounded-full bg-[#00875A]/40" />
-                                                        </div>
-                                                        <span className="text-[11px] font-medium text-[#86888C] dark:text-white/50">
-                                                            Scanner Aktif
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex gap-[3px]">
-                                                        {[
-                                                            3, 1, 2, 1, 3, 1, 1,
-                                                            2, 1, 3, 2, 1, 1, 3,
-                                                            1, 2, 3, 1, 1, 2, 1,
-                                                            3, 1, 2, 1, 3, 2, 1,
-                                                        ].map((w, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className="bg-[#1A1A1A] dark:bg-white/60"
-                                                                style={{
-                                                                    width: `${w}px`,
-                                                                    height: '32px',
-                                                                    animation: `barGrow 400ms cubic-bezier(0.32,0.72,0,1) ${800 + i * 20}ms forwards`,
-                                                                    transformOrigin:
-                                                                        'bottom',
-                                                                    transform:
-                                                                        'scaleY(0)',
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <div className="mt-4 rounded-xl border border-[#ECEDEE] bg-[#F7F8F9] px-3.5 py-2.5 text-center text-[11px] font-medium text-[#53565A] dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/60">
-                                                        AST-2024-0847
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
+                            {features.map((feature) => (
                                 <div
-                                    className="opacity-0"
-                                    style={{
-                                        animation:
-                                            'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 540ms forwards',
-                                    }}
+                                    key={feature.code}
+                                    className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/50 p-8 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/80 hover:shadow-xl hover:shadow-[#0B0B6B]/10 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
                                 >
-                                    <div className="group rounded-[1.5rem] border border-black/[0.06] bg-black/[0.02] p-[3px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[#006FCF]/20 hover:shadow-[0_8px_40px_rgba(0,111,207,0.06)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.05] dark:hover:shadow-[0_8px_40px_rgba(0,111,207,0.08)]">
-                                        <div className="rounded-[calc(1.5rem-3px)] bg-white p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,23,90,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                            <div className="mb-5 h-1 w-10 rounded-full bg-[#00175A] dark:bg-[#006FCF]" />
-                                            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-[#00175A]/[0.06] text-[#00175A] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:bg-[#00175A] group-hover:text-white dark:bg-[#006FCF]/10 dark:text-[#006FCF] dark:group-hover:bg-[#006FCF]">
-                                                {features[2].icon}
-                                            </div>
-                                            <h3 className="mb-2 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                                                {features[2].title}
+                                    <div className="relative z-10 flex h-full flex-col">
+                                        <div className="flex items-center gap-4">
+                                            <span className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0080FF]/10 to-[#6971ec]/10 font-mono text-sm font-bold text-[#0080FF] ring-1 ring-[#0080FF]/15 dark:text-[#6971ec]">
+                                                {feature.code}
+                                            </span>
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                                {feature.title}
                                             </h3>
-                                            <p className="text-xs leading-relaxed text-[#53565A] dark:text-[#B7C3D9]">
-                                                {features[2].description}
-                                            </p>
-                                            <div className="mt-5 flex items-center gap-2.5">
-                                                <div className="flex-1 rounded-xl border border-[#ECEDEE] bg-[#F7F8F9] p-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                                    <div className="text-[9px] text-[#86888C] dark:text-white/40">
-                                                        Dari
-                                                    </div>
-                                                    <div className="mt-0.5 text-[11px] font-medium text-[#1A1A1A] dark:text-white/80">
-                                                        IT Dept
-                                                    </div>
-                                                </div>
-                                                <svg
-                                                    className="size-3.5 shrink-0 text-[#006FCF]"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    strokeWidth={2}
-                                                    stroke="currentColor"
+                                        </div>
+                                        <p className="mt-5 leading-relaxed text-gray-600 dark:text-gray-400">
+                                            {feature.description}
+                                        </p>
+                                        <ul className="mt-auto space-y-3 pt-8">
+                                            {feature.ops.map((op) => (
+                                                <li
+                                                    key={op}
+                                                    className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300"
                                                 >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                                    />
-                                                </svg>
-                                                <div className="flex-1 rounded-xl border border-[#ECEDEE] bg-[#F7F8F9] p-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                                    <div className="text-[9px] text-[#86888C] dark:text-white/40">
-                                                        Ke
-                                                    </div>
-                                                    <div className="mt-0.5 text-[11px] font-medium text-[#1A1A1A] dark:text-white/80">
-                                                        HR Dept
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#0080FF]/10 text-[#0080FF] dark:bg-[#6971ec]/20 dark:text-[#6971ec]">
+                                                        <svg
+                                                            className="size-3"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            strokeWidth={3}
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="m4.5 12.75 6 6 9-13.5"
+                                                            />
+                                                        </svg>
+                                                    </span>
+                                                    {op}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 </div>
-                                <div
-                                    className="opacity-0"
-                                    style={{
-                                        animation:
-                                            'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 660ms forwards',
-                                    }}
-                                >
-                                    <div className="group rounded-[1.5rem] border border-black/[0.06] bg-black/[0.02] p-[3px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[#B95000]/20 hover:shadow-[0_8px_40px_rgba(185,80,0,0.06)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-[#B95000]/30 dark:hover:bg-white/[0.05] dark:hover:shadow-[0_8px_40px_rgba(185,80,0,0.08)]">
-                                        <div className="rounded-[calc(1.5rem-3px)] bg-white p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,23,90,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                            <div className="mb-5 h-1 w-10 rounded-full bg-[#B95000]" />
-                                            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-[#B95000]/[0.08] text-[#B95000] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:bg-[#B95000] group-hover:text-white dark:bg-[#B95000]/10">
-                                                {features[3].icon}
-                                            </div>
-                                            <h3 className="mb-2 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                                                {features[3].title}
-                                            </h3>
-                                            <p className="text-xs leading-relaxed text-[#53565A] dark:text-[#B7C3D9]">
-                                                {features[3].description}
-                                            </p>
-                                            <div className="mt-5 rounded-xl border border-[#B95000]/20 bg-[#B95000]/[0.06] p-2.5 text-center dark:bg-[#B95000]/[0.08]">
-                                                <span className="text-[11px] font-medium text-[#B95000]">
-                                                    12 Menunggu
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </section>
-                    <section className="mt-32 md:mt-40">
-                        <div
-                            className="opacity-0"
-                            style={{
-                                animation:
-                                    'fadeUp 800ms cubic-bezier(0.32,0.72,0,1) 200ms forwards',
-                            }}
-                        >
-                            <div className="rounded-[2rem] border border-[#00175A]/20 bg-[#00175A]/[0.03] p-[3px] dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                <div className="relative overflow-hidden rounded-[calc(2rem-3px)] bg-[#00175A] px-8 py-16 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:px-16 md:py-24 dark:bg-white/[0.02] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                                    <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#006FCF]/20 blur-[100px] dark:bg-[#006FCF]/[0.1]" />
-                                    <div className="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-[#BF9B30]/10 blur-[80px] dark:bg-[#BF9B30]/[0.06]" />
-                                    <div className="relative flex flex-col items-center text-center">
-                                        <h2 className="mb-5 max-w-2xl text-3xl font-semibold tracking-tight text-white md:text-4xl lg:text-5xl">
-                                            Optimalkan pengelolaan aset Anda
-                                            hari ini.
-                                        </h2>
-                                        <p className="mb-10 max-w-md text-base leading-relaxed text-[#B7C3D9]">
-                                            Masuk menggunakan akun SSO
-                                            perusahaan Anda dan mulai mengelola
-                                            seluruh aset dalam hitungan menit.
-                                        </p>
-                                        <a
-                                            href="/auth/redirect"
-                                            className="group inline-flex items-center gap-0 rounded-full bg-white py-2 pr-2 pl-8 text-sm font-medium text-[#00175A] shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/90 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] active:scale-[0.97]"
-                                        >
-                                            Masuk dengan SSO
-                                            <span className="ml-2 flex size-9 items-center justify-center rounded-full bg-[#00175A]/5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-[1px] group-hover:scale-110 group-hover:bg-[#00175A]/10">
-                                                <svg
-                                                    className="size-3.5"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    strokeWidth={2}
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                                    />
-                                                </svg>
-                                            </span>
-                                        </a>
+
+                    {/* How it works */}
+                    <section
+                        id="cara-kerja"
+                        className="scroll-mt-32 pb-24 md:pb-32"
+                    >
+                        <div className="mb-16 text-center md:text-left">
+                            <h2 className="text-3xl leading-tight font-extrabold tracking-tight md:text-5xl dark:text-white">
+                                Tiga langkah mudah.
+                            </h2>
+                            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                                Alur kerja yang intuitif untuk semua peran.
+                            </p>
+                        </div>
+                        <div className="relative grid gap-6 md:grid-cols-3">
+                            <div className="absolute top-1/2 right-[16%] left-[16%] hidden h-0.5 -translate-y-1/2 bg-gradient-to-r from-[#0080FF]/25 via-[#6971ec]/25 to-[#0080FF]/25 md:block" />
+                            {steps.map((step, i) => (
+                                <div
+                                    key={step.title}
+                                    className="relative flex flex-col items-center rounded-3xl border border-white/70 bg-white/45 p-8 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]"
+                                >
+                                    <div className="relative mb-6 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-2xl font-black text-white shadow-lg shadow-[#0080FF]/30">
+                                        {i + 1}
                                     </div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                        {step.title}
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                                        {step.description}
+                                    </p>
                                 </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* CTA */}
+                    <section className="pb-24 md:pb-36">
+                        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/40 px-8 py-20 text-center shadow-2xl shadow-[#0B0B3B]/10 backdrop-blur-2xl md:px-16 dark:border-white/10 dark:bg-white/[0.04]">
+                            <div className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-[#0080FF]/20 blur-[100px]" />
+                            <div className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-[#6971ec]/20 blur-[100px]" />
+                            <div className="relative z-10">
+                                <h2 className="mx-auto max-w-2xl text-3xl leading-tight font-extrabold tracking-tight md:text-5xl dark:text-white">
+                                    Kendalikan aset Anda hari ini.
+                                </h2>
+                                <p className="mx-auto mt-6 max-w-xl text-lg text-gray-600 dark:text-gray-400">
+                                    Gunakan akun SSO korporat Anda untuk masuk
+                                    dan mulai mengelola ribuan aset dalam
+                                    hitungan menit.
+                                </p>
+                                <Link
+                                    href={ctaHref}
+                                    className="group mt-10 inline-flex items-center gap-2.5 rounded-2xl bg-[#0080FF] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#0080FF]/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/45 active:translate-y-0 active:scale-95"
+                                >
+                                    {auth?.user
+                                        ? 'Lanjutkan ke Dashboard'
+                                        : 'Masuk via SSO Sekarang'}
+                                    <svg
+                                        className="size-5 transition-transform duration-300 group-hover:translate-x-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={2.5}
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                                        />
+                                    </svg>
+                                </Link>
                             </div>
                         </div>
                     </section>
                 </main>
-                <footer className="relative z-10 border-t border-[#D5D9DC] py-10 dark:border-white/[0.06]">
-                    <div className="mx-auto flex max-w-7xl items-center justify-between px-4 md:px-8">
-                        <div className="flex items-center gap-2">
-                            <AppLogoIcon className="size-5 text-[#86888C] dark:text-white/30" />
-                            <span className="text-xs text-[#86888C] dark:text-white/30">
-                                OptiAsset
+
+                <footer className="relative z-10 border-t border-white/60 bg-white/30 px-6 py-14 backdrop-blur-xl md:px-8 dark:border-white/[0.06] dark:bg-black/20">
+                    <div className="mx-auto max-w-6xl">
+                        <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr]">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white">
+                                        <AppLogoIcon className="size-5" />
+                                    </span>
+                                    <span className="font-mono text-base font-bold text-gray-900 dark:text-white">
+                                        OptiAsset
+                                    </span>
+                                </div>
+                                <p className="mt-6 max-w-sm text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                                    Sistem manajemen aset internal canggih untuk
+                                    organisasi modern. Tersentral, jejak penuh,
+                                    integrasi aman.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-mono text-xs font-bold tracking-widest text-gray-900 uppercase dark:text-white">
+                                    Navigasi
+                                </h4>
+                                <ul className="mt-6 space-y-3">
+                                    {[
+                                        ['#fitur', 'Fitur Utama'],
+                                        ['#cara-kerja', 'Cara Kerja'],
+                                        ...(auth?.user
+                                            ? [['/organizations', 'Organisasi']]
+                                            : []),
+                                    ].map(([href, label]) => (
+                                        <li key={href}>
+                                            <a
+                                                href={href}
+                                                className="text-sm font-medium text-gray-500 transition-colors hover:text-[#0080FF] dark:text-gray-400 dark:hover:text-[#6971ec]"
+                                            >
+                                                {label}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-mono text-xs font-bold tracking-widest text-gray-900 uppercase dark:text-white">
+                                    Akses
+                                </h4>
+                                <ul className="mt-6 space-y-3">
+                                    <li>
+                                        <a
+                                            href={ctaHref}
+                                            className="text-sm font-medium text-gray-500 transition-colors hover:text-[#0080FF] dark:text-gray-400 dark:hover:text-[#6971ec]"
+                                        >
+                                            {ctaLabel}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="/auth/redirect"
+                                            className="text-sm font-medium text-gray-500 transition-colors hover:text-[#0080FF] dark:text-gray-400 dark:hover:text-[#6971ec]"
+                                        >
+                                            SSO Perusahaan
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="mt-12 flex flex-col items-center justify-between border-t border-white/60 pt-8 sm:flex-row dark:border-white/10">
+                            <span className="text-sm text-gray-500 dark:text-gray-500">
+                                © {new Date().getFullYear()} OptiAsset Inc.
+                            </span>
+                            <span className="mt-2 text-sm text-gray-500 sm:mt-0 dark:text-gray-500">
+                                Internal Asset Management System
                             </span>
                         </div>
-                        <span className="text-xs text-[#86888C] dark:text-white/30">
-                            Sistem Manajemen Aset Internal
-                        </span>
                     </div>
                 </footer>
             </div>
+
             <style
                 dangerouslySetInnerHTML={{
                     __html: `
-                        @keyframes fadeUp {
-                            from {
-                                opacity: 0;
-                                transform: translateY(1.5rem) blur(4px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0) blur(0);
-                            }
-                        }
-                        @keyframes barGrow {
-                            from {
-                                transform: scaleY(0);
-                            }
-                            to {
-                                transform: scaleY(1);
-                            }
-                        }
-                        @media (prefers-reduced-motion: reduce) {
-                            [style*="animation"] {
-                                animation: none !important;
-                                opacity: 1 !important;
-                                transform: none !important;
-                            }
-                        }
-                    `,
+                    @keyframes scanSweep {
+                        0%, 100% { transform: translateY(0); opacity: 0; }
+                        15% { opacity: 1; }
+                        50% { transform: translateY(132px); opacity: 1; }
+                        85% { opacity: 1; }
+                        100% { transform: translateY(0); opacity: 0; }
+                    }
+                    .scan-laser { animation: scanSweep 3s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+                    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+                    .marquee-track { animation: marquee 30s linear infinite; }
+                    @keyframes rowIn { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+                    .scan-row { animation: rowIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+                    @keyframes wordRoll {
+                        0%, 16% { transform: translateY(0); }
+                        20%, 36% { transform: translateY(-20%); }
+                        40%, 56% { transform: translateY(-40%); }
+                        60%, 76% { transform: translateY(-60%); }
+                        80%, 96% { transform: translateY(-80%); }
+                        100% { transform: translateY(-80%); }
+                    }
+                    .word-roll { animation: wordRoll 8s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+                    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+                    .perspective-1000 { perspective: 1000px; }
+                    @media (prefers-reduced-motion: reduce) {
+                        .scan-laser, .marquee-track, .word-roll, .animate-fade-in-up, .scan-row { animation: none !important; opacity: 1 !important; transform: none !important; }
+                    }
+                `,
                 }}
             />
         </>

@@ -241,7 +241,7 @@ export const sidebarData: SidebarData = {
                 },
                 {
                     title: 'Anggota',
-                    url: '/members',
+                    url: '/employees',
                     icon: UserCircle,
                     permission: {
                         resource: 'employee',

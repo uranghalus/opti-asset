@@ -45,4 +45,9 @@ return [
             'verify' => env('OIDC_VERIFY_SSL', true),
         ],
     ],
+    'optigate_portal' => [
+        'url' => env('WEB_PORTAL_URL'),
+        'token' => env('WEB_PORTAL_TOKEN'),
+        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+    ],
 ];

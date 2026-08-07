@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OIDCController;
+use App\Http\Controllers\Org\DepartmentController;
+use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -55,6 +58,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('locations', [LocationController::class, 'store'])->name('locations.store');
     Route::patch('locations/{location}', [LocationController::class, 'update'])->name('locations.update');
     Route::delete('locations/{location}', [LocationController::class, 'destroy'])->name('locations.destroy');
+
+    Route::get('categories', [AssetCategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories', [AssetCategoryController::class, 'store'])->name('categories.store');
+    Route::patch('categories/{category}', [AssetCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [AssetCategoryController::class, 'destroy'])->name('categories.destroy');
+
+    Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
+    Route::get('departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
+    Route::post('departments/sync', [DepartmentController::class, 'sync'])->name('departments.sync');
+
+    Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::post('employees/sync', [EmployeeController::class, 'sync'])->name('employees.sync');
 
     Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');

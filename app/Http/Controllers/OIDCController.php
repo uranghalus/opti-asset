@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateTenantAction;
 use App\Models\Department;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,19 +37,14 @@ class OIDCController extends Controller
                 ? ($rawData['department']['name'] ?? $rawData['department']['id'] ?? null)
                 : ($rawData['department'] ?? null);
 
+            $user = User::where('email', $ssoUser->getEmail())->first();
+
             $departmentId = null;
             if (! empty($ssoDepartmentName)) {
                 try {
-                    if (Str::isUuid($ssoDepartmentName)) {
-                        $localDepartment = Department::find($ssoDepartmentName);
-                    } else {
-                        $localDepartment = Department::where('nama_department', $ssoDepartmentName)->first();
-                    }
-
-                    if ($localDepartment) {
-                        $departmentId = $localDepartment->id_department;
-                    } else {
-                        Log::warning("SSO Callback: Department '{$ssoDepartmentName}' tidak ditemukan di tabel lokal.");
+                    if ($user?->tenant_id) {
+                        $departmentId = Tenant::find($user->tenant_id)
+                            ?->execute(fn () => $this->findDepartmentId($ssoDepartmentName));
                     }
                 } catch (\Exception $e) {
                     Log::warning('SSO Callback: Gagal query Department — '.$e->getMessage());
@@ -101,5 +97,20 @@ class OIDCController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function findDepartmentId(string $ssoDepartmentName): ?string
+    {
+        $department = Str::isUuid($ssoDepartmentName)
+            ? Department::find($ssoDepartmentName)
+            : Department::where('nama_department', $ssoDepartmentName)->first();
+
+        if (! $department) {
+            Log::warning("SSO Callback: Department '{$ssoDepartmentName}' tidak ditemukan di tabel lokal.");
+
+            return null;
+        }
+
+        return $department->id_department;
     }
 }

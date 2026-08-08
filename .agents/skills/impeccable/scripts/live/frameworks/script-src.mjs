@@ -13,5 +13,6 @@
  */
 export function buildLiveScriptSrc(port, token) {
   const base = 'http://localhost:' + port + '/live.js';
+
   return token ? base + '?token=' + encodeURIComponent(token) : base;
 }

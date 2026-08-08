@@ -16,20 +16,26 @@
  *   - git:       branch + files changed vs the default branch (a scope hint)
  *   - devServer: whether a local dev server answers on a common port (gates live)
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
 import { loadContext, extractPlatform } from './context.mjs';
 import { readLatestSnapshotAcrossTargets } from './critique-storage.mjs';
 
 /** Is there code here at all, or just context files / an empty repo? */
 function hasCode(cwd) {
-  if (fs.existsSync(path.join(cwd, 'package.json'))) return true;
+  if (fs.existsSync(path.join(cwd, 'package.json'))) {
+return true;
+}
+
   for (const d of ['src', 'app', 'pages', 'site', 'public', 'components', 'lib']) {
-    if (fs.existsSync(path.join(cwd, d))) return true;
+    if (fs.existsSync(path.join(cwd, d))) {
+return true;
+}
   }
+
   return false;
 }
 
@@ -39,12 +45,18 @@ function hasCode(cwd) {
 function latestCritique(cwd) {
   try {
     const latest = readLatestSnapshotAcrossTargets({ cwd });
-    if (!latest) return null;
+
+    if (!latest) {
+return null;
+}
+
     const get = (key) => latest.meta[key] ?? null;
     const num = (v) => {
       const n = Number(v);
+
       return Number.isFinite(n) ? n : null;
     };
+
     return {
       slug: get('slug'),
       score: num(get('score')),
@@ -67,14 +79,17 @@ function gitSignals(cwd) {
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'ignore'],
       });
+
       return trim ? out.trim() : out;
     } catch {
       return null;
     }
   };
+
   if (run(['rev-parse', '--is-inside-work-tree']) !== 'true') {
     return { isRepo: false, branch: null, base: null, changedFiles: [], changedCount: 0 };
   }
+
   const branch = run(['rev-parse', '--abbrev-ref', 'HEAD']);
   // The merge target is detected, not assumed. A hardcoded main/master list
   // diffed develop-based repos against the wrong base, so git.changedFiles
@@ -99,16 +114,26 @@ function gitSignals(cwd) {
   // from feature's remote-tracking refs by the full ref namespace.
   const resolveUpstream = () => {
     const full = run(['rev-parse', '--symbolic-full-name', '@{u}']);
-    if (!full) return null;
+
+    if (!full) {
+return null;
+}
+
     if (full.startsWith('refs/heads/')) {
       const name = full.slice('refs/heads/'.length);
+
       return { name, rev: name };
     }
+
     if (full.startsWith('refs/remotes/')) {
       const rest = full.slice('refs/remotes/'.length);
       const i = rest.indexOf('/');
-      if (i > 0) return { name: rest.slice(i + 1), rev: rest };
+
+      if (i > 0) {
+return { name: rest.slice(i + 1), rev: rest };
+}
     }
+
     return null;
   };
   const conventional = ['develop', 'main', 'master'];
@@ -123,18 +148,24 @@ function gitSignals(cwd) {
   // checkout (branch reads as the literal `HEAD`) has no branch identity to
   // diff for and keeps the working-tree scope too.
   const remoteHeads = [];
+
   for (const r of [...new Set(['origin', ...remotes])]) {
     // The symref's own prefix is the remote just queried, so it is stripped
     // directly; the remote need not be in `git remote` output (tests and
     // partial clones fabricate refs/remotes/origin/* without a remote).
     const ref = run(['symbolic-ref', '--short', `refs/remotes/${r}/HEAD`]);
-    if (ref && ref.startsWith(`${r}/`)) remoteHeads.push({ name: ref.slice(r.length + 1), rev: ref });
+
+    if (ref && ref.startsWith(`${r}/`)) {
+remoteHeads.push({ name: ref.slice(r.length + 1), rev: ref });
+}
   }
+
   const onIntegrationBranch = branch === 'HEAD'
     || conventional.includes(branch)
     || remoteHeads.some((head) => head.name === branch);
   let base = null;
   let baseRev = null;
+
   if (!onIntegrationBranch) {
     const upstream = resolveUpstream();
     // Every named candidate tries the local branch first, then that name on
@@ -147,13 +178,20 @@ function gitSignals(cwd) {
     const candidates = [];
     const seen = new Set();
     const addCandidate = (name, revs) => {
-      if (!name || name === branch || seen.has(name)) return;
+      if (!name || name === branch || seen.has(name)) {
+return;
+}
+
       seen.add(name);
       candidates.push({ name, revs });
     };
+
     // The upstream tracks the actual merge target, so its own rev wins over
     // a possibly stale local branch of the same name.
-    if (upstream) addCandidate(upstream.name, [upstream.rev]);
+    if (upstream) {
+addCandidate(upstream.name, [upstream.rev]);
+}
+
     // A develop branch marks a git-flow repo where features merge to develop
     // even when the platform default (origin/HEAD) was never flipped off
     // main; an existing develop therefore outranks the remote default. This
@@ -166,10 +204,18 @@ function gitSignals(cwd) {
     // itself or a stale local develop would win.
     const advertisedRevs = (name) => remoteHeads.filter((head) => head.name === name).map((head) => head.rev);
     addCandidate('develop', [...new Set([...advertisedRevs('develop'), ...revsFor('develop')])]);
-    for (const head of remoteHeads) addCandidate(head.name, [...new Set([head.rev, ...revsFor(head.name)])]);
-    for (const name of ['main', 'master']) addCandidate(name, revsFor(name));
+
+    for (const head of remoteHeads) {
+addCandidate(head.name, [...new Set([head.rev, ...revsFor(head.name)])]);
+}
+
+    for (const name of ['main', 'master']) {
+addCandidate(name, revsFor(name));
+}
+
     for (const c of candidates) {
       const rev = c.revs.find((r) => run(['rev-parse', '--verify', '--quiet', r]) !== null);
+
       if (rev) {
         base = c.name;
         baseRev = rev;
@@ -177,6 +223,7 @@ function gitSignals(cwd) {
       }
     }
   }
+
   const diffBase = base && branch && branch !== base ? base : null;
   const fromDiff = diffBase ? run(['diff', '--name-only', `${baseRev}...HEAD`]) : null;
   // porcelain lines are `XY PATH`: a 2-char status + a space, then the path.
@@ -185,15 +232,18 @@ function gitSignals(cwd) {
   // status column and shift the slice. Renames render as `old -> new`.
   const fromStatus = run(['-c', 'core.quotepath=false', 'status', '--porcelain'], { trim: false });
   let changed = [];
+
   if (fromDiff) {
     changed = fromDiff.split('\n').filter(Boolean);
   } else if (fromStatus) {
     changed = fromStatus.split(/\r?\n/).filter(Boolean).map((l) => {
       const p = l.slice(3);
       const arrow = p.indexOf(' -> ');
+
       return arrow === -1 ? p : p.slice(arrow + 4);
     });
   }
+
   return {
     isRepo: true,
     branch,
@@ -210,9 +260,16 @@ function probePort(port, timeout = 250) {
     const sock = new net.Socket();
     let settled = false;
     const finish = (ok) => {
-      if (settled) return;
+      if (settled) {
+return;
+}
+
       settled = true;
-      try { sock.destroy(); } catch { /* ignore */ }
+
+      try {
+ sock.destroy(); 
+} catch { /* ignore */ }
+
       resolve(ok);
     };
     sock.setTimeout(timeout);
@@ -227,10 +284,13 @@ async function devServerSignals() {
   const open = [];
   await Promise.all(
     COMMON_DEV_PORTS.map(async (p) => {
-      if (await probePort(p)) open.push(p);
+      if (await probePort(p)) {
+open.push(p);
+}
     }),
   );
   open.sort((a, b) => a - b);
+
   return { running: open.length > 0, ports: open };
 }
 
@@ -250,6 +310,7 @@ const SOURCE_DIRS = ['src', 'app', 'components', 'pages', 'public'];
 // the walker would never visit.
 function isVendoredPath(rel) {
   const dirSegments = rel.split(/[\\/]/).slice(0, -1);
+
   return dirSegments.some(
     (seg) =>
       (seg.startsWith('.') && seg !== '.vitepress' && seg !== '.vuepress' && seg !== '.storybook') ||
@@ -273,21 +334,36 @@ function scanTargets(cwd, git) {
       .filter((f) => SCANNABLE_EXT.has(path.extname(f).toLowerCase()))
       .filter((f) => !isVendoredPath(f))
       .filter((f) => fs.existsSync(path.join(cwd, f)));
-    if (changed.length) return { targets: changed.slice(0, 50), via: 'git-changes' };
+
+    if (changed.length) {
+return { targets: changed.slice(0, 50), via: 'git-changes' };
+}
   }
+
   // 2. Otherwise scan the local source dirs that exist.
   const dirs = SOURCE_DIRS.filter((d) => fs.existsSync(path.join(cwd, d)));
-  if (dirs.length) return { targets: dirs, via: 'source-dir' };
+
+  if (dirs.length) {
+return { targets: dirs, via: 'source-dir' };
+}
+
   // 3. A root HTML entry, or the project root as a last resort when there's
   //    code but no conventional source dir (walkDir still skips heavy dirs).
-  if (fs.existsSync(path.join(cwd, 'index.html'))) return { targets: ['index.html'], via: 'html' };
-  if (hasCode(cwd)) return { targets: ['.'], via: 'root' };
+  if (fs.existsSync(path.join(cwd, 'index.html'))) {
+return { targets: ['index.html'], via: 'html' };
+}
+
+  if (hasCode(cwd)) {
+return { targets: ['.'], via: 'root' };
+}
+
   return { targets: [], via: null };
 }
 
 export async function gatherSignals(cwd = process.cwd()) {
   const ctx = loadContext(cwd);
   const git = gitSignals(cwd);
+
   return {
     setup: {
       hasProduct: ctx.hasProduct,
@@ -311,7 +387,11 @@ async function cli() {
 
 function invokedAsScript() {
   const arg = process.argv[1];
-  if (!arg) return false;
+
+  if (!arg) {
+return false;
+}
+
   try {
     return fs.realpathSync(arg) === fs.realpathSync(fileURLToPath(import.meta.url));
   } catch {

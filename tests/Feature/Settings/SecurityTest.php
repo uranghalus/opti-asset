@@ -39,23 +39,6 @@ class SecurityTest extends TestCase
             );
     }
 
-    public function test_security_page_requires_password_confirmation_when_enabled()
-    {
-        $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-        $user = User::factory()->create();
-
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-        ]);
-
-        $response = $this->actingAs($user)
-            ->get(route('security.edit'));
-
-        $response->assertRedirect(route('password.confirm'));
-    }
-
     public function test_security_page_renders_without_two_factor_when_feature_is_disabled()
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());

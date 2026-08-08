@@ -20,14 +20,22 @@ import { readBuffer, removeEntries, truncateBuffer } from './live/manual-edits-b
 
 function argVal(args, name) {
   const prefix = name + '=';
+
   for (const a of args) {
-    if (a === name) return true;
-    if (a.startsWith(prefix)) return a.slice(prefix.length);
+    if (a === name) {
+return true;
+}
+
+    if (a.startsWith(prefix)) {
+return a.slice(prefix.length);
+}
   }
+
   return null;
 }
 
 const args = process.argv.slice(2);
+
 if (args.includes('--help') || args.includes('-h')) {
   console.log('Usage: node live-discard-manual-edits.mjs [--page-url=<url>]');
   process.exit(0);
@@ -39,6 +47,7 @@ const cwd = process.cwd();
 let discarded;
 let entries;
 const buffer = readBuffer(cwd);
+
 if (pageUrlFilter) {
   entries = buffer.entries.filter((entry) => entry.pageUrl === pageUrlFilter);
   discarded = removeEntries(cwd, (entry) => entry.pageUrl === pageUrlFilter);

@@ -239,31 +239,92 @@ type ImportRow = {
     parent_code: string;
 };
 
+const HIERARCHY_COLUMNS = [
+    { key: 'golongan aset', level: 'group' },
+    { key: 'bidang/ kategori aset', level: 'category' },
+    { key: 'kelompok aset', level: 'cluster' },
+    { key: 'sub. kelompok aset', level: 'sub-cluster' },
+];
+
 function rowsFromSheet(data: string[][]): ImportRow[] {
     if (data.length === 0) {
         return [];
     }
 
     const header = data[0].map((h) => h.trim().toLowerCase());
-    const indexOf = (name: string) => header.indexOf(name);
+
+    const hasColumn = (name: string) => header.includes(name);
+
+    // Legacy flat format: level / name / code / description / parent_code
+    if (hasColumn('level') && hasColumn('name')) {
+        const indexOf = (name: string) => header.indexOf(name);
+
+        return data
+            .slice(1)
+            .map((cells) => {
+                const at = (name: string) =>
+                    indexOf(name) === -1
+                        ? ''
+                        : (cells[indexOf(name)]?.trim() ?? '');
+
+                return {
+                    level: at('level'),
+                    name: at('name'),
+                    code: at('code'),
+                    description: at('description'),
+                    parent_code: at('parent_code'),
+                };
+            })
+            .filter((row) => row.name !== '');
+    }
+
+    // Hierarchy format: Golongan Aset | Bidang/Kategori | Kelompok | Sub.Kelompok | Uraian | Keterangan
+    const columns = HIERARCHY_COLUMNS.filter((column) =>
+        hasColumn(column.key),
+    ).map((column) => ({
+        ...column,
+        index: header.indexOf(column.key),
+    }));
+
+    if (columns.length === 0) {
+        return [];
+    }
+
+    const uraianIndex = header.indexOf('uraian');
+    const keteranganIndex = header.indexOf('keterangan');
 
     return data
         .slice(1)
         .map((cells) => {
-            const at = (name: string) =>
-                indexOf(name) === -1
-                    ? ''
-                    : (cells[indexOf(name)]?.trim() ?? '');
+            const filled = columns
+                .filter((column) => (cells[column.index]?.trim() ?? '') !== '')
+                .map((column) => ({
+                    ...column,
+                    value: (cells[column.index] ?? '').trim(),
+                }));
+
+            if (filled.length === 0) {
+                return null;
+            }
+
+            const node = filled[filled.length - 1];
+            const parent = filled.length > 1 ? filled[filled.length - 2] : null;
 
             return {
-                level: at('level'),
-                name: at('name'),
-                code: at('code'),
-                description: at('description'),
-                parent_code: at('parent_code'),
+                level: node.level,
+                name:
+                    uraianIndex === -1
+                        ? ''
+                        : (cells[uraianIndex]?.trim() ?? ''),
+                code: node.value,
+                description:
+                    keteranganIndex === -1
+                        ? ''
+                        : (cells[keteranganIndex]?.trim() ?? ''),
+                parent_code: parent?.value ?? '',
             };
         })
-        .filter((row) => row.name !== '');
+        .filter((row): row is ImportRow => row !== null && row.name !== '');
 }
 
 export default function AssetClassification() {

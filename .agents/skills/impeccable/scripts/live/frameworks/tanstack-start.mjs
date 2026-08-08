@@ -39,7 +39,10 @@ export const tanstackStart = {
     },
 
     artifacts({ project }) {
-      if (!project) return [];
+      if (!project) {
+return [];
+}
+
       return [
         {
           kind: 'created',

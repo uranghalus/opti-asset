@@ -44,6 +44,7 @@ const PIN_MARKER = '<!-- impeccable-pinned-skill -->';
  */
 function findProjectRoot(startDir = process.cwd()) {
   let dir = resolve(startDir);
+
   while (dir !== '/') {
     if (
       existsSync(join(dir, 'package.json')) ||
@@ -52,10 +53,16 @@ function findProjectRoot(startDir = process.cwd()) {
     ) {
       return dir;
     }
+
     const parent = resolve(dir, '..');
-    if (parent === dir) break;
+
+    if (parent === dir) {
+break;
+}
+
     dir = parent;
   }
+
   return resolve(startDir);
 }
 
@@ -64,14 +71,17 @@ function findProjectRoot(startDir = process.cwd()) {
  */
 function findHarnessDirs(projectRoot) {
   const dirs = [];
+
   for (const harness of HARNESS_DIRS) {
     const skillsDir = join(projectRoot, harness, 'skills');
     // Only pin in harness dirs that already have impeccable installed
     const impeccableDir = join(skillsDir, 'impeccable');
+
     if (existsSync(impeccableDir) || existsSync(join(skillsDir, 'i-impeccable'))) {
       dirs.push(skillsDir);
     }
   }
+
   return dirs;
 }
 
@@ -80,9 +90,11 @@ function findHarnessDirs(projectRoot) {
  */
 function loadCommandMetadata() {
   const metadataPath = join(__dirname, 'command-metadata.json');
+
   if (existsSync(metadataPath)) {
     return JSON.parse(readFileSync(metadataPath, 'utf-8'));
   }
+
   return {};
 }
 
@@ -123,6 +135,7 @@ function pin(command, projectRoot) {
 
   if (harnessDirs.length === 0) {
     console.log('No harness directories with impeccable installed found.');
+
     return false;
   }
 
@@ -133,10 +146,13 @@ function pin(command, projectRoot) {
     const content = generatePinnedSkill(command, metadata, commandPrefix, commandPrefix === '$');
     // Check if skill already exists (and isn't a pin)
     const skillDir = join(skillsDir, command);
+
     if (existsSync(skillDir)) {
       const existingMd = join(skillDir, 'SKILL.md');
+
       if (existsSync(existingMd)) {
         const existing = readFileSync(existingMd, 'utf-8');
+
         if (!existing.includes(PIN_MARKER)) {
           console.log(`  SKIP: ${skillDir} (non-pinned skill already exists)`);
           continue;
@@ -167,13 +183,20 @@ function unpin(command, projectRoot) {
 
   for (const skillsDir of harnessDirs) {
     const skillDir = join(skillsDir, command);
-    if (!existsSync(skillDir)) continue;
+
+    if (!existsSync(skillDir)) {
+continue;
+}
 
     const skillMd = join(skillDir, 'SKILL.md');
-    if (!existsSync(skillMd)) continue;
+
+    if (!existsSync(skillMd)) {
+continue;
+}
 
     // Safety: only remove if it's a pinned skill
     const content = readFileSync(skillMd, 'utf-8');
+
     if (!content.includes(PIN_MARKER)) {
       console.log(`  SKIP: ${skillDir} (not a pinned skill)`);
       continue;

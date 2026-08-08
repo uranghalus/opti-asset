@@ -20,6 +20,7 @@ export function clearSourceResolutionCache() {
 function targetSignature(event) {
   const isInsert = event.mode === 'insert';
   const target = isInsert ? insertTarget(event) : replaceTarget(event);
+
   return JSON.stringify({
     mode: isInsert ? 'insert' : 'replace',
     position: isInsert ? target.position : null,
@@ -31,11 +32,16 @@ function targetSignature(event) {
 }
 
 export function buildGenerationPreflight(event, scriptsDir, { cache = null } = {}) {
-  if (!event || event.type !== 'generate' || !event.id) return null;
+  if (!event || event.type !== 'generate' || !event.id) {
+return null;
+}
 
   const isInsert = event.mode === 'insert';
   const target = isInsert ? insertTarget(event) : replaceTarget(event);
-  if (!target.elementId && !target.classes) return null;
+
+  if (!target.elementId && !target.classes) {
+return null;
+}
 
   const script = path.join(scriptsDir, isInsert ? 'live-insert.mjs' : 'live-wrap.mjs');
   const args = [script, '--id', event.id, '--count', String(event.count || 3)];
@@ -44,18 +50,41 @@ export function buildGenerationPreflight(event, scriptsDir, { cache = null } = {
   // server-side write reloads the framework and strands the browser at 0/N.
   // No-op on the svelte-component path, which never writes the route source.
   args.push('--defer-source-write');
-  if (isInsert) args.push('--position', target.position);
-  if (target.elementId) args.push('--element-id', target.elementId);
-  if (target.classes) args.push('--classes', target.classes);
-  if (target.tag) args.push('--tag', target.tag);
-  if (target.text) args.push('--text', target.text);
-  if (!isInsert && event.pageUrl) args.push('--page-url', event.pageUrl);
+
+  if (isInsert) {
+args.push('--position', target.position);
+}
+
+  if (target.elementId) {
+args.push('--element-id', target.elementId);
+}
+
+  if (target.classes) {
+args.push('--classes', target.classes);
+}
+
+  if (target.tag) {
+args.push('--tag', target.tag);
+}
+
+  if (target.text) {
+args.push('--text', target.text);
+}
+
+  if (!isInsert && event.pageUrl) {
+args.push('--page-url', event.pageUrl);
+}
+
   const signature = targetSignature(event);
   // A cached resolution points the helper straight at the file, skipping the
   // tree search. The helper still reads current content, so line ranges stay
   // fresh; only discovery is cached.
   const cachedFile = cache ? cache.get(signature) : null;
-  if (cachedFile) args.push('--file', cachedFile);
+
+  if (cachedFile) {
+args.push('--file', cachedFile);
+}
+
   return { script, args, mode: isInsert ? 'insert' : 'replace', signature };
 }
 
@@ -77,11 +106,13 @@ export async function runGenerationPreflight(event, {
   cache = sourceResolutionCache,
 } = {}) {
   const command = buildGenerationPreflight(event, scriptsDir, { cache });
+
   if (!command) {
     return { ok: false, skipped: true, reason: 'insufficient_locator' };
   }
 
   const startedAt = performance.now();
+
   try {
     const { stdout } = await execFileImpl(process.execPath, command.args, {
       cwd,
@@ -89,14 +120,20 @@ export async function runGenerationPreflight(event, {
       timeout: timeoutMs,
     });
     const line = String(stdout).trim().split('\n').filter(Boolean).pop();
-    if (!line) throw new Error('preflight returned no scaffold metadata');
+
+    if (!line) {
+throw new Error('preflight returned no scaffold metadata');
+}
+
     const scaffold = JSON.parse(line);
     // Cache the resolved SOURCE file (route source, not the svelte manifest) so
     // the next generate on this target skips the tree search.
     const resolvedSource = scaffold.sourceFile || scaffold.file;
+
     if (cache && command.signature && typeof resolvedSource === 'string') {
       cache.set(command.signature, resolvedSource);
     }
+
     return {
       ok: true,
       mode: command.mode,
@@ -106,7 +143,10 @@ export async function runGenerationPreflight(event, {
   } catch (error) {
     // Evict a stale/failed resolution so the next attempt does a full search
     // (the element may have moved out of the previously cached file).
-    if (cache && command.signature) cache.delete(command.signature);
+    if (cache && command.signature) {
+cache.delete(command.signature);
+}
+
     return {
       ok: false,
       mode: command.mode,
@@ -134,6 +174,7 @@ function normalizeTarget(target) {
   const text = typeof target.textContent === 'string'
     ? target.textContent.trim().slice(0, 80)
     : '';
+
   return {
     elementId: target.id || target.elementId || undefined,
     classes: classes || undefined,
@@ -145,5 +186,6 @@ function normalizeTarget(target) {
 function compactError(error) {
   const stderr = error?.stderr ? String(error.stderr).trim() : '';
   const message = stderr.split('\n').filter(Boolean).pop() || error?.message || 'preflight failed';
+
   return String(message).slice(0, 500);
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Department;
+use App\Models\Tenant;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -18,7 +19,15 @@ class SyncDepartments extends Command
         $url = config('services.optigate_portal.url').'/api/departments';
         $token = config('services.optigate_portal.token');
 
-        $this->info('Memulai sinkronisasi department...');
+        $tenantId = Tenant::current()?->id;
+
+        if (! $tenantId) {
+            $this->error('Tidak ada tenant aktif. Sinkronisasi dibatalkan.');
+
+            return;
+        }
+
+        $this->info("Memulai sinkronisasi department untuk tenant {$tenantId}...");
 
         try {
             $response = Http::withToken($token)
@@ -32,9 +41,10 @@ class SyncDepartments extends Command
 
                 foreach ($departments as $dept) {
                     // Gunakan updateOrCreate untuk mencegah duplikasi data
-                    Department::updateOrCreate(
+                    Department::withoutGlobalScopes()->updateOrCreate(
                         ['id_department' => $dept['id']],
                         [
+                            'tenant_id' => $tenantId,
                             'nama_department' => $dept['name'],
                             'kode_department' => $dept['code'] ?? null,
                             'hod_user_id' => $dept['hod_user_id'] ?? null,

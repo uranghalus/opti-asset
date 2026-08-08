@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignEmployeeRolesRequest;
 use App\Models\Department;
 use App\Models\Employee;
 use Illuminate\Http\RedirectResponse;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class EmployeeController extends Controller
 {
@@ -18,7 +20,7 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Employee::query()->with('department');
+        $query = Employee::query()->with('department', 'roles');
 
         if ($request->filled('search')) {
             $search = $request->string('search')->trim()->toString();
@@ -41,6 +43,10 @@ class EmployeeController extends Controller
             'employees' => $employees,
             'departments' => Department::orderBy('nama_department')
                 ->get(['id_department', 'kode_department', 'nama_department']),
+            'roles' => Role::query()
+                ->where('guard_name', 'web')
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'filters' => $request->only(['search', 'department']),
         ]);
     }
@@ -51,8 +57,20 @@ class EmployeeController extends Controller
     public function show(Employee $employee): Response
     {
         return Inertia::render('Employees/Show', [
-            'employee' => $employee->load('department'),
+            'employee' => $employee->load('department', 'roles'),
         ]);
+    }
+
+    /**
+     * Sync the roles assigned to the specified employee.
+     */
+    public function assignRoles(AssignEmployeeRolesRequest $request, Employee $employee): RedirectResponse
+    {
+        $employee->syncRoles($request->validated('roles'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Role karyawan berhasil diperbarui.']);
+
+        return back();
     }
 
     /**

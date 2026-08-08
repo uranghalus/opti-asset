@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { CalendarDays, Download } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { ChartOverview } from '@/components/dashboard/chart-overview';
 import { KpiCards } from '@/components/dashboard/kpi-cards';
@@ -42,18 +42,15 @@ function GreetingHeader() {
     const { auth } = usePage().props;
     const name = auth?.user?.name?.split(' ')[0] ?? 'User';
 
-    const [greeting, setGreeting] = useState('Selamat pagi');
-
-    useEffect(() => {
+    const [greeting] = useState(() => {
         const hour = new Date().getHours();
-        setGreeting(
-            hour < 12
-                ? 'Selamat pagi'
-                : hour < 18
-                  ? 'Selamat siang'
-                  : 'Selamat malam',
-        );
-    }, []);
+
+        return hour < 12
+            ? 'Selamat pagi'
+            : hour < 18
+              ? 'Selamat siang'
+              : 'Selamat malam';
+    });
 
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#002A6E] via-[#00175A] to-[#000C3D] p-6 shadow-lg shadow-[#00175A]/20 sm:p-7">

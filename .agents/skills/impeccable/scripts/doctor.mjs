@@ -24,23 +24,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { loadContext, extractPlatform, resolveTargetSelection } from './context.mjs';
-import { parseTargetOptions } from './lib/target-args.mjs';
-import { IMPECCABLE_COMMAND, IMPECCABLE_PROVIDER_ID } from './lib/provider.mjs';
-import { parseDesignMd } from './lib/design-parser.mjs';
 import {
   PRODUCT_SCHEMA_VERSION,
   readProductSchemaVersion,
   stampProductSchema,
 } from './lib/artifact-schema.mjs';
-import {
-  checkConfig,
-  checkDesignSidecar,
-  checkNativePlatformEvidence,
-  checkProduct,
-  checkProjectRoots,
-  checkSurfaceBriefs,
-  designSidecarCandidatesFor,
-} from './lib/staleness.mjs';
+import { parseDesignMd } from './lib/design-parser.mjs';
+import { IMPECCABLE_COMMAND, IMPECCABLE_PROVIDER_ID } from './lib/provider.mjs';
 import {
   checkDesignCoverage,
   checkDesignDrift,
@@ -50,6 +40,16 @@ import {
   checkWorkspaces,
   loadKnownRuleIds,
 } from './lib/staleness-deep.mjs';
+import {
+  checkConfig,
+  checkDesignSidecar,
+  checkNativePlatformEvidence,
+  checkProduct,
+  checkProjectRoots,
+  checkSurfaceBriefs,
+  designSidecarCandidatesFor,
+} from './lib/staleness.mjs';
+import { parseTargetOptions } from './lib/target-args.mjs';
 
 const SCRIPTS_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -64,12 +64,19 @@ function safeRead(filePath) {
 function parseArgs(argv) {
   const passthrough = [];
   const flags = { json: false, fix: false, help: false };
+
   for (const arg of argv) {
-    if (arg === '--json') flags.json = true;
-    else if (arg === '--fix') flags.fix = true;
-    else if (arg === '--help' || arg === '-h') flags.help = true;
-    else passthrough.push(arg);
+    if (arg === '--json') {
+flags.json = true;
+} else if (arg === '--fix') {
+flags.fix = true;
+} else if (arg === '--help' || arg === '-h') {
+flags.help = true;
+} else {
+passthrough.push(arg);
+}
   }
+
   return { flags, targetOptions: parseTargetOptions(passthrough, { strict: true }) };
 }
 
@@ -149,18 +156,26 @@ async function collect(cwd, targetOptions) {
 // Read straight from disk rather than importing context.mjs's private reader.
 // Only the positive/negative pattern strings matter here.
 function readProjectRootPatterns(repoRoot) {
-  if (!repoRoot) return [];
+  if (!repoRoot) {
+return [];
+}
+
   const patterns = [];
+
   for (const name of ['config.json', 'config.local.json']) {
     try {
       const raw = JSON.parse(fs.readFileSync(path.join(repoRoot, '.impeccable', name), 'utf-8'));
+
       if (Array.isArray(raw?.projectRoots)) {
         for (const entry of raw.projectRoots) {
-          if (typeof entry === 'string' && entry.trim()) patterns.push(entry.trim());
+          if (typeof entry === 'string' && entry.trim()) {
+patterns.push(entry.trim());
+}
         }
       }
     } catch { /* missing or malformed: nothing to check */ }
   }
+
   return patterns;
 }
 
@@ -177,19 +192,26 @@ function applyFixes(report) {
       skipped.push({ id: entry.id, reason: 'needs a decision from the user' });
       continue;
     }
+
     if (entry.id === 'design-sidecar-legacy-path') {
       const canonical = report.sidecarCandidates[0];
       const present = report.sidecarCandidates.find((candidate) => fs.existsSync(candidate));
-      if (!canonical || !present || path.resolve(canonical) === path.resolve(present)) continue;
+
+      if (!canonical || !present || path.resolve(canonical) === path.resolve(present)) {
+continue;
+}
+
       if (fs.existsSync(canonical)) {
         skipped.push({ id: entry.id, reason: `${rel(canonical, report.projectRoot)} already exists; not overwriting` });
         continue;
       }
+
       fs.mkdirSync(path.dirname(canonical), { recursive: true });
       fs.renameSync(present, canonical);
       applied.push(`Moved ${rel(present, report.projectRoot)} to ${rel(canonical, report.projectRoot)}.`);
       continue;
     }
+
     if (entry.id === 'legacy-live-state') {
       // Reported, never deleted here: a running live session still reads these,
       // and losing session state to a doctor run is a worse outcome than a
@@ -197,12 +219,14 @@ function applyFixes(report) {
       skipped.push({ id: entry.id, reason: 'delete by hand once no live session is running' });
       continue;
     }
+
     skipped.push({ id: entry.id, reason: 'no automatic migration implemented' });
   }
 
   // Stamping the product record is additive and safe, and it is what stops a
   // later version proposing an interview the user has already sat through.
   const productPath = report.absProductPath;
+
   if (productPath && report.ctx.product && readProductSchemaVersion(report.ctx.product) === null
     && !report.findings.some((entry) => entry.id === 'product-schema-legacy')) {
     fs.writeFileSync(productPath, stampProductSchema(report.ctx.product), 'utf-8');
@@ -214,6 +238,7 @@ function applyFixes(report) {
 
 function rel(filePath, root) {
   const value = path.relative(root, filePath);
+
   return value && !value.startsWith('..') ? value.split(path.sep).join('/') : filePath;
 }
 
@@ -228,35 +253,46 @@ function renderText(report, fixes) {
   const { findings } = report;
 
   lines.push(`Impeccable doctor: ${rel(report.projectRoot, process.cwd()) || '.'}`);
+
   if (report.ctx.isMonorepo) {
     lines.push(`Monorepo, repo root ${rel(report.ctx.repoRoot, process.cwd()) || '.'}.`);
   }
+
   lines.push('');
 
   if (!findings.length) {
     lines.push('No drift found. Every artifact matches what this version reads.');
   } else {
     const order = ['route', 'mention', 'auto'];
+
     for (const severity of order) {
       const group = findings.filter((entry) => entry.severity === severity);
-      if (!group.length) continue;
+
+      if (!group.length) {
+continue;
+}
+
       lines.push(`${SEVERITY_LABEL[severity]} (${group.length}):`);
+
       for (const entry of group) {
         lines.push(`  ${entry.id}${entry.path ? `  [${entry.path}]` : ''}`);
         lines.push(`    ${entry.summary}`);
         lines.push(`    → ${entry.fix}`);
       }
+
       lines.push('');
     }
   }
 
   if (report.workspaces.length) {
     lines.push('Workspaces:');
+
     for (const workspace of report.workspaces) {
       lines.push(`  ${workspace.path}  product: ${workspace.productStatus}`
         + `  design: ${workspace.designStatus}`
         + `${workspace.platform ? `  platform: ${workspace.platform}` : ''}`);
     }
+
     lines.push('');
   }
 
@@ -267,11 +303,19 @@ function renderText(report, fixes) {
 
   if (fixes) {
     lines.push(fixes.applied.length ? 'Applied:' : 'Applied nothing.');
-    for (const entry of fixes.applied) lines.push(`  ${entry}`);
+
+    for (const entry of fixes.applied) {
+lines.push(`  ${entry}`);
+}
+
     const held = fixes.skipped.filter((entry) => entry.reason !== 'needs a decision from the user');
+
     if (held.length) {
       lines.push('Left alone:');
-      for (const entry of held) lines.push(`  ${entry.id}: ${entry.reason}`);
+
+      for (const entry of held) {
+lines.push(`  ${entry.id}: ${entry.reason}`);
+}
     }
   } else if (findings.some((entry) => entry.severity === 'auto')) {
     lines.push(`Run \`node doctor.mjs --fix\` to apply the automatic migrations, `
@@ -283,14 +327,17 @@ function renderText(report, fixes) {
 
 async function cli() {
   let parsed;
+
   try {
     parsed = parseArgs(process.argv.slice(2));
   } catch (err) {
     process.stderr.write(`${err.message}\n`);
     process.exit(1);
   }
+
   if (parsed.flags.help) {
     process.stdout.write(`${usage()}\n`);
+
     return;
   }
 
@@ -310,6 +357,7 @@ async function cli() {
       workspaces: report.workspaces,
       ...(fixes ? { fixes } : {}),
     }, null, 2)}\n`);
+
     return;
   }
 
@@ -318,7 +366,11 @@ async function cli() {
 
 function invokedAsScript() {
   const arg = process.argv[1];
-  if (!arg) return false;
+
+  if (!arg) {
+return false;
+}
+
   try {
     return fs.realpathSync(arg) === fs.realpathSync(fileURLToPath(import.meta.url));
   } catch {

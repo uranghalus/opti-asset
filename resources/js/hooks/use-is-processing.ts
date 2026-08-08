@@ -28,6 +28,7 @@ export function useIsProcessing(): boolean {
         return () => {
             unsubscribeStart();
             unsubscribeFinish();
+
             if (timer.current) {
                 clearTimeout(timer.current);
             }

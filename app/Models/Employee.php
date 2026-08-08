@@ -4,16 +4,20 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Permission\Traits\HasRoles;
 
 class Employee extends Model
 {
-    use BelongsToTenant, HasUuids;
+    use BelongsToTenant, HasFactory, HasRoles, HasUuids;
 
     protected $table = 'tb_employee';
 
     protected $primaryKey = 'id_employee';
+
+    protected $guard_name = 'web';
 
     public $incrementing = false;
 

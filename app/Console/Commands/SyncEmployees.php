@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Employee;
+use App\Models\Tenant;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -18,7 +19,15 @@ class SyncEmployees extends Command
         $url = config('services.optigate_portal.url').'/api/users';
         $token = config('services.optigate_portal.token');
 
-        $this->info('Memulai sinkronisasi employee...');
+        $tenantId = Tenant::current()?->id;
+
+        if (! $tenantId) {
+            $this->error('Tidak ada tenant aktif. Sinkronisasi dibatalkan.');
+
+            return;
+        }
+
+        $this->info("Memulai sinkronisasi employee untuk tenant {$tenantId}...");
 
         try {
             $response = Http::withToken($token)
@@ -31,9 +40,10 @@ class SyncEmployees extends Command
                 $count = 0;
 
                 foreach ($employees as $employee) {
-                    Employee::updateOrCreate(
+                    Employee::withoutGlobalScopes()->updateOrCreate(
                         ['id_employee' => $employee['id']],
                         [
+                            'tenant_id' => $tenantId,
                             'nik_employee' => $employee['nik'] ?? null,
                             'nama_employee' => $employee['name'],
                             'email' => $employee['email'] ?? null,

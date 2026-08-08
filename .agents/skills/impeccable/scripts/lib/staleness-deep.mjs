@@ -12,9 +12,9 @@
  * Same finding shape and severities as lib/staleness.mjs.
  */
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const VISUAL_SOURCE_DIRS = ['src', 'app', 'pages', 'components', 'site', 'styles', 'public'];
@@ -50,8 +50,12 @@ function readJson(filePath) {
 }
 
 function toRelative(filePath, root) {
-  if (!filePath) return null;
+  if (!filePath) {
+return null;
+}
+
   const rel = path.relative(root, filePath);
+
   return rel && !rel.startsWith('..') && !path.isAbsolute(rel)
     ? rel.split(path.sep).join('/')
     : filePath;
@@ -80,25 +84,44 @@ function git(args, cwd) {
  * small enough to be ordinary maintenance.
  */
 export function checkDesignDrift({ designPath, projectRoot, threshold = 25 }) {
-  if (!designPath || !projectRoot) return [];
-  if (!git(['rev-parse', '--is-inside-work-tree'], projectRoot)) return [];
+  if (!designPath || !projectRoot) {
+return [];
+}
+
+  if (!git(['rev-parse', '--is-inside-work-tree'], projectRoot)) {
+return [];
+}
 
   const relDesign = toRelative(designPath, projectRoot);
   const lastDesignCommit = git(['log', '-1', '--format=%H', '--', relDesign], projectRoot);
-  if (!lastDesignCommit) return [];
+
+  if (!lastDesignCommit) {
+return [];
+}
 
   const dirs = VISUAL_SOURCE_DIRS.filter((dir) => fs.existsSync(path.join(projectRoot, dir)));
-  if (!dirs.length) return [];
+
+  if (!dirs.length) {
+return [];
+}
 
   const log = git(
     ['log', '--oneline', `${lastDesignCommit}..HEAD`, '--', ...dirs],
     projectRoot,
   );
-  if (log === null) return [];
+
+  if (log === null) {
+return [];
+}
+
   const commits = log ? log.split('\n').filter(Boolean).length : 0;
-  if (commits < threshold) return [];
+
+  if (commits < threshold) {
+return [];
+}
 
   const when = git(['log', '-1', '--format=%ad', '--date=short', '--', relDesign], projectRoot);
+
   return [finding({
     id: 'design-md-drift',
     artifact: 'DESIGN.md',
@@ -118,14 +141,20 @@ export function checkDesignDrift({ designPath, projectRoot, threshold = 25 }) {
  * documentation gap for a human to judge, never as an error.
  */
 function hasCoverageValue(value) {
-  if (Array.isArray(value)) return value.some(hasCoverageValue);
+  if (Array.isArray(value)) {
+return value.some(hasCoverageValue);
+}
+
   if (value && typeof value === 'object') {
     return Object.values(value).some(hasCoverageValue);
   }
+
   if (typeof value === 'string') {
     const trimmed = value.trim();
+
     return trimmed.length > 0 && !/^(?:\[\s*\]|\{\s*\})$/.test(trimmed);
   }
+
   return false;
 }
 
@@ -135,20 +164,29 @@ const SEED_DESIGN_MARKERS = ['/', '$'].map((prefix) =>
 );
 
 export function checkDesignCoverage({ design, designPath, parseDesignMd }) {
-  if (!design || typeof parseDesignMd !== 'function') return [];
+  if (!design || typeof parseDesignMd !== 'function') {
+return [];
+}
+
   let model;
+
   try {
     model = parseDesignMd(design);
   } catch {
     return [];
   }
+
   const isSeed = SEED_DESIGN_MARKERS.some((marker) => design.includes(marker));
   const requiredSections = isSeed
     ? ['colors', 'typography']
     : ['colors', 'typography', 'components'];
   const missing = requiredSections
     .filter((section) => !model[section] && !hasCoverageValue(model.frontmatter?.[section]));
-  if (!missing.length) return [];
+
+  if (!missing.length) {
+return [];
+}
+
   return [finding({
     id: 'design-md-coverage',
     artifact: 'DESIGN.md',
@@ -171,19 +209,27 @@ export function checkDesignCoverage({ design, designPath, parseDesignMd }) {
  */
 export function checkDetectorIgnores({ projectRoot, knownRuleIds = null }) {
   const findings = [];
-  if (!projectRoot) return findings;
+
+  if (!projectRoot) {
+return findings;
+}
 
   for (const name of ['config.json', 'config.local.json']) {
     const filePath = path.join(projectRoot, '.impeccable', name);
     const raw = readJson(filePath);
     const detector = raw?.detector;
-    if (!detector || typeof detector !== 'object') continue;
+
+    if (!detector || typeof detector !== 'object') {
+continue;
+}
+
     const rel = toRelative(filePath, projectRoot);
 
     if (knownRuleIds && Array.isArray(detector.ignoreRules)) {
       const unknown = detector.ignoreRules
         .map((rule) => String(rule || '').trim().toLowerCase())
         .filter((rule) => rule && rule !== '*' && !knownRuleIds.has(rule));
+
       if (unknown.length) {
         findings.push(finding({
           id: 'detector-ignore-rules-unknown',
@@ -202,6 +248,7 @@ export function checkDetectorIgnores({ projectRoot, knownRuleIds = null }) {
       const missing = detector.ignoreFiles
         .map((entry) => String(entry || '').trim())
         .filter((entry) => entry && !entry.includes('*') && !fs.existsSync(path.join(projectRoot, entry)));
+
       if (missing.length) {
         findings.push(finding({
           id: 'detector-ignore-files-missing',
@@ -216,6 +263,7 @@ export function checkDetectorIgnores({ projectRoot, knownRuleIds = null }) {
       }
     }
   }
+
   return findings;
 }
 
@@ -223,16 +271,27 @@ export function checkDetectorIgnores({ projectRoot, knownRuleIds = null }) {
 
 function collectHookCommands(value, out = []) {
   if (typeof value === 'string') {
-    if (HOOK_SCRIPT_MARKERS.some((marker) => value.includes(marker))) out.push(value);
+    if (HOOK_SCRIPT_MARKERS.some((marker) => value.includes(marker))) {
+out.push(value);
+}
+
     return out;
   }
+
   if (Array.isArray(value)) {
-    for (const entry of value) collectHookCommands(entry, out);
+    for (const entry of value) {
+collectHookCommands(entry, out);
+}
+
     return out;
   }
+
   if (value && typeof value === 'object') {
-    for (const entry of Object.values(value)) collectHookCommands(entry, out);
+    for (const entry of Object.values(value)) {
+collectHookCommands(entry, out);
+}
   }
+
   return out;
 }
 
@@ -252,10 +311,19 @@ const HOOK_MARKER = /skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs/;
 // or `||`. Returns the token verbatim; resolution happens separately.
 function hookScriptTokenFrom(command) {
   const str = String(command);
-  if (!HOOK_MARKER.test(str)) return null;
+
+  if (!HOOK_MARKER.test(str)) {
+return null;
+}
+
   const quoted = str.match(/"([^"]*skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs)"/);
-  if (quoted) return quoted[1];
+
+  if (quoted) {
+return quoted[1];
+}
+
   const bare = str.match(/([^\s"'|&;()]*skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs)/);
+
   return bare ? bare[1] : null;
 }
 
@@ -280,12 +348,22 @@ function hookScriptTokenFrom(command) {
 // A token with no placeholder is a literal path: absolute as-is, else relative
 // to `root`.
 function resolveHookScriptPath(token, root) {
-  if (!token) return null;
+  if (!token) {
+return null;
+}
+
   // Command substitution or backtick expansion we can't evaluate.
-  if (token.includes('$(') || token.includes('`')) return null;
+  if (token.includes('$(') || token.includes('`')) {
+return null;
+}
+
   const expanded = token.replace(/\$\{CLAUDE_PROJECT_DIR\}/g, root);
+
   // Any placeholder or shell variable still present is one we can't map.
-  if (/\$\{[^}]*\}|\$[A-Za-z_]/.test(expanded)) return null;
+  if (/\$\{[^}]*\}|\$[A-Za-z_]/.test(expanded)) {
+return null;
+}
+
   return path.isAbsolute(expanded) ? expanded : path.join(root, expanded);
 }
 
@@ -297,7 +375,10 @@ function resolveHookScriptPath(token, root) {
 export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
   const findings = [];
   const manifests = HOOK_MANIFESTS_BY_PROVIDER[providerId] || [];
-  if (!manifests.length) return findings;
+
+  if (!manifests.length) {
+return findings;
+}
 
   const roots = [...new Set([projectRoot, repoRoot].filter(Boolean).map((root) => path.resolve(root)))];
   let installedAt = null;
@@ -306,19 +387,36 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
     for (const rel of manifests) {
       const manifestPath = path.join(root, rel);
       const raw = readJson(manifestPath);
-      if (!raw?.hooks) continue;
+
+      if (!raw?.hooks) {
+continue;
+}
+
       const commands = collectHookCommands(raw.hooks);
-      if (!commands.length) continue;
+
+      if (!commands.length) {
+continue;
+}
+
       installedAt = toRelative(manifestPath, projectRoot || root);
 
       const broken = commands.filter((command) => {
         const token = hookScriptTokenFrom(command);
-        if (!token) return false;
+
+        if (!token) {
+return false;
+}
+
         const abs = resolveHookScriptPath(token, root);
+
         // Unresolvable placeholder or command substitution: never assert missing.
-        if (!abs) return false;
+        if (!abs) {
+return false;
+}
+
         return !fs.existsSync(abs);
       });
+
       if (broken.length) {
         findings.push(finding({
           id: 'hook-script-missing',
@@ -338,6 +436,7 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
     for (const root of roots) {
       for (const name of ['config.json', 'config.local.json']) {
         const raw = readJson(path.join(root, '.impeccable', name));
+
         if (raw?.hook && raw.hook.enabled === false) {
           findings.push(finding({
             id: 'hook-enabled-conflict',
@@ -349,6 +448,7 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
             fix: 'Ask which was intended: `impeccable hooks on` to enable, or `impeccable hooks off` to uninstall '
               + 'the manifest entry as well.',
           }));
+
           return findings;
         }
       }
@@ -361,9 +461,16 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
 // ─── retired locations ─────────────────────────────────────────────────────
 
 export function checkLegacyLiveState({ projectRoot }) {
-  if (!projectRoot) return [];
+  if (!projectRoot) {
+return [];
+}
+
   const present = LEGACY_LIVE_PATHS.filter((rel) => fs.existsSync(path.join(projectRoot, rel)));
-  if (!present.length) return [];
+
+  if (!present.length) {
+return [];
+}
+
   return [finding({
     id: 'legacy-live-state',
     artifact: 'live state',
@@ -387,7 +494,10 @@ export function checkLegacyLiveState({ projectRoot }) {
  * `candidates` comes from context.mjs's discovery so the walk is not repeated.
  */
 export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatformEvidence, extractPlatform, readFile }) {
-  if (!repoRoot || !candidates.length) return { findings: [], workspaces: [] };
+  if (!repoRoot || !candidates.length) {
+return { findings: [], workspaces: [] };
+}
+
   const findings = [];
   const workspaces = [];
 
@@ -407,13 +517,17 @@ export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatform
       platform: platform || (product ? 'web (default)' : null),
     });
 
-    if (!checkNativePlatformEvidence) continue;
+    if (!checkNativePlatformEvidence) {
+continue;
+}
+
     const native = checkNativePlatformEvidence({
       projectRoot: workspaceRoot,
       platform,
       product,
       productPath: candidate.productPath,
     });
+
     for (const entry of native) {
       findings.push(finding({
         id: 'workspace-platform-native-evidence',
@@ -434,6 +548,7 @@ export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatform
   }
 
   const inherited = workspaces.filter((entry) => entry.productStatus === 'inherited');
+
   if (inherited.length) {
     findings.push(finding({
       id: 'workspace-context-inherited',
@@ -467,10 +582,18 @@ export async function loadKnownRuleIds(scriptsDir = path.resolve(path.dirname(fi
     path.join(scriptsDir, '..', '..', 'cli', 'engine', 'detect-antipatterns.mjs'),
   ];
   const detectorPath = candidates.find((candidate) => fs.existsSync(candidate));
-  if (!detectorPath) return null;
+
+  if (!detectorPath) {
+return null;
+}
+
   try {
     const { ANTIPATTERNS } = await import(pathToFileURL(detectorPath).href);
-    if (!Array.isArray(ANTIPATTERNS)) return null;
+
+    if (!Array.isArray(ANTIPATTERNS)) {
+return null;
+}
+
     return new Set(ANTIPATTERNS.map((rule) => String(rule.id).toLowerCase()));
   } catch {
     return null;

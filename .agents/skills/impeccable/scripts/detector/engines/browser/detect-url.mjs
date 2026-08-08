@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import { finding } from '../../findings.mjs';
 import { profileFindingsAsync, profileStep, profileStepAsync } from '../../profile/profiler.mjs';
-import { captureVisualContrastCandidate } from '../visual/screenshot-contrast.mjs';
 import { checkContentHiddenAtRest } from '../../rules/checks.mjs';
+import { captureVisualContrastCandidate } from '../visual/screenshot-contrast.mjs';
 
 // On Windows, puppeteer's bundled Chrome lives in a user-writable cache
 // directory. Its GPU process can be denied (STATUS_ACCESS_DENIED) by security
@@ -22,6 +22,7 @@ import { checkContentHiddenAtRest } from '../../rules/checks.mjs';
 // cause so the real failure is not lost.
 async function launchBrowser(puppeteer, { headless = true, args = [] } = {}) {
   let channelError;
+
   if (process.platform === 'win32') {
     try {
       return await puppeteer.default.launch({ channel: 'chrome', headless, args });
@@ -31,10 +32,14 @@ async function launchBrowser(puppeteer, { headless = true, args = [] } = {}) {
       channelError = err;
     }
   }
+
   try {
     return await puppeteer.default.launch({ headless, args });
   } catch (err) {
-    if (channelError && err && err.cause === undefined) err.cause = channelError;
+    if (channelError && err && err.cause === undefined) {
+err.cause = channelError;
+}
+
     throw err;
   }
 }
@@ -53,21 +58,30 @@ async function measureContentHiddenAfterReveal(page) {
       document.documentElement.scrollHeight || 0,
       document.body?.scrollHeight || 0,
     );
+
     for (let y = 0; y <= max; y += step) {
       window.scrollTo({ top: y, left: 0, behavior: 'instant' });
       await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 40)));
     }
+
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     await new Promise(resolve => setTimeout(resolve, 700));
   });
+
   return page.evaluate(() => {
-    if (typeof window.impeccableMeasureHiddenText !== 'function') return null;
+    if (typeof window.impeccableMeasureHiddenText !== 'function') {
+return null;
+}
+
     return window.impeccableMeasureHiddenText();
   });
 }
 
 function serializeDesignSystemForBrowser(designSystem) {
-  if (!designSystem?.present) return null;
+  if (!designSystem?.present) {
+return null;
+}
+
   return {
     present: true,
     hasFonts: designSystem.hasFonts === true,
@@ -86,7 +100,10 @@ function serializeDesignSystemForBrowser(designSystem) {
 }
 
 async function runVisualContrastFallback(page, serializedGroups, options, profile, target) {
-  if (options?.visualContrast === false) return [];
+  if (options?.visualContrast === false) {
+return [];
+}
+
   const maxCandidates = Number.isFinite(options?.visualContrastMaxCandidates)
     ? options.visualContrastMaxCandidates
     : 12;
@@ -100,6 +117,7 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
 
   let browserAnalyses = [];
   const findings = [];
+
   if (options?.visualContrastBrowser !== false) {
     const browserFindings = await profileFindingsAsync(profile, {
       engine: 'browser',
@@ -108,9 +126,13 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
       target,
     }, async () => {
       browserAnalyses = await page.evaluate(async ({ maxCandidates, scrollOffscreen }) => {
-        if (typeof window.impeccableAnalyzeVisualContrast !== 'function') return [];
+        if (typeof window.impeccableAnalyzeVisualContrast !== 'function') {
+return [];
+}
+
         return window.impeccableAnalyzeVisualContrast({ maxCandidates, scrollOffscreen });
       }, { maxCandidates, scrollOffscreen });
+
       return browserAnalyses
         .filter(result => result.finding && !existingLowContrastSelectors.has(result.selector))
         .map(result => result.finding);
@@ -119,6 +141,7 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
   }
 
   let candidates = browserAnalyses.length > 0 ? browserAnalyses : [];
+
   if (candidates.length === 0) {
     candidates = await profileStepAsync(profile, {
       engine: 'browser',
@@ -126,7 +149,10 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
       ruleId: 'collect-candidates',
       target,
     }, () => page.evaluate(({ maxCandidates }) => {
-      if (typeof window.impeccableCollectVisualContrastCandidates !== 'function') return [];
+      if (typeof window.impeccableCollectVisualContrastCandidates !== 'function') {
+return [];
+}
+
       return window.impeccableCollectVisualContrastCandidates({ maxCandidates });
     }, { maxCandidates }));
   }
@@ -142,7 +168,11 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
     !existingLowContrastSelectors.has(candidate.selector) &&
     !browserResolvedSelectors.has(candidate.selector)
   );
-  if (options?.visualContrastPixel === false) return findings;
+
+  if (options?.visualContrastPixel === false) {
+return findings;
+}
+
   for (const candidate of filtered) {
     const result = await profileFindingsAsync(profile, {
       engine: 'browser',
@@ -151,10 +181,12 @@ async function runVisualContrastFallback(page, serializedGroups, options, profil
       target,
     }, async () => {
       const finding = await captureVisualContrastCandidate(page, candidate, viewport);
+
       return finding ? [finding] : [];
     });
     findings.push(...result);
   }
+
   return findings;
 }
 
@@ -169,6 +201,7 @@ async function detectUrl(url, options = {}) {
   const viewport = options?.viewport || { width: 1280, height: 800 };
   const externalBrowser = options?.browser || null;
   let puppeteer;
+
   if (!externalBrowser) {
     try {
       puppeteer = await profileStepAsync(profile, {
@@ -190,6 +223,7 @@ async function detectUrl(url, options = {}) {
     'detect-antipatterns-browser.js'
   );
   let browserScript;
+
   try {
     browserScript = profileStep(profile, {
       engine: 'browser',
@@ -223,14 +257,19 @@ async function detectUrl(url, options = {}) {
   // initial parse, long before the load event. Dedupe by message; a single
   // broken loop can otherwise throw hundreds of identical errors.
   const pageErrors = [];
+
   if (options?.scriptErrors !== false) {
     page.on('pageerror', (err) => {
       const message = String(err?.message || err).split('\n')[0].trim().slice(0, 160);
-      if (message && !pageErrors.includes(message)) pageErrors.push(message);
+
+      if (message && !pageErrors.includes(message)) {
+pageErrors.push(message);
+}
     });
   }
 
   let results = [];
+
   try {
     await profileStepAsync(profile, {
       engine: 'browser',
@@ -244,6 +283,7 @@ async function detectUrl(url, options = {}) {
       ruleId: `goto:${waitUntil}`,
       target: url,
     }, () => page.goto(url, { waitUntil, timeout: 30000 }));
+
     if (settleMs > 0) {
       await profileStepAsync(profile, {
         engine: 'browser',
@@ -281,13 +321,18 @@ async function detectUrl(url, options = {}) {
       target: url,
     }, async () => {
       serializedGroups = await page.evaluate(() => {
-        if (!window.impeccableDetect) return [];
+        if (!window.impeccableDetect) {
+return [];
+}
+
         return window.impeccableDetect({ decorate: false, serialize: true });
       });
+
       return serializedGroups.flatMap(({ findings }) =>
         findings.map(f => ({ id: f.type, snippet: f.detail, ignoreValue: f.ignoreValue || '', severity: f.severity || '' }))
       );
     });
+
     // Content invisible at rest: reveal sweep, then re-measure. Runs after
     // the main scan (which must see the true at-rest state) and before the
     // visual contrast fallback (the sweep restores scroll to the top).
@@ -299,6 +344,7 @@ async function detectUrl(url, options = {}) {
         target: url,
       }, async () => {
         const measured = await measureContentHiddenAfterReveal(page);
+
         return measured ? checkContentHiddenAtRest(measured) : [];
       });
       results.push(...hiddenFindings);
@@ -317,6 +363,7 @@ async function detectUrl(url, options = {}) {
       ruleId: 'close-page',
       target: url,
     }, () => page.close().catch(() => {}));
+
     if (!externalBrowser) {
       await profileStepAsync(profile, {
         engine: 'browser',
@@ -326,23 +373,33 @@ async function detectUrl(url, options = {}) {
       }, () => browser.close());
     }
   }
+
   return results.map(f => {
     const item = finding(f.id, url, f.snippet);
-    if (f.ignoreValue) item.ignoreValue = f.ignoreValue;
+
+    if (f.ignoreValue) {
+item.ignoreValue = f.ignoreValue;
+}
+
     // Per-finding severity promotion (e.g. hero-region pulsing dot)
     // overrides the registry default carried by finding().
-    if (f.severity && f.severity !== item.severity) item.severity = f.severity;
+    if (f.severity && f.severity !== item.severity) {
+item.severity = f.severity;
+}
+
     return item;
   });
 }
 
 async function createBrowserDetector(options = {}) {
   let puppeteer;
+
   try {
     puppeteer = await import('puppeteer');
   } catch {
     throw new Error('puppeteer is required for URL scanning. Install: npm install puppeteer');
   }
+
   const launchArgs = options.launchArgs || (process.env.CI ? ['--no-sandbox', '--disable-setuid-sandbox'] : []);
   const browser = options.browser || await launchBrowser(puppeteer, {
     headless: options.headless ?? true,
@@ -354,6 +411,7 @@ async function createBrowserDetector(options = {}) {
     settleMs: Number.isFinite(options.settleMs) ? options.settleMs : 100,
     viewport: options.viewport || { width: 1280, height: 800 },
   };
+
   return {
     browser,
     async detectUrl(url, scanOptions = {}) {
@@ -364,7 +422,9 @@ async function createBrowserDetector(options = {}) {
       });
     },
     async close() {
-      if (ownsBrowser) await browser.close().catch(() => {});
+      if (ownsBrowser) {
+await browser.close().catch(() => {});
+}
     },
   };
 }

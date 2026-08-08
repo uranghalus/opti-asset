@@ -596,10 +596,15 @@ const RULE_SCOPES = new Set(
 // Keep only findings whose rule declares at least one of the requested
 // scopes. An empty scope list means no filtering (default CLI behavior).
 function filterByScopes(findings, scopes = []) {
-  if (!scopes || scopes.length === 0) return findings;
+  if (!scopes || scopes.length === 0) {
+return findings;
+}
+
   const enabled = new Set(scopes);
+
   return findings.filter(f => {
     const rule = getAntipattern(f.antipattern);
+
     return (rule?.scopes || []).some(scope => enabled.has(scope));
   });
 }

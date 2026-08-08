@@ -358,4 +358,45 @@ class AssetClassificationTest extends TestCase
 
         $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
     }
+
+    public function test_import_is_idempotent_for_duplicate_codes_within_parent(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.import'), [
+                'rows' => [
+                    ['level' => 'group', 'code' => '01', 'name' => 'Tanah'],
+                    ['level' => 'category', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
+                    ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Fire Cabinet', 'parent_code' => '01.01.01'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Fire Cabinet (Baru)', 'parent_code' => '01.01.01'],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, AssetSubCluster::withoutGlobalScopes()->count());
+        $this->assertSame('Fire Cabinet (Baru)', AssetSubCluster::withoutGlobalScopes()->first()?->name);
+    }
+
+    public function test_import_can_be_repeated_without_duplicating(): void
+    {
+        $rows = [
+            ['level' => 'group', 'code' => '01', 'name' => 'Tanah'],
+            ['level' => 'category', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
+            ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+            ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
+        ];
+
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.import'), ['rows' => $rows])
+            ->assertRedirect();
+
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.import'), ['rows' => $rows])
+            ->assertRedirect();
+
+        $this->assertSame(1, AssetGroup::withoutGlobalScopes()->count());
+        $this->assertSame(1, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(1, AssetCluster::withoutGlobalScopes()->count());
+        $this->assertSame(1, AssetSubCluster::withoutGlobalScopes()->count());
+    }
 }

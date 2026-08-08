@@ -1,12 +1,12 @@
-import { GENERIC_FONTS, OVERUSED_FONTS, EM_DASH_FLOOR, EM_DASH_CHARS_PER_DASH } from '../../shared/constants.mjs';
-import { isNeutralColor } from '../../shared/color.mjs';
-import { extractGoogleFontFamilies } from '../../shared/fonts.mjs';
 import { checkSourceDesignSystem } from '../../design-system.mjs';
-import { scanCssTextForGlow, scanCssTextForGridBackground, scanCssTextForMarquee, scanCssTextForPseudoStripe, scanCssTextForRadialHalo } from '../../rules/checks.mjs';
-import { isFullPage } from '../../shared/page.mjs';
-import { applyInlineIgnores } from '../../shared/inline-ignores.mjs';
 import { finding } from '../../findings.mjs';
 import { profileFindings, profileStep } from '../../profile/profiler.mjs';
+import { scanCssTextForGlow, scanCssTextForGridBackground, scanCssTextForMarquee, scanCssTextForPseudoStripe, scanCssTextForRadialHalo } from '../../rules/checks.mjs';
+import { isNeutralColor } from '../../shared/color.mjs';
+import { GENERIC_FONTS, OVERUSED_FONTS, EM_DASH_FLOOR, EM_DASH_CHARS_PER_DASH } from '../../shared/constants.mjs';
+import { extractGoogleFontFamilies } from '../../shared/fonts.mjs';
+import { applyInlineIgnores } from '../../shared/inline-ignores.mjs';
+import { isFullPage } from '../../shared/page.mjs';
 
 // ---------------------------------------------------------------------------
 // Regex fallback (non-HTML files: CSS, JSX, TSX, etc.)
@@ -36,8 +36,12 @@ function extFromFilePath(filePath) {
 }
 
 function shouldRunPageAnalyzers(content, filePath) {
-  if (!isFullPage(content)) return false;
+  if (!isFullPage(content)) {
+return false;
+}
+
   const ext = extFromFilePath(filePath);
+
   return !ext || PAGE_ANALYZER_EXTS.has(ext);
 }
 
@@ -47,20 +51,29 @@ const BLOCK_BRACE_PREFIX_KEYWORDS = new Set(['do', 'else', 'finally', 'try']);
 
 function isInsideOpeningJsxTag(source) {
   const tagStart = source.lastIndexOf('<');
-  if (tagStart === -1 || !/^<[A-Za-z][\w.:-]*/.test(source.slice(tagStart))) return false;
+
+  if (tagStart === -1 || !/^<[A-Za-z][\w.:-]*/.test(source.slice(tagStart))) {
+return false;
+}
 
   let quote = '';
+
   for (let cursor = tagStart + 1; cursor < source.length; cursor++) {
     const char = source[cursor];
+
     if (quote) {
-      if (char === '\\') cursor++;
-      else if (char === quote) quote = '';
+      if (char === '\\') {
+cursor++;
+} else if (char === quote) {
+quote = '';
+}
     } else if (char === "'" || char === '"') {
       quote = char;
     } else if (char === '>') {
       return false;
     }
   }
+
   return true;
 }
 
@@ -98,15 +111,19 @@ function stripJsComments(content, options = {}) {
   const recordSignificant = (char) => {
     if (/\s/.test(char)) {
       wordSeparated = true;
+
       return;
     }
+
     const isWordChar = /[\w$]/.test(char);
+
     if (isWordChar && (wordSeparated || !currentWord)) {
       currentWord = '';
       currentWordPrefix = lastSignificant;
     } else if (!isWordChar) {
       currentWordPrefix = '';
     }
+
     wordSeparated = false;
     antePreviousSignificant = previousSignificant;
     previousSignificant = lastSignificant;
@@ -125,6 +142,7 @@ function stripJsComments(content, options = {}) {
       } else {
         output += ' ';
       }
+
       continue;
     }
 
@@ -136,11 +154,13 @@ function stripJsComments(content, options = {}) {
       } else {
         output += char === '\n' ? '\n' : ' ';
       }
+
       continue;
     }
 
     if (state === 'regex') {
       output += char;
+
       if (char === '\\' && next) {
         output += next;
         i++;
@@ -152,6 +172,7 @@ function stripJsComments(content, options = {}) {
         state = 'code';
         recordSignificant('/');
       }
+
       continue;
     }
 
@@ -162,13 +183,18 @@ function stripJsComments(content, options = {}) {
       recordSignificant('{');
       templateExpressionDepths.push(1);
       braceKinds.push('expression');
-      if (jsxExpressionDepth) jsxExpressionDepth++;
+
+      if (jsxExpressionDepth) {
+jsxExpressionDepth++;
+}
+
       state = 'code';
       continue;
     }
 
     if (state !== 'code') {
       output += char;
+
       if (char === '\\' && next) {
         output += next;
         i++;
@@ -180,6 +206,7 @@ function stripJsComments(content, options = {}) {
         state = 'code';
         recordSignificant(char);
       }
+
       continue;
     }
 
@@ -192,6 +219,7 @@ function stripJsComments(content, options = {}) {
     const afterPostfixUpdate = (lastSignificant === '+' || lastSignificant === '-') &&
       previousSignificant === lastSignificant &&
       antePreviousSignificant !== lastSignificant;
+
     if (char === '/' && next === '/' && jsxUrlSeparator) {
       output += '//';
       i++;
@@ -209,15 +237,24 @@ function stripJsComments(content, options = {}) {
       output += char;
       templateExpressionDepths[templateExpressionDepths.length - 1]++;
       braceKinds.push(braceKind());
-      if (jsxExpressionDepth) jsxExpressionDepth++;
+
+      if (jsxExpressionDepth) {
+jsxExpressionDepth++;
+}
+
       recordSignificant(char);
     } else if (templateExpressionDepths.length && char === '}') {
       output += char;
       const depthIndex = templateExpressionDepths.length - 1;
       templateExpressionDepths[depthIndex]--;
       lastClosedBraceKind = braceKinds.pop() || '';
-      if (jsxExpressionDepth) jsxExpressionDepth--;
+
+      if (jsxExpressionDepth) {
+jsxExpressionDepth--;
+}
+
       recordSignificant(char);
+
       if (templateExpressionDepths[depthIndex] === 0) {
         templateExpressionDepths.pop();
         state = 'template';
@@ -238,14 +275,28 @@ function stripJsComments(content, options = {}) {
       const startsJsxExpression = options.jsx && char === '{' && jsxExpressionDepth === 0 &&
         (/<[A-Za-z](?:[^>]*[^/])?>[^<]*$/.test(output.slice(output.lastIndexOf('\n') + 1, -1)) ||
           isInsideOpeningJsxTag(output.slice(0, -1)));
-      if (char === '{') braceKinds.push(braceKind(startsJsxExpression));
-      else if (char === '}') lastClosedBraceKind = braceKinds.pop() || '';
-      if (char === '{' && (jsxExpressionDepth || startsJsxExpression)) jsxExpressionDepth++;
-      else if (char === '}' && jsxExpressionDepth) jsxExpressionDepth--;
+
+      if (char === '{') {
+braceKinds.push(braceKind(startsJsxExpression));
+} else if (char === '}') {
+lastClosedBraceKind = braceKinds.pop() || '';
+}
+
+      if (char === '{' && (jsxExpressionDepth || startsJsxExpression)) {
+jsxExpressionDepth++;
+} else if (char === '}' && jsxExpressionDepth) {
+jsxExpressionDepth--;
+}
+
       recordSignificant(char);
-      if (char === "'") state = 'single-quote';
-      else if (char === '"') state = 'double-quote';
-      else if (char === '`') state = 'template';
+
+      if (char === "'") {
+state = 'single-quote';
+} else if (char === '"') {
+state = 'double-quote';
+} else if (char === '`') {
+state = 'template';
+}
     }
   }
 
@@ -272,9 +323,17 @@ const NEUTRAL_COLOR_KEYWORDS = new Set([
 
 function hexChannels(color) {
   const long = color.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})(?:[0-9a-f]{2})?$/i);
-  if (long) return [parseInt(long[1], 16), parseInt(long[2], 16), parseInt(long[3], 16)];
+
+  if (long) {
+return [parseInt(long[1], 16), parseInt(long[2], 16), parseInt(long[3], 16)];
+}
+
   const short = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])(?:[0-9a-f])?$/i);
-  if (short) return [1, 2, 3].map((i) => parseInt(short[i] + short[i], 16));
+
+  if (short) {
+return [1, 2, 3].map((i) => parseInt(short[i] + short[i], 16));
+}
+
   return null;
 }
 
@@ -289,22 +348,34 @@ function tokenizeShadowLayer(layer) {
   const tokens = [];
   let depth = 0;
   let current = '';
+
   for (const char of String(layer || '')) {
-    if (char === '(') depth++;
-    else if (char === ')') depth--;
-    else if (depth === 0 && /\s/.test(char)) {
-      if (current) tokens.push(current);
+    if (char === '(') {
+depth++;
+} else if (char === ')') {
+depth--;
+} else if (depth === 0 && /\s/.test(char)) {
+      if (current) {
+tokens.push(current);
+}
+
       current = '';
       continue;
     }
+
     current += char;
   }
-  if (current) tokens.push(current);
+
+  if (current) {
+tokens.push(current);
+}
+
   return tokens;
 }
 
 function lastMatch(text, re) {
   const all = [...String(text || '').matchAll(re)];
+
   return all.length ? all[all.length - 1] : null;
 }
 
@@ -324,39 +395,77 @@ function isShadowLength(token) {
  */
 function isNeutralAuthoredColor(rawColor) {
   const c = String(rawColor || '').trim().toLowerCase();
-  if (!c) return false;
-  if (NEUTRAL_COLOR_KEYWORDS.has(c)) return true;
+
+  if (!c) {
+return false;
+}
+
+  if (NEUTRAL_COLOR_KEYWORDS.has(c)) {
+return true;
+}
+
   // Modern rgb() takes space-separated channels (`rgb(0 0 0)`). shared/color.mjs
   // parses only the comma form a browser's getComputedStyle emits, so authored
   // space-separated neutrals fell through it and reported as chromatic — the
   // exemption this function exists for, missed. Normalize before delegating.
   if (/^rgba?\(/i.test(c)) {
     const channels = c.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+
     if (channels) {
       const values = [1, 2, 3].map((i) => Number(channels[i]));
+
       return (Math.max(...values) - Math.min(...values)) < 30;
     }
+
     return isNeutralColor(c);
   }
-  if (/^(?:hsla?|oklch|oklab|lab|lch|hwb)\(/i.test(c)) return isNeutralColor(c);
+
+  if (/^(?:hsla?|oklch|oklab|lab|lch|hwb)\(/i.test(c)) {
+return isNeutralColor(c);
+}
+
   const channels = hexChannels(c);
-  if (channels) return (Math.max(...channels) - Math.min(...channels)) < 30;
+
+  if (channels) {
+return (Math.max(...channels) - Math.min(...channels)) < 30;
+}
+
   return false;
 }
 
 function isNeutralBorderColor(str) {
   const m = str.match(/solid\s+((?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color)\([^)]*\)|#[0-9a-f]{3,8}\b|[a-z]+)/i);
-  if (!m) return false;
+
+  if (!m) {
+return false;
+}
+
   return isNeutralAuthoredColor(m[1]);
 }
 
 const REGEX_MATCHERS = [
   // --- Side-tab ---
   { id: 'side-tab', regex: /\bborder-[lrse]-(\d+)\b/g,
-    test: (m, line) => { const n = +m[1]; return hasRounded(line) ? n >= 2 : n >= 4; },
+    test: (m, line) => {
+ const n = +m[1];
+
+ return hasRounded(line) ? n >= 2 : n >= 4; 
+},
     fmt: (m) => m[0] },
   { id: 'side-tab', regex: /border-(?:left|right)\s*:\s*(\d+)px\s+solid[^;]*/gi,
-    test: (m, line) => { if (isSafeElement(line)) return false; if (isNeutralBorderColor(m[0])) return false; const n = +m[1]; return hasBorderRadius(line) ? n >= 2 : n >= 3; },
+    test: (m, line) => {
+ if (isSafeElement(line)) {
+return false;
+}
+
+ if (isNeutralBorderColor(m[0])) {
+return false;
+}
+
+ const n = +m[1];
+
+ return hasBorderRadius(line) ? n >= 2 : n >= 3; 
+},
     fmt: (m) => m[0].replace(/\s*;?\s*$/, '') },
   { id: 'side-tab', regex: /border-(?:left|right)-width\s*:\s*(\d+)px/gi,
     test: (m, line) => !isSafeElement(line) && +m[1] >= 3,
@@ -384,6 +493,7 @@ const REGEX_MATCHERS = [
   { id: 'overused-font', regex: /fonts\.googleapis\.com\/css2?\?[^"'\s)<>]*/gi,
     test: (m) => {
       m.overusedGoogleFont = firstOverusedGoogleFont(m[0]);
+
       return Boolean(m.overusedGoogleFont);
     },
     fmt: (m) => `Google Fonts: ${m.overusedGoogleFont || firstOverusedGoogleFont(m[0])}` },
@@ -398,7 +508,11 @@ const REGEX_MATCHERS = [
   // --- Tailwind gray on colored bg ---
   { id: 'gray-on-color', regex: /\btext-(?:gray|slate|zinc|neutral|stone)-(\d+)\b/g,
     test: (m, line) => /\bbg-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+\b/.test(line),
-    fmt: (m, line) => { const bg = line.match(/\bbg-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+\b/); return `${m[0]} on ${bg?.[0] || '?'}`; } },
+    fmt: (m, line) => {
+ const bg = line.match(/\bbg-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+\b/);
+
+ return `${m[0]} on ${bg?.[0] || '?'}`; 
+} },
   // --- Tailwind AI palette ---
   { id: 'ai-color-palette', regex: /\btext-(?:purple|violet|indigo)-(\d+)\b/g,
     test: (m, line) => /\btext-(?:[2-9]xl|[3-9]xl)\b|<h[1-3]/i.test(line),
@@ -416,11 +530,13 @@ const REGEX_MATCHERS = [
       const token = m[1]
         .split(/[,\s]+/)
         .find((part) => /bounce|elastic|wobble|jiggle|spring/i.test(part));
+
       return `animation: ${token || m[1].trim()}`;
     } },
   { id: 'bounce-easing', regex: /cubic-bezier\(\s*([\d.-]+)\s*,\s*([\d.-]+)\s*,\s*([\d.-]+)\s*,\s*([\d.-]+)\s*\)/g,
     test: (m) => {
       const y1 = parseFloat(m[2]), y2 = parseFloat(m[4]);
+
       return y1 < -0.1 || y1 > 1.1 || y2 < -0.1 || y2 > 1.1;
     },
     fmt: (m) => `cubic-bezier(${m[1]}, ${m[2]}, ${m[3]}, ${m[4]})` },
@@ -428,21 +544,31 @@ const REGEX_MATCHERS = [
   { id: 'layout-transition', regex: /transition\s*:\s*([^;{}]+)/gi,
     test: (m) => {
       const val = m[1].toLowerCase();
-      if (/\ball\b/.test(val)) return false;
+
+      if (/\ball\b/.test(val)) {
+return false;
+}
+
       return /\b(?:(?:max|min)-)?(?:width|height)\b|\bpadding\b|\bmargin\b/.test(val);
     },
     fmt: (m) => {
       const found = m[1].match(/\b(?:(?:max|min)-)?(?:width|height)\b|\bpadding(?:-(?:top|right|bottom|left))?\b|\bmargin(?:-(?:top|right|bottom|left))?\b/gi);
+
       return `transition: ${found ? found.join(', ') : m[1].trim()}`;
     } },
   { id: 'layout-transition', regex: /transition-property\s*:\s*([^;{}]+)/gi,
     test: (m) => {
       const val = m[1].toLowerCase();
-      if (/\ball\b/.test(val)) return false;
+
+      if (/\ball\b/.test(val)) {
+return false;
+}
+
       return /\b(?:(?:max|min)-)?(?:width|height)\b|\bpadding\b|\bmargin\b/.test(val);
     },
     fmt: (m) => {
       const found = m[1].match(/\b(?:(?:max|min)-)?(?:width|height)\b|\bpadding(?:-(?:top|right|bottom|left))?\b|\bmargin(?:-(?:top|right|bottom|left))?\b/gi);
+
       return `transition-property: ${found ? found.join(', ') : m[1].trim()}`;
     } },
   // --- Broken image: src="" or src="#" or src=" " ---
@@ -462,24 +588,50 @@ const REGEX_ANALYZERS = [
     const REM = 16;
     let m;
     const sizeRe = /font-size\s*:\s*([\d.]+)(px|rem|em)\b/gi;
+
     while ((m = sizeRe.exec(content)) !== null) {
       const px = m[2] === 'px' ? +m[1] : +m[1] * REM;
-      if (px > 0 && px < 200) sizes.add(Math.round(px * 10) / 10);
+
+      if (px > 0 && px < 200) {
+sizes.add(Math.round(px * 10) / 10);
+}
     }
+
     const clampRe = /font-size\s*:\s*clamp\(\s*([\d.]+)(px|rem|em)\s*,\s*[^,]+,\s*([\d.]+)(px|rem|em)\s*\)/gi;
+
     while ((m = clampRe.exec(content)) !== null) {
       sizes.add(Math.round((m[2] === 'px' ? +m[1] : +m[1] * REM) * 10) / 10);
       sizes.add(Math.round((m[4] === 'px' ? +m[3] : +m[3] * REM) * 10) / 10);
     }
+
     const TW = { 'text-xs': 12, 'text-sm': 14, 'text-base': 16, 'text-lg': 18, 'text-xl': 20, 'text-2xl': 24, 'text-3xl': 30, 'text-4xl': 36, 'text-5xl': 48, 'text-6xl': 60, 'text-7xl': 72, 'text-8xl': 96, 'text-9xl': 128 };
-    for (const [cls, px] of Object.entries(TW)) { if (new RegExp(`\\b${cls}\\b`).test(content)) sizes.add(px); }
-    if (sizes.size < 3) return [];
+
+    for (const [cls, px] of Object.entries(TW)) {
+ if (new RegExp(`\\b${cls}\\b`).test(content)) {
+sizes.add(px);
+} 
+}
+
+    if (sizes.size < 3) {
+return [];
+}
+
     const sorted = [...sizes].sort((a, b) => a - b);
     const ratio = sorted[sorted.length - 1] / sorted[0];
-    if (ratio >= 2.0) return [];
+
+    if (ratio >= 2.0) {
+return [];
+}
+
     const lines = content.split('\n');
     let line = 1;
-    for (let i = 0; i < lines.length; i++) { if (/font-size/i.test(lines[i]) || /\btext-(?:xs|sm|base|lg|xl|\d)/i.test(lines[i])) { line = i + 1; break; } }
+
+    for (let i = 0; i < lines.length; i++) {
+ if (/font-size/i.test(lines[i]) || /\btext-(?:xs|sm|base|lg|xl|\d)/i.test(lines[i])) {
+ line = i + 1; break; 
+} 
+}
+
     return [finding('flat-type-hierarchy', filePath, `Sizes: ${sorted.map(s => s + 'px').join(', ')} (ratio ${ratio.toFixed(1)}:1)`, line)];
   },
   // Monotonous spacing (regex)
@@ -487,22 +639,59 @@ const REGEX_ANALYZERS = [
     const vals = [];
     let m;
     const pxRe = /(?:padding|margin)(?:-(?:top|right|bottom|left))?\s*:\s*(\d+)px/gi;
-    while ((m = pxRe.exec(content)) !== null) { const v = +m[1]; if (v > 0 && v < 200) vals.push(v); }
+
+    while ((m = pxRe.exec(content)) !== null) {
+ const v = +m[1];
+
+ if (v > 0 && v < 200) {
+vals.push(v);
+} 
+}
+
     const remRe = /(?:padding|margin)(?:-(?:top|right|bottom|left))?\s*:\s*([\d.]+)rem/gi;
-    while ((m = remRe.exec(content)) !== null) { const v = Math.round(parseFloat(m[1]) * 16); if (v > 0 && v < 200) vals.push(v); }
+
+    while ((m = remRe.exec(content)) !== null) {
+ const v = Math.round(parseFloat(m[1]) * 16);
+
+ if (v > 0 && v < 200) {
+vals.push(v);
+} 
+}
+
     const gapRe = /gap\s*:\s*(\d+)px/gi;
-    while ((m = gapRe.exec(content)) !== null) vals.push(+m[1]);
+
+    while ((m = gapRe.exec(content)) !== null) {
+vals.push(+m[1]);
+}
+
     const twRe = /\b(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap)-(\d+)\b/g;
-    while ((m = twRe.exec(content)) !== null) vals.push(+m[1] * 4);
+
+    while ((m = twRe.exec(content)) !== null) {
+vals.push(+m[1] * 4);
+}
+
     const rounded = vals.map(v => Math.round(v / 4) * 4);
-    if (rounded.length < 10) return [];
+
+    if (rounded.length < 10) {
+return [];
+}
+
     const counts = {};
-    for (const v of rounded) counts[v] = (counts[v] || 0) + 1;
+
+    for (const v of rounded) {
+counts[v] = (counts[v] || 0) + 1;
+}
+
     const maxCount = Math.max(...Object.values(counts));
     const pct = maxCount / rounded.length;
     const unique = [...new Set(rounded)].filter(v => v > 0);
-    if (pct <= 0.6 || unique.length > 3) return [];
+
+    if (pct <= 0.6 || unique.length > 3) {
+return [];
+}
+
     const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+
     return [finding('monotonous-spacing', filePath, `~${dominant}px used ${maxCount}/${rounded.length} times (${Math.round(pct * 100)}%)`)];
   },
   // Em-dash overuse (ADVISORY): the AI cadence tell is em-dash *saturation*,
@@ -527,12 +716,22 @@ const REGEX_ANALYZERS = [
       .replace(/&mdash;|&#0*8212;|&#x0*2014;/gi, '—');
     let count = 0;
     const re = /[—]|--(?=\S)/g;
-    while (re.exec(text) !== null) count++;
-    if (count < EM_DASH_FLOOR) return [];
+
+    while (re.exec(text) !== null) {
+count++;
+}
+
+    if (count < EM_DASH_FLOOR) {
+return [];
+}
+
     // Saturation gate: dashes must be dense in the prose, not sprinkled through
     // a long document. textLength <= count * chars-per-dash means the density is
     // at or above the threshold.
-    if (text.length > count * EM_DASH_CHARS_PER_DASH) return [];
+    if (text.length > count * EM_DASH_CHARS_PER_DASH) {
+return [];
+}
+
     return [finding('em-dash-overuse', filePath, `${count} em-dashes in body text`)];
   },
   // Marketing buzzwords: SaaS phrase list
@@ -553,19 +752,31 @@ const REGEX_ANALYZERS = [
     ];
     let count = 0;
     let firstSample = '';
+
     for (const phrase of BUZZWORDS) {
       let from = 0;
+
       while (true) {
         const idx = lower.indexOf(phrase, from);
-        if (idx === -1) break;
+
+        if (idx === -1) {
+break;
+}
+
         count++;
+
         if (!firstSample) {
           firstSample = text.slice(Math.max(0, idx - 12), Math.min(text.length, idx + phrase.length + 12)).trim();
         }
+
         from = idx + phrase.length;
       }
     }
-    if (count === 0) return [];
+
+    if (count === 0) {
+return [];
+}
+
     return [finding('marketing-buzzword', filePath, `${count} buzzword phrase${count === 1 ? '' : 's'}: "${firstSample}"`)];
   },
   // Aphoristic cadence: manufactured-contrast + short-rebuttal
@@ -577,16 +788,29 @@ const REGEX_ANALYZERS = [
     let firstSample = '';
     let m;
     NOT_A_RE.lastIndex = 0;
+
     while ((m = NOT_A_RE.exec(text)) !== null) {
       count++;
-      if (!firstSample) firstSample = m[0].trim().slice(0, 80);
+
+      if (!firstSample) {
+firstSample = m[0].trim().slice(0, 80);
+}
     }
+
     SHORT_REBUTTAL_RE.lastIndex = 0;
+
     while ((m = SHORT_REBUTTAL_RE.exec(text)) !== null) {
       count++;
-      if (!firstSample) firstSample = m[0].trim().slice(0, 80);
+
+      if (!firstSample) {
+firstSample = m[0].trim().slice(0, 80);
+}
     }
-    if (count < 3) return [];
+
+    if (count < 3) {
+return [];
+}
+
     return [finding('aphoristic-cadence', filePath, `${count} aphoristic constructions: "${firstSample}"`)];
   },
   // Dark glow / chromatic halo shadows (page-level). Shared scanner handles
@@ -594,16 +818,26 @@ const REGEX_ANALYZERS = [
   // any background, and text-shadow glows.
   (content, filePath) => {
     const hits = scanCssTextForGlow(content);
-    if (hits.length === 0) return [];
+
+    if (hits.length === 0) {
+return [];
+}
+
     const lines = content.substring(0, hits[0].index).split('\n');
+
     return [finding('dark-glow', filePath, hits[0].snippet, lines.length)];
   },
   // Radial-gradient background halo on a dark page (the gradient sibling
   // of the dark-glow shadow tell).
   (content, filePath) => {
     const hits = scanCssTextForRadialHalo(content);
-    if (hits.length === 0) return [];
+
+    if (hits.length === 0) {
+return [];
+}
+
     const lines = content.substring(0, hits[0].index).split('\n');
+
     return [finding('radial-halo', filePath, hits[0].snippet, lines.length)];
   },
   // Auto-scrolling marquees (<marquee> or infinite horizontal loop
@@ -620,10 +854,21 @@ const CHROMATIC_SHADOW_TOKEN_RE = /(?:^|-)(?:accent|kinpaku|patina|gold|red|oran
 
 function insetStripeColorIsChromatic(rawColor) {
   const color = String(rawColor || '').trim().replace(/\s*!important\s*$/i, '');
-  if (/^(?:currentcolor|transparent|inherit|unset)$/i.test(color)) return false;
+
+  if (/^(?:currentcolor|transparent|inherit|unset)$/i.test(color)) {
+return false;
+}
+
   const variable = color.match(/^var\(\s*(--[\w-]+)/i);
-  if (variable) return CHROMATIC_SHADOW_TOKEN_RE.test(variable[1]);
-  if (!/^(?:#|rgba?\(|hsla?\(|hwb\(|oklch\(|oklab\(|lch\(|lab\(|color\(|[a-z]+$)/i.test(color)) return false;
+
+  if (variable) {
+return CHROMATIC_SHADOW_TOKEN_RE.test(variable[1]);
+}
+
+  if (!/^(?:#|rgba?\(|hsla?\(|hwb\(|oklch\(|oklab\(|lch\(|lab\(|color\(|[a-z]+$)/i.test(color)) {
+return false;
+}
+
   return !isNeutralAuthoredColor(color);
 }
 
@@ -647,32 +892,63 @@ function scanInsetStripeCss(rawContent, filePath, lineOffset = 0) {
   let scanLine = 1;
   const lineAtOffset = (offset) => {
     while (scanOffset < offset) {
-      if (content[scanOffset] === '\n') scanLine++;
+      if (content[scanOffset] === '\n') {
+scanLine++;
+}
+
       scanOffset++;
     }
+
     return scanLine;
   };
+
   while ((match = ruleRe.exec(content)) !== null) {
     // The selector group is `[^{};]+`, which greedily absorbs the whitespace and
     // newlines trailing the previous rule. Advance past that run before deriving
     // the line, or every rule after the first reports the preceding line.
     const selectorStart = match.index + (match[1].length - match[1].trimStart().length);
     const selector = match[1].trim().replace(/\s+/g, ' ');
-    if (!selector) continue;
-    if (/:(?:hover|focus|focus-visible|focus-within|active|checked|target)\b/i.test(selector)) continue;
-    if (/\[aria-selected\s*[*^$|~]?=\s*["']?true/i.test(selector)) continue;
-    if (/\[aria-current(?!\s*[*^$|~]?=\s*["']?false)/i.test(selector)) continue;
-    if (/(?:^|[\s._[-])(?:active|current|selected)(?![\w])/i.test(selector)) continue;
-    if (/(?:^|[\s>+~,(])(?:button|hr|tr|td|th|table|blockquote|pre|code)(?![\w-])/i.test(selector)) continue;
+
+    if (!selector) {
+continue;
+}
+
+    if (/:(?:hover|focus|focus-visible|focus-within|active|checked|target)\b/i.test(selector)) {
+continue;
+}
+
+    if (/\[aria-selected\s*[*^$|~]?=\s*["']?true/i.test(selector)) {
+continue;
+}
+
+    if (/\[aria-current(?!\s*[*^$|~]?=\s*["']?false)/i.test(selector)) {
+continue;
+}
+
+    if (/(?:^|[\s._[-])(?:active|current|selected)(?![\w])/i.test(selector)) {
+continue;
+}
+
+    if (/(?:^|[\s>+~,(])(?:button|hr|tr|td|th|table|blockquote|pre|code)(?![\w-])/i.test(selector)) {
+continue;
+}
 
     // Read the last of a repeated declaration, not the first: that is what the
     // cascade paints. Taking the first both flagged stripes that a later
     // `box-shadow: none` had cancelled and missed stripes that overrode an
     // earlier value, and mis-skipped rules whose narrow width was overridden.
     const width = lastMatch(match[2], /(?:^|;)\s*(?:width|inline-size)\s*:\s*(\d+(?:\.\d+)?)px/gi);
-    if (width && Number(width[1]) <= 40) continue;
+
+    if (width && Number(width[1]) <= 40) {
+continue;
+}
+
     const declaration = lastMatch(match[2], /(?:^|;)\s*box-shadow\s*:\s*([^;]+)/gi);
-    if (!declaration || !/\binset\b/i.test(declaration[1])) continue;
+
+    if (!declaration || !/\binset\b/i.test(declaration[1])) {
+continue;
+}
+
     // `!important` qualifies the declaration, not the shadow value, so strip it
     // before the layers are read. Tokenizing split it into its own token, which
     // made the color count wrong and silently stopped flagging stripes declared
@@ -689,14 +965,22 @@ function scanInsetStripeCss(rawContent, filePath, lineOffset = 0) {
       // respect parens: `rgb(0 0 0)` is one color token, and splitting it on
       // whitespace would read its channels as lengths.
       const tokens = tokenizeShadowLayer(layer);
-      if (!tokens.some((token) => /^inset$/i.test(token))) continue;
+
+      if (!tokens.some((token) => /^inset$/i.test(token))) {
+continue;
+}
+
       const rest = tokens.filter((token) => !/^inset$/i.test(token));
       const lengths = rest.filter(isShadowLength);
       const colors = rest.filter((token) => !isShadowLength(token));
+
       // Only the two offsets are required; omitted blur/spread default to 0,
       // which is exactly the stripe shape. More than one non-length token is a
       // layer shape we do not claim to understand, so leave it alone.
-      if (lengths.length < 2 || lengths.length > 4 || colors.length !== 1) continue;
+      if (lengths.length < 2 || lengths.length > 4 || colors.length !== 1) {
+continue;
+}
+
       const values = lengths.map((token) => ({
         n: Number(token.replace(/px$/i, '')),
         hasPx: /px$/i.test(token),
@@ -705,17 +989,29 @@ function scanInsetStripeCss(rawContent, filePath, lineOffset = 0) {
       const y = values[1];
       const blur = values[2] ? values[2].n : 0;
       const spread = values[3] ? values[3].n : 0;
-      if ((x.n !== 0 && !x.hasPx) || (y.n !== 0 && !y.hasPx) || blur !== 0 || spread !== 0) continue;
+
+      if ((x.n !== 0 && !x.hasPx) || (y.n !== 0 && !y.hasPx) || blur !== 0 || spread !== 0) {
+continue;
+}
+
       const ax = Math.abs(x.n);
       const ay = Math.abs(y.n);
-      if (!((ax >= 3 && ax <= 12 && ay === 0) || (ay >= 3 && ay <= 12 && ax === 0))) continue;
-      if (!insetStripeColorIsChromatic(colors[0])) continue;
+
+      if (!((ax >= 3 && ax <= 12 && ay === 0) || (ay >= 3 && ay <= 12 && ax === 0))) {
+continue;
+}
+
+      if (!insetStripeColorIsChromatic(colors[0])) {
+continue;
+}
+
       const edge = ay === 0 ? (x.n > 0 ? 'left' : 'right') : (y.n > 0 ? 'top' : 'bottom');
       const line = lineOffset + lineAtOffset(selectorStart);
       findings.push(finding('side-tab', filePath, `${selector} — inset box-shadow ${ay === 0 ? ax : ay}px stripe (${edge})`, line));
       break;
     }
   }
+
   return findings;
 }
 
@@ -725,15 +1021,21 @@ function scanInsetStripeCss(rawContent, filePath, lineOffset = 0) {
 
 function extractStyleBlocks(content, ext) {
   ext = ext.toLowerCase();
-  if (ext !== '.astro' && ext !== '.vue' && ext !== '.svelte') return [];
+
+  if (ext !== '.astro' && ext !== '.vue' && ext !== '.svelte') {
+return [];
+}
+
   const blocks = [];
   const re = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let m;
+
   while ((m = re.exec(content)) !== null) {
     const before = content.substring(0, m.index);
     const startLine = before.split('\n').length + 1;
     blocks.push({ content: m[1], startLine });
   }
+
   return blocks;
 }
 
@@ -745,16 +1047,22 @@ const CSS_IN_JS_EXTENSIONS = new Set(['.js', '.ts', '.jsx', '.tsx']);
 
 function findQuotedStringEnd(content, start, quote) {
   for (let cursor = start + 1; cursor < content.length; cursor++) {
-    if (content[cursor] === '\\') cursor++;
-    else if (content[cursor] === quote) return cursor;
+    if (content[cursor] === '\\') {
+cursor++;
+} else if (content[cursor] === quote) {
+return cursor;
+}
   }
+
   return -1;
 }
 
 function findRegexLiteralEnd(content, start) {
   let inCharacterClass = false;
+
   for (let cursor = start + 1; cursor < content.length; cursor++) {
     const char = content[cursor];
+
     if (char === '\\') {
       cursor++;
     } else if (char === '[') {
@@ -762,12 +1070,16 @@ function findRegexLiteralEnd(content, start) {
     } else if (char === ']') {
       inCharacterClass = false;
     } else if (char === '/' && !inCharacterClass) {
-      while (/[A-Za-z]/.test(content[cursor + 1] || '')) cursor++;
+      while (/[A-Za-z]/.test(content[cursor + 1] || '')) {
+cursor++;
+}
+
       return cursor;
     } else if (char === '\n' || char === '\r') {
       return -1;
     }
   }
+
   return -1;
 }
 
@@ -795,15 +1107,19 @@ function findTemplateExpressionEnd(content, start) {
   const recordSignificant = (char) => {
     if (/\s/.test(char)) {
       wordSeparated = true;
+
       return;
     }
+
     const isWordChar = /[\w$]/.test(char);
+
     if (isWordChar && (wordSeparated || !currentWord)) {
       currentWord = '';
       currentWordPrefix = lastSignificant;
     } else if (!isWordChar) {
       currentWordPrefix = '';
     }
+
     wordSeparated = false;
     antePreviousSignificant = previousSignificant;
     previousSignificant = lastSignificant;
@@ -817,17 +1133,30 @@ function findTemplateExpressionEnd(content, start) {
     const afterPostfixUpdate = (lastSignificant === '+' || lastSignificant === '-') &&
       previousSignificant === lastSignificant &&
       antePreviousSignificant !== lastSignificant;
+
     if (char === "'" || char === '"') {
       cursor = findQuotedStringEnd(content, cursor, char);
-      if (cursor === -1) return -1;
+
+      if (cursor === -1) {
+return -1;
+}
+
       recordSignificant(')');
     } else if (char === '/' && next === '/') {
       const lineEnd = content.indexOf('\n', cursor + 2);
-      if (lineEnd === -1) return -1;
+
+      if (lineEnd === -1) {
+return -1;
+}
+
       cursor = lineEnd;
     } else if (char === '/' && next === '*') {
       const commentEnd = content.indexOf('*/', cursor + 2);
-      if (commentEnd === -1) return -1;
+
+      if (commentEnd === -1) {
+return -1;
+}
+
       cursor = commentEnd + 1;
     } else if (
       char === '/' &&
@@ -838,11 +1167,19 @@ function findTemplateExpressionEnd(content, start) {
         (currentWordPrefix !== '.' && REGEX_PREFIX_KEYWORDS.has(currentWord)))
     ) {
       cursor = findRegexLiteralEnd(content, cursor);
-      if (cursor === -1) return -1;
+
+      if (cursor === -1) {
+return -1;
+}
+
       recordSignificant(')');
     } else if (char === '`') {
       cursor = findTemplateLiteralEnd(content, cursor);
-      if (cursor === -1) return -1;
+
+      if (cursor === -1) {
+return -1;
+}
+
       recordSignificant(')');
     } else if (char === '{') {
       depth++;
@@ -850,28 +1187,38 @@ function findTemplateExpressionEnd(content, start) {
       recordSignificant(char);
     } else if (char === '}') {
       depth--;
-      if (depth === 0) return cursor;
+
+      if (depth === 0) {
+return cursor;
+}
+
       lastClosedBraceKind = braceKinds.pop() || '';
       recordSignificant(char);
     } else {
       recordSignificant(char);
     }
   }
+
   return -1;
 }
 
 function findTemplateLiteralEnd(content, start) {
   for (let cursor = start + 1; cursor < content.length; cursor++) {
     const char = content[cursor];
+
     if (char === '\\') {
       cursor++;
     } else if (char === '`') {
       return cursor;
     } else if (char === '$' && content[cursor + 1] === '{') {
       cursor = findTemplateExpressionEnd(content, cursor + 2);
-      if (cursor === -1) return -1;
+
+      if (cursor === -1) {
+return -1;
+}
     }
   }
+
   return -1;
 }
 
@@ -879,27 +1226,52 @@ function findCSSinJSTemplates(content) {
   const templates = [];
   const tagRe = /\b(?:styled(?:\.\w+|\([^)]+\))|css)/g;
   let match;
+
   while ((match = tagRe.exec(content)) !== null) {
     let cursor = match.index + match[0].length;
-    while (/\s/.test(content[cursor] || '')) cursor++;
+
+    while (/\s/.test(content[cursor] || '')) {
+cursor++;
+}
 
     if (content[cursor] === '<') {
       let depth = 0;
+
       while (cursor < content.length) {
         const char = content[cursor];
-        if (char === '<') depth++;
-        else if (char === '>' && content[cursor - 1] !== '=') depth--;
+
+        if (char === '<') {
+depth++;
+} else if (char === '>' && content[cursor - 1] !== '=') {
+depth--;
+}
+
         cursor++;
-        if (depth === 0) break;
+
+        if (depth === 0) {
+break;
+}
       }
-      if (depth !== 0) continue;
-      while (/\s/.test(content[cursor] || '')) cursor++;
+
+      if (depth !== 0) {
+continue;
+}
+
+      while (/\s/.test(content[cursor] || '')) {
+cursor++;
+}
     }
 
-    if (content[cursor] !== '`') continue;
+    if (content[cursor] !== '`') {
+continue;
+}
+
     const contentStart = cursor + 1;
     cursor = findTemplateLiteralEnd(content, cursor);
-    if (cursor === -1) continue;
+
+    if (cursor === -1) {
+continue;
+}
 
     templates.push({
       tagStart: match.index,
@@ -908,15 +1280,21 @@ function findCSSinJSTemplates(content) {
     });
     tagRe.lastIndex = cursor + 1;
   }
+
   return templates;
 }
 
 function extractCSSinJS(content, ext) {
   ext = ext.toLowerCase();
-  if (!CSS_IN_JS_EXTENSIONS.has(ext)) return [];
+
+  if (!CSS_IN_JS_EXTENSIONS.has(ext)) {
+return [];
+}
+
   return findCSSinJSTemplates(content).map((template) => {
     const before = content.substring(0, template.tagStart);
     const startLine = before.split('\n').length;
+
     return {
       content: content.slice(template.contentStart, template.contentEnd),
       startLine,
@@ -925,38 +1303,47 @@ function extractCSSinJS(content, ext) {
 }
 
 function stripCssInJsComments(content, ext) {
-  if (!CSS_IN_JS_EXTENSIONS.has(ext.toLowerCase())) return content;
+  if (!CSS_IN_JS_EXTENSIONS.has(ext.toLowerCase())) {
+return content;
+}
+
   const templates = findCSSinJSTemplates(content);
   let output = '';
   let cursor = 0;
+
   for (const template of templates) {
     output += content.slice(cursor, template.contentStart);
     output += stripCssComments(content.slice(template.contentStart, template.contentEnd));
     cursor = template.contentEnd;
   }
+
   return output + content.slice(cursor);
 }
 
 function runRegexMatchers(lines, filePath, lineOffset = 0, blockContext = null, options = {}) {
   const { profile, phase = 'regex-matchers' } = options || {};
   const findings = [];
+
   if (!profile) {
     for (const matcher of REGEX_MATCHERS) {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         matcher.regex.lastIndex = 0;
         let m;
+
         while ((m = matcher.regex.exec(line)) !== null) {
           // For extracted blocks, use nearby lines as context for multi-line CSS patterns
           const context = blockContext
             ? lines.slice(Math.max(0, i - 3), Math.min(lines.length, i + 4)).join(' ')
             : line;
+
           if (matcher.test(m, context)) {
             findings.push(finding(matcher.id, filePath, matcher.fmt(m, context), i + 1 + lineOffset));
           }
         }
       }
     }
+
     return findings;
   }
 
@@ -968,24 +1355,29 @@ function runRegexMatchers(lines, filePath, lineOffset = 0, blockContext = null, 
       target: filePath,
     }, () => {
       const matches = [];
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         matcher.regex.lastIndex = 0;
         let m;
+
         while ((m = matcher.regex.exec(line)) !== null) {
           // For extracted blocks, use nearby lines as context for multi-line CSS patterns
           const context = blockContext
             ? lines.slice(Math.max(0, i - 3), Math.min(lines.length, i + 4)).join(' ')
             : line;
+
           if (matcher.test(m, context)) {
             matches.push(finding(matcher.id, filePath, matcher.fmt(m, context), i + 1 + lineOffset));
           }
         }
       }
+
       return matches;
     });
     findings.push(...matcherFindings);
   }
+
   return findings;
 }
 
@@ -1002,10 +1394,15 @@ const TEXT_CONTENT_ANALYZER_IDS = [
 
 function runTextContentAnalyzers(content, filePath, options = {}) {
   const profile = options?.profile;
-  if (!shouldRunPageAnalyzers(content, filePath)) return [];
+
+  if (!shouldRunPageAnalyzers(content, filePath)) {
+return [];
+}
+
   // The 3 text-content analyzers are at indices 2-4 in REGEX_ANALYZERS
   // (single-font's removal on 2026-07-29 shifted every index down one).
   const findings = [];
+
   for (let i = 0; i < TEXT_CONTENT_ANALYZER_IDS.length; i++) {
     const analyzer = REGEX_ANALYZERS[2 + i];
     const ruleId = TEXT_CONTENT_ANALYZER_IDS[i];
@@ -1016,6 +1413,7 @@ function runTextContentAnalyzers(content, filePath, options = {}) {
       target: filePath,
     }, () => analyzer(content, filePath)));
   }
+
   return findings;
 }
 
@@ -1062,6 +1460,7 @@ function detectText(content, filePath, options = {}) {
     target: filePath,
   }, () => scanCssTextForGridBackground(source).map(hit => {
     const line = source.substring(0, hit.index).split('\n').length;
+
     return finding('codex-grid-background', filePath, hit.snippet, line);
   })));
 
@@ -1074,6 +1473,7 @@ function detectText(content, filePath, options = {}) {
       target: filePath,
     }, () => extractStyleBlocks(content, ext))
     : extractStyleBlocks(content, ext);
+
   for (const block of styleBlocks) {
     const blockLines = block.content.split('\n');
     findings.push(...runRegexMatchers(blockLines, filePath, block.startLine - 1, true, {
@@ -1099,6 +1499,7 @@ function detectText(content, filePath, options = {}) {
       target: filePath,
     }, () => extractCSSinJS(source, ext))
     : extractCSSinJS(source, ext);
+
   for (const block of cssJsBlocks) {
     const blockContent = stripCssComments(block.content);
     const blockLines = blockContent.split('\n');
@@ -1121,13 +1522,17 @@ function detectText(content, filePath, options = {}) {
 
   // Deduplicate findings (same antipattern + similar snippet, within 2 lines)
   const deduped = [];
+
   for (const f of findings) {
     const isDupe = deduped.some(d =>
       d.antipattern === f.antipattern &&
       d.snippet === f.snippet &&
       Math.abs(d.line - f.line) <= 2
     );
-    if (!isDupe) deduped.push(f);
+
+    if (!isDupe) {
+deduped.push(f);
+}
   }
 
   // Page-level analyzers only run on full pages
@@ -1140,6 +1545,7 @@ function detectText(content, filePath, options = {}) {
       'aphoristic-cadence',
       'dark-glow',
     ];
+
     for (let i = 0; i < REGEX_ANALYZERS.length; i++) {
       const analyzer = REGEX_ANALYZERS[i];
       deduped.push(...profileFindings(profile, {

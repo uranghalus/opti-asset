@@ -125,13 +125,13 @@ return [
     | Register View Routes
     |--------------------------------------------------------------------------
     |
-    | Here you may specify if the routes returning views should be disabled as
-    | you may not need them when building your own application. This may be
-    | especially true if you're writing a custom single-page application.
+    | View routes (login, register, password reset, email verification,
+    | two-factor challenge, confirm password) are disabled because this
+    | application authenticates exclusively via corporate SSO (OIDC).
     |
     */
 
-    'views' => true,
+    'views' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -161,16 +161,13 @@ return [
     */
 
     'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
-        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
-            'confirmPassword' => true,
+            'confirmPassword' => false,
             // 'window' => 0
         ]),
         Features::passkeys([
-            'confirmPassword' => true,
+            'confirmPassword' => false,
         ]),
     ],
 

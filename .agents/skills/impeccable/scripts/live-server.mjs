@@ -13,30 +13,15 @@
  *   node <scripts_path>/live-server.mjs --help
  */
 
-import http from 'node:http';
-import { randomUUID } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
-import path from 'node:path';
+import http from 'node:http';
 import net from 'node:net';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseDesignMd } from './lib/design-parser.mjs';
 import { loadContext } from './context.mjs';
-import {
-  assembleLiveBrowserScript,
-  assertLiveBrowserScriptParts,
-  readLiveBrowserScriptParts,
-  resolveLiveBrowserScriptParts,
-} from './live/browser-script-parts.mjs';
-import { createLiveSessionStore, GENERATION_FENCED_PHASES } from './live/session-store.mjs';
-import { runGenerationPreflight } from './live/generation-preflight.mjs';
-import { validateEvent } from './live/event-validation.mjs';
-import { selectAvailablePendingEvent } from './live/poll-lanes.mjs';
-import { createManualEditRoutes } from './live/manual-edit-routes.mjs';
-import {
-  LIVE_COMMANDS,
-  VARIANT_PROGRESS_CHECKPOINT_REASONS as VARIANT_PROGRESS_CHECKPOINT_REASON_LIST,
-} from './live/vocabulary.mjs';
+import { parseDesignMd } from './lib/design-parser.mjs';
 import {
   getDesignSidecarPath,
   getLiveDir,
@@ -47,11 +32,23 @@ import {
   resolveDesignSidecarPath,
   writeLiveServerInfo,
 } from './lib/impeccable-paths.mjs';
-import { countByPage as countPendingByPage } from './live/manual-edits-buffer.mjs';
+import {
+  assembleLiveBrowserScript,
+  assertLiveBrowserScriptParts,
+  readLiveBrowserScriptParts,
+  resolveLiveBrowserScriptParts,
+} from './live/browser-script-parts.mjs';
+import { validateEvent } from './live/event-validation.mjs';
+import { runGenerationPreflight } from './live/generation-preflight.mjs';
 import {
   createManualApplyController,
   summarizeManualApplyFailures,
 } from './live/manual-apply.mjs';
+import { createManualEditRoutes } from './live/manual-edit-routes.mjs';
+import { countByPage as countPendingByPage } from './live/manual-edits-buffer.mjs';
+import { selectAvailablePendingEvent } from './live/poll-lanes.mjs';
+import { enterLiveRoot } from './live/roots.mjs';
+import { createLiveSessionStore, GENERATION_FENCED_PHASES } from './live/session-store.mjs';
 import {
   applyDeferredSvelteComponentAccepts,
   bumpSvelteComponentPreviewRevision,
@@ -59,7 +56,10 @@ import {
   removeAllSvelteComponentSessions,
   sweepInactiveSvelteComponentSessions,
 } from './live/svelte-component.mjs';
-import { enterLiveRoot } from './live/roots.mjs';
+import {
+  LIVE_COMMANDS,
+  VARIANT_PROGRESS_CHECKPOINT_REASONS as VARIANT_PROGRESS_CHECKPOINT_REASON_LIST,
+} from './live/vocabulary.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Anchor the whole process on the live roots manifest before anything derives
@@ -79,6 +79,7 @@ function resolveProjectContext() {
     : (LIVE_ROOTS?.designPath && fs.existsSync(LIVE_ROOTS.designPath) ? LIVE_ROOTS.designPath : null);
   const hasProduct = ctx.hasProduct
     || !!(LIVE_ROOTS?.productPath && fs.existsSync(LIVE_ROOTS.productPath));
+
   return {
     ...ctx,
     hasProduct,
@@ -172,8 +173,14 @@ const manualEditRoutes = createManualEditRoutes({
 });
 
 function chatAgentLikelyActive() {
-  if (state.pendingPolls.length > 0) return true;
-  if (!state.lastPollAt) return false;
+  if (state.pendingPolls.length > 0) {
+return true;
+}
+
+  if (!state.lastPollAt) {
+return false;
+}
+
   return Date.now() - state.lastPollAt < CHAT_POLL_FRESHNESS_MS;
 }
 
@@ -182,7 +189,10 @@ function chatAgentLikelyActive() {
 const MAX_ANNOTATION_BYTES = 10 * 1024 * 1024;
 
 function enqueueEvent(event) {
-  if (!event) return;
+  if (!event) {
+return;
+}
+
   // Dedupe by (session, type), except mount failures, which are per-variant:
   // variant 2 failing must not be swallowed because variant 1's failure is
   // still queued.
@@ -191,15 +201,24 @@ function enqueueEvent(event) {
     && entry.event?.type === event.type
     && (event.type !== 'variant_mount_failed' || entry.event?.variant === event.variant)
   ));
-  if (duplicate) return;
+
+  if (duplicate) {
+return;
+}
+
   state.pendingEvents.push({ event, leaseUntil: 0, seq: state.nextEventSeq++ });
   flushPendingPolls();
 }
 
 function restorePendingEventsFromStore() {
-  if (!state.sessionStore) return;
+  if (!state.sessionStore) {
+return;
+}
+
   for (const snapshot of state.sessionStore.listActiveSessions()) {
-    if (snapshot.pendingEvent) enqueueEvent(snapshot.pendingEvent);
+    if (snapshot.pendingEvent) {
+enqueueEvent(snapshot.pendingEvent);
+}
   }
 }
 
@@ -214,23 +233,34 @@ async function leaseEvent(entry, leaseMs) {
   // to a second poll in that window and generated twice.
   entry.leaseUntil = Date.now() + leaseMs;
   await prepareGenerateEventForLease(entry);
+
   if (!entry.event?.id) {
     const idx = state.pendingEvents.indexOf(entry);
-    if (idx !== -1) state.pendingEvents.splice(idx, 1);
+
+    if (idx !== -1) {
+state.pendingEvents.splice(idx, 1);
+}
+
     return entry.event;
   }
+
   // Re-stamp so the lease window starts when the agent actually receives the
   // work, not when scaffolding began.
   entry.leaseUntil = Date.now() + leaseMs;
   recordGenerateDelivery(entry);
   scheduleLeaseFlush();
   broadcastAgentPollingIfChanged();
+
   return entry.event;
 }
 
 function recordGenerateDelivery(entry) {
   const event = entry?.event;
-  if (!event || event.type !== 'generate' || event.generationReadyAt) return;
+
+  if (!event || event.type !== 'generate' || event.generationReadyAt) {
+return;
+}
+
   const at = Date.now();
   entry.event = { ...event, generationReadyAt: at };
   state.sessionStore?.appendEvent(entry.event);
@@ -239,7 +269,10 @@ function recordGenerateDelivery(entry) {
 
 async function prepareGenerateEventForLease(entry) {
   const event = entry?.event;
-  if (!event || event.type !== 'generate' || event.scaffoldAttempted) return;
+
+  if (!event || event.type !== 'generate' || event.scaffoldAttempted) {
+return;
+}
 
   recordAgentPhase(event.id, 'picked_up');
   recordAgentPhase(event.id, 'scaffolding');
@@ -261,7 +294,10 @@ async function prepareGenerateEventForLease(entry) {
 }
 
 function recordAgentPhase(id, phase, details = {}) {
-  if (!id) return;
+  if (!id) {
+return;
+}
+
   const event = {
     type: 'agent_phase',
     id,
@@ -294,33 +330,61 @@ function recordAgentPhase(id, phase, details = {}) {
  * redelivery from its next checkpoint.
  */
 function detectMissedGenerationCompletion(event) {
-  if (!event?.id || event.type !== 'checkpoint') return null;
-  if (event.phase !== 'generating') return null;
-  if (!variantCountLooksBehind(event.arrivedVariants, event.expectedVariants)) return null;
-  if (!state.sessionStore) return null;
+  if (!event?.id || event.type !== 'checkpoint') {
+return null;
+}
+
+  if (event.phase !== 'generating') {
+return null;
+}
+
+  if (!variantCountLooksBehind(event.arrivedVariants, event.expectedVariants)) {
+return null;
+}
+
+  if (!state.sessionStore) {
+return null;
+}
+
   let snapshot = null;
+
   try {
     snapshot = state.sessionStore.getSnapshot(event.id);
   } catch {
     return null;
   }
+
   return missedCompletionFromSnapshot(snapshot);
 }
 
 function variantCountLooksBehind(arrivedValue, expectedValue) {
   const arrived = Number(arrivedValue) || 0;
   const expected = Number(expectedValue) || 0;
+
   return arrived <= 0 || (expected > 0 && arrived < expected);
 }
 
 function missedCompletionFromSnapshot(snapshot) {
-  if (!snapshot?.id || !snapshot.generationCompletedAt) return null;
-  if (snapshot.generationCanceled) return null;
+  if (!snapshot?.id || !snapshot.generationCompletedAt) {
+return null;
+}
+
+  if (snapshot.generationCanceled) {
+return null;
+}
+
   // Accept/discard already underway: the browser is no longer waiting on
   // generation, and a late `done` there would collide with teardown.
-  if (GENERATION_FENCED_PHASES.has(snapshot.phase)) return null;
+  if (GENERATION_FENCED_PHASES.has(snapshot.phase)) {
+return null;
+}
+
   const file = snapshot.sourceFile || snapshot.previewFile;
-  if (!file) return null;
+
+  if (!file) {
+return null;
+}
+
   return {
     type: 'done',
     id: snapshot.id,
@@ -333,8 +397,14 @@ function missedCompletionFromSnapshot(snapshot) {
 }
 
 function recordGenerationCheckpoint(event) {
-  if (!event?.id || event.type !== 'checkpoint') return;
-  if (generationIsFenced(event.id)) return;
+  if (!event?.id || event.type !== 'checkpoint') {
+return;
+}
+
+  if (generationIsFenced(event.id)) {
+return;
+}
+
   // Only checkpoints that report a change in variant availability are
   // generation progress. The browser also checkpoints for durability on Tune
   // slider drags, resumes, and anchor recovery; treating those as progress
@@ -342,12 +412,20 @@ function recordGenerationCheckpoint(event) {
   // remounts the component preview mid-drag (reverting the user's live param
   // edit and detaching the popover's element), and permanently latched the
   // *_reviewable phases from the wrong trigger, corrupting generation timings.
-  if (!VARIANT_PROGRESS_CHECKPOINT_REASONS.has(event.reason)) return;
+  if (!VARIANT_PROGRESS_CHECKPOINT_REASONS.has(event.reason)) {
+return;
+}
+
   const arrived = Number(event.arrivedVariants) || 0;
   const expected = Number(event.expectedVariants) || 0;
-  if (arrived <= 0 || expected <= 0) return;
+
+  if (arrived <= 0 || expected <= 0) {
+return;
+}
+
   const previewMode = event.previewMode || 'source';
   const previewFile = event.previewFile || event.file;
+
   if (previewFile) {
     broadcast({
       type: 'variant_progress',
@@ -361,27 +439,35 @@ function recordGenerationCheckpoint(event) {
       publicationKind: event.publicationKind || 'variants',
     });
   }
+
   const details = {
     arrivedVariants: arrived,
     expectedVariants: expected,
     checkpointReason: event.reason || null,
   };
   const at = Date.now();
+
   if (!generationPhaseAlreadyRecorded(event.id, 'first_reviewable')) {
     recordAgentPhase(event.id, 'first_reviewable', { ...details, at });
   }
+
   if (arrived >= 2 && expected >= 3 && !generationPhaseAlreadyRecorded(event.id, 'second_reviewable')) {
     recordAgentPhase(event.id, 'second_reviewable', { ...details, at });
   }
+
   if (arrived >= expected && !generationPhaseAlreadyRecorded(event.id, 'all_variants_ready')) {
     recordAgentPhase(event.id, 'all_variants_ready', { ...details, at });
   }
 }
 
 function generationIsFenced(id) {
-  if (!state.sessionStore || !id) return false;
+  if (!state.sessionStore || !id) {
+return false;
+}
+
   try {
     const snapshot = state.sessionStore.getSnapshot(id, { includeCompleted: true });
+
     return snapshot?.generationCanceled === true;
   } catch {
     return false;
@@ -389,9 +475,13 @@ function generationIsFenced(id) {
 }
 
 function generationPhaseAlreadyRecorded(id, phase) {
-  if (!state.sessionStore) return false;
+  if (!state.sessionStore) {
+return false;
+}
+
   try {
     const snapshot = state.sessionStore.getSnapshot(id, { includeCompleted: true });
+
     return !!snapshot?.generationTimings?.[phase];
   } catch {
     return false;
@@ -399,16 +489,24 @@ function generationPhaseAlreadyRecorded(id, phase) {
 }
 
 function acknowledgePendingEvent(id, sourceEventType) {
-  if (!id) return false;
+  if (!id) {
+return false;
+}
+
   const idx = state.pendingEvents.findIndex((entry) => (
     entry.event?.id === id
     && (!sourceEventType || entry.event?.type === sourceEventType)
   ));
-  if (idx === -1) return false;
+
+  if (idx === -1) {
+return false;
+}
+
   const acknowledged = state.pendingEvents[idx].event;
   state.pendingEvents.splice(idx, 1);
   scheduleLeaseFlush();
   broadcastAgentPollingIfChanged();
+
   return acknowledged;
 }
 
@@ -417,34 +515,53 @@ function releasePendingEvent(id, sourceEventType) {
     item.event?.id === id
     && (!sourceEventType || item.event?.type === sourceEventType)
   ));
-  if (!entry) return null;
+
+  if (!entry) {
+return null;
+}
+
   entry.leaseUntil = 0;
   scheduleLeaseFlush();
+
   return entry.event;
 }
 
 function retirePendingGeneration(id) {
-  if (!id) return 0;
+  if (!id) {
+return 0;
+}
+
   let retired = 0;
+
   for (let index = state.pendingEvents.length - 1; index >= 0; index -= 1) {
     const event = state.pendingEvents[index]?.event;
-    if (event?.id !== id || event.type !== 'generate') continue;
+
+    if (event?.id !== id || event.type !== 'generate') {
+continue;
+}
+
     state.pendingEvents.splice(index, 1);
     retired += 1;
   }
+
   if (retired > 0) {
     scheduleLeaseFlush();
     broadcastAgentPollingIfChanged();
   }
+
   return retired;
 }
 
 function findPendingEventById(id, sourceEventType) {
-  if (!id) return null;
+  if (!id) {
+return null;
+}
+
   const entry = state.pendingEvents.find((item) => (
     item.event?.id === id
     && (!sourceEventType || item.event?.type === sourceEventType)
   ));
+
   return entry?.event || null;
 }
 
@@ -456,6 +573,7 @@ function summarizePendingEventForStatus(entry) {
     leased: isLeased(entry),
     leaseUntil: entry.leaseUntil || null,
   };
+
   if (event.type === 'manual_edit_apply') {
     summary.pageUrl = event.pageUrl || null;
     summary.chunk = event.chunk || null;
@@ -464,6 +582,7 @@ function summarizePendingEventForStatus(entry) {
     summary.agentAction = event.agentAction || manualApply.buildAgentAction(event);
     summary.manualApplySummary = manualApply.summarizeEvent(event, manualApply.getDeferred(event.id)?.batch || event.batch);
   }
+
   return summary;
 }
 
@@ -495,22 +614,32 @@ function summarizeActiveSessionForClient(snapshot = {}) {
 }
 
 function activeSessionSummaries() {
-  if (!state.sessionStore) return [];
+  if (!state.sessionStore) {
+return [];
+}
+
   return state.sessionStore.listActiveSessions().map((snapshot) => summarizeActiveSessionForClient(snapshot));
 }
 
 function cancelQueuedAnonymousExitEvents() {
   let removed = 0;
+
   for (let i = state.pendingEvents.length - 1; i >= 0; i -= 1) {
     const event = state.pendingEvents[i]?.event;
-    if (event?.type !== 'exit' || event.id) continue;
+
+    if (event?.type !== 'exit' || event.id) {
+continue;
+}
+
     state.pendingEvents.splice(i, 1);
     removed += 1;
   }
+
   if (removed > 0) {
     scheduleLeaseFlush();
     broadcastAgentPollingIfChanged();
   }
+
   return removed;
 }
 
@@ -519,12 +648,17 @@ function scheduleLeaseFlush() {
     clearTimeout(state.leaseTimer);
     state.leaseTimer = null;
   }
+
   const now = Date.now();
   const nextLeaseUntil = state.pendingEvents
     .map((entry) => entry.leaseUntil || 0)
     .filter((leaseUntil) => leaseUntil > now)
     .sort((a, b) => a - b)[0];
-  if (!nextLeaseUntil) return;
+
+  if (!nextLeaseUntil) {
+return;
+}
+
   state.leaseTimer = setTimeout(() => {
     state.leaseTimer = null;
     flushPendingPolls();
@@ -534,21 +668,30 @@ function scheduleLeaseFlush() {
 
 function flushPendingPolls() {
   let changed = false;
+
   while (state.pendingPolls.length > 0) {
     let pollIndex = -1;
     let entry = null;
+
     for (let index = 0; index < state.pendingPolls.length; index += 1) {
       const candidate = findAvailablePendingEvent(Date.now(), state.pendingPolls[index].types);
-      if (!candidate) continue;
+
+      if (!candidate) {
+continue;
+}
+
       pollIndex = index;
       entry = candidate;
       break;
     }
+
     if (!entry) {
       scheduleLeaseFlush();
       broadcastAgentPollingIfChanged();
+
       return;
     }
+
     const [poll] = state.pendingPolls.splice(pollIndex, 1);
     // leaseEvent is async (it may scaffold source), but it claims the entry
     // synchronously, so the next loop iteration will not re-select it. Resolve
@@ -562,8 +705,12 @@ function flushPendingPolls() {
     });
     changed = true;
   }
+
   scheduleLeaseFlush();
-  if (changed) broadcastAgentPollingIfChanged();
+
+  if (changed) {
+broadcastAgentPollingIfChanged();
+}
 }
 
 function isLeased(entry) {
@@ -579,7 +726,11 @@ function agentPollingConnected() {
 
 function broadcastAgentPollingIfChanged() {
   const connected = agentPollingConnected();
-  if (state.lastAgentPollingBroadcast === connected) return;
+
+  if (state.lastAgentPollingBroadcast === connected) {
+return;
+}
+
   state.lastAgentPollingBroadcast = connected;
   broadcast({ type: 'agent_polling', connected });
 }
@@ -587,8 +738,11 @@ function broadcastAgentPollingIfChanged() {
 /** Push a message to all connected SSE clients. */
 function broadcast(msg) {
   const data = 'data: ' + JSON.stringify(msg) + '\n\n';
+
   for (const res of state.sseClients) {
-    try { res.write(data); } catch { /* client gone */ }
+    try {
+ res.write(data); 
+} catch { /* client gone */ }
   }
 }
 
@@ -600,6 +754,7 @@ function recordManualEditActivity(type, details = {}) {
     ...details,
   };
   state.manualEditActivity = entry;
+
   if (DEBUG_MANUAL_EDIT_EVENTS) {
     try {
       const filePath = path.join(getLiveDir(process.cwd()), 'manual-edit-events.jsonl');
@@ -609,13 +764,16 @@ function recordManualEditActivity(type, details = {}) {
       /* diagnostics are best-effort; never block live mode on observability */
     }
   }
+
   broadcast(entry);
+
   return entry;
 }
 
 function getManualEditStatus() {
   try {
     const { totalCount, perPage } = countPendingByPage(process.cwd());
+
     return { totalCount, perPage, lastActivity: state.manualEditActivity };
   } catch (err) {
     return {
@@ -642,14 +800,18 @@ function loadBrowserScripts() {
     path.join(process.cwd(), 'node_modules', 'impeccable', 'cli', 'engine', 'detect-antipatterns-browser.js'),
   ];
   let detectScript = '';
+
   for (const p of detectPaths) {
-    try { detectScript = fs.readFileSync(p, 'utf-8'); break; } catch { /* try next */ }
+    try {
+ detectScript = fs.readFileSync(p, 'utf-8'); break; 
+} catch { /* try next */ }
   }
 
   // Browser script parts: DO NOT cache. Return paths so the /live.js handler
   // can re-read every part on each request. Editing browser code during
   // iteration should land on the next tab reload, not require a server restart.
   const liveScriptParts = resolveLiveBrowserScriptParts(__dirname);
+
   try {
     assertLiveBrowserScriptParts(liveScriptParts);
   } catch (err) {
@@ -668,18 +830,35 @@ function hasProjectContext() {
 }
 
 function statOrNull(filePath) {
-  try { return fs.statSync(filePath); } catch { return null; }
+  try {
+ return fs.statSync(filePath); 
+} catch {
+ return null; 
+}
 }
 
 // Strict loopback-origin test for CORS. Parses the Origin as a URL (never a
 // substring match, so `http://localhost.evil.com` and `http://127.0.0.1.evil.com`
 // fail) and accepts only http/https on localhost, 127.0.0.1, or the IPv6 loopback.
 function isLoopbackOrigin(origin) {
-  if (typeof origin !== 'string' || origin.length === 0) return false;
+  if (typeof origin !== 'string' || origin.length === 0) {
+return false;
+}
+
   let parsed;
-  try { parsed = new URL(origin); } catch { return false; }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+
+  try {
+ parsed = new URL(origin); 
+} catch {
+ return false; 
+}
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+return false;
+}
+
   const host = parsed.hostname.toLowerCase();
+
   return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
 }
 
@@ -706,13 +885,20 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
     // own fetches) are not subject to CORS and keep working; no ACAO header
     // is needed for them.
     const origin = req.headers.origin;
+
     if (origin && (isLoopbackOrigin(origin) || url.searchParams.get('token') === state.token)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
     }
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+    if (req.method === 'OPTIONS') {
+ res.writeHead(204); res.end();
+
+ return; 
+}
 
     const p = url.pathname;
 
@@ -725,20 +911,25 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
       if (url.searchParams.get('token') !== state.token) {
         res.writeHead(401, { 'Content-Type': 'text/plain' });
         res.end('Unauthorized');
+
         return;
       }
+
       // Re-read from disk each request so edits to live-browser.js land on
       // the next tab reload. No-store headers prevent browser caching across
       // sessions — during iteration, a cached old script silently breaks
       // every subsequent session.
       let parts;
+
       try {
         parts = readLiveBrowserScriptParts(liveScriptParts);
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Error reading live browser scripts: ' + err.message);
+
         return;
       }
+
       const body = assembleLiveBrowserScript({
         token: state.token,
         port: state.port,
@@ -753,12 +944,20 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
         'Pragma': 'no-cache',
       });
       res.end(body);
+
       return;
     }
+
     if (p === '/detect.js' || p === '/') {
-      if (!detectScript) { res.writeHead(404); res.end('Not available'); return; }
+      if (!detectScript) {
+ res.writeHead(404); res.end('Not available');
+
+ return; 
+}
+
       res.writeHead(200, { 'Content-Type': 'application/javascript' });
       res.end(detectScript);
+
       return;
     }
 
@@ -767,6 +966,7 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
     // window.modernScreenshot.domToBlob(...) for capture.
     if (p === '/modern-screenshot.js') {
       const vendorPath = path.join(__dirname, 'modern-screenshot.umd.js');
+
       try {
         res.writeHead(200, {
           'Content-Type': 'application/javascript',
@@ -776,6 +976,7 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
       } catch {
         res.writeHead(404); res.end('Vendor script not found');
       }
+
       return;
     }
 
@@ -785,48 +986,73 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
     // bridge and preserves the "one shot from the user's POV" UX.
     if (p === '/annotation' && req.method === 'POST') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401); res.end('Unauthorized');
+
+ return; 
+}
+
       const eventId = url.searchParams.get('eventId');
+
       if (!eventId || !/^[A-Za-z0-9_-]{1,64}$/.test(eventId)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid eventId' }));
+
         return;
       }
+
       if ((req.headers['content-type'] || '').toLowerCase() !== 'image/png') {
         res.writeHead(415, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Content-Type must be image/png' }));
+
         return;
       }
+
       if (!state.sessionDir) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Session dir unavailable' }));
+
         return;
       }
+
       const chunks = [];
       let total = 0;
       let aborted = false;
       req.on('data', (c) => {
-        if (aborted) return;
+        if (aborted) {
+return;
+}
+
         total += c.length;
+
         if (total > MAX_ANNOTATION_BYTES) {
           aborted = true;
           res.writeHead(413, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Payload too large' }));
           req.destroy();
+
           return;
         }
+
         chunks.push(c);
       });
       req.on('end', () => {
-        if (aborted) return;
+        if (aborted) {
+return;
+}
+
         const absPath = path.join(state.sessionDir, eventId + '.png');
+
         try {
           fs.writeFileSync(absPath, Buffer.concat(chunks));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Write failed: ' + err.message }));
+
           return;
         }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, path: absPath }));
       });
@@ -836,13 +1062,20 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
           res.end(JSON.stringify({ error: 'Upload failed' }));
         }
       });
+
       return;
     }
 
     // --- Health ---
     if (p === '/status') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' }));
+
+ return; 
+}
+
       const sessions = activeSessionSummaries();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -854,6 +1087,7 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
         activeSessions: sessions,
         manualEdits: getManualEditStatus(),
       }));
+
       return;
     }
 
@@ -864,6 +1098,7 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
         hasProjectContext: hasProjectContext(),
         connectedClients: state.sseClients.size,
       }));
+
       return;
     }
 
@@ -880,7 +1115,12 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
     //   /design-system/raw     returns DESIGN.md markdown verbatim
     if (p === '/design-system.json' || p === '/design-system/raw') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401); res.end('Unauthorized');
+
+ return; 
+}
 
       const projectContext = resolveProjectContext();
       const mdPath = projectContext.resolvedDesignPath;
@@ -889,15 +1129,22 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
       const jsonStat = statOrNull(jsonPath);
 
       if (p === '/design-system/raw') {
-        if (!mdStat) { res.writeHead(404); res.end('Not found'); return; }
+        if (!mdStat) {
+ res.writeHead(404); res.end('Not found');
+
+ return; 
+}
+
         res.writeHead(200, { 'Content-Type': 'text/markdown; charset=utf-8' });
         res.end(fs.readFileSync(mdPath, 'utf-8'));
+
         return;
       }
 
       if (!mdStat && !jsonStat) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ present: false }));
+
         return;
       }
 
@@ -926,15 +1173,28 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(response));
+
       return;
     }
 
     // --- Source file (no-HMR fallback) ---
     if (p === '/source') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401); res.end('Unauthorized');
+
+ return; 
+}
+
       const filePath = url.searchParams.get('path');
-      if (!filePath || filePath.includes('..')) { res.writeHead(400); res.end('Bad path'); return; }
+
+      if (!filePath || filePath.includes('..')) {
+ res.writeHead(400); res.end('Bad path');
+
+ return; 
+}
+
       const absPath = path.resolve(process.cwd(), filePath);
       // Confine to the project root. A bare `startsWith(cwd)` string check lets a
       // sibling dir whose name extends the root name (projeto -> projeto-backup)
@@ -942,19 +1202,39 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
       // sessionFileMetadataFromPollReply below). An empty rel means the request
       // resolved to the root directory itself, which this file route never serves.
       const rel = path.relative(process.cwd(), absPath);
-      if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) { res.writeHead(403); res.end('Forbidden'); return; }
+
+      if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+ res.writeHead(403); res.end('Forbidden');
+
+ return; 
+}
+
       let content;
-      try { content = fs.readFileSync(absPath, 'utf-8'); }
-      catch { res.writeHead(404); res.end('File not found'); return; }
+
+      try {
+ content = fs.readFileSync(absPath, 'utf-8'); 
+} catch {
+ res.writeHead(404); res.end('File not found');
+
+ return; 
+}
+
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(content);
+
       return;
     }
 
     // --- SSE: server→browser push (replaces WebSocket) ---
     if (p === '/events' && req.method === 'GET') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401); res.end('Unauthorized');
+
+ return; 
+}
+
       clearTimeout(state.exitTimer);
       state.exitTimer = null;
       cancelQueuedAnonymousExitEvents();
@@ -974,58 +1254,84 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
 
       // Keepalive: SSE comment every 30s prevents silent connection drops.
       const heartbeat = setInterval(() => {
-        try { res.write(': keepalive\n\n'); } catch { clearInterval(heartbeat); }
+        try {
+ res.write(': keepalive\n\n'); 
+} catch {
+ clearInterval(heartbeat); 
+}
       }, SSE_HEARTBEAT_INTERVAL);
 
       req.on('close', () => {
         clearInterval(heartbeat);
         state.sseClients.delete(res);
+
         if (state.sseClients.size === 0) {
           clearTimeout(state.exitTimer);
           state.exitTimer = setTimeout(() => {
-            if (state.sseClients.size === 0) enqueueEvent({ type: 'exit' });
+            if (state.sseClients.size === 0) {
+enqueueEvent({ type: 'exit' });
+}
           }, 8000);
         }
       });
+
       return;
     }
 
-    if (manualEditRoutes(req, res, url)) return;
+    if (manualEditRoutes(req, res, url)) {
+return;
+}
 
     // --- Browser→server events (replaces WebSocket messages) ---
     if (p === '/events' && req.method === 'POST') {
       let body = '';
-      req.on('data', (c) => { body += c; });
+      req.on('data', (c) => {
+ body += c; 
+});
       req.on('end', () => {
         let msg;
-        try { msg = JSON.parse(body); } catch {
+
+        try {
+ msg = JSON.parse(body); 
+} catch {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid JSON' }));
+
           return;
         }
+
         if (msg.token !== state.token) {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Unauthorized' }));
+
           return;
         }
+
         // Defense in depth: manual copy edits must use the staged stash/apply
         // endpoints. The direct Save event path is disabled in the browser.
         if (msg.type === 'manual_edits') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'manual_edits must POST to /manual-edit-stash, not /events' }));
+
           return;
         }
+
         if (msg.type === 'manual_edit_apply') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'manual_edit_apply is disabled; use /manual-edit-stash then /manual-edit-commit' }));
+
           return;
         }
+
         const error = validateEvent(msg);
+
         if (error) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error }));
+
           return;
         }
+
         if (msg.type === 'agent_phase') {
           recordAgentPhase(msg.id, msg.phase, {
             ...(Number.isFinite(msg.durationMs) ? { durationMs: msg.durationMs } : {}),
@@ -1033,8 +1339,10 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
           });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: true }));
+
           return;
         }
+
         // Only the events that START a session may create its journal.
         // Everything else (checkpoints, mount acks, accept/discard) must
         // reference a session THIS store already knows: appendEvent creates a
@@ -1047,26 +1355,37 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
             && !state.sessionStore.has(msg.id)) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'unknown_session', id: msg.id }));
+
           return;
         }
+
         const missedCompletion = detectMissedGenerationCompletion(msg);
+
         if (state.sessionStore && msg.id) {
           try {
             state.sessionStore.appendEvent(msg);
           } catch (err) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'session_store_append_failed', message: err.message }));
+
             return;
           }
         }
+
         if (msg.type === 'accept' || msg.type === 'discard') {
           retirePendingGeneration(msg.id);
         }
+
         recordGenerationCheckpoint(msg);
-        if (missedCompletion) broadcast(missedCompletion);
+
+        if (missedCompletion) {
+broadcast(missedCompletion);
+}
+
         if (msg.type === 'exit') {
           cleanupSvelteComponentSessionsBeforeExit();
         }
+
         // An ORPHANED discard is the browser reporting that the session's
         // wrapper no longer exists in source (edited or regenerated away).
         // There is no cleanup for an agent to perform, and asking one to run
@@ -1074,11 +1393,13 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
         // scaffolding, so the server terminalizes the session itself and the
         // event stays out of the poll queue.
         const orphanedDiscard = msg.type === 'discard' && msg.orphaned === true;
+
         if (orphanedDiscard && state.sessionStore && msg.id) {
           try {
             state.sessionStore.appendEvent({ type: 'discarded', id: msg.id, orphaned: true });
           } catch { /* the discard_requested phase already left the resumable set */ }
         }
+
         // `variant_mounted` is the happy path: it is journaled above so the
         // snapshot carries render truth, but there is nothing for the agent to
         // do about it, so it stays out of the poll queue and off the SSE bus.
@@ -1088,29 +1409,41 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
         if (msg.type !== 'checkpoint' && msg.type !== 'variant_mounted' && !orphanedDiscard) {
           enqueueEvent(msg);
         }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       });
+
       return;
     }
 
     // --- Stop ---
     if (p === '/stop') {
       const token = url.searchParams.get('token');
-      if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
+
+      if (token !== state.token) {
+ res.writeHead(401); res.end('Unauthorized');
+
+ return; 
+}
+
       res.writeHead(200, { 'Content-Type': 'text/plain' });
       res.end('stopping');
       shutdown();
+
       return;
     }
 
     // --- Agent poll ---
     if (p === '/poll' && req.method === 'GET') {
       handlePollGet(req, res, url);
+
       return;
     }
+
     if (p === '/poll' && req.method === 'POST') {
       handlePollPost(req, res);
+
       return;
     }
 
@@ -1123,43 +1456,64 @@ function createRequestHandler({ detectScript, liveScriptParts }) {
 // ---------------------------------------------------------------------------
 
 function parsePollTypes(value) {
-  if (!value) return null;
+  if (!value) {
+return null;
+}
+
   const types = String(value).split(',').map((type) => type.trim()).filter(Boolean);
+
   return types.length > 0 ? new Set(types) : null;
 }
 
 function handlePollGet(req, res, url) {
   const token = url.searchParams.get('token');
+
   if (token !== state.token) {
     res.writeHead(401, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Unauthorized' }));
+
     return;
   }
+
   state.lastPollAt = Date.now();
   const timeout = parseInt(url.searchParams.get('timeout') || DEFAULT_POLL_TIMEOUT, 10);
   const leaseMs = parseInt(url.searchParams.get('leaseMs') || '30000', 10);
   const types = parsePollTypes(url.searchParams.get('types'));
   const available = findAvailablePendingEvent(Date.now(), types);
+
   if (available) {
     // Do not await inline: leaseEvent may scaffold source, and this handler runs
     // on the server's only thread. The client can disconnect during that window,
     // so check the socket before replying.
     leaseEvent(available, leaseMs).then((event) => {
-      if (res.writableEnded || res.destroyed) return;
+      if (res.writableEnded || res.destroyed) {
+return;
+}
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(event));
     }, (error) => {
       console.error('[live] lease failed for ' + (available.event?.id || 'unknown') + ': ' + (error?.message || error));
-      if (res.writableEnded || res.destroyed) return;
+
+      if (res.writableEnded || res.destroyed) {
+return;
+}
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ type: 'timeout' }));
     });
+
     return;
   }
+
   const poll = { resolve, leaseMs, types };
   const timer = setTimeout(() => {
     const idx = state.pendingPolls.indexOf(poll);
-    if (idx !== -1) state.pendingPolls.splice(idx, 1);
+
+    if (idx !== -1) {
+state.pendingPolls.splice(idx, 1);
+}
+
     broadcastAgentPollingIfChanged();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ type: 'timeout' }));
@@ -1176,35 +1530,56 @@ function handlePollGet(req, res, url) {
   req.on('close', () => {
     clearTimeout(timer);
     const idx = state.pendingPolls.indexOf(poll);
-    if (idx !== -1) state.pendingPolls.splice(idx, 1);
+
+    if (idx !== -1) {
+state.pendingPolls.splice(idx, 1);
+}
+
     broadcastAgentPollingIfChanged();
   });
 }
 
 function sessionFileMetadataFromPollReply(file) {
-  if (!file || typeof file !== 'string') return { file };
+  if (!file || typeof file !== 'string') {
+return { file };
+}
+
   const normalized = file.split(path.sep).join('/');
   const base = { file: normalized };
   const metadataFile = normalized;
-  if (!metadataFile.endsWith('/manifest.json') && metadataFile !== 'manifest.json') return base;
+
+  if (!metadataFile.endsWith('/manifest.json') && metadataFile !== 'manifest.json') {
+return base;
+}
+
   if (!metadataFile.includes('.impeccable/live/previews/')
       && !metadataFile.includes('node_modules/.impeccable-live/')
       && !metadataFile.includes('src/lib/impeccable/')
-      && !metadataFile.includes('/.impeccable-live/')) return base;
+      && !metadataFile.includes('/.impeccable-live/')) {
+return base;
+}
 
   let full;
+
   try {
     full = path.resolve(process.cwd(), metadataFile);
     const rel = path.relative(process.cwd(), full);
-    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return base;
+
+    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+return base;
+}
   } catch {
     return base;
   }
 
   try {
     const manifest = JSON.parse(fs.readFileSync(full, 'utf-8'));
+
     if (manifest?.previewMode !== 'svelte-component'
-        || !manifest.sourceFile) return base;
+        || !manifest.sourceFile) {
+return base;
+}
+
     return {
       file: String(manifest.sourceFile).split(path.sep).join('/'),
       sourceFile: String(manifest.sourceFile).split(path.sep).join('/'),
@@ -1219,12 +1594,23 @@ function sessionFileMetadataFromPollReply(file) {
 function inferSourceEventType(msg = {}, pendingEvents = state.pendingEvents) {
   const entriesForId = pendingEvents.filter((entry) => entry.event?.id === msg.id);
   const pendingTypes = new Set(entriesForId.map((entry) => entry.event?.type));
-  if (msg.type === 'discarded' || msg.type === 'discard') return 'discard';
+
+  if (msg.type === 'discarded' || msg.type === 'discard') {
+return 'discard';
+}
+
   if (msg.type === 'complete') {
-    if (pendingTypes.has('carbonize_cleanup')) return 'carbonize_cleanup';
+    if (pendingTypes.has('carbonize_cleanup')) {
+return 'carbonize_cleanup';
+}
+
     return pendingTypes.has('accept') ? 'accept' : (pendingTypes.has('generate') ? 'generate' : undefined);
   }
-  if (msg.type === 'steer_done') return 'steer';
+
+  if (msg.type === 'steer_done') {
+return 'steer';
+}
+
   // `agent_done` can be the automatic acknowledgement for a carbonize Accept.
   // New pollers send sourceEventType explicitly; default to generate only for
   // older callers so a late worker cannot acknowledge a queued Accept.
@@ -1233,9 +1619,13 @@ function inferSourceEventType(msg = {}, pendingEvents = state.pendingEvents) {
     // browser. Without this the ack would look for a `generate` that was
     // already retired, the mount-failure event would stay queued, and the next
     // poll would hand the same failure back to the agent forever.
-    if (!pendingTypes.has('generate') && pendingTypes.has('variant_mount_failed')) return 'variant_mount_failed';
+    if (!pendingTypes.has('generate') && pendingTypes.has('variant_mount_failed')) {
+return 'variant_mount_failed';
+}
+
     return 'generate';
   }
+
   // `error` is reference/live.md's documented failure reply, and parseReplyArgs
   // never sets sourceEventType on it (the poller is a fresh process that cannot
   // know what it leased). Returning undefined here makes acknowledgePendingEvent
@@ -1248,27 +1638,39 @@ function inferSourceEventType(msg = {}, pendingEvents = state.pendingEvents) {
   if (msg.type === 'error') {
     return entriesForId.find(isLeased)?.event?.type || 'generate';
   }
+
   return undefined;
 }
 
 function handlePollPost(req, res) {
   let body = '';
-  req.on('data', (c) => { body += c; });
+  req.on('data', (c) => {
+ body += c; 
+});
   req.on('end', () => {
     let msg;
-    try { msg = JSON.parse(body); } catch {
+
+    try {
+ msg = JSON.parse(body); 
+} catch {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Invalid JSON' }));
+
       return;
     }
+
     if (msg.token !== state.token) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Unauthorized' }));
+
       return;
     }
+
     const pendingApplyDeferred = manualApply.getDeferred(msg.id);
+
     if (pendingApplyDeferred) {
       const validation = manualApply.validateResultMessage(msg, pendingApplyDeferred);
+
       if (!validation.ok) {
         recordManualEditActivity('manual_edit_apply_reply_invalid', {
           id: msg.id,
@@ -1280,8 +1682,10 @@ function handlePollPost(req, res) {
         });
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(validation.body));
+
         return;
       }
+
       recordManualEditActivity('manual_edit_apply_reply_received', {
         id: msg.id,
         pageUrl: pendingApplyDeferred.pageUrl,
@@ -1298,8 +1702,10 @@ function handlePollPost(req, res) {
       flushPendingPolls();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
+
       return;
     }
+
     if (manualApply.hasTimedOutId(msg.id)) {
       const rollback = manualApply.rollbackTimedOutReply(msg);
       recordManualEditActivity('manual_edit_apply_stale_reply_rejected', {
@@ -1309,25 +1715,34 @@ function handlePollPost(req, res) {
       });
       res.writeHead(409, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'stale_manual_edit_apply_reply', ...rollback }));
+
       return;
     }
+
     const sourceEventType = msg.sourceEventType || inferSourceEventType(msg);
+
     if (msg.type === 'retry') {
       const releasedEvent = releasePendingEvent(msg.id, sourceEventType);
+
       if (!releasedEvent) {
         res.writeHead(msg.id ? 404 : 400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           error: msg.id ? 'unknown_poll_retry_id' : 'missing_poll_retry_id',
           id: msg.id,
         }));
+
         return;
       }
+
       flushPendingPolls();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, released: true }));
+
       return;
     }
+
     const pendingEventBeforeAck = findPendingEventById(msg.id, sourceEventType);
+
     if (pendingEventBeforeAck?.type === 'steer' && msg.type === 'steer_done'
         && !msg.file && !(typeof msg.message === 'string' && msg.message.trim())) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1335,18 +1750,26 @@ function handlePollPost(req, res) {
         error: 'steer_done_requires_file_or_message',
         hint: 'Reply with --file after writing source, or include a message explaining an intentional no-op.',
       }));
+
       return;
     }
+
     const acknowledgedEvent = acknowledgePendingEvent(msg.id, sourceEventType);
     let skipJournalReply = false;
     let existingSession = null;
+
     if (!acknowledgedEvent && state.sessionStore && msg.id) {
       try {
         existingSession = state.sessionStore.getSnapshot(msg.id, { includeCompleted: true });
-        if (!existingSession?.updatedAt) existingSession = null;
+
+        if (!existingSession?.updatedAt) {
+existingSession = null;
+}
+
         skipJournalReply = existingSession?.phase === 'completed' || existingSession?.phase === 'discarded';
       } catch { /* fall through and record the reply normally */ }
     }
+
     if (!acknowledgedEvent && !existingSession) {
       recordManualEditActivity('manual_edit_poll_reply_unknown', {
         id: msg.id || null,
@@ -1357,9 +1780,12 @@ function handlePollPost(req, res) {
         error: msg.id ? 'unknown_poll_reply_id' : 'missing_poll_reply_id',
         id: msg.id,
       }));
+
       return;
     }
+
     const replyFileMeta = sessionFileMetadataFromPollReply(msg.file);
+
     // A publish (done reply carrying a component manifest) snapshots the
     // variant files into a fresh revision dir before the browser is told:
     // the import path changes every publish, so no transform cache can pin a
@@ -1371,7 +1797,11 @@ function handlePollPost(req, res) {
         && msg.id
         && (msg.type === 'done' || !msg.type)) {
       let compileCheck = { ok: true, failures: [] };
-      try { compileCheck = compileCheckVariants(msg.id, process.cwd()); } catch { /* best-effort */ }
+
+      try {
+ compileCheck = compileCheckVariants(msg.id, process.cwd()); 
+} catch { /* best-effort */ }
+
       if (!compileCheck.ok) {
         res.writeHead(422, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -1380,10 +1810,15 @@ function handlePollPost(req, res) {
           failures: compileCheck.failures,
           _instructions: 'The publish was NOT delivered: the listed variant file(s) do not compile, so the browser never saw them. Fix each failure at the given file and line (the most common cause is a second top-level <style> element; Svelte allows exactly one, so merge all rules into the existing block), then send the same --reply done again.',
         }));
+
         return;
       }
-      try { bumpSvelteComponentPreviewRevision(msg.id, process.cwd()); } catch { /* best-effort */ }
+
+      try {
+ bumpSvelteComponentPreviewRevision(msg.id, process.cwd()); 
+} catch { /* best-effort */ }
     }
+
     if (state.sessionStore && msg.id && !skipJournalReply) {
       try {
         const eventType = msg.type === 'steer_done'
@@ -1408,6 +1843,7 @@ function handlePollPost(req, res) {
         });
       } catch { /* keep reply path best-effort; browser still needs SSE */ }
     }
+
     flushPendingPolls();
     // Forward the reply to the browser via SSE
     broadcast({
@@ -1434,16 +1870,37 @@ let httpServer = null;
 function shutdown() {
   cleanupSvelteComponentSessionsBeforeExit();
   removeLiveServerInfo(process.cwd());
-  if (state.leaseTimer) clearTimeout(state.leaseTimer);
+
+  if (state.leaseTimer) {
+clearTimeout(state.leaseTimer);
+}
+
   state.leaseTimer = null;
+
   if (state.sessionDir) {
-    try { fs.rmSync(state.sessionDir, { recursive: true, force: true }); } catch {}
+    try {
+ fs.rmSync(state.sessionDir, { recursive: true, force: true }); 
+} catch {}
   }
-  for (const res of state.sseClients) { try { res.end(); } catch {} }
+
+  for (const res of state.sseClients) {
+ try {
+ res.end(); 
+} catch {} 
+}
+
   state.sseClients.clear();
-  for (const poll of state.pendingPolls) poll.resolve({ type: 'exit' });
+
+  for (const poll of state.pendingPolls) {
+poll.resolve({ type: 'exit' });
+}
+
   state.pendingPolls.length = 0;
-  if (httpServer) httpServer.close();
+
+  if (httpServer) {
+httpServer.close();
+}
+
   process.exit(0);
 }
 
@@ -1466,6 +1923,7 @@ function sweepOrphanSvelteComponentSessionsOnStartup() {
       .map((snapshot) => snapshot?.id)
       .filter(Boolean);
     const result = sweepInactiveSvelteComponentSessions(activeIds, process.cwd());
+
     if (result.removed.length > 0 || result.removedRoot) {
       console.log('[impeccable] swept orphaned Svelte component sessions:', JSON.stringify(result));
     }
@@ -1482,19 +1940,34 @@ const ACCEPT_RECEIPT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 function sweepStaleAcceptReceiptsOnStartup() {
   try {
     const dir = path.join(getLiveDir(process.cwd()), 'accept-receipts');
-    if (!fs.existsSync(dir)) return;
+
+    if (!fs.existsSync(dir)) {
+return;
+}
+
     const cutoff = Date.now() - ACCEPT_RECEIPT_MAX_AGE_MS;
     let removed = 0;
+
     for (const name of fs.readdirSync(dir)) {
-      if (!name.endsWith('.json') && !name.endsWith('.tmp')) continue;
+      if (!name.endsWith('.json') && !name.endsWith('.tmp')) {
+continue;
+}
+
       const file = path.join(dir, name);
+
       try {
-        if (fs.statSync(file).mtimeMs >= cutoff) continue;
+        if (fs.statSync(file).mtimeMs >= cutoff) {
+continue;
+}
+
         fs.rmSync(file, { force: true });
         removed++;
       } catch { /* non-fatal */ }
     }
-    if (removed > 0) console.log(`[impeccable] removed ${removed} accept receipt(s) older than 14 days`);
+
+    if (removed > 0) {
+console.log(`[impeccable] removed ${removed} accept receipt(s) older than 14 days`);
+}
   } catch (err) {
     console.warn('[impeccable] accept receipt retention sweep failed:', err.message);
   }
@@ -1503,6 +1976,7 @@ function sweepStaleAcceptReceiptsOnStartup() {
 function applyLegacyDeferredAcceptsOnStartup() {
   try {
     const result = applyDeferredSvelteComponentAccepts(process.cwd());
+
     if (result.applied > 0 || result.failed > 0) {
       console.log('[impeccable] applied legacy deferred Svelte component accepts:', JSON.stringify(result));
     }
@@ -1551,24 +2025,32 @@ Endpoints:
 
 if (args.includes('stop')) {
   const keepInject = args.includes('--keep-inject');
+
   try {
     const { info } = readLiveServerInfo(process.cwd()) || {};
     const res = await fetch(`http://localhost:${info.port}/stop?token=${info.token}`);
-    if (res.ok) console.log(`Stopped live server on port ${info.port}.`);
+
+    if (res.ok) {
+console.log(`Stopped live server on port ${info.port}.`);
+}
   } catch {
     console.log('No running live server found.');
   }
+
   if (!keepInject) {
     const injectPath = path.join(__dirname, 'live-inject.mjs');
+
     try {
       const out = execFileSync(process.execPath, [injectPath, '--remove'], {
         encoding: 'utf-8',
         cwd: process.cwd(),
       });
       const line = out.trim().split('\n').filter(Boolean).pop();
+
       if (line) {
         try {
           const j = JSON.parse(line);
+
           if (j.removed === true) {
             console.log(`Removed live script tag from ${j.file}.`);
           }
@@ -1584,6 +2066,7 @@ if (args.includes('stop')) {
       console.warn(`Note: could not remove live script tag (${detail.split('\n')[0]})`);
     }
   }
+
   process.exit(0);
 }
 
@@ -1601,35 +2084,43 @@ if (args.includes('--background')) {
 
   // Poll for the PID file (the child writes it once the HTTP server is listening).
   const deadline = Date.now() + 10_000;
+
   while (Date.now() < deadline) {
     try {
       const { info } = readLiveServerInfo(process.cwd()) || {};
+
       if (info.pid !== process.pid) {
         // Output JSON so the agent can read port + token from stdout.
         console.log(JSON.stringify(info));
         process.exit(0);
       }
     } catch { /* not ready yet */ }
+
     // The detached child is typically listening in 35-45ms. A 200ms polling
     // floor dominated configured cold Live startup; poll cheaply and return
     // as soon as the child has written its ready record.
     await new Promise(r => setTimeout(r, 5));
   }
+
   console.error('Timed out waiting for live server to start.');
   process.exit(1);
 }
 
 // Check for existing session
 const existingRecord = readLiveServerInfo(process.cwd());
+
 if (existingRecord?.info) {
   const existing = existingRecord.info;
+
   try {
     process.kill(existing.pid, 0);
     console.error(`Live server already running on port ${existing.port} (pid ${existing.pid}).`);
     console.error('Stop it first with: node ' + path.basename(fileURLToPath(import.meta.url)) + ' stop');
     process.exit(1);
   } catch {
-    try { fs.unlinkSync(existingRecord.path); } catch {}
+    try {
+ fs.unlinkSync(existingRecord.path); 
+} catch {}
   }
 }
 

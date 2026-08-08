@@ -37,9 +37,17 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
 
   function getReadableJournalPath(id) {
     const primary = getJournalPath(rootDir, id);
-    if (fs.existsSync(primary)) return primary;
+
+    if (fs.existsSync(primary)) {
+return primary;
+}
+
     const legacy = getJournalPath(legacyRootDir, id);
-    if (fs.existsSync(legacy)) return legacy;
+
+    if (fs.existsSync(legacy)) {
+return legacy;
+}
+
     return primary;
   }
 
@@ -55,15 +63,18 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
     const mtimeMs = stat ? stat.mtimeMs : -1;
 
     const cached = derived.get(id);
+
     if (cached && cached.journalPath === journalPath && cached.size === size && cached.mtimeMs === mtimeMs) {
       return cached;
     }
 
     if (allowSnapshotFile && stat) {
       const hydrated = readSnapshotFile(getSnapshotPath(rootDir, id), id, size);
+
       if (hydrated) {
         const entry = { ...hydrated, journalPath, size, mtimeMs };
         derived.set(id, entry);
+
         return entry;
       }
     }
@@ -71,6 +82,7 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
     const rebuilt = rebuildSnapshotFromJournal(journalPath, id);
     const entry = { snapshot: rebuilt.snapshot, nextSeq: rebuilt.nextSeq, journalPath, size, mtimeMs };
     derived.set(id, entry);
+
     return entry;
   }
 
@@ -95,12 +107,14 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
       const normalized = normalizeEvent(event, sessionId);
       const journalPath = getJournalPath(rootDir, normalized.id);
       const legacyJournalPath = getJournalPath(legacyRootDir, normalized.id);
+
       if (!fs.existsSync(journalPath) && fs.existsSync(legacyJournalPath)) {
         fs.copyFileSync(legacyJournalPath, journalPath);
         // The readable path just moved from legacy to primary; anything derived
         // against the old path describes a file this session no longer reads.
         derived.delete(normalized.id);
       }
+
       // Reuse the derived state when the journal has not changed under us, and
       // apply the new event on top of it. Correctness still comes from the
       // journal: any append from another process invalidates the entry above
@@ -117,6 +131,7 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
       fs.appendFileSync(journalPath, JSON.stringify(entry) + '\n');
       const next = applyEvent(prior.snapshot, entry);
       persist(normalized.id, next, prior.nextSeq + 1);
+
       return next;
     },
     /**
@@ -127,7 +142,10 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
      * storage materializes a ghost session in this store.
      */
     has(id) {
-      if (!id || typeof id !== 'string') return false;
+      if (!id || typeof id !== 'string') {
+return false;
+}
+
       return fs.existsSync(getJournalPath(rootDir, id))
         || fs.existsSync(getJournalPath(legacyRootDir, id));
     },
@@ -138,9 +156,16 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
      * Snapshot files are written by appendEvent and by flush().
      */
     getSnapshot(id = sessionId, opts = {}) {
-      if (!id) throw new Error('session id required');
+      if (!id) {
+throw new Error('session id required');
+}
+
       const { snapshot } = readState(id);
-      if (!opts.includeCompleted && COMPLETED_PHASES.has(snapshot.phase)) return null;
+
+      if (!opts.includeCompleted && COMPLETED_PHASES.has(snapshot.phase)) {
+return null;
+}
+
       return snapshot;
     },
     /**
@@ -149,19 +174,30 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
      * processes use; callers that need the state itself should use getSnapshot.
      */
     flush(id = sessionId) {
-      if (!id) throw new Error('session id required');
+      if (!id) {
+throw new Error('session id required');
+}
+
       const state = readState(id, { allowSnapshotFile: false });
       persist(id, state.snapshot, state.nextSeq);
+
       return state.snapshot;
     },
     listActiveSessions() {
       const ids = new Set();
+
       for (const dir of [legacyRootDir, rootDir]) {
-        if (!fs.existsSync(dir)) continue;
+        if (!fs.existsSync(dir)) {
+continue;
+}
+
         for (const name of fs.readdirSync(dir)) {
-          if (name.endsWith('.jsonl')) ids.add(name.slice(0, -'.jsonl'.length));
+          if (name.endsWith('.jsonl')) {
+ids.add(name.slice(0, -'.jsonl'.length));
+}
         }
       }
+
       // Each id goes through readState, so a session whose journal has not moved
       // since it was last derived costs a stat and nothing more. The server calls
       // this on every /status and on every SSE connect.
@@ -189,28 +225,53 @@ function statOrNull(filePath) {
  */
 function readSnapshotFile(snapshotPath, id, journalBytes) {
   let parsed;
+
   try {
     parsed = JSON.parse(fs.readFileSync(snapshotPath, 'utf-8'));
   } catch {
     return null;
   }
-  if (!parsed || typeof parsed !== 'object') return null;
-  if (parsed[META_JOURNAL_BYTES] !== journalBytes) return null;
-  if (!Number.isInteger(parsed[META_NEXT_SEQ])) return null;
+
+  if (!parsed || typeof parsed !== 'object') {
+return null;
+}
+
+  if (parsed[META_JOURNAL_BYTES] !== journalBytes) {
+return null;
+}
+
+  if (!Number.isInteger(parsed[META_NEXT_SEQ])) {
+return null;
+}
+
   const nextSeq = parsed[META_NEXT_SEQ];
   delete parsed[META_JOURNAL_BYTES];
   delete parsed[META_NEXT_SEQ];
+
   // The journal owns identity; a snapshot file copied between session ids is
   // not a reason to answer with the wrong id.
-  if (parsed.id !== id) return null;
+  if (parsed.id !== id) {
+return null;
+}
+
   return { snapshot: { ...baseSnapshot(id), ...parsed }, nextSeq };
 }
 
 function normalizeEvent(event, fallbackId) {
-  if (!event || typeof event !== 'object') throw new Error('event object required');
+  if (!event || typeof event !== 'object') {
+throw new Error('event object required');
+}
+
   const id = event.id || fallbackId;
-  if (!id || typeof id !== 'string') throw new Error('event id required');
-  if (!event.type || typeof event.type !== 'string') throw new Error('event type required');
+
+  if (!id || typeof id !== 'string') {
+throw new Error('event id required');
+}
+
+  if (!event.type || typeof event.type !== 'string') {
+throw new Error('event type required');
+}
+
   return { ...event, id };
 }
 
@@ -276,9 +337,18 @@ const MOUNT_FAILURE_HISTORY = 5;
  * the user is looking at something.
  */
 function deriveRenderState(snapshot) {
-  if (snapshot.mountedVariants.length > 0) return 'mounted';
-  if (snapshot.mountFailures.length > 0) return 'failed';
-  if (snapshot.generationCompletedAt) return 'pending';
+  if (snapshot.mountedVariants.length > 0) {
+return 'mounted';
+}
+
+  if (snapshot.mountFailures.length > 0) {
+return 'failed';
+}
+
+  if (snapshot.generationCompletedAt) {
+return 'pending';
+}
+
   return null;
 }
 
@@ -286,16 +356,31 @@ function rebuildSnapshotFromJournal(journalPath, id) {
   let snapshot = baseSnapshot(id);
   const diagnostics = [];
   let nextSeq = 1;
-  if (!fs.existsSync(journalPath)) return { snapshot, diagnostics, nextSeq };
+
+  if (!fs.existsSync(journalPath)) {
+return { snapshot, diagnostics, nextSeq };
+}
 
   const lines = fs.readFileSync(journalPath, 'utf-8').split('\n');
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (!line.trim()) continue;
+
+    if (!line.trim()) {
+continue;
+}
+
     try {
       const entry = JSON.parse(line);
-      if (!entry || typeof entry !== 'object') throw new Error('entry is not object');
-      if (Number.isInteger(entry.seq)) nextSeq = Math.max(nextSeq, entry.seq + 1);
+
+      if (!entry || typeof entry !== 'object') {
+throw new Error('entry is not object');
+}
+
+      if (Number.isInteger(entry.seq)) {
+nextSeq = Math.max(nextSeq, entry.seq + 1);
+}
+
       snapshot = applyEvent(snapshot, entry);
     } catch (err) {
       diagnostics.push({
@@ -305,7 +390,9 @@ function rebuildSnapshotFromJournal(journalPath, id) {
       });
     }
   }
+
   snapshot.diagnostics = [...snapshot.diagnostics, ...diagnostics];
+
   return { snapshot, diagnostics, nextSeq };
 }
 
@@ -338,12 +425,17 @@ function applyEvent(snapshot, entry) {
       next.mountedVariants = [];
       next.mountFailures = [];
       next.renderState = null;
-      if (event.screenshotPath) upsertArtifact(next.annotationArtifacts, { type: 'screenshot', path: event.screenshotPath });
+
+      if (event.screenshotPath) {
+upsertArtifact(next.annotationArtifacts, { type: 'screenshot', path: event.screenshotPath });
+}
+
       break;
     case 'variant_plan':
       if (!next.generationCanceled && !GENERATION_FENCED_PHASES.has(next.phase)) {
         next.variantPlan = event.plan ?? next.variantPlan;
       }
+
       break;
     case 'detector_waivers':
       if (!next.generationCanceled && !GENERATION_FENCED_PHASES.has(next.phase)) {
@@ -352,15 +444,18 @@ function applyEvent(snapshot, entry) {
           ...(Array.isArray(event.waivers) ? event.waivers : []),
         ];
       }
+
       break;
     case 'agent_phase':
       next.generationPhase = event.phase ?? next.generationPhase;
+
       if (event.phase) {
         next.generationTimings[event.phase] = {
           at: event.at ?? (Date.parse(entry.ts || '') || null),
           durationMs: event.durationMs ?? null,
         };
       }
+
       break;
     case 'variants_ready':
     case 'agent_done':
@@ -373,6 +468,7 @@ function applyEvent(snapshot, entry) {
         });
         break;
       }
+
       next.phase = event.carbonize === true ? 'carbonize_required' : 'variants_ready';
       // Durable completion marker: later browser checkpoints (a resumed page
       // reporting phase "generating") regress `phase`, but generation staying
@@ -385,6 +481,7 @@ function applyEvent(snapshot, entry) {
       next.arrivedVariants = event.arrivedVariants ?? (next.expectedVariants || next.arrivedVariants || 0);
       next.pendingEventSeq = null;
       next.pendingEvent = null;
+
       if (event.carbonize === true) {
         next.diagnostics.push({
           error: 'carbonize_cleanup_required',
@@ -392,26 +489,32 @@ function applyEvent(snapshot, entry) {
           message: 'Accepted variant still has carbonize markers that must be folded into source CSS.',
         });
       }
+
       next.renderState = deriveRenderState(next);
       break;
     case 'variant_mounted': {
       const variant = Number(event.variant);
+
       if (!Number.isInteger(variant) || variant < 1) {
         next.diagnostics.push({ error: 'malformed_mount_ack', type: event.type, variant: event.variant ?? null });
         break;
       }
+
       if (!next.mountedVariants.includes(variant)) {
         next.mountedVariants = [...next.mountedVariants, variant].sort((a, b) => a - b);
       }
+
       next.renderState = deriveRenderState(next);
       break;
     }
     case 'variant_mount_failed': {
       const variant = Number(event.variant);
+
       if (!Number.isInteger(variant) || variant < 1) {
         next.diagnostics.push({ error: 'malformed_mount_ack', type: event.type, variant: event.variant ?? null });
         break;
       }
+
       next.mountFailures = [
         ...next.mountFailures,
         {
@@ -422,6 +525,7 @@ function applyEvent(snapshot, entry) {
         },
       ].slice(-MOUNT_FAILURE_HISTORY);
       next.renderState = deriveRenderState(next);
+
       // The failure needs an agent reply, so it must survive a helper
       // restart the same way a generate does. Never clobber a still-pending
       // generate: a progressive publish can fail an early mount while the
@@ -429,6 +533,7 @@ function applyEvent(snapshot, entry) {
       if (!next.pendingEvent) {
         next.pendingEvent = toPendingEvent(event);
       }
+
       break;
     }
     case 'checkpoint':
@@ -436,6 +541,7 @@ function applyEvent(snapshot, entry) {
         next.diagnostics.push({ error: 'checkpoint_after_terminal_ignored', phase: event.phase ?? null, revision: event.revision ?? null });
         break;
       }
+
       {
         const revisionDomain = event.revisionDomain === 'publication'
           || (event.reason === 'variants_progress' && !event.owner)
@@ -447,19 +553,29 @@ function applyEvent(snapshot, entry) {
         const currentRevision = next[revisionField]
           ?? (revisionDomain === 'browser' ? next.checkpointRevision : 0)
           ?? 0;
+
         if ((event.revision ?? 0) >= currentRevision) {
           next.phase = event.phase ?? next.phase;
           next[revisionField] = event.revision ?? currentRevision;
+
           if (revisionDomain === 'browser') {
             next.checkpointRevision = event.revision ?? next.checkpointRevision;
             next.activeOwner = event.owner ?? next.activeOwner;
           }
+
           next.arrivedVariants = event.arrivedVariants ?? next.arrivedVariants;
-          if (revisionDomain === 'browser') next.visibleVariant = event.visibleVariant ?? next.visibleVariant;
+
+          if (revisionDomain === 'browser') {
+next.visibleVariant = event.visibleVariant ?? next.visibleVariant;
+}
+
           next.sourceFile = event.sourceFile ?? next.sourceFile;
           next.previewFile = event.previewFile ?? next.previewFile;
           next.previewMode = event.previewMode ?? next.previewMode;
-          if (revisionDomain === 'browser' && event.paramValues) next.paramValues = { ...event.paramValues };
+
+          if (revisionDomain === 'browser' && event.paramValues) {
+next.paramValues = { ...event.paramValues };
+}
         } else {
           next.diagnostics.push({ error: 'stale_checkpoint_ignored', revision: event.revision, revisionDomain });
         }
@@ -472,7 +588,11 @@ function applyEvent(snapshot, entry) {
       next.generationCanceledAt = event.at ?? (Date.parse(entry.ts || '') || Date.now());
       next.cancelReason = 'accept';
       next.visibleVariant = Number(event.variantId ?? next.visibleVariant);
-      if (event.paramValues) next.paramValues = { ...event.paramValues };
+
+      if (event.paramValues) {
+next.paramValues = { ...event.paramValues };
+}
+
       next.pendingEventSeq = entry.seq ?? next.pendingEventSeq;
       next.pendingEvent = toPendingEvent(event);
       break;
@@ -529,6 +649,7 @@ function applyEvent(snapshot, entry) {
         next.diagnostics.push({ error: 'late_generation_event_ignored', type: event.type, phase: next.phase });
         break;
       }
+
       next.phase = 'agent_error';
       next.pendingEventSeq = null;
       next.pendingEvent = null;
@@ -538,12 +659,14 @@ function applyEvent(snapshot, entry) {
       next.diagnostics.push({ error: 'unknown_event_type', type: event.type });
       break;
   }
+
   return next;
 }
 
 function toPendingEvent(event) {
   const pending = { ...event };
   delete pending.token;
+
   return pending;
 }
 

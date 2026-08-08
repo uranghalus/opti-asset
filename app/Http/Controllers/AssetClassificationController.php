@@ -400,24 +400,29 @@ class AssetClassificationController extends Controller
     {
         $level = $row['level'];
         $data = [
-            'code' => $row['code'] ?? null,
             'name' => $row['name'],
             'description' => $row['description'] ?? null,
         ];
 
+        $parentCode = $row['parent_code'] ?? null;
+
         if ($level === 'group') {
-            AssetGroup::create($data);
+            AssetGroup::updateOrCreate(
+                ['code' => $row['code'] ?? null],
+                $data,
+            );
 
             return;
         }
-
-        $parentCode = $row['parent_code'] ?? null;
 
         if ($level === 'category') {
             $parent = AssetGroup::where('code', $parentCode)->first();
 
             if ($parent !== null) {
-                $parent->categories()->create($data);
+                AssetCategory::updateOrCreate(
+                    ['asset_group_id' => $parent->id, 'code' => $row['code'] ?? null],
+                    $data,
+                );
             }
 
             return;
@@ -427,7 +432,10 @@ class AssetClassificationController extends Controller
             $parent = AssetCategory::where('code', $parentCode)->first();
 
             if ($parent !== null) {
-                $parent->clusters()->create($data);
+                AssetCluster::updateOrCreate(
+                    ['asset_category_id' => $parent->id, 'code' => $row['code'] ?? null],
+                    $data,
+                );
             }
 
             return;
@@ -436,7 +444,10 @@ class AssetClassificationController extends Controller
         $parent = AssetCluster::where('code', $parentCode)->first();
 
         if ($parent !== null) {
-            $parent->subClusters()->create($data);
+            AssetSubCluster::updateOrCreate(
+                ['asset_cluster_id' => $parent->id, 'code' => $row['code'] ?? null],
+                $data,
+            );
         }
     }
 }

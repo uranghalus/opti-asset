@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\AssetClassificationController;
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LocationController;
@@ -54,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('organizations', [OrganizationController::class, 'store'])->name('organizations.store');
     Route::patch('organizations/{tenant}', [OrganizationController::class, 'update'])->name('organizations.update');
     Route::delete('organizations/{tenant}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
+    Route::post('organizations/sync', [OrganizationController::class, 'sync'])->name('organizations.sync');
 
     Route::get('locations', [LocationController::class, 'index'])->name('locations.index');
     Route::post('locations', [LocationController::class, 'store'])->name('locations.store');
@@ -70,12 +72,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('items/{item}', [ItemController::class, 'update'])->name('items.update');
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
+    Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
+    Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
+    Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
+    Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
+    Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+
     Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::get('departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
     Route::post('departments/sync', [DepartmentController::class, 'sync'])->name('departments.sync');
 
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::post('employees/{employee}/roles', [EmployeeController::class, 'assignRoles'])->name('employees.roles.update');
     Route::post('employees/sync', [EmployeeController::class, 'sync'])->name('employees.sync');
 
     Route::get('roles', [RoleController::class, 'index'])->name('roles.index');

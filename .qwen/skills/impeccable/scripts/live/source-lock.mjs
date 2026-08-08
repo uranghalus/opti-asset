@@ -1,6 +1,6 @@
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash, randomUUID } from 'node:crypto';
 import { getLiveDir, isLiveServerPidReachable } from '../lib/impeccable-paths.mjs';
 
 // Only used to retire a lock whose contents we cannot read (empty or truncated
@@ -10,6 +10,7 @@ const UNREADABLE_LOCK_STALE_MS = 60_000;
 
 export function sourceLockPath(file, cwd = process.cwd()) {
   const digest = createHash('sha256').update(path.resolve(cwd, file)).digest('hex').slice(0, 24);
+
   return path.join(getLiveDir(cwd), 'locks', digest + '.lock');
 }
 
@@ -29,6 +30,7 @@ export function withSourceLockSync(file, owner, fn, {
   while (!acquired) {
     clearStaleLock(lockPath);
     let fd;
+
     try {
       fd = fs.openSync(lockPath, 'wx');
       fs.writeFileSync(fd, JSON.stringify({
@@ -40,16 +42,25 @@ export function withSourceLockSync(file, owner, fn, {
       }) + '\n');
       acquired = true;
     } catch (error) {
-      if (error?.code !== 'EEXIST') throw error;
+      if (error?.code !== 'EEXIST') {
+throw error;
+}
+
       if (Date.now() >= deadline) {
         const locked = new Error('source_locked');
         locked.code = 'SOURCE_LOCKED';
         locked.lockPath = lockPath;
+
         throw locked;
       }
+
       sleepSync(Math.max(1, Math.min(Number(retryMs) || 5, deadline - Date.now())));
     } finally {
-      try { if (fd !== undefined) fs.closeSync(fd); } catch {}
+      try {
+ if (fd !== undefined) {
+fs.closeSync(fd);
+} 
+} catch {}
     }
   }
 
@@ -65,7 +76,11 @@ function sleepSync(ms) {
 }
 
 function readLock(lockPath) {
-  try { return JSON.parse(fs.readFileSync(lockPath, 'utf-8')); } catch { return null; }
+  try {
+ return JSON.parse(fs.readFileSync(lockPath, 'utf-8')); 
+} catch {
+ return null; 
+}
 }
 
 /**
@@ -75,8 +90,14 @@ function readLock(lockPath) {
  */
 function releaseOwnLock(lockPath, token) {
   const held = readLock(lockPath);
-  if (held && held.token !== token) return;
-  try { fs.unlinkSync(lockPath); } catch {}
+
+  if (held && held.token !== token) {
+return;
+}
+
+  try {
+ fs.unlinkSync(lockPath); 
+} catch {}
 }
 
 /**
@@ -91,15 +112,26 @@ function releaseOwnLock(lockPath, token) {
  */
 function clearStaleLock(lockPath) {
   const held = readLock(lockPath);
+
   if (!held) {
     // Unreadable: either a crash truncated it, or we caught the brief window
     // between create and write in a live acquisition. mtime distinguishes them.
     try {
       const stat = fs.statSync(lockPath);
-      if (Date.now() - stat.mtimeMs > UNREADABLE_LOCK_STALE_MS) fs.unlinkSync(lockPath);
+
+      if (Date.now() - stat.mtimeMs > UNREADABLE_LOCK_STALE_MS) {
+fs.unlinkSync(lockPath);
+}
     } catch { /* gone already */ }
+
     return;
   }
-  if (typeof held.pid === 'number' && isLiveServerPidReachable(held.pid)) return;
-  try { fs.unlinkSync(lockPath); } catch {}
+
+  if (typeof held.pid === 'number' && isLiveServerPidReachable(held.pid)) {
+return;
+}
+
+  try {
+ fs.unlinkSync(lockPath); 
+} catch {}
 }

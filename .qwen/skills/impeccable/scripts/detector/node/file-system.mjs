@@ -33,10 +33,17 @@ const HTML_EXTENSIONS = new Set(['.html', '.htm']);
 
 function hasScannableExtension(filename) {
   const lower = filename.toLowerCase();
-  if (SCANNABLE_EXTENSIONS.has(path.extname(lower))) return true;
+
+  if (SCANNABLE_EXTENSIONS.has(path.extname(lower))) {
+return true;
+}
+
   for (const ext of SCANNABLE_EXTENSIONS) {
-    if (ext.indexOf('.', 1) !== -1 && lower.endsWith(ext)) return true;
+    if (ext.indexOf('.', 1) !== -1 && lower.endsWith(ext)) {
+return true;
+}
   }
+
   return false;
 }
 
@@ -49,14 +56,31 @@ const IMPORT_SPECIFIER_PATTERNS = [
 function walkDir(dir) {
   const files = [];
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return files; }
+
+  try {
+ entries = fs.readdirSync(dir, { withFileTypes: true }); 
+} catch {
+ return files; 
+}
+
   for (const entry of entries) {
-    if (SKIP_DIRS.has(entry.name)) continue;
-    if (entry.isDirectory() && entry.name.startsWith('.') && !HIDDEN_SOURCE_DIRS.has(entry.name)) continue;
+    if (SKIP_DIRS.has(entry.name)) {
+continue;
+}
+
+    if (entry.isDirectory() && entry.name.startsWith('.') && !HIDDEN_SOURCE_DIRS.has(entry.name)) {
+continue;
+}
+
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) files.push(...walkDir(full));
-    else if (hasScannableExtension(entry.name)) files.push(full);
+
+    if (entry.isDirectory()) {
+files.push(...walkDir(full));
+} else if (hasScannableExtension(entry.name)) {
+files.push(full);
+}
   }
+
   return files;
 }
 
@@ -66,18 +90,33 @@ function walkDir(dir) {
 // ---------------------------------------------------------------------------
 
 function resolveImport(specifier, fromDir, fileSet) {
-  if (!/^[./]/.test(specifier)) return null; // skip bare specifiers
+  if (!/^[./]/.test(specifier)) {
+return null;
+} // skip bare specifiers
+
   const base = path.resolve(fromDir, specifier);
-  if (fileSet.has(base)) return base;
+
+  if (fileSet.has(base)) {
+return base;
+}
+
   for (const ext of SCANNABLE_EXTENSIONS) {
     const withExt = base + ext;
-    if (fileSet.has(withExt)) return withExt;
+
+    if (fileSet.has(withExt)) {
+return withExt;
+}
   }
+
   // index file convention
   for (const ext of SCANNABLE_EXTENSIONS) {
     const indexFile = path.join(base, 'index' + ext);
-    if (fileSet.has(indexFile)) return indexFile;
+
+    if (fileSet.has(indexFile)) {
+return indexFile;
+}
   }
+
   return null;
 }
 
@@ -93,12 +132,16 @@ function buildImportGraph(files) {
     for (const pattern of IMPORT_SPECIFIER_PATTERNS) {
       for (const match of content.matchAll(pattern)) {
         const resolved = resolveImport(match[1], dir, fileSet);
-        if (resolved) imports.add(resolved);
+
+        if (resolved) {
+imports.add(resolved);
+}
       }
     }
 
     graph.set(file, imports);
   }
+
   return graph;
 }
 
@@ -132,23 +175,37 @@ const FRAMEWORK_CONFIGS = [
 
 function detectFrameworkConfig(dir) {
   let entries;
-  try { entries = fs.readdirSync(dir); } catch { return null; }
+
+  try {
+ entries = fs.readdirSync(dir); 
+} catch {
+ return null; 
+}
+
   const entrySet = new Set(entries);
 
   for (const cfg of FRAMEWORK_CONFIGS) {
     const match = cfg.files.find(f => entrySet.has(f));
-    if (!match) continue;
+
+    if (!match) {
+continue;
+}
 
     const configPath = path.join(dir, match);
     let port = cfg.defaultPort;
+
     try {
       const content = fs.readFileSync(configPath, 'utf-8');
       const portMatch = content.match(cfg.portRe);
-      if (portMatch) port = parseInt(portMatch[1], 10);
+
+      if (portMatch) {
+port = parseInt(portMatch[1], 10);
+}
     } catch { /* use default */ }
 
     return { name: cfg.name, port, configPath, fingerprint: cfg.fingerprint };
   }
+
   return null;
 }
 
@@ -160,12 +217,17 @@ async function isPortListening(port, fingerprint = null) {
   if (!fingerprint) {
     // Simple TCP probe fallback
     const net = await import('node:net');
+
     return new Promise((resolve) => {
       const sock = net.default.createConnection({ port, host: '127.0.0.1' });
       sock.setTimeout(500);
-      sock.on('connect', () => { sock.destroy(); resolve({ listening: true, matched: true }); });
+      sock.on('connect', () => {
+ sock.destroy(); resolve({ listening: true, matched: true }); 
+});
       sock.on('error', () => resolve({ listening: false }));
-      sock.on('timeout', () => { sock.destroy(); resolve({ listening: false }); });
+      sock.on('timeout', () => {
+ sock.destroy(); resolve({ listening: false }); 
+});
     });
   }
 
@@ -179,6 +241,7 @@ async function isPortListening(port, fingerprint = null) {
     // Check header fingerprint
     if (fingerprint.header) {
       const val = res.headers.get(fingerprint.header);
+
       if (val && (!fingerprint.value || fingerprint.value.test(val))) {
         return { listening: true, matched: true };
       }
@@ -187,6 +250,7 @@ async function isPortListening(port, fingerprint = null) {
     // Check body fingerprint
     if (fingerprint.body) {
       const body = await res.text();
+
       if (fingerprint.body.test(body)) {
         return { listening: true, matched: true };
       }

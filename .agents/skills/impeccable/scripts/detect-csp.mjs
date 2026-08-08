@@ -100,6 +100,7 @@ export function detectCsp(cwd = process.cwd()) {
         /packages\/[^/]+\/src\/.*(config|next-config|security)/.test(relPath) &&
         MONOREPO_HELPER_SIGNALS.some((re) => re.test(body))) {
       hits.appendArrays.push(relPath);
+
       return;
     }
 
@@ -107,6 +108,7 @@ export function detectCsp(cwd = process.cwd()) {
     if (SCAN_EXTS.has(ext) && isConfig('svelte') &&
         SVELTEKIT_CSP_SIGNALS.every((re) => re.test(body))) {
       hits.appendArrays.push(relPath);
+
       return;
     }
 
@@ -114,6 +116,7 @@ export function detectCsp(cwd = process.cwd()) {
     if (SCAN_EXTS.has(ext) && isConfig('nuxt') &&
         NUXT_SECURITY_SIGNALS.every((re) => re.test(body))) {
       hits.appendArrays.push(relPath);
+
       return;
     }
 
@@ -128,6 +131,7 @@ export function detectCsp(cwd = process.cwd()) {
       // is a route-rules / inline-headers case. Either way, same patch
       // mechanism.
       hits.appendString.push(relPath);
+
       return;
     }
 
@@ -149,49 +153,80 @@ export function detectCsp(cwd = process.cwd()) {
   if (hits.appendArrays.length > 0) {
     return { shape: 'append-arrays', signals: hits.appendArrays };
   }
+
   if (hits.appendString.length > 0) {
     return { shape: 'append-string', signals: hits.appendString };
   }
+
   if (hits.middleware.length > 0) {
     return { shape: 'middleware', signals: hits.middleware };
   }
+
   if (hits.metaTag.length > 0) {
     return { shape: 'meta-tag', signals: hits.metaTag };
   }
+
   return { shape: null, signals: [] };
 }
 
 function walk(root, dir, depth, visit) {
-  if (depth > MAX_DEPTH) return;
+  if (depth > MAX_DEPTH) {
+return;
+}
+
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
-  catch { return; }
+
+  try {
+ entries = fs.readdirSync(dir, { withFileTypes: true }); 
+} catch {
+ return; 
+}
 
   for (const entry of entries) {
     const abs = path.join(dir, entry.name);
+
     if (entry.isDirectory()) {
-      if (SKIP_DIRS.has(entry.name)) continue;
+      if (SKIP_DIRS.has(entry.name)) {
+continue;
+}
+
       walk(root, abs, depth + 1, visit);
       continue;
     }
-    if (!entry.isFile()) continue;
+
+    if (!entry.isFile()) {
+continue;
+}
+
     const ext = path.extname(entry.name);
-    if (!SCAN_EXTS.has(ext) && !LAYOUT_EXTS.has(ext)) continue;
+
+    if (!SCAN_EXTS.has(ext) && !LAYOUT_EXTS.has(ext)) {
+continue;
+}
+
     let body;
+
     try {
       const fd = fs.openSync(abs, 'r');
+
       try {
         const buf = Buffer.alloc(MAX_READ_BYTES);
         const n = fs.readSync(fd, buf, 0, MAX_READ_BYTES, 0);
         body = buf.slice(0, n).toString('utf-8');
-      } finally { fs.closeSync(fd); }
-    } catch { continue; }
+      } finally {
+ fs.closeSync(fd); 
+}
+    } catch {
+ continue; 
+}
+
     visit(abs, path.relative(root, abs), body);
   }
 }
 
 // CLI mode
 const _running = process.argv[1];
+
 if (_running?.endsWith('detect-csp.mjs') || _running?.endsWith('detect-csp.mjs/')) {
   const result = detectCsp(process.cwd());
   console.log(JSON.stringify(result, null, 2));

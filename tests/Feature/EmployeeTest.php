@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class EmployeeTest extends TestCase
@@ -82,6 +83,77 @@ class EmployeeTest extends TestCase
                 ->component('Employees/Index')
                 ->has('employees.data', 2)
                 ->where('employees.data.0.nama_employee', 'Agus'));
+    }
+
+    public function test_roles_can_be_assigned_to_employee(): void
+    {
+        $employee = Employee::factory()->create();
+        $role = Role::create(['name' => 'manager', 'guard_name' => 'web']);
+
+        $this->actingAs($this->user)
+            ->from(route('employees.index'))
+            ->post(route('employees.roles.update', $employee), ['roles' => ['manager']])
+            ->assertRedirect(route('employees.index'));
+
+        $this->assertTrue($employee->fresh()->hasRole('manager'));
+        $this->assertSame(1, $employee->fresh()->roles()->count());
+    }
+
+    public function test_roles_can_be_synced_on_employee(): void
+    {
+        $employee = Employee::factory()->create();
+        $manager = Role::create(['name' => 'manager', 'guard_name' => 'web']);
+        $staff = Role::create(['name' => 'staff', 'guard_name' => 'web']);
+        $employee->assignRole($manager);
+
+        $this->actingAs($this->user)
+            ->from(route('employees.index'))
+            ->post(route('employees.roles.update', $employee), ['roles' => ['staff']])
+            ->assertRedirect(route('employees.index'));
+
+        $this->assertTrue($employee->fresh()->hasRole('staff'));
+        $this->assertFalse($employee->fresh()->hasRole('manager'));
+    }
+
+    public function test_roles_can_be_cleared_on_employee(): void
+    {
+        $employee = Employee::factory()->create();
+        $role = Role::create(['name' => 'staff', 'guard_name' => 'web']);
+        $employee->assignRole($role);
+
+        $this->actingAs($this->user)
+            ->from(route('employees.index'))
+            ->post(route('employees.roles.update', $employee), ['roles' => []])
+            ->assertRedirect(route('employees.index'));
+
+        $this->assertSame(0, $employee->fresh()->roles()->count());
+    }
+
+    public function test_roles_must_exist_when_assigned_to_employee(): void
+    {
+        $employee = Employee::factory()->create();
+
+        $this->actingAs($this->user)
+            ->from(route('employees.index'))
+            ->post(route('employees.roles.update', $employee), ['roles' => ['ghost-role']])
+            ->assertSessionHasErrors('roles.0');
+
+        $this->assertSame(0, $employee->fresh()->roles()->count());
+    }
+
+    public function test_employee_show_renders_roles(): void
+    {
+        $employee = Employee::factory()->create();
+        $role = Role::create(['name' => 'staff', 'guard_name' => 'web']);
+        $employee->assignRole($role);
+
+        $this->actingAs($this->user)
+            ->get(route('employees.show', $employee))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Employees/Show')
+                ->where('employee.nama_employee', $employee->nama_employee)
+                ->where('employee.roles.0.name', 'staff'));
     }
 
     public function test_index_searches_employees(): void
@@ -162,5 +234,41 @@ class EmployeeTest extends TestCase
         $this->assertSame('0812345678', $employee->number);
         $this->assertSame('dept-1', $employee->id_department);
         $this->assertSame($this->tenant->id, $employee->tenant_id);
+    }
+
+    public function test_sync_after_switching_tenant_does_not_duplicate(): void
+    {
+        config([
+            'services.optigate_portal.url' => 'https://portal.example',
+            'services.optigate_portal.token' => 'secret',
+        ]);
+
+        $payload = fn () => Http::response([
+            'data' => [
+                [
+                    'id' => 'emp-1',
+                    'name' => 'Budi',
+                    'nik' => 'NIK-001',
+                ],
+            ],
+        ]);
+
+        Http::fake([
+            'https://portal.example/api/users' => $payload(),
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('employees.sync'));
+
+        $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+
+        $this->actingAs($this->user)
+            ->withSession(['current_tenant_id' => 'other'])
+            ->post(route('employees.sync'))
+            ->assertRedirect(route('employees.index'));
+
+        $this->assertSame(1, Employee::count());
+        $employee = Employee::withoutGlobalScopes()->first();
+        $this->assertSame('other', $employee->tenant_id);
     }
 }

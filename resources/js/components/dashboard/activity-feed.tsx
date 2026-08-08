@@ -29,16 +29,19 @@ function timeAgo(dateStr: string): string {
     if (diffMin < 1) {
         return 'baru saja';
     }
+
     if (diffMin < 60) {
         return `${diffMin}m lalu`;
     }
 
     const diffHour = Math.floor(diffMin / 60);
+
     if (diffHour < 24) {
         return `${diffHour}j lalu`;
     }
 
     const diffDay = Math.floor(diffHour / 24);
+
     return `${diffDay}h lalu`;
 }
 

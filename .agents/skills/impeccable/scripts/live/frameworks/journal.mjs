@@ -40,23 +40,31 @@ export function injectJournalPath(cwd = process.cwd()) {
 export function readInjectJournal(cwd = process.cwd()) {
   const file = injectJournalPath(cwd);
   let raw;
+
   try {
     raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
   } catch {
     return null;
   }
-  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.artifacts)) return null;
+
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.artifacts)) {
+return null;
+}
+
   return raw;
 }
 
 export function clearInjectJournal(cwd = process.cwd()) {
-  try { fs.unlinkSync(injectJournalPath(cwd)); } catch { /* already gone */ }
+  try {
+ fs.unlinkSync(injectJournalPath(cwd)); 
+} catch { /* already gone */ }
 }
 
 function writeInjectJournal(cwd, journal) {
   const file = injectJournalPath(cwd);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(journal, null, 2) + '\n', 'utf-8');
+
   return file;
 }
 
@@ -67,8 +75,10 @@ function writeInjectJournal(cwd, journal) {
 export function recordInjection(cwd = process.cwd(), { framework, port, artifacts = [] } = {}) {
   if (!artifacts.length) {
     clearInjectJournal(cwd);
+
     return null;
   }
+
   return writeInjectJournal(cwd, {
     version: INJECT_JOURNAL_VERSION,
     appRoot: path.resolve(cwd),
@@ -95,30 +105,43 @@ function readIfPresent(abs) {
 function pruneEmptyDirs(dir, stopDir) {
   let current = path.resolve(dir);
   const stop = path.resolve(stopDir);
+
   while (current !== stop && current.startsWith(stop + path.sep)) {
     try {
-      if (fs.readdirSync(current).length > 0) return;
+      if (fs.readdirSync(current).length > 0) {
+return;
+}
+
       fs.rmdirSync(current);
     } catch {
       return;
     }
+
     current = path.dirname(current);
   }
 }
 
 function insideProject(cwd, abs) {
   const rel = path.relative(path.resolve(cwd), path.resolve(abs));
+
   return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
 }
 
 function healArtifact(cwd, artifact, undoers) {
   const abs = path.resolve(cwd, artifact.path);
+
   // The journal is a project-local file, i.e. attacker-writable input in a
   // cloned repo. Never touch anything outside the project tree, whatever the
   // journal claims to own.
-  if (!insideProject(cwd, abs)) return { path: artifact.path, action: 'refused_outside_project' };
+  if (!insideProject(cwd, abs)) {
+return { path: artifact.path, action: 'refused_outside_project' };
+}
+
   const content = readIfPresent(abs);
-  if (content === null) return { path: artifact.path, action: 'absent' };
+
+  if (content === null) {
+return { path: artifact.path, action: 'absent' };
+}
 
   if (artifact.kind === 'created') {
     // Only reclaim a generated file that still carries our marker; a created
@@ -126,28 +149,51 @@ function healArtifact(cwd, artifact, undoers) {
     if (!artifact.marker || !content.includes(artifact.marker)) {
       return { path: artifact.path, action: 'disowned' };
     }
-    try { fs.rmSync(abs, { force: true }); } catch { return null; }
+
+    try {
+ fs.rmSync(abs, { force: true }); 
+} catch {
+ return null; 
+}
+
     if (artifact.pruneTo !== undefined) {
       const pruneRoot = path.resolve(cwd, artifact.pruneTo || '.');
+
       if (insideProject(cwd, pruneRoot) || pruneRoot === path.resolve(cwd)) {
         pruneEmptyDirs(path.dirname(abs), pruneRoot);
       }
     }
+
     return { path: artifact.path, action: 'removed' };
   }
 
   if (artifact.kind === 'patched') {
     const markers = Array.isArray(artifact.markers) ? artifact.markers : [];
+
     // No marker left means the patch is already gone; never run an undo over
     // a file we no longer recognize (the undoers normalize whitespace).
     if (markers.length && !markers.some((marker) => content.includes(marker))) {
       return { path: artifact.path, action: 'disowned' };
     }
+
     const undo = undoers[artifact.patch];
-    if (typeof undo !== 'function') return null;
+
+    if (typeof undo !== 'function') {
+return null;
+}
+
     const next = undo(content);
-    if (next === content) return { path: artifact.path, action: 'disowned' };
-    try { fs.writeFileSync(abs, next, 'utf-8'); } catch { return null; }
+
+    if (next === content) {
+return { path: artifact.path, action: 'disowned' };
+}
+
+    try {
+ fs.writeFileSync(abs, next, 'utf-8'); 
+} catch {
+ return null; 
+}
+
     return { path: artifact.path, action: 'unpatched' };
   }
 
@@ -169,19 +215,27 @@ function healArtifact(cwd, artifact, undoers) {
  */
 export function healInjectJournal(cwd = process.cwd(), { keep = [], undoers = PATCH_UNDOERS } = {}) {
   const journal = readInjectJournal(cwd);
-  if (!journal) return { healed: [], kept: [] };
+
+  if (!journal) {
+return { healed: [], kept: [] };
+}
 
   const keepSet = new Set(keep.map((rel) => normalizeRel(cwd, rel)));
   const healed = [];
   const kept = [];
 
   for (const artifact of journal.artifacts) {
-    if (!artifact || typeof artifact.path !== 'string') continue;
+    if (!artifact || typeof artifact.path !== 'string') {
+continue;
+}
+
     if (keepSet.has(normalizeRel(cwd, artifact.path))) {
       kept.push(artifact);
       continue;
     }
+
     const outcome = healArtifact(cwd, artifact, undoers);
+
     if (outcome && (outcome.action === 'removed' || outcome.action === 'unpatched')) {
       healed.push(outcome);
     }

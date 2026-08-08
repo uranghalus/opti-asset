@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             SubstituteBindings::class,
             HandleInertiaRequests::class,
         ]);
+
+        $middleware->redirectGuestsTo(fn () => route('home'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

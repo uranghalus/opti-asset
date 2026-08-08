@@ -21,8 +21,12 @@ export const MARKER_CLOSE_TEXT = 'impeccable-live-end';
 /** Markers that identify a file as still carrying our tag-strategy patch. */
 export const TAG_PATCH_MARKERS = Object.freeze([MARKER_OPEN_TEXT, 'data-impeccable-csp-original']);
 
-function commentOpen(syntax) { return syntax === 'jsx' ? '{/*' : '<!--'; }
-function commentClose(syntax) { return syntax === 'jsx' ? '*/}' : '-->'; }
+function commentOpen(syntax) {
+ return syntax === 'jsx' ? '{/*' : '<!--'; 
+}
+function commentClose(syntax) {
+ return syntax === 'jsx' ? '*/}' : '-->'; 
+}
 
 /**
  * `scriptAttrs` is a pre-rendered attribute string (trailing space included)
@@ -34,6 +38,7 @@ function commentClose(syntax) { return syntax === 'jsx' ? '*/}' : '-->'; }
 export function buildTagBlock(syntax, port, token, scriptAttrs = '') {
   const open = commentOpen(syntax);
   const close = commentClose(syntax);
+
   return (
     open + ' ' + MARKER_OPEN_TEXT + ' ' + close + '\n' +
     '<script ' + scriptAttrs + 'src="' + buildLiveScriptSrc(port, token) + '"></script>\n' +
@@ -42,8 +47,14 @@ export function buildTagBlock(syntax, port, token, scriptAttrs = '') {
 }
 
 function detectLineEnding(content) {
-  if (content.includes('\r\n')) return '\r\n';
-  if (content.includes('\r')) return '\r';
+  if (content.includes('\r\n')) {
+return '\r\n';
+}
+
+  if (content.includes('\r')) {
+return '\r';
+}
+
   return '\n';
 }
 
@@ -52,27 +63,46 @@ function normalizeLineEndings(content, lineEnding) {
 }
 
 function readLineEndingAt(content, index) {
-  if (content[index] === '\r' && content[index + 1] === '\n') return '\r\n';
-  if (content[index] === '\n') return '\n';
-  if (content[index] === '\r') return '\r';
+  if (content[index] === '\r' && content[index + 1] === '\n') {
+return '\r\n';
+}
+
+  if (content[index] === '\n') {
+return '\n';
+}
+
+  if (content[index] === '\r') {
+return '\r';
+}
+
   return '';
 }
 
 export function insertTag(content, config, port, token, scriptAttrs = '') {
   const lineEnding = detectLineEnding(content);
   const block = normalizeLineEndings(buildTagBlock(config.commentSyntax, port, token, scriptAttrs), lineEnding);
+
   // insertBefore: match the LAST occurrence. Anchors like `</body>` naturally
   // belong at the end, and the same literal can appear earlier in code blocks
   // within rendered documentation pages.
   if (config.insertBefore) {
     const idx = content.lastIndexOf(config.insertBefore);
-    if (idx === -1) return content;
+
+    if (idx === -1) {
+return content;
+}
+
     return content.slice(0, idx) + block + content.slice(idx);
   }
+
   // insertAfter: match the FIRST occurrence — typical anchors like `<head>` or
   // `<body>` open near the top of the document.
   const idx = content.indexOf(config.insertAfter);
-  if (idx === -1) return content;
+
+  if (idx === -1) {
+return content;
+}
+
   const after = idx + config.insertAfter.length;
   // Preserve an existing trailing newline if the anchor already has one.
   // Slice the remainder from the original anchor offset, not prefix.length:
@@ -82,6 +112,7 @@ export function insertTag(content, config, port, token, scriptAttrs = '') {
   const existingNewline = readLineEndingAt(content, after);
   const prefix = content.slice(0, after) + (existingNewline || lineEnding);
   const rest = content.slice(after + existingNewline.length);
+
   return prefix + block + rest;
 }
 
@@ -101,19 +132,31 @@ export function removeTag(content, _syntax) {
     /([ \t]*)<!--\s*impeccable-live-start\s*-->[\s\S]*?<!--\s*impeccable-live-end\s*-->([ \t]*(?:\r\n|\n|\r|$)?)/,
     /([ \t]*)\{\/\*\s*impeccable-live-start\s*\*\/\}[\s\S]*?\{\/\*\s*impeccable-live-end\s*\*\/\}([ \t]*(?:\r\n|\n|\r|$)?)/,
   ];
+
   for (const pat of patterns) {
     let changed = false;
     let next = content;
+
     do {
       content = next;
       next = content.replace(pat, (_match, leadingIndent, trailing = '') => {
-        if (/[\r\n]/.test(trailing)) return leadingIndent;
+        if (/[\r\n]/.test(trailing)) {
+return leadingIndent;
+}
+
         return leadingIndent || trailing || '';
       });
-      if (next !== content) changed = true;
+
+      if (next !== content) {
+changed = true;
+}
     } while (next !== content);
-    if (changed) return next;
+
+    if (changed) {
+return next;
+}
   }
+
   return content;
 }
 
@@ -143,28 +186,41 @@ function findCspMetaTags(content) {
   const out = [];
   const tagRe = /<meta\s+([^>]*?)\/?>/gis;
   let m;
+
   while ((m = tagRe.exec(content)) !== null) {
     const attrs = m[1];
-    if (!/(http-equiv|httpEquiv)\s*=\s*(['"])Content-Security-Policy\2/i.test(attrs)) continue;
+
+    if (!/(http-equiv|httpEquiv)\s*=\s*(['"])Content-Security-Policy\2/i.test(attrs)) {
+continue;
+}
+
     out.push({ start: m.index, end: m.index + m[0].length, full: m[0], attrs });
   }
+
   return out;
 }
 
 function getAttr(attrs, name) {
   const re = new RegExp(`\\b${name}\\s*=\\s*(['"])([\\s\\S]*?)\\1`, 'i');
   const m = attrs.match(re);
+
   return m ? { quote: m[1], value: m[2], full: m[0] } : null;
 }
 
 function appendOriginToDirective(csp, directive, origin) {
   const re = new RegExp(`(^|;)(\\s*)(${directive})\\s+([^;]*)`, 'i');
   const m = csp.match(re);
+
   if (m) {
     const tokens = m[4].trim().split(/\s+/);
-    if (tokens.includes(origin)) return csp;
+
+    if (tokens.includes(origin)) {
+return csp;
+}
+
     return csp.replace(re, `${m[1]}${m[2]}${m[3]} ${[...tokens, origin].join(' ')}`);
   }
+
   // Directive missing — add it. Use 'self' + origin so we don't inadvertently
   // narrow the policy compared to the default-src fallback (most users with
   // an explicit CSP have 'self' there).
@@ -173,17 +229,29 @@ function appendOriginToDirective(csp, directive, origin) {
 
 export function patchCspMeta(content, port) {
   const tags = findCspMetaTags(content);
-  if (tags.length === 0) return content;
+
+  if (tags.length === 0) {
+return content;
+}
+
   const origin = `http://localhost:${port}`;
 
   // Walk last-to-first so prior splices don't invalidate later indices.
   let result = content;
+
   for (let i = tags.length - 1; i >= 0; i--) {
     const tag = tags[i];
     const attrs = tag.attrs;
-    if (getAttr(attrs, CSP_MARKER_ATTR)) continue; // already patched
+
+    if (getAttr(attrs, CSP_MARKER_ATTR)) {
+continue;
+} // already patched
+
     const contentAttr = getAttr(attrs, 'content');
-    if (!contentAttr) continue;
+
+    if (!contentAttr) {
+continue;
+}
 
     const original = contentAttr.value;
     let patched = original;
@@ -193,7 +261,10 @@ export function patchCspMeta(content, port) {
     // URL.createObjectURL, producing a `blob:` URL — img-src 'self' rejects
     // those. Add `blob:` so the overlay doesn't throw a CSP violation.
     patched = appendOriginToDirective(patched, 'img-src', 'blob:');
-    if (patched === original) continue;
+
+    if (patched === original) {
+continue;
+}
 
     const newContentAttr = `content=${contentAttr.quote}${patched}${contentAttr.quote}`;
     const marker = `${CSP_MARKER_ATTR}="${Buffer.from(original, 'utf-8').toString('base64')}"`;
@@ -211,24 +282,40 @@ export function patchCspMeta(content, port) {
 
     result = result.slice(0, tag.start) + newTag + result.slice(tag.end);
   }
+
   return result;
 }
 
 export function revertCspMeta(content) {
   const tags = findCspMetaTags(content);
-  if (tags.length === 0) return content;
+
+  if (tags.length === 0) {
+return content;
+}
 
   let result = content;
+
   for (let i = tags.length - 1; i >= 0; i--) {
     const tag = tags[i];
     const origAttr = getAttr(tag.attrs, CSP_MARKER_ATTR);
-    if (!origAttr) continue;
+
+    if (!origAttr) {
+continue;
+}
+
     const contentAttr = getAttr(tag.attrs, 'content');
-    if (!contentAttr) continue;
+
+    if (!contentAttr) {
+continue;
+}
 
     let originalValue;
-    try { originalValue = Buffer.from(origAttr.value, 'base64').toString('utf-8'); }
-    catch { continue; }
+
+    try {
+ originalValue = Buffer.from(origAttr.value, 'base64').toString('utf-8'); 
+} catch {
+ continue; 
+}
 
     const newContentAttr = `content=${contentAttr.quote}${originalValue}${contentAttr.quote}`;
     let newAttrs = tag.attrs.replace(contentAttr.full, newContentAttr);
@@ -238,6 +325,7 @@ export function revertCspMeta(content) {
 
     result = result.slice(0, tag.start) + newTag + result.slice(tag.end);
   }
+
   return result;
 }
 

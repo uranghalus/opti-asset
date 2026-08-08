@@ -31,18 +31,25 @@ export function readBufferStrict(cwd = process.cwd()) {
 
 function readBufferInternal(cwd, { strict }) {
   const filePath = getBufferPath(cwd);
+
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
     const parsed = JSON.parse(raw);
+
     if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.entries)) {
-      if (strict) throw new Error('manual_edit_buffer_invalid_schema');
+      if (strict) {
+throw new Error('manual_edit_buffer_invalid_schema');
+}
+
       return { version: BUFFER_VERSION, entries: [] };
     }
+
     return { version: BUFFER_VERSION, entries: parsed.entries };
   } catch (err) {
     if (strict && err?.code !== 'ENOENT') {
       throw new Error('manual_edit_buffer_unreadable: ' + (err.message || String(err)));
     }
+
     return { version: BUFFER_VERSION, entries: [] };
   }
 }
@@ -64,11 +71,17 @@ export function writeBuffer(cwd, buffer) {
 export function stageEntry(cwd, newEntry) {
   const buf = readBufferStrict(cwd);
   const pageUrl = newEntry.pageUrl;
+
   for (const newOp of newEntry.ops) {
     let mergedIntoExisting = false;
+
     for (const existing of buf.entries) {
-      if (existing.pageUrl !== pageUrl) continue;
+      if (existing.pageUrl !== pageUrl) {
+continue;
+}
+
       const existingOpIdx = existing.ops.findIndex((op) => op.ref === newOp.ref);
+
       if (existingOpIdx >= 0) {
         // Keep the original source text but refresh the latest DOM/source evidence.
         existing.ops[existingOpIdx] = {
@@ -77,15 +90,24 @@ export function stageEntry(cwd, newEntry) {
           newText: newOp.newText,
           deleted: newOp.deleted || false,
         };
-        if (newEntry.element) existing.element = newEntry.element;
+
+        if (newEntry.element) {
+existing.element = newEntry.element;
+}
+
         existing.stagedAt = new Date().toISOString();
         mergedIntoExisting = true;
         break;
       }
     }
-    if (mergedIntoExisting) continue;
+
+    if (mergedIntoExisting) {
+continue;
+}
+
     // No existing op for this (pageUrl, ref). Find or create an entry to hold it.
     let entry = buf.entries.find((e) => e.pageUrl === pageUrl && e.id === newEntry.id);
+
     if (!entry) {
       entry = {
         id: newEntry.id,
@@ -96,10 +118,13 @@ export function stageEntry(cwd, newEntry) {
       };
       buf.entries.push(entry);
     }
+
     entry.ops.push(newOp);
     entry.stagedAt = new Date().toISOString();
   }
+
   writeBuffer(cwd, buf);
+
   return buf;
 }
 
@@ -112,6 +137,7 @@ export function removeEntries(cwd, predicate) {
   const buf = readBuffer(cwd);
   let removedOps = 0;
   const kept = [];
+
   for (const entry of buf.entries) {
     if (predicate(entry)) {
       removedOps += entry.ops?.length || 0;
@@ -119,8 +145,10 @@ export function removeEntries(cwd, predicate) {
       kept.push(entry);
     }
   }
+
   buf.entries = kept;
   writeBuffer(cwd, buf);
+
   return removedOps;
 }
 
@@ -131,11 +159,13 @@ export function countByPage(cwd = process.cwd()) {
   const buf = readBuffer(cwd);
   const perPage = {};
   let totalCount = 0;
+
   for (const entry of buf.entries) {
     const n = entry.ops.length;
     perPage[entry.pageUrl] = (perPage[entry.pageUrl] || 0) + n;
     totalCount += n;
   }
+
   return { totalCount, perPage };
 }
 
@@ -146,7 +176,12 @@ export function countByPage(cwd = process.cwd()) {
 export function truncateBuffer(cwd) {
   const buf = readBuffer(cwd);
   let removed = 0;
-  for (const entry of buf.entries) removed += entry.ops.length;
+
+  for (const entry of buf.entries) {
+removed += entry.ops.length;
+}
+
   writeBuffer(cwd, { version: BUFFER_VERSION, entries: [] });
+
   return removed;
 }

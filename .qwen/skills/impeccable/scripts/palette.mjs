@@ -421,17 +421,24 @@ const SEEDS = [
 
 function parseArgs(argv) {
   const args = { id: null, from: null };
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--id' && argv[i + 1]) { args.id = argv[++i]; }
-    else if (a === '--from' && argv[i + 1]) { args.from = argv[++i]; }
+
+    if (a === '--id' && argv[i + 1]) {
+ args.id = argv[++i]; 
+} else if (a === '--from' && argv[i + 1]) {
+ args.from = argv[++i]; 
+}
   }
+
   return args;
 }
 
 // Hash a key into a stable float in [0, 1) for deterministic weighted picks.
 function hashUnit(key) {
   const h = crypto.createHash('sha256').update(key).digest();
+
   return h.readUInt32BE(0) / 0x100000000;
 }
 
@@ -444,31 +451,47 @@ function hashUnit(key) {
 function buildWeights(seeds) {
   const bucketCount = {};
   const bucketOf = (s) => Math.floor(((s.oklch[2] % 360) + 360) % 360 / 30);
-  for (const s of seeds) { const b = bucketOf(s); bucketCount[b] = (bucketCount[b] || 0) + 1; }
+
+  for (const s of seeds) {
+ const b = bucketOf(s); bucketCount[b] = (bucketCount[b] || 0) + 1; 
+}
+
   const weights = seeds.map((s) => 1 / bucketCount[bucketOf(s)]);
   const total = weights.reduce((a, b) => a + b, 0);
+
   return { weights, total };
 }
 
 function weightedPick(seeds, unit) {
   const { weights, total } = buildWeights(seeds);
   let target = unit * total;
+
   for (let i = 0; i < seeds.length; i++) {
     target -= weights[i];
-    if (target < 0) return seeds[i];
+
+    if (target < 0) {
+return seeds[i];
+}
   }
+
   return seeds[seeds.length - 1];
 }
 
 function pickSeed(seeds, { id, from }) {
   if (id) {
     const found = seeds.find(s => s.id === id);
-    if (!found) { console.error(`no seed with id "${id}"`); process.exit(2); }
+
+    if (!found) {
+ console.error(`no seed with id "${id}"`); process.exit(2); 
+}
+
     return found;
   }
+
   const envFrom = process.env.IMPECCABLE_PALETTE_SEED;
   const key = from || envFrom;
   const unit = key ? hashUnit(key) : Math.random();
+
   return weightedPick(seeds, unit);
 }
 
@@ -477,18 +500,54 @@ function fmtOklch([L, C, H]) {
 }
 
 function hueWord(H) {
-  if (H < 15 || H >= 345) return 'pure red';
-  if (H < 35)  return 'warm red / crimson';
-  if (H < 55)  return 'warm coral / burnt orange';
-  if (H < 80)  return 'orange / honey';
-  if (H < 105) return 'warm amber / honey-gold';
-  if (H < 135) return 'yellow-green / olive';
-  if (H < 170) return 'green';
-  if (H < 200) return 'teal';
-  if (H < 230) return 'sky blue';
-  if (H < 265) return 'cobalt / indigo';
-  if (H < 295) return 'violet / purple';
-  if (H < 330) return 'magenta / pink';
+  if (H < 15 || H >= 345) {
+return 'pure red';
+}
+
+  if (H < 35)  {
+return 'warm red / crimson';
+}
+
+  if (H < 55)  {
+return 'warm coral / burnt orange';
+}
+
+  if (H < 80)  {
+return 'orange / honey';
+}
+
+  if (H < 105) {
+return 'warm amber / honey-gold';
+}
+
+  if (H < 135) {
+return 'yellow-green / olive';
+}
+
+  if (H < 170) {
+return 'green';
+}
+
+  if (H < 200) {
+return 'teal';
+}
+
+  if (H < 230) {
+return 'sky blue';
+}
+
+  if (H < 265) {
+return 'cobalt / indigo';
+}
+
+  if (H < 295) {
+return 'violet / purple';
+}
+
+  if (H < 330) {
+return 'magenta / pink';
+}
+
   return 'deep pink / rose';
 }
 

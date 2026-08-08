@@ -12,10 +12,8 @@ import {
     ArchiveX,
     Building2,
     Network,
-    Layers,
     ShieldCheck,
     KeyRound,
-    User,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -213,34 +211,7 @@ export const sidebarData: SidebarData = {
                     },
                 },
                 {
-                    title: 'Divisi',
-                    url: '/divisions',
-                    icon: Layers,
-                    permission: {
-                        resource: 'division',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Pengguna',
-                    url: '/users',
-                    icon: User,
-                    permission: {
-                        resource: 'user',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Tim',
-                    url: '/teams',
-                    icon: Layers,
-                    permission: {
-                        resource: 'team',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Anggota',
+                    title: 'Karyawan',
                     url: '/employees',
                     icon: UserCircle,
                     permission: {

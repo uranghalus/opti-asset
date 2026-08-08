@@ -26,7 +26,10 @@ function replyCmd(scriptsPath, id, rest) {
 }
 
 export function instructionsForEvent(event, { scriptsPath = '{{scripts_path}}' } = {}) {
-  if (!event || typeof event !== 'object') return undefined;
+  if (!event || typeof event !== 'object') {
+return undefined;
+}
+
   switch (event.type) {
     case 'generate':
       return generateInstructions(event, scriptsPath);
@@ -88,6 +91,7 @@ function generateInstructions(event, scriptsPath) {
 function svelteComponentInstructions(event, scaffold, scriptsPath) {
   const dir = scaffold.componentDir;
   const count = event.count;
+
   return `Svelte component preview. EDIT the existing stubs ${dir}/v1.svelte ... v${count}.svelte in place; never delete or recreate them; do not read them back (the prop-substituted markup is in scaffold.componentStubMarkup). Keep the stub's control flow ({#each}, {#if}) and propContract prop names exactly; never flatten a loop into literal items. The stub <style> is seeded with the source rules that style the selection; restyle or delete freely, and know that any seeded rule you do not re-declare is REMOVED from source on accept (the preview never applied it). ALL your CSS goes inside that ONE existing <style> block: Svelte forbids a second top-level style element, and a publish with a non-compiling variant is bounced back to you with file and line. Semantic class selectors only: no @scope, no data-impeccable-* attributes. Params go in ${dir}/params.json keyed by variant number (never an attribute); author knob CSS against var(--p-<id>, default) and :global([data-p-<id>="..."]). Reply with --file ${scaffold.file}. Accept later merges everything into ${scaffold.sourceFile} mechanically; you have no post-accept cleanup.`;
 }
 
@@ -95,18 +99,22 @@ function deferredWrapperInstructions(event, scaffold, scriptsPath) {
   const insertNote = Number(scaffold.replaceEndLine) < Number(scaffold.replaceStartLine)
     ? ` (replaceEndLine < replaceStartLine: this is an INSERTION at line ${scaffold.replaceStartLine}; remove nothing)`
     : '';
+
   return `The wrapper is NOT in source yet. In ONE edit to ${scaffold.file}: splice preview CSS plus all ${event.count} variants into scaffold.wrapperBlock at the "Variants: insert below this line" marker, then replace lines ${scaffold.replaceStartLine}-${scaffold.replaceEndLine}${insertNote} with the result. Two separate writes reload the framework mid-publish and strand the browser at 0/N. Author CSS per the returned cssAuthoring contract; each variant div holds exactly ONE top-level element (same tag as the original); first visible, others display: none. On JSX/TSX wrap the <style> content in a template literal and use className / style={{...}}.`;
 }
 
 function insertScaffoldInstructions(event, scriptsPath) {
   const scaffold = event.scaffold;
   const base = `Insert mode: net-new content sized around ${event.placeholder?.width || '?'}x${event.placeholder?.height || '?'} at the chosen anchor; load craft-floor.md before writing net-new markup.`;
+
   if (scaffold?.previewMode === 'svelte-component') {
     return `${base} Write each inserted variant as a single-root Svelte component under ${scaffold.componentDir} (no data-impeccable-* attributes, CSS in each component's <style>). Never edit the route during generation; reply with --file ${scaffold.file}.`;
   }
+
   if (scaffold && scaffold.sourceWritten === false) {
     return `${base} Splice your variants into scaffold.wrapperBlock at the marker and insert the result at line ${scaffold.replaceStartLine} of ${scaffold.file} in ONE edit.`;
   }
+
   return `${base} If no scaffold payload is present, run node ${scriptsPath}/live-insert.mjs --id ${event.id} --count ${event.count} --position ${event.insert?.position || 'after'} with the anchor flags from event.insert.anchor, then splice variants at the returned insertLine.`;
 }
 
@@ -118,21 +126,27 @@ function acceptInstructions(event, scriptsPath) {
   if (result.handled === true && result.carbonize === true) {
     return `${prefix}Carbonize cleanup is REQUIRED now, before the next poll, in ${result.file}: (1) locate the impeccable-carbonize-start/end block and read the impeccable-param-values comment; (2) move the CSS rules into the stylesheet that owns this area; (3) bake params while rewriting selectors (@scope wrappers to semantic classes, keep only the chosen data-p branch, substitute range literals); (4) unwrap the accepted content and drop every data-impeccable-* / data-p-* attribute; (5) delete the inline <style>, the param-values comment, and both markers plus dead @scope rules. Then run node ${scriptsPath}/live-complete.mjs --id ${event.id} and verify phase "completed"; it refuses with source_dirty while leftovers remain. Poll again only after that.`;
   }
+
   if (result.handled === true) {
     return `${prefix}Accept was merged into source mechanically; nothing to clean up. Poll again.`;
   }
+
   if (result.mode === 'fallback') {
     return `${prefix}The session lived in a generated file, so accept refused to persist there. Write the accepted variant into the true source you identified during Handle fallback, remove the temporary wrapper from the served file, then poll again.`;
   }
+
   if (result.mode === 'error') {
     if (result.error === 'source_locked') {
       return `${prefix}The source file is briefly locked by a publisher. Re-run the exact same live-accept.mjs command (idempotent); do NOT hand-edit the file, and do not poll past this.`;
     }
+
     if (result.error === 'accept_receipt_conflict') {
       return `${prefix}This session already resolved as ${result.priorOperation || 'a prior operation'}; do not edit anything. Run node ${scriptsPath}/live-status.mjs and tell the user what the session resolved to.`;
     }
+
     return `${prefix}Accept failed: ${result.error || 'unknown error'}. Source was not touched; do not hand-edit. Run node ${scriptsPath}/live-status.mjs before continuing.`;
   }
+
   return `${prefix}No mechanical accept result; read ${result.file || 'the session source file'}, find the impeccable markers, and finish the merge by hand. Poll again after.`;
 }
 

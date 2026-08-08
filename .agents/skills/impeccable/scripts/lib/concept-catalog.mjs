@@ -67,8 +67,10 @@ export function validateConceptEntry(concept, { existingForms = new Map(), axes 
       errors.push(`concept ${id} axes must be an object of axis id to value id`);
     } else if (axes) {
       const byId = new Map((axes.axes || []).map(axis => [axis.id, axis]));
+
       for (const [axisId, valueId] of Object.entries(concept.axes)) {
         const axis = byId.get(axisId);
+
         if (!axis) {
           errors.push(`concept ${id} names unknown axis "${axisId}"`);
         } else if (!(axis.values || []).some(value => value.id === valueId)) {
@@ -80,35 +82,42 @@ export function validateConceptEntry(concept, { existingForms = new Map(), axes 
       }
     }
   }
+
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(concept?.id || '')) {
     errors.push(`invalid concept id: ${String(concept?.id)}`);
   }
 
   const normalized = normalizeConceptForm(concept?.form);
+
   if (!normalized) {
     errors.push(`concept ${id} needs a form`);
   } else if (existingForms.has(normalized)) {
     errors.push(`duplicate concept form: ${id} and ${existingForms.get(normalized)}`);
   }
+
   if (typeof concept?.form !== 'string'
     || concept.form.trim().length < 40
     || concept.form.trim().length > 360
     || !concept.form.includes(',')) {
     errors.push(`concept ${id} must name a form and inherited structure after a comma`);
   }
+
   if (typeof concept?.lineage !== 'string'
     || concept.lineage.trim().length < 12
     || concept.lineage.trim().length > 200) {
     errors.push(`concept ${id} needs specific lineage metadata of 12–200 characters`);
   }
+
   if (!CONCEPT_STRENGTHS.has(concept?.strength)) {
     errors.push(`concept ${id} needs a strength of ${[...CONCEPT_STRENGTHS].join(', ')}`);
   }
+
   if (!Array.isArray(concept?.tags)
     || concept.tags.length !== 3
     || concept.tags.some(tag => typeof tag !== 'string' || !tag.trim())) {
     errors.push(`concept ${id} must have exactly three structural tags`);
   }
+
   // The slop this world in particular is at risk of. Optional, because 541
   // entries predate it and none of them are wrong for lacking it. A world built
   // from posters is at risk of shouting and one built from instruments is at
@@ -121,38 +130,47 @@ export function validateConceptEntry(concept, { existingForms = new Map(), axes 
       errors.push(`concept ${id} avoid must be two or three negations of 12–160 characters`);
     }
   }
+
   if (!Array.isArray(concept?.system)
     || concept.system.length !== SYSTEM_PREFIXES.length
     || concept.system.some(rule => typeof rule !== 'string' || rule.trim().length < 12 || rule.trim().length > 180)) {
     errors.push(`concept ${id} needs system grammar with exactly five rules of 12–180 characters`);
   } else {
     const uniqueRules = new Set(concept.system.map(normalizeConceptForm));
+
     if (uniqueRules.size !== SYSTEM_PREFIXES.length) {
       errors.push(`concept ${id} has duplicate system grammar rules`);
     }
+
     if (concept.system.some((rule, index) => !rule.startsWith(SYSTEM_PREFIXES[index]))) {
       errors.push(`concept ${id} system grammar must use palette, type, topology, controls, and responsive prefixes in order`);
     }
   }
+
   if (typeof concept?.spark !== 'string'
     || concept.spark.trim().length < 80
     || concept.spark.trim().length > 320) {
     errors.push(`concept ${id} needs a vivid creative spark of 80–320 characters`);
   }
+
   if (typeof concept?.webLeverage !== 'string'
     || concept.webLeverage.trim().length < 20
     || concept.webLeverage.trim().length > 240) {
     errors.push(`concept ${id} needs web leverage of 20–240 characters`);
   }
+
   if (/\b(?:live digital system|shared participatory system) modeled on\b/i.test(concept?.form || '')) {
     errors.push(`concept ${id} is a generic wrapper around another artifact`);
   }
+
   if (/\b(?:in the style of|styled like|copy of)\b/i.test(concept?.form || '')) {
     errors.push(`concept ${id} contains imitation language`);
   }
+
   if (BLAND_FORM_RE.test(concept?.form || '')) {
     errors.push(`concept ${id} is framed as a literal software or operations archetype instead of an inspiring visual world`);
   }
+
   return errors;
 }
 
@@ -168,6 +186,7 @@ export function conceptContentHash(concept) {
     concept?.spark ?? '',
     concept?.webLeverage ?? '',
   ].join('\n');
+
   return crypto.createHash('sha256').update(payload).digest('hex').slice(0, 12);
 }
 
@@ -211,49 +230,63 @@ export function validateConceptCatalog(catalog, reviewData, {
   if (!Number.isInteger(catalog?.schemaVersion) || catalog.schemaVersion < 7) {
     errors.push('catalog.schemaVersion must be 7 or newer');
   }
+
   if (typeof catalog?.catalogVersion !== 'string' || !catalog.catalogVersion.trim()) {
     errors.push('catalog.catalogVersion must be a non-empty string');
   }
+
   if (typeof catalog?.qualityBar?.principle !== 'string' || catalog.qualityBar.principle.trim().length < 80) {
     errors.push('catalog.qualityBar.principle must define the universal creative bar');
   }
+
   if (!Array.isArray(catalog?.qualityBar?.rejectIf) || catalog.qualityBar.rejectIf.length < 5) {
     errors.push('catalog.qualityBar.rejectIf must define at least five rejection gates');
   }
+
   if (!Array.isArray(catalog?.qualityBar?.reviewAxes) || catalog.qualityBar.reviewAxes.length < 8) {
     errors.push('catalog.qualityBar.reviewAxes must define at least eight review axes');
   }
+
   if (!Array.isArray(catalog?.families) || catalog.families.length < 3) {
     errors.push('catalog.families must contain at least three families');
   }
 
   const wellIds = new Set();
+
   if (!Array.isArray(catalog?.wells) || catalog.wells.length < 5) {
     errors.push('catalog.wells must define at least five inspiration wells');
   }
+
   for (const well of catalog?.wells || []) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(well.id || '')) {
       errors.push(`invalid well id: ${String(well.id)}`);
     } else if (wellIds.has(well.id)) {
       errors.push(`duplicate well id: ${well.id}`);
     }
+
     wellIds.add(well.id);
+
     if (typeof well.label !== 'string' || !well.label.trim()) {
       errors.push(`well ${well.id || '(unknown)'} needs a label`);
     }
+
     if (typeof well.description !== 'string' || well.description.trim().length < 40) {
       errors.push(`well ${well.id || '(unknown)'} needs a description of at least 40 characters`);
     }
+
     if (!WELL_TIERS.includes(well.tier)) {
       errors.push(`well ${well.id || '(unknown)'} needs a tier of ${WELL_TIERS.join(', ')}, got: ${String(well.tier)}`);
     }
   }
+
   const tiersPresent = new Set((catalog?.wells || []).map(well => well.tier).filter(tier => WELL_TIERS.includes(tier)));
+
   for (const tier of WELL_TIERS) {
     if ((catalog?.wells || []).length > 0 && !tiersPresent.has(tier)) {
       errors.push(`no well declares the ${tier} tier`);
     }
   }
+
   const populatedWells = new Set();
 
   for (const family of catalog?.families || []) {
@@ -262,15 +295,19 @@ export function validateConceptCatalog(catalog, reviewData, {
     } else if (familyIds.has(family.id)) {
       errors.push(`duplicate family id: ${family.id}`);
     }
+
     familyIds.add(family.id);
+
     if (typeof family.label !== 'string' || !family.label.trim()) {
       errors.push(`family ${family.id || '(unknown)'} needs a label`);
     }
+
     if (!wellIds.has(family.well)) {
       errors.push(`family ${family.id || '(unknown)'} must belong to a declared well, got: ${String(family.well)}`);
     } else {
       populatedWells.add(family.well);
     }
+
     if (!Array.isArray(family.concepts) || family.concepts.length === 0) {
       errors.push(`family ${family.id || '(unknown)'} has no concepts`);
       continue;
@@ -278,13 +315,19 @@ export function validateConceptCatalog(catalog, reviewData, {
 
     for (const concept of family.concepts) {
       concepts.push(concept);
+
       if (conceptIds.has(concept.id)) {
         errors.push(`duplicate concept id: ${concept.id}`);
       }
+
       errors.push(...validateConceptEntry(concept, { existingForms: normalizedForms }));
       conceptIds.add(concept.id);
       const normalized = normalizeConceptForm(concept.form);
-      if (normalized) normalizedForms.set(normalized, concept.id);
+
+      if (normalized) {
+normalizedForms.set(normalized, concept.id);
+}
+
       if (typeof concept.webLeverage === 'string' && !WEB_LEVERAGE_RE.test(concept.webLeverage)) {
         warnings.push(`concept ${concept.id} web leverage should be checked for a specific browser-native capability`);
       }
@@ -300,6 +343,7 @@ export function validateConceptCatalog(catalog, reviewData, {
   if (expectedTotal !== undefined && concepts.length !== expectedTotal) {
     errors.push(`expected ${expectedTotal} concepts, found ${concepts.length}`);
   }
+
   if (minimumTotal !== undefined && concepts.length < minimumTotal) {
     errors.push(`expected at least ${minimumTotal} concepts, found ${concepts.length}`);
   }
@@ -307,24 +351,36 @@ export function validateConceptCatalog(catalog, reviewData, {
   if (!Number.isInteger(reviewData?.schemaVersion) || reviewData.schemaVersion < 2) {
     errors.push('reviews.schemaVersion must be 2 or newer');
   }
+
   const conceptsById = new Map(concepts.map(concept => [concept.id, concept]));
+
   for (const [id, review] of Object.entries(reviewData?.reviews || {})) {
-    if (!conceptIds.has(id)) errors.push(`review references missing concept: ${id}`);
-    if (!CONCEPT_STATUSES.has(review?.status)) errors.push(`invalid review status for ${id}: ${String(review?.status)}`);
+    if (!conceptIds.has(id)) {
+errors.push(`review references missing concept: ${id}`);
+}
+
+    if (!CONCEPT_STATUSES.has(review?.status)) {
+errors.push(`invalid review status for ${id}: ${String(review?.status)}`);
+}
+
     if (typeof review?.reviewedBy !== 'string' || !review.reviewedBy.trim()) {
       errors.push(`review ${id} needs reviewedBy`);
     }
+
     if (typeof review?.reviewedAt !== 'string' || Number.isNaN(Date.parse(review.reviewedAt))) {
       errors.push(`review ${id} needs an ISO reviewedAt timestamp`);
     }
+
     if (typeof review?.formHash !== 'string' || !review.formHash.trim()) {
       errors.push(`review ${id} needs a formHash of the reviewed content`);
     } else if (conceptsById.has(id) && review.formHash !== conceptContentHash(conceptsById.get(id))) {
       errors.push(`review ${id} is stale: concept content changed since it was reviewed; reset or re-review it`);
     }
+
     if (review?.note !== undefined && (typeof review.note !== 'string' || !review.note.trim() || review.note.length > 500)) {
       errors.push(`review ${id} note must be a non-empty string of 500 characters or fewer`);
     }
+
     // Rating grades how strong an approved concept is (3 exceptional, 2 solid,
     // 1 marginal keep). Optional, approved-only, and read as a calibration
     // signal for future authoring rounds.
@@ -335,12 +391,14 @@ export function validateConceptCatalog(catalog, reviewData, {
         errors.push(`review ${id} rating only applies to approved concepts`);
       }
     }
+
     // Breadth: a world too narrow to serve an arbitrary build keeps its approval
     // and leaves the challenger pool. Selection has honoured this for a while but
     // nothing validated it, so a typo would silently read as "general".
     if (review?.breadth !== undefined && !CONCEPT_BREADTHS.has(review.breadth)) {
       errors.push(`review ${id} breadth must be one of ${[...CONCEPT_BREADTHS].join(', ')}`);
     }
+
     // Mode eligibility: which registers of work this world can carry. Absent
     // means all of them, which is why it needs no backfill. Listing every mode
     // is the same as omitting it, and an empty list would deal nothing, so both
@@ -366,7 +424,11 @@ export function validateConceptCatalog(catalog, reviewData, {
       .map(family => wellTierById.get(family.well))
       .filter(tier => WELL_TIERS.includes(tier))
   );
-  if (requireApprovedMinimum && approved.length < 3) errors.push('at least three concepts must be approved');
+
+  if (requireApprovedMinimum && approved.length < 3) {
+errors.push('at least three concepts must be approved');
+}
+
   if (requireApprovedMinimum && approvedTiers.size < WELL_TIERS.length) {
     errors.push('approved concepts must cover every challenger tier');
   }
@@ -391,6 +453,7 @@ export function approvedPoolRevision(concepts) {
     .map(concept => `${concept.familyId}:${concept.id}:${concept.strength}:${concept.form}:${concept.spark}:${JSON.stringify(concept.system)}:${concept.webLeverage}`)
     .sort()
     .join('\n');
+
   return crypto.createHash('sha256').update(payload).digest('hex').slice(0, 12);
 }
 

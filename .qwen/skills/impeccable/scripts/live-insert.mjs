@@ -10,6 +10,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isGeneratedFile } from './lib/is-generated.mjs';
+import { enterLiveRoot } from './live/roots.mjs';
+import {
+  buildSvelteComponentCssAuthoring,
+  scaffoldSvelteComponentInsertSession,
+  shouldUseSvelteComponentInjection,
+} from './live/svelte-component.mjs';
 import {
   buildSearchQueries,
   findElement,
@@ -21,12 +27,6 @@ import {
   buildCssAuthoring,
   buildCssSelectorPrefixExamples,
 } from './live-wrap.mjs';
-import {
-  buildSvelteComponentCssAuthoring,
-  scaffoldSvelteComponentInsertSession,
-  shouldUseSvelteComponentInjection,
-} from './live/svelte-component.mjs';
-import { enterLiveRoot } from './live/roots.mjs';
 
 const INSERT_POSITIONS = new Set(['before', 'after']);
 
@@ -67,31 +67,57 @@ export function buildInsertWrapperLines({ id, count, indent, commentSyntax, isJs
 
 function argVal(args, flag) {
   const idx = args.indexOf(flag);
+
   return idx !== -1 && idx + 1 < args.length ? args[idx + 1] : null;
 }
 
 function resolveElementMatch({ lines, queries, tag, text }) {
   if (text) {
     const candidates = [];
+
     for (const q of queries) {
       const all = findAllElements(lines, q, tag);
+
       for (const c of all) {
-        if (!candidates.some((x) => x.startLine === c.startLine)) candidates.push(c);
+        if (!candidates.some((x) => x.startLine === c.startLine)) {
+candidates.push(c);
+}
       }
-      if (candidates.length === 1) break;
+
+      if (candidates.length === 1) {
+break;
+}
     }
-    if (candidates.length === 0) return { error: 'element_not_found' };
-    if (candidates.length === 1) return { match: candidates[0] };
+
+    if (candidates.length === 0) {
+return { error: 'element_not_found' };
+}
+
+    if (candidates.length === 1) {
+return { match: candidates[0] };
+}
+
     const filtered = filterByText(candidates, lines, text);
-    if (filtered.length === 1) return { match: filtered[0] };
-    if (filtered.length === 0) return { match: candidates[0] };
+
+    if (filtered.length === 1) {
+return { match: filtered[0] };
+}
+
+    if (filtered.length === 0) {
+return { match: candidates[0] };
+}
+
     return { error: 'element_ambiguous', candidates: filtered };
   }
 
   for (const q of queries) {
     const match = findElement(lines, q, tag);
-    if (match) return { match };
+
+    if (match) {
+return { match };
+}
   }
+
   return { error: 'element_not_found' };
 }
 
@@ -136,9 +162,18 @@ Output (JSON):
   // untouched so the agent's single edit is the only framework reload.
   const deferSourceWrite = args.includes('--defer-source-write');
 
-  if (!id) { console.error('Missing --id'); process.exit(1); }
-  if (!position) { console.error('Missing --position (before | after)'); process.exit(1); }
-  if (!isInsertPosition(position)) { console.error('Invalid --position: ' + position); process.exit(1); }
+  if (!id) {
+ console.error('Missing --id'); process.exit(1); 
+}
+
+  if (!position) {
+ console.error('Missing --position (before | after)'); process.exit(1); 
+}
+
+  if (!isInsertPosition(position)) {
+ console.error('Invalid --position: ' + position); process.exit(1); 
+}
+
   if (!elementId && !classes && !query) {
     console.error('Need at least one of: --element-id, --classes, --query');
     process.exit(1);
@@ -148,17 +183,27 @@ Output (JSON):
   const genOpts = { cwd: process.cwd() };
 
   let targetFile = filePath;
+
   if (!targetFile) {
     for (const q of queries) {
       targetFile = findFileWithQuery(q, process.cwd(), genOpts);
-      if (targetFile) break;
+
+      if (targetFile) {
+break;
+}
     }
+
     if (!targetFile) {
       let generatedHit = null;
+
       for (const q of queries) {
         generatedHit = findFileWithQuery(q, process.cwd(), { ...genOpts, includeGenerated: true });
-        if (generatedHit) break;
+
+        if (generatedHit) {
+break;
+}
       }
+
       console.error(JSON.stringify({
         error: generatedHit ? 'element_not_in_source' : 'element_not_found',
         fallback: 'agent-driven',
@@ -191,6 +236,7 @@ Output (JSON):
     }));
     process.exit(1);
   }
+
   if (!resolved.match) {
     console.error(JSON.stringify({ error: 'element_not_found', fallback: 'agent-driven' }));
     process.exit(1);
@@ -233,6 +279,7 @@ Output (JSON):
       cssSelectorPrefixExamples: [],
       cssAuthoring: buildSvelteComponentCssAuthoring(count),
     }));
+
     return;
   }
 
@@ -249,6 +296,7 @@ Output (JSON):
   });
 
   let deferredWrapper = null;
+
   if (deferSourceWrite) {
     // Insert-as-empty-range: the agent inserts `wrapperBlock` (variants spliced
     // at the marker) at spliceIndex without removing any source line.
@@ -286,6 +334,7 @@ Output (JSON):
 }
 
 const _running = process.argv[1];
+
 if (_running?.endsWith('live-insert.mjs') || _running?.endsWith('live-insert.mjs/')) {
   enterLiveRoot();
   insertCli();

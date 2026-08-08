@@ -31,10 +31,13 @@ const FORBIDDEN = [
 export function verifyAcceptedSource(text) {
   const findings = [];
   const lines = String(text || '').split('\n');
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+
     for (const { marker, label, why } of FORBIDDEN) {
       const hit = marker instanceof RegExp ? marker.test(line) : line.includes(marker);
+
       if (hit) {
         findings.push({
           marker: label || String(marker),
@@ -45,16 +48,19 @@ export function verifyAcceptedSource(text) {
       }
     }
   }
+
   return { clean: findings.length === 0, findings };
 }
 
 /** Convenience wrapper for CLI callers: read + scan, tolerating a missing file. */
 export function verifyAcceptedFile(fs, filePath) {
   let text;
+
   try {
     text = fs.readFileSync(filePath, 'utf-8');
   } catch {
     return { clean: true, findings: [], missing: true };
   }
+
   return { ...verifyAcceptedSource(text), missing: false };
 }

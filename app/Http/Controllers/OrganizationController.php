@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOrganizationRequest;
 use App\Http\Requests\UpdateOrganizationRequest;
 use App\Models\Tenant;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 
 class OrganizationController extends Controller
@@ -45,5 +47,20 @@ class OrganizationController extends Controller
         $tenant->delete();
 
         return redirect()->back();
+    }
+
+    public function sync(Request $request): RedirectResponse
+    {
+        try {
+            Artisan::call('app:sync-tenants');
+
+            $request->user()->tenants()->syncWithoutDetaching(Tenant::pluck('id'));
+
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Sinkronisasi organisasi berhasil dilakukan.']);
+        } catch (\Throwable $th) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Gagal sinkronisasi: '.$th->getMessage()]);
+        }
+
+        return redirect()->route('organizations.index');
     }
 }

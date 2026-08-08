@@ -38,14 +38,14 @@
 
 import path from 'node:path';
 
-import { sveltekit } from './sveltekit.mjs';
-import { nuxt } from './nuxt.mjs';
-import { tanstackStart } from './tanstack-start.mjs';
 import { astro } from './astro.mjs';
 import { nextjs } from './nextjs.mjs';
-import { viteGeneric } from './vite-generic.mjs';
+import { nuxt } from './nuxt.mjs';
 import { staticHtml } from './static-html.mjs';
+import { sveltekit } from './sveltekit.mjs';
 import { TAG_PATCH_MARKERS, unpatchTagFile } from './tag-strategy.mjs';
+import { tanstackStart } from './tanstack-start.mjs';
+import { viteGeneric } from './vite-generic.mjs';
 
 /** Priority order. Do not reorder without re-reading rule 1 above. */
 export const FRAMEWORKS = Object.freeze([
@@ -91,8 +91,12 @@ export const PATCH_UNDOERS = Object.freeze(Object.assign(
 export function resolveFramework(cwd = process.cwd(), config = null) {
   for (const framework of FRAMEWORKS) {
     const project = framework.detect(cwd, config);
-    if (project) return { framework, project };
+
+    if (project) {
+return { framework, project };
+}
   }
+
   // Unreachable while static-html stays terminal, but a caller that reorders
   // the array should get a diagnosable null rather than a silent tag inject.
   return null;
@@ -104,12 +108,19 @@ export function resolveFramework(cwd = process.cwd(), config = null) {
  */
 export function resolveSourceTraits(filePath) {
   const ext = path.extname(String(filePath || '')).toLowerCase();
+
   for (const framework of FRAMEWORKS) {
     const source = framework.source;
-    if (!source || !source.extensions.includes(ext)) continue;
+
+    if (!source || !source.extensions.includes(ext)) {
+continue;
+}
+
     const { extensions, ...traits } = source;
+
     return { framework: framework.name, ...SOURCE_TRAIT_DEFAULTS, ...traits };
   }
+
   return { framework: null, ...SOURCE_TRAIT_DEFAULTS };
 }
 
@@ -120,6 +131,7 @@ export function resolveSourceTraits(filePath) {
  */
 export function frameworkIgnorePatterns(resolved) {
   const fn = resolved?.framework?.inject?.ignorePatterns;
+
   return typeof fn === 'function' ? (fn(resolved.project) || []) : [];
 }
 
@@ -129,11 +141,16 @@ export function frameworkIgnorePatterns(resolved) {
  * config files.
  */
 export function describeInjectArtifacts(resolved, { cwd = process.cwd(), files = [] } = {}) {
-  if (!resolved) return [];
+  if (!resolved) {
+return [];
+}
+
   const { framework, project } = resolved;
+
   if (framework.inject.kind === 'adapter') {
     return (framework.inject.artifacts?.({ cwd, project }) || []).filter((a) => a && a.path);
   }
+
   return files.map((file) => ({
     kind: 'patched',
     path: file,

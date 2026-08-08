@@ -9,8 +9,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildLiveScriptSrc } from './script-src.mjs';
 import { findConfigFile } from './detect-utils.mjs';
+import { buildLiveScriptSrc } from './script-src.mjs';
 
 export const NUXT_PLUGIN_MARKER = 'impeccable-live-nuxt-plugin';
 export const NUXT_PLUGIN_NAME = 'impeccable-live.client.ts';
@@ -19,17 +19,22 @@ const NUXT_CONFIG_RE = /^nuxt\.config\.(?:js|mjs|cjs|ts|mts|cts)$/;
 
 export function detectNuxtProject(cwd = process.cwd()) {
   const configFile = findConfigFile(cwd, NUXT_CONFIG_RE);
-  if (!configFile) return null;
+
+  if (!configFile) {
+return null;
+}
 
   const config = fs.readFileSync(path.join(cwd, configFile), 'utf-8');
   const literalSrcDir = config.match(/\bsrcDir\s*:\s*(['"])([^'"]+)\1/);
   let appDir = '';
+
   if (literalSrcDir) {
     const candidate = literalSrcDir[2]
       .replace(/\\/g, '/')
       .replace(/^\.\//, '')
       .replace(/\/+$/, '');
     const normalized = path.posix.normalize(candidate);
+
     if (normalized !== '..' && !normalized.startsWith('../') && !path.isAbsolute(normalized)) {
       appDir = normalized === '.' ? '' : normalized;
     }
@@ -41,6 +46,7 @@ export function detectNuxtProject(cwd = process.cwd()) {
   }
 
   const pluginFile = [appDir, 'plugins', NUXT_PLUGIN_NAME].filter(Boolean).join('/');
+
   return { configFile, appDir, pluginFile };
 }
 
@@ -72,9 +78,13 @@ export default defineNuxtPlugin(() => {
 }
 
 export function applyNuxtLiveAdapter({ cwd = process.cwd(), port, token, project = detectNuxtProject(cwd) }) {
-  if (!project) return { error: 'nuxt_not_detected' };
+  if (!project) {
+return { error: 'nuxt_not_detected' };
+}
+
   const absFile = path.join(cwd, project.pluginFile);
   const existing = fs.existsSync(absFile) ? fs.readFileSync(absFile, 'utf-8') : null;
+
   if (existing !== null && !existing.includes(NUXT_PLUGIN_MARKER)) {
     return {
       file: project.pluginFile,
@@ -85,7 +95,11 @@ export function applyNuxtLiveAdapter({ cwd = process.cwd(), port, token, project
 
   const content = buildNuxtPlugin(port, token);
   fs.mkdirSync(path.dirname(absFile), { recursive: true });
-  if (content !== existing) fs.writeFileSync(absFile, content, 'utf-8');
+
+  if (content !== existing) {
+fs.writeFileSync(absFile, content, 'utf-8');
+}
+
   return {
     file: project.pluginFile,
     inserted: true,
@@ -95,12 +109,18 @@ export function applyNuxtLiveAdapter({ cwd = process.cwd(), port, token, project
 }
 
 export function removeNuxtLiveAdapter({ cwd = process.cwd(), project = detectNuxtProject(cwd) }) {
-  if (!project) return { error: 'nuxt_not_detected' };
+  if (!project) {
+return { error: 'nuxt_not_detected' };
+}
+
   const absFile = path.join(cwd, project.pluginFile);
+
   if (!fs.existsSync(absFile)) {
     return { file: project.pluginFile, removed: false, note: 'no adapter present' };
   }
+
   const content = fs.readFileSync(absFile, 'utf-8');
+
   if (!content.includes(NUXT_PLUGIN_MARKER)) {
     return {
       file: project.pluginFile,
@@ -109,9 +129,14 @@ export function removeNuxtLiveAdapter({ cwd = process.cwd(), project = detectNux
       hint: `${project.pluginFile} is not managed by Impeccable Live`,
     };
   }
+
   fs.unlinkSync(absFile);
   const pluginDir = path.dirname(absFile);
-  if (fs.readdirSync(pluginDir).length === 0) fs.rmdirSync(pluginDir);
+
+  if (fs.readdirSync(pluginDir).length === 0) {
+fs.rmdirSync(pluginDir);
+}
+
   return { file: project.pluginFile, removed: true };
 }
 
@@ -140,7 +165,10 @@ export const nuxt = {
     },
 
     artifacts({ project }) {
-      if (!project?.pluginFile) return [];
+      if (!project?.pluginFile) {
+return [];
+}
+
       return [{
         kind: 'created',
         path: project.pluginFile,

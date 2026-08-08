@@ -38,6 +38,7 @@ import {
   healInjectJournal,
   recordInjection,
 } from './live/frameworks/journal.mjs';
+import { buildLiveScriptSrc } from './live/frameworks/script-src.mjs';
 import {
   buildTagBlock,
   insertTag,
@@ -45,7 +46,6 @@ import {
   removeTag,
   revertCspMeta,
 } from './live/frameworks/tag-strategy.mjs';
-import { buildLiveScriptSrc } from './live/frameworks/script-src.mjs';
 import { enterLiveRoot } from './live/roots.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -56,6 +56,7 @@ function CONFIG_PATH_GET() {
   if (!CONFIG_PATH_CACHED) {
     CONFIG_PATH_CACHED = resolveLiveConfigPath({ cwd: process.cwd(), scriptsDir: __dirname });
   }
+
   return CONFIG_PATH_CACHED;
 }
 const IGNORE_MARKER_OPEN = '# impeccable-live-ignore-start';
@@ -130,20 +131,27 @@ Output (JSON):
       console.log(JSON.stringify({ ok: false, error: 'config_missing', path: CONFIG_PATH_GET() }));
       process.exit(0);
     }
+
     let cfg;
+
     try {
       cfg = JSON.parse(fs.readFileSync(CONFIG_PATH_GET(), 'utf-8'));
     } catch (err) {
       console.log(JSON.stringify({ ok: false, error: 'config_invalid', message: err.message, path: CONFIG_PATH_GET() }));
+
       return;
     }
+
     try {
       validateConfig(cfg);
     } catch (err) {
       console.log(JSON.stringify({ ok: false, error: 'config_invalid', message: err.message, path: CONFIG_PATH_GET() }));
+
       return;
     }
+
     console.log(JSON.stringify({ ok: true, config: cfg, path: CONFIG_PATH_GET() }));
+
     return;
   }
 
@@ -152,6 +160,7 @@ Output (JSON):
     console.error(JSON.stringify({ ok: false, error: 'config_missing', path: CONFIG_PATH_GET() }));
     process.exit(1);
   }
+
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH_GET(), 'utf-8'));
   validateConfig(config);
 
@@ -174,17 +183,31 @@ Output (JSON):
         results: [adapterResult],
         healed: healed.length ? healed : undefined,
       }));
-      if (!ok) process.exitCode = 1;
+
+      if (!ok) {
+process.exitCode = 1;
+}
+
       return;
     }
+
     const results = resolvedFiles.map((relFile) => {
       const absFile = path.resolve(cwd, relFile);
-      if (!fs.existsSync(absFile)) return { file: relFile, error: 'file_not_found' };
+
+      if (!fs.existsSync(absFile)) {
+return { file: relFile, error: 'file_not_found' };
+}
+
       const content = fs.readFileSync(absFile, 'utf-8');
       const detagged = removeTag(content, config.commentSyntax);
       const updated = revertCspMeta(detagged);
-      if (updated === content) return { file: relFile, removed: false, note: 'no tag present' };
+
+      if (updated === content) {
+return { file: relFile, removed: false, note: 'no tag present' };
+}
+
       fs.writeFileSync(absFile, updated, 'utf-8');
+
       return {
         file: relFile,
         removed: detagged !== content,
@@ -194,28 +217,35 @@ Output (JSON):
     const { healed } = healInjectJournal(cwd);
     clearInjectJournal(cwd);
     console.log(JSON.stringify({ ok: true, results, healed: healed.length ? healed : undefined }));
+
     return;
   }
 
   // Insert mode — need --port
   const portIdx = args.indexOf('--port');
   const port = portIdx !== -1 ? parseInt(args[portIdx + 1], 10) : NaN;
+
   if (!Number.isFinite(port)) {
     console.error(JSON.stringify({ ok: false, error: 'missing_port' }));
     process.exit(1);
   }
+
   // Optional server token: appended to the /live.js src so the token-gated
   // /live.js handler authorizes the browser fetch. `live.mjs` always passes
   // it; a manual `--port`-only invocation reads the running helper's token
   // from server.json instead of writing an unauthenticated URL that 401s.
   const tokenIdx = args.indexOf('--token');
   let token = tokenIdx !== -1 ? args[tokenIdx + 1] : undefined;
+
   if (!token) {
     try {
       const info = JSON.parse(fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'server.json'), 'utf-8'));
+
       // A record for a DIFFERENT port is a stale or foreign helper; its token
       // would 401 just the same, so only adopt a matching one.
-      if (info?.token && Number(info.port) === port) token = info.token;
+      if (info?.token && Number(info.port) === port) {
+token = info.token;
+}
     } catch { /* no running helper recorded; keep legacy tokenless behavior */ }
   }
 
@@ -226,11 +256,13 @@ Output (JSON):
   const { healed } = healInjectJournal(cwd, { keep: plannedArtifacts.map((a) => a.path) });
 
   const gitIgnore = ensureLiveGitIgnores(cwd, frameworkIgnorePatterns(resolved));
+
   // In a nested-app repo the roots pointer lives at the REPO root, outside the
   // reach of the appRoot-relative ignore block above; give that directory its
   // own local excludes so the pointer (absolute host paths) never gets staged.
   try {
     const rootsManifest = JSON.parse(fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'roots.json'), 'utf-8'));
+
     if (rootsManifest?.repoRoot && path.resolve(rootsManifest.repoRoot) !== path.resolve(cwd)) {
       ensureLiveGitIgnores(rootsManifest.repoRoot);
     }
@@ -245,7 +277,11 @@ Output (JSON):
       project: resolved.project,
     });
     const ok = !(adapterResult && adapterResult.error);
-    if (ok) recordInjection(cwd, { framework: resolved.framework.name, port, artifacts: plannedArtifacts });
+
+    if (ok) {
+recordInjection(cwd, { framework: resolved.framework.name, port, artifacts: plannedArtifacts });
+}
+
     console.log(JSON.stringify({
       ok,
       port,
@@ -254,24 +290,35 @@ Output (JSON):
       results: [adapterResult],
       healed: healed.length ? healed : undefined,
     }));
-    if (!ok) process.exitCode = 1;
+
+    if (!ok) {
+process.exitCode = 1;
+}
+
     return;
   }
 
   const results = resolvedFiles.map((relFile) => {
     const absFile = path.resolve(cwd, relFile);
-    if (!fs.existsSync(absFile)) return { file: relFile, error: 'file_not_found' };
+
+    if (!fs.existsSync(absFile)) {
+return { file: relFile, error: 'file_not_found' };
+}
+
     const content = fs.readFileSync(absFile, 'utf-8');
     const withoutOld = revertCspMeta(removeTag(content, config.commentSyntax));
     // Per-file, not per-project: a Vite app can hold an .astro partial, and a
     // framework project's entry template is often plain HTML.
     const scriptAttrs = resolveSourceTraits(relFile).injectScriptAttrs;
     const withTag = insertTag(withoutOld, config, port, token, scriptAttrs);
+
     if (withTag === withoutOld) {
       return { file: relFile, error: 'insertion_point_not_found', anchor: config.insertBefore || config.insertAfter };
     }
+
     const updated = patchCspMeta(withTag, port);
     fs.writeFileSync(absFile, updated, 'utf-8');
+
     return {
       file: relFile,
       inserted: true,
@@ -292,7 +339,10 @@ Output (JSON):
     results,
     healed: healed.length ? healed : undefined,
   }));
-  if (!anyInserted) process.exit(1);
+
+  if (!anyInserted) {
+process.exit(1);
+}
 }
 
 export function ensureLiveGitIgnores(cwd = process.cwd(), extraPatterns = []) {
@@ -306,6 +356,7 @@ export function ensureLiveGitIgnores(cwd = process.cwd(), extraPatterns = []) {
   const markerRe = new RegExp(`${escapeRegExp(IGNORE_MARKER_OPEN)}[\\s\\S]*?${escapeRegExp(IGNORE_MARKER_CLOSE)}`);
 
   let updated;
+
   if (markerRe.test(existing)) {
     updated = existing.replace(markerRe, block);
   } else {
@@ -328,24 +379,40 @@ export function ensureLiveGitIgnores(cwd = process.cwd(), extraPatterns = []) {
 
 function resolveIgnoreTarget(cwd) {
   const gitExcludePath = resolveGitInfoExcludePath(cwd);
+
   if (gitExcludePath) {
     return { path: gitExcludePath, mode: 'git-info-exclude' };
   }
+
   return { path: path.join(cwd, '.gitignore'), mode: 'gitignore' };
 }
 
 function resolveGitInfoExcludePath(cwd) {
   const dotGit = path.join(cwd, '.git');
-  if (!fs.existsSync(dotGit)) return null;
+
+  if (!fs.existsSync(dotGit)) {
+return null;
+}
 
   const stat = fs.statSync(dotGit);
-  if (stat.isDirectory()) return path.join(dotGit, 'info', 'exclude');
-  if (!stat.isFile()) return null;
+
+  if (stat.isDirectory()) {
+return path.join(dotGit, 'info', 'exclude');
+}
+
+  if (!stat.isFile()) {
+return null;
+}
 
   const body = fs.readFileSync(dotGit, 'utf-8').trim();
   const match = body.match(/^gitdir:\s*(.+)$/i);
-  if (!match) return null;
+
+  if (!match) {
+return null;
+}
+
   const gitDir = path.isAbsolute(match[1]) ? match[1] : path.resolve(cwd, match[1]);
+
   return path.join(gitDir, 'info', 'exclude');
 }
 
@@ -371,6 +438,7 @@ export function resolveFiles(rootDir, config) {
 
   const seen = new Set();
   const out = [];
+
   for (const pat of patterns) {
     if (!isGlob(pat)) {
       // Literal path — include even if it doesn't exist yet; the caller
@@ -380,24 +448,39 @@ export function resolveFiles(rootDir, config) {
         seen.add(pat);
         out.push(pat);
       }
+
       continue;
     }
+
     let matches;
+
     try {
       matches = fs.globSync(pat, { cwd: rootDir, withFileTypes: true });
     } catch {
       continue;
     }
+
     for (const ent of matches) {
-      if (!ent.isFile || !ent.isFile()) continue;
+      if (!ent.isFile || !ent.isFile()) {
+continue;
+}
+
       const abs = path.join(ent.parentPath || ent.path || rootDir, ent.name);
       const rel = path.relative(rootDir, abs).split(path.sep).join('/');
-      if (isExcluded(rel)) continue;
-      if (seen.has(rel)) continue;
+
+      if (isExcluded(rel)) {
+continue;
+}
+
+      if (seen.has(rel)) {
+continue;
+}
+
       seen.add(rel);
       out.push(rel);
     }
   }
+
   return out;
 }
 
@@ -411,8 +494,10 @@ export function resolveFiles(rootDir, config) {
 function globToRegex(pattern) {
   let re = '';
   let i = 0;
+
   while (i < pattern.length) {
     const c = pattern[i];
+
     if (c === '*') {
       if (pattern[i + 1] === '*') {
         // ** — any number of segments, including zero. Handle the common
@@ -439,6 +524,7 @@ function globToRegex(pattern) {
       i += 1;
     }
   }
+
   return new RegExp('^' + re + '$');
 }
 
@@ -447,27 +533,36 @@ function globToRegex(pattern) {
 // ---------------------------------------------------------------------------
 
 function validateConfig(cfg) {
-  if (!cfg || typeof cfg !== 'object') throw new Error('config.json must be an object');
+  if (!cfg || typeof cfg !== 'object') {
+throw new Error('config.json must be an object');
+}
+
   if (!Array.isArray(cfg.files) || cfg.files.length === 0) {
     throw new Error('config.files (non-empty string array) required');
   }
+
   if (!cfg.files.every((f) => typeof f === 'string' && f.length > 0)) {
     throw new Error('config.files must contain only non-empty strings');
   }
+
   if (cfg.exclude !== undefined) {
     if (!Array.isArray(cfg.exclude)) {
       throw new Error('config.exclude, if present, must be a string array');
     }
+
     if (!cfg.exclude.every((f) => typeof f === 'string' && f.length > 0)) {
       throw new Error('config.exclude must contain only non-empty strings');
     }
   }
+
   if (typeof cfg.insertBefore !== 'string' && typeof cfg.insertAfter !== 'string') {
     throw new Error('config.insertBefore or config.insertAfter (string) required');
   }
+
   if (cfg.commentSyntax !== 'html' && cfg.commentSyntax !== 'jsx') {
     throw new Error("config.commentSyntax must be 'html' or 'jsx'");
   }
+
   if (cfg.cspChecked !== undefined && typeof cfg.cspChecked !== 'boolean') {
     throw new Error("config.cspChecked, if present, must be a boolean");
   }
@@ -478,6 +573,7 @@ function validateConfig(cfg) {
 // ---------------------------------------------------------------------------
 
 const _running = process.argv[1];
+
 if (_running?.endsWith('live-inject.mjs') || _running?.endsWith('live-inject.mjs/')) {
   enterLiveRoot();
   injectCli();

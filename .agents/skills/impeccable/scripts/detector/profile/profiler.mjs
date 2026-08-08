@@ -9,7 +9,10 @@ function createDetectorProfile() {
 }
 
 function recordProfileEvent(profile, event) {
-  if (!profile) return;
+  if (!profile) {
+return;
+}
+
   const normalized = {
     engine: event.engine || 'unknown',
     phase: event.phase || 'unknown',
@@ -18,10 +21,15 @@ function recordProfileEvent(profile, event) {
     ms: Number.isFinite(event.ms) ? event.ms : 0,
     findings: Number.isFinite(event.findings) ? event.findings : 0,
   };
-  if (event.detail) normalized.detail = event.detail;
+
+  if (event.detail) {
+normalized.detail = event.detail;
+}
+
   if (Array.isArray(event.findingIds) && event.findingIds.length) {
     normalized.findingIds = event.findingIds;
   }
+
   if (typeof profile === 'function') {
     profile(normalized);
   } else if (typeof profile.record === 'function') {
@@ -34,12 +42,18 @@ function recordProfileEvent(profile, event) {
 }
 
 function extractFindingIds(findings) {
-  if (!Array.isArray(findings) || findings.length === 0) return [];
+  if (!Array.isArray(findings) || findings.length === 0) {
+return [];
+}
+
   return [...new Set(findings.map(f => f?.id || f?.type || f?.antipattern).filter(Boolean))];
 }
 
 function profileFindings(profile, meta, callback) {
-  if (!profile) return callback();
+  if (!profile) {
+return callback();
+}
+
   const started = profileNow();
   const findings = callback();
   recordProfileEvent(profile, {
@@ -48,12 +62,17 @@ function profileFindings(profile, meta, callback) {
     findings: Array.isArray(findings) ? findings.length : 0,
     findingIds: extractFindingIds(findings),
   });
+
   return findings;
 }
 
 function profileStep(profile, meta, callback) {
-  if (!profile) return callback();
+  if (!profile) {
+return callback();
+}
+
   const started = profileNow();
+
   try {
     return callback();
   } finally {
@@ -66,7 +85,10 @@ function profileStep(profile, meta, callback) {
 }
 
 async function profileFindingsAsync(profile, meta, callback) {
-  if (!profile) return callback();
+  if (!profile) {
+return callback();
+}
+
   const started = profileNow();
   const findings = await callback();
   recordProfileEvent(profile, {
@@ -75,12 +97,17 @@ async function profileFindingsAsync(profile, meta, callback) {
     findings: Array.isArray(findings) ? findings.length : 0,
     findingIds: extractFindingIds(findings),
   });
+
   return findings;
 }
 
 async function profileStepAsync(profile, meta, callback) {
-  if (!profile) return callback();
+  if (!profile) {
+return callback();
+}
+
   const started = profileNow();
+
   try {
     return await callback();
   } finally {
@@ -93,11 +120,15 @@ async function profileStepAsync(profile, meta, callback) {
 }
 
 function percentile(sortedValues, pct) {
-  if (!sortedValues.length) return 0;
+  if (!sortedValues.length) {
+return 0;
+}
+
   const idx = Math.min(
     sortedValues.length - 1,
     Math.max(0, Math.ceil((pct / 100) * sortedValues.length) - 1),
   );
+
   return sortedValues[idx];
 }
 
@@ -106,6 +137,7 @@ function summarizeDetectorProfile(profile) {
     ? profile
     : (Array.isArray(profile?.events) ? profile.events : []);
   const groups = new Map();
+
   for (const event of events) {
     const key = [
       event.engine || 'unknown',
@@ -114,6 +146,7 @@ function summarizeDetectorProfile(profile) {
       event.target || '',
     ].join('\u0000');
     let group = groups.get(key);
+
     if (!group) {
       group = {
         engine: event.engine || 'unknown',
@@ -127,15 +160,18 @@ function summarizeDetectorProfile(profile) {
       };
       groups.set(key, group);
     }
+
     const ms = Number.isFinite(event.ms) ? event.ms : 0;
     group.calls += 1;
     group.totalMs += ms;
     group.findings += Number.isFinite(event.findings) ? event.findings : 0;
     group.samples.push(ms);
   }
+
   return [...groups.values()]
     .map(group => {
       const samples = group.samples.sort((a, b) => a - b);
+
       return {
         engine: group.engine,
         phase: group.phase,

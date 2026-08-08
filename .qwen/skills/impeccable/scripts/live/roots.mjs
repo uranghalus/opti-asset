@@ -24,10 +24,10 @@
  * roots the boot decided on. When several apps in one repo run live, the
  * pointer follows the most recent boot; per-app roots.json files stay put.
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { resolveProjectRoot } from '../context.mjs';
 
 const ROOTS_MANIFEST_VERSION = 1;
@@ -57,23 +57,40 @@ const CANDIDATE_SCAN_IGNORED = new Set([
 const CANDIDATE_SCAN_DEPTH = 2;
 
 function exists(p) {
-  try { fs.statSync(p); return true; } catch { return false; }
+  try {
+ fs.statSync(p);
+
+ return true; 
+} catch {
+ return false; 
+}
 }
 
 function isDir(p) {
-  try { return fs.statSync(p).isDirectory(); } catch { return false; }
+  try {
+ return fs.statSync(p).isDirectory(); 
+} catch {
+ return false; 
+}
 }
 
 function firstExisting(dir, names) {
   for (const name of names) {
     const abs = path.join(dir, name);
-    if (exists(abs)) return abs;
+
+    if (exists(abs)) {
+return abs;
+}
   }
+
   return null;
 }
 
 function hasDevConfig(dir) {
-  if (DEV_CONFIG_MARKERS.some((name) => exists(path.join(dir, name)))) return true;
+  if (DEV_CONFIG_MARKERS.some((name) => exists(path.join(dir, name)))) {
+return true;
+}
+
   // A plain Vite app can run with zero config: index.html + package.json.
   return exists(path.join(dir, 'index.html')) && exists(path.join(dir, 'package.json'));
 }
@@ -86,22 +103,41 @@ function isAppRoot(dir) {
 
 function findContextFile(dir, names) {
   const direct = firstExisting(dir, names);
-  if (direct) return direct;
+
+  if (direct) {
+return direct;
+}
+
   for (const rel of CONTEXT_FALLBACK_DIRS) {
     const nested = firstExisting(path.join(dir, rel), names);
-    if (nested) return nested;
+
+    if (nested) {
+return nested;
+}
   }
+
   return null;
 }
 
 export function findGitRoot(startDir) {
   let dir = path.resolve(startDir);
   const home = path.resolve(os.homedir());
+
   while (true) {
-    if (dir === home) return null;
-    if (exists(path.join(dir, '.git'))) return dir;
+    if (dir === home) {
+return null;
+}
+
+    if (exists(path.join(dir, '.git'))) {
+return dir;
+}
+
     const parent = path.dirname(dir);
-    if (parent === dir) return null;
+
+    if (parent === dir) {
+return null;
+}
+
     dir = parent;
   }
 }
@@ -110,19 +146,35 @@ function walkUp(startDir, upperBound, visit) {
   let dir = path.resolve(startDir);
   const stop = path.resolve(upperBound);
   const home = path.resolve(os.homedir());
+
   while (true) {
-    if (dir === home) return null;
+    if (dir === home) {
+return null;
+}
+
     const hit = visit(dir);
-    if (hit) return hit;
-    if (dir === stop) return null;
+
+    if (hit) {
+return hit;
+}
+
+    if (dir === stop) {
+return null;
+}
+
     const parent = path.dirname(dir);
-    if (parent === dir) return null;
+
+    if (parent === dir) {
+return null;
+}
+
     dir = parent;
   }
 }
 
 function insideOrEqual(candidate, root) {
   const rel = path.relative(path.resolve(root), path.resolve(candidate));
+
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
 }
 
@@ -136,11 +188,24 @@ export function discoverAppCandidates(rootDir, depth = CANDIDATE_SCAN_DEPTH) {
   const found = [];
   const scan = (dir, remaining) => {
     let entries;
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+
+    try {
+ entries = fs.readdirSync(dir, { withFileTypes: true }); 
+} catch {
+ return; 
+}
+
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      if (entry.name.startsWith('.') || CANDIDATE_SCAN_IGNORED.has(entry.name)) continue;
+      if (!entry.isDirectory()) {
+continue;
+}
+
+      if (entry.name.startsWith('.') || CANDIDATE_SCAN_IGNORED.has(entry.name)) {
+continue;
+}
+
       const abs = path.join(dir, entry.name);
+
       // Same criterion as the upward walk (isAppRoot): a live-configured
       // plain-static site with no bundler markers is still an app, and
       // missing it here would silently fall back to the wrong root.
@@ -148,10 +213,14 @@ export function discoverAppCandidates(rootDir, depth = CANDIDATE_SCAN_DEPTH) {
         found.push(abs);
         continue; // nested apps below an app root are that app's business
       }
-      if (remaining > 1) scan(abs, remaining - 1);
+
+      if (remaining > 1) {
+scan(abs, remaining - 1);
+}
     }
   };
   scan(path.resolve(rootDir), depth);
+
   return found.sort();
 }
 
@@ -197,6 +266,7 @@ export function resolveRoots({ cwd = process.cwd(), targetPath = null } = {}) {
 
   if (!appRoot && !absTarget) {
     const candidates = discoverAppCandidates(absCwd);
+
     if (candidates.length === 1) {
       appRoot = candidates[0];
       resolvedFrom = `candidate:${path.relative(absCwd, appRoot)}`;
@@ -259,6 +329,7 @@ export function writeRootsManifest(manifest) {
   const file = rootsFilePath(manifest.appRoot);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+
   if (path.resolve(manifest.repoRoot) !== path.resolve(manifest.appRoot)) {
     const pointer = pointerFilePath(manifest.repoRoot);
     fs.mkdirSync(path.dirname(pointer), { recursive: true });
@@ -271,17 +342,23 @@ export function writeRootsManifest(manifest) {
     entries.unshift({ appRoot: manifest.appRoot, bootedAt: new Date().toISOString() });
     fs.writeFileSync(pointer, JSON.stringify({ version: 2, appRoots: entries }));
   }
+
   return file;
 }
 
 function readPointerEntries(repoRoot) {
   try {
     const raw = JSON.parse(fs.readFileSync(pointerFilePath(repoRoot), 'utf-8'));
+
     if (Array.isArray(raw?.appRoots)) {
       return raw.appRoots.filter((entry) => entry && typeof entry.appRoot === 'string');
     }
+
     // v1 shape: a single { appRoot } value.
-    if (raw && typeof raw.appRoot === 'string') return [{ appRoot: raw.appRoot }];
+    if (raw && typeof raw.appRoot === 'string') {
+return [{ appRoot: raw.appRoot }];
+}
+
     return [];
   } catch {
     return [];
@@ -301,17 +378,25 @@ function hasLiveServer(appRoot) {
   let pid;
   let port;
   let token;
+
   try {
     const info = JSON.parse(fs.readFileSync(path.join(appRoot, '.impeccable', 'live', 'server.json'), 'utf-8'));
-    if (!info || typeof info.pid !== 'number') return false;
+
+    if (!info || typeof info.pid !== 'number') {
+return false;
+}
+
     pid = info.pid;
     port = Number(info.port);
     token = typeof info.token === 'string' ? info.token : null;
     process.kill(pid, 0);
   } catch (err) {
     // EPERM: the process exists but is not signalable by this user.
-    if (err?.code !== 'EPERM') return false;
+    if (err?.code !== 'EPERM') {
+return false;
+}
   }
+
   // Liveness alone misclassifies a REUSED pid, and a bare TCP connect
   // misclassifies a coincidental listener on a reused port. The decisive
   // signal is IDENTITY: the helper answers its authenticated /status
@@ -325,11 +410,13 @@ function hasLiveServer(appRoot) {
         "req.on('timeout', () => { req.destroy(); process.exit(1); });",
         "req.on('error', () => process.exit(1));",
       ].join(''), String(port), token], { timeout: 4000, stdio: 'ignore' });
+
       return true;
     } catch {
       return false;
     }
   }
+
   // Every server.json this codebase has ever written records port + token
   // (see writeLiveServerInfo). A record without them is malformed or foreign
   // and cannot be authenticated, so it does not count as a live helper;
@@ -349,28 +436,44 @@ const TERMINAL_SESSION_PHASES = new Set(['completed', 'discarded']);
 function hasActiveDurableSession(appRoot) {
   const dir = path.join(appRoot, '.impeccable', 'live', 'sessions');
   let entries;
+
   try {
     entries = fs.readdirSync(dir);
   } catch {
     return false;
   }
+
   for (const name of entries) {
-    if (!name.endsWith('.snapshot.json')) continue;
+    if (!name.endsWith('.snapshot.json')) {
+continue;
+}
+
     try {
       const snapshot = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf-8'));
-      if (snapshot?.phase && !TERMINAL_SESSION_PHASES.has(snapshot.phase)) return true;
+
+      if (snapshot?.phase && !TERMINAL_SESSION_PHASES.has(snapshot.phase)) {
+return true;
+}
     } catch { /* skip unreadable snapshots */ }
   }
+
   return false;
 }
 
 function readManifestAt(appRoot) {
   try {
     const raw = JSON.parse(fs.readFileSync(rootsFilePath(appRoot), 'utf-8'));
-    if (!raw || typeof raw.appRoot !== 'string') return null;
+
+    if (!raw || typeof raw.appRoot !== 'string') {
+return null;
+}
+
     // A manifest is only trusted where it claims to live; anything else is a
     // copied or stale file.
-    if (path.resolve(raw.appRoot) !== path.resolve(appRoot)) return null;
+    if (path.resolve(raw.appRoot) !== path.resolve(appRoot)) {
+return null;
+}
+
     return raw;
   } catch {
     return null;
@@ -394,9 +497,13 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
 
   if (!targetPath) {
     const persisted = walkUp(absCwd, findGitRoot(absCwd) || absCwd, (dir) => readManifestAt(dir));
-    if (persisted) return { manifest: persisted, source: 'persisted' };
+
+    if (persisted) {
+return { manifest: persisted, source: 'persisted' };
+}
 
     const gitRoot = findGitRoot(absCwd);
+
     if (gitRoot) {
       // Several apps in one repo may have booted live. Preference order:
       // a running helper server, then an app whose durable store still holds
@@ -406,12 +513,14 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
       const candidates = readPointerEntries(gitRoot)
         .map((entry) => readManifestAt(entry.appRoot))
         .filter(Boolean);
+
       if (candidates.length > 0) {
         const liveApps = candidates.filter((manifest) => hasLiveServer(manifest.appRoot));
         const recoveringApps = liveApps.length > 0
           ? liveApps
           : candidates.filter((manifest) => hasActiveDurableSession(manifest.appRoot));
         const tier = recoveringApps.length > 0 ? recoveringApps : candidates;
+
         // Multiple apps qualifying at the same tier is inherent ambiguity:
         // intent is unknowable from the repo root. The choice stays
         // deterministic (most recent boot first), but it must be LOUD, not
@@ -424,13 +533,18 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
             + `Other candidate(s): ${others}. Run from the app directory (or pass --target) to address a specific app.\n`,
           );
         }
+
         return { manifest: tier[0], source: 'pointer' };
       }
     }
   }
 
   const fresh = resolveRoots({ cwd: absCwd, targetPath });
-  if (fresh.selection) return { selection: fresh.selection, source: 'fresh' };
+
+  if (fresh.selection) {
+return { selection: fresh.selection, source: 'fresh' };
+}
+
   return { manifest: fresh.manifest, source: 'fresh' };
 }
 
@@ -442,26 +556,35 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
 export function consumeTargetArg(argv = process.argv) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+
     if (arg === '--target') {
       const value = argv[i + 1];
+
       // A --target with no usable value must not degrade into implicit root
       // selection: these helpers mutate session state, and "the most recent
       // app" is exactly what the caller was trying NOT to get.
       if (typeof value !== 'string' || value === '' || value.startsWith('--')) {
         throw new Error('--target requires a path value (use --target <path> or --target=<path>)');
       }
+
       argv.splice(i, 2);
+
       return value;
     }
+
     if (typeof arg === 'string' && arg.startsWith('--target=')) {
       const value = arg.slice('--target='.length);
+
       if (value === '') {
         throw new Error('--target requires a path value (use --target <path> or --target=<path>)');
       }
+
       argv.splice(i, 1);
+
       return value;
     }
   }
+
   return null;
 }
 
@@ -478,15 +601,22 @@ export function consumeTargetArg(argv = process.argv) {
  */
 export function enterLiveRoot(cwd = process.cwd()) {
   let targetPath;
+
   try {
     targetPath = consumeTargetArg(process.argv);
   } catch (err) {
     console.error(`[impeccable live] ${err.message}`);
     process.exit(1);
   }
+
   const resolved = resolveLiveRoots(cwd, targetPath ? { targetPath } : {});
-  if (!resolved.manifest) return null;
+
+  if (!resolved.manifest) {
+return null;
+}
+
   const appRoot = resolved.manifest.appRoot;
+
   if (path.resolve(cwd) !== path.resolve(appRoot)) {
     // Failing to land on the resolved appRoot must be fatal: a helper that
     // silently keeps its ambient cwd derives server, session, and source
@@ -497,6 +627,7 @@ export function enterLiveRoot(cwd = process.cwd()) {
       console.error(`[impeccable live] resolved app root does not exist: ${appRoot} (stale roots manifest? re-run the live boot, or pass --target <path>)`);
       process.exit(1);
     }
+
     try {
       process.chdir(appRoot);
     } catch (err) {
@@ -504,5 +635,6 @@ export function enterLiveRoot(cwd = process.cwd()) {
       process.exit(1);
     }
   }
+
   return resolved.manifest;
 }

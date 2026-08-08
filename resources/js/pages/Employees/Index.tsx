@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Building2,
@@ -7,11 +7,13 @@ import {
     Mail,
     RefreshCw,
     Search,
+    ShieldCheck,
     Users,
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -32,6 +34,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
 import { index as indexRoute, show, sync } from '@/routes/employees';
+import { update as updateRoles } from '@/routes/employees/roles';
+
+type RoleOption = {
+    id: number;
+    name: string;
+};
 
 type Employee = {
     id_employee: string;
@@ -46,6 +54,7 @@ type Employee = {
         kode_department: string;
         nama_department: string | null;
     } | null;
+    roles: RoleOption[];
     created_at: string;
 };
 
@@ -75,8 +84,22 @@ type PaginatedData<T> = {
 type PageProps = {
     employees: PaginatedData<Employee>;
     departments: DepartmentOption[];
+    roles: RoleOption[];
     filters: { search: string | null; department: string | null };
 };
+
+const ROLE_ACCENTS = [
+    'bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300',
+    'bg-violet-500/10 text-violet-700 ring-violet-500/20 dark:text-violet-300',
+    'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
+    'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
+    'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+    'bg-teal-500/10 text-teal-700 ring-teal-500/20 dark:text-teal-300',
+];
+
+function roleAccent(index: number): string {
+    return ROLE_ACCENTS[index % ROLE_ACCENTS.length];
+}
 
 function formatDate(value: string): string {
     return new Date(value).toLocaleDateString('id-ID', {
@@ -87,17 +110,31 @@ function formatDate(value: string): string {
 }
 
 export default function EmployeesIndex() {
-    const { employees, departments, filters } = usePage()
-        .props as unknown as PageProps;
+    const {
+        employees,
+        departments,
+        roles: allRoles,
+        filters,
+    } = usePage().props as unknown as PageProps;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [department, setDepartment] = useState(filters.department ?? 'all');
     const [prevFilters, setPrevFilters] = useState(filters);
     const [syncOpen, setSyncOpen] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [assignTarget, setAssignTarget] = useState<Employee | null>(null);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const isProcessing = useIsProcessing();
+
+    const {
+        data: roleForm,
+        setData: setRoleForm,
+        post: assignPost,
+        processing: assignProcessing,
+        reset: resetRoleForm,
+        errors: assignErrors,
+    } = useForm<{ roles: string[] }>({ roles: [] });
 
     if (
         filters.search !== prevFilters.search ||
@@ -195,6 +232,39 @@ export default function EmployeesIndex() {
         );
     };
 
+    const openAssign = (employee: Employee) => {
+        setAssignTarget(employee);
+        setRoleForm(
+            'roles',
+            employee.roles.map((role) => role.name),
+        );
+    };
+
+    const closeAssign = () => {
+        setAssignTarget(null);
+        resetRoleForm();
+    };
+
+    const handleAssign = () => {
+        if (!assignTarget) {
+            return;
+        }
+
+        assignPost(updateRoles(assignTarget.id_employee).url, {
+            preserveScroll: true,
+            onSuccess: () => closeAssign(),
+        });
+    };
+
+    const toggleRole = (roleName: string, checked: boolean) => {
+        setRoleForm(
+            'roles',
+            checked
+                ? [...roleForm.roles, roleName]
+                : roleForm.roles.filter((name) => name !== roleName),
+        );
+    };
+
     const goToPage = (url: string | null) => {
         if (url) {
             router.get(url, {}, { preserveState: true, replace: true });
@@ -230,10 +300,10 @@ export default function EmployeesIndex() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    Anggota
+                                    Karyawan
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Seluruh anggota organisasi Anda,
+                                    Seluruh karyawan organisasi Anda,
                                     disinkronkan dari Portal Optigate.
                                 </p>
                             </div>
@@ -312,7 +382,7 @@ export default function EmployeesIndex() {
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
                         <h2 className="text-sm font-semibold tracking-wide text-foreground">
-                            Semua Anggota
+                            Semua Karyawan
                         </h2>
                         <div className="flex items-center gap-3">
                             {(filters.search ||
@@ -348,13 +418,13 @@ export default function EmployeesIndex() {
                                     {search.trim() ||
                                     (department && department !== 'all')
                                         ? 'Tidak ada hasil pencarian'
-                                        : 'Belum ada anggota'}
+                                        : 'Belum ada karyawan'}
                                 </p>
                                 <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
                                     {search.trim() ||
                                     (department && department !== 'all')
-                                        ? 'Tidak ditemukan anggota dengan filter tersebut. Coba kata kunci lain.'
-                                        : 'Sinkronkan data dari Portal Optigate untuk memuat anggota organisasi Anda.'}
+                                        ? 'Tidak ditemukan karyawan dengan filter tersebut. Coba kata kunci lain.'
+                                        : 'Sinkronkan data dari Portal Optigate untuk memuat karyawan organisasi Anda.'}
                                 </p>
                             </div>
                             {search.trim() ||
@@ -382,12 +452,14 @@ export default function EmployeesIndex() {
                     ) : (
                         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                             {employees.data.map((employee) => (
-                                <Link
+                                <div
                                     key={employee.id_employee}
-                                    href={show(employee).url}
-                                    className="group block"
+                                    className="glass-card ease-premium group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]"
                                 >
-                                    <div className="glass-card ease-premium relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]">
+                                    <Link
+                                        href={show(employee).url}
+                                        className="flex flex-1 flex-col"
+                                    >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex min-w-0 items-center gap-3.5">
                                                 {employee.photo_url ? (
@@ -459,8 +531,50 @@ export default function EmployeesIndex() {
                                                 )}
                                             </p>
                                         </div>
+                                    </Link>
+
+                                    <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+                                        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                                            {employee.roles.length > 0 ? (
+                                                employee.roles.map(
+                                                    (role, index) => (
+                                                        <span
+                                                            key={role.id}
+                                                            className={cn(
+                                                                'inline-flex max-w-28 shrink-0 items-center gap-1 truncate rounded-md px-2 py-1 text-[10px] font-semibold ring-1',
+                                                                roleAccent(
+                                                                    index,
+                                                                ),
+                                                            )}
+                                                        >
+                                                            <ShieldCheck
+                                                                className="size-3 shrink-0"
+                                                                strokeWidth={2}
+                                                            />
+                                                            {role.name}
+                                                        </span>
+                                                    ),
+                                                )
+                                            ) : (
+                                                <span className="truncate text-xs text-muted-foreground">
+                                                    Belum ada role
+                                                </span>
+                                            )}
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => openAssign(employee)}
+                                            className="h-7 shrink-0 gap-1 rounded-lg px-2.5 text-[11px] font-medium"
+                                        >
+                                            <ShieldCheck
+                                                className="size-3.5"
+                                                strokeWidth={2}
+                                            />
+                                            Assign Role
+                                        </Button>
                                     </div>
-                                </Link>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -528,9 +642,9 @@ export default function EmployeesIndex() {
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Sinkronisasi Anggota</DialogTitle>
+                        <DialogTitle>Sinkronisasi Karyawan</DialogTitle>
                         <DialogDescription>
-                            Data anggota akan diperbarui dari Portal Optigate.
+                            Data karyawan akan diperbarui dari Portal Optigate.
                             Proses ini dapat mengubah data yang ada.
                         </DialogDescription>
                     </DialogHeader>
@@ -553,6 +667,97 @@ export default function EmployeesIndex() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <Dialog
+                open={!!assignTarget}
+                onOpenChange={(open) => !open && closeAssign()}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Assign Role</DialogTitle>
+                        <DialogDescription>
+                            Tetapkan role untuk{' '}
+                            <span className="font-semibold text-foreground">
+                                {assignTarget?.nama_employee}
+                            </span>
+                            . Role menentukan hak akses ke modul dan fitur
+                            aplikasi.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {assignErrors.roles && (
+                        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                            {assignErrors.roles}
+                        </p>
+                    )}
+
+                    <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto pr-1">
+                        {allRoles.map((role) => {
+                            const checked = roleForm.roles.includes(role.name);
+
+                            return (
+                                <label
+                                    key={role.id}
+                                    className={cn(
+                                        'flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3 transition-all duration-150',
+                                        checked
+                                            ? 'border-primary/40 bg-primary/5 shadow-sm'
+                                            : 'border-border/70 bg-card/40 hover:border-border hover:bg-card/70',
+                                    )}
+                                >
+                                    <Checkbox
+                                        checked={checked}
+                                        onCheckedChange={(value) =>
+                                            toggleRole(
+                                                role.name,
+                                                value === true,
+                                            )
+                                        }
+                                    />
+                                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                                        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                            <ShieldCheck
+                                                className="size-4"
+                                                strokeWidth={2}
+                                            />
+                                        </span>
+                                        <span className="truncate text-sm font-medium text-foreground">
+                                            {role.name}
+                                        </span>
+                                    </div>
+                                </label>
+                            );
+                        })}
+                        {allRoles.length === 0 && (
+                            <p className="py-8 text-center text-sm text-muted-foreground">
+                                Belum ada role. Buat role terlebih dahulu di
+                                menu Role.
+                            </p>
+                        )}
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={closeAssign}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleAssign}
+                            disabled={assignProcessing}
+                            className="min-w-24"
+                        >
+                            {assignProcessing && (
+                                <Spinner className="mr-2 size-4" />
+                            )}
+                            Simpan
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -560,7 +765,7 @@ export default function EmployeesIndex() {
 EmployeesIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Anggota',
+            title: 'Karyawan',
             href: indexRoute().url,
         },
     ],

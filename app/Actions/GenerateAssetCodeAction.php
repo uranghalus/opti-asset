@@ -7,48 +7,40 @@ use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
-use Illuminate\Support\Str;
 
 class GenerateAssetCodeAction
 {
     /**
-     * Build the asset code from the classification chain: golongan.kategori.cluster.subcluster.urutan.
+     * Build the asset code from the deepest selected classification level.
      *
-     * Each classification code may already carry its parent path (e.g. "01.01.01"),
-     * so only the last segment of each level is used. The trailing sequence is the
-     * next number of assets already registered in the sub cluster.
+     * The base is the selected level's own code (which already carries the
+     * parent path, e.g. "01.01.01"), and a per-level sequence is appended so
+     * every asset under the same selection stays unique:
      *
-     * @return string|null null when any required level is missing a code
+     *   golongan only  -> 01.001
+     *   up to kategori -> 01.01.001
+     *   full chain     -> 01.01.01.01.001
+     *
+     * @return string|null null when no classification level is selected
      */
     public function execute(
-        ?string $groupCode,
-        ?string $categoryCode,
-        ?string $clusterCode,
-        ?string $subClusterCode,
-        ?string $subClusterId = null,
+        ?string $code,
+        ?string $levelField,
+        ?string $levelId,
         ?string $exceptAssetId = null,
         int $padding = 3,
     ): ?string {
-        $segments = array_map(
-            static fn (?string $code): ?string => $code !== null && $code !== ''
-                ? Str::afterLast($code, '.')
-                : null,
-            [$groupCode, $categoryCode, $clusterCode, $subClusterCode],
-        );
-
-        $segments = array_filter($segments, static fn (?string $code): bool => $code !== null && $code !== '');
-
-        if (count($segments) !== 4) {
+        if ($code === null || $code === '' || $levelField === null || $levelId === null) {
             return null;
         }
 
-        $sequence = $this->nextSequence($subClusterId, $exceptAssetId);
+        $sequence = $this->nextSequence($levelField, $levelId, $exceptAssetId);
 
-        return implode('.', [...$segments, str_pad((string) $sequence, $padding, '0', STR_PAD_LEFT)]);
+        return $code.'.'.str_pad((string) $sequence, $padding, '0', STR_PAD_LEFT);
     }
 
     /**
-     * Resolve the chain from the classification ids and build the asset code.
+     * Resolve the deepest selected classification level and build the code.
      *
      * @return array{code: string|null, asset_group_id: string|null, asset_category_id: string|null, asset_cluster_id: string|null, asset_sub_cluster_id: string|null}
      */
@@ -59,30 +51,10 @@ class GenerateAssetCodeAction
         ?string $subClusterId,
         ?string $exceptAssetId = null,
     ): array {
-        if (! $groupId || ! $categoryId || ! $clusterId || ! $subClusterId) {
-            return [
-                'code' => null,
-                'asset_group_id' => $groupId,
-                'asset_category_id' => $categoryId,
-                'asset_cluster_id' => $clusterId,
-                'asset_sub_cluster_id' => $subClusterId,
-            ];
-        }
-
-        $group = AssetGroup::find($groupId);
-        $category = AssetCategory::find($categoryId);
-        $cluster = AssetCluster::find($clusterId);
-        $subCluster = AssetSubCluster::find($subClusterId);
+        [$model, $field, $id] = $this->resolveDeepest($groupId, $categoryId, $clusterId, $subClusterId);
 
         return [
-            'code' => $this->execute(
-                $group?->code,
-                $category?->code,
-                $cluster?->code,
-                $subCluster?->code,
-                $subClusterId,
-                $exceptAssetId,
-            ),
+            'code' => $this->execute($model?->code, $field, $id, $exceptAssetId),
             'asset_group_id' => $groupId,
             'asset_category_id' => $categoryId,
             'asset_cluster_id' => $clusterId,
@@ -90,17 +62,57 @@ class GenerateAssetCodeAction
         ];
     }
 
-    private function nextSequence(?string $subClusterId, ?string $exceptAssetId): int
-    {
-        if (! $subClusterId) {
-            return 1;
+    /**
+     * @return array{AssetGroup|AssetCategory|AssetCluster|AssetSubCluster|null, string|null, string|null}
+     */
+    private function resolveDeepest(
+        ?string $groupId,
+        ?string $categoryId,
+        ?string $clusterId,
+        ?string $subClusterId,
+    ): array {
+        if ($subClusterId !== null && $subClusterId !== '') {
+            return [AssetSubCluster::find($subClusterId), 'asset_sub_cluster_id', $subClusterId];
         }
 
-        $count = Asset::query()
-            ->where('asset_sub_cluster_id', $subClusterId)
-            ->when($exceptAssetId, fn ($query, string $id) => $query->whereKeyNot($id))
-            ->count();
+        if ($clusterId !== null && $clusterId !== '') {
+            return [AssetCluster::find($clusterId), 'asset_cluster_id', $clusterId];
+        }
 
-        return $count + 1;
+        if ($categoryId !== null && $categoryId !== '') {
+            return [AssetCategory::find($categoryId), 'asset_category_id', $categoryId];
+        }
+
+        if ($groupId !== null && $groupId !== '') {
+            return [AssetGroup::find($groupId), 'asset_group_id', $groupId];
+        }
+
+        return [null, null, null];
+    }
+
+    private function nextSequence(string $levelField, string $levelId, ?string $exceptAssetId): int
+    {
+        $query = Asset::query()->where($levelField, $levelId);
+
+        foreach ($this->deeperFields($levelField) as $field) {
+            $query->whereNull($field);
+        }
+
+        if ($exceptAssetId !== null) {
+            $query->whereKeyNot($exceptAssetId);
+        }
+
+        return $query->count() + 1;
+    }
+
+    /** @return array<int, string> */
+    private function deeperFields(string $levelField): array
+    {
+        return match ($levelField) {
+            'asset_group_id' => ['asset_category_id', 'asset_cluster_id', 'asset_sub_cluster_id'],
+            'asset_category_id' => ['asset_cluster_id', 'asset_sub_cluster_id'],
+            'asset_cluster_id' => ['asset_sub_cluster_id'],
+            default => [],
+        };
     }
 }

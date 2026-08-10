@@ -5,6 +5,7 @@ import {
     FolderTree,
     Hash,
     Inbox,
+    Layers,
     Pencil,
     Plus,
     Search,
@@ -15,6 +16,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -37,6 +39,7 @@ import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
 import {
     destroy,
+    destroyBulk,
     index as indexRoute,
     store,
     update,
@@ -44,7 +47,17 @@ import {
 
 type Group = {
     id: string;
+    code: string | null;
     name: string;
+};
+
+type ClassificationOption = {
+    id: string;
+    code: string | null;
+    name: string;
+    asset_group_id?: string;
+    asset_category_id?: string;
+    asset_cluster_id?: string;
 };
 
 type Category = {
@@ -82,7 +95,10 @@ type Filters = {
 
 type PageProps = {
     categories: PaginatedData<Category>;
-    groups: Group[];
+    groups: ClassificationOption[];
+    optionCategories: ClassificationOption[];
+    optionClusters: ClassificationOption[];
+    optionSubClusters: ClassificationOption[];
     filters: Filters;
 };
 
@@ -94,7 +110,7 @@ const SORT_OPTIONS = [
     { value: '-code', label: 'Kode (Z–A)' },
 ];
 
-const ALL_GROUPS = '';
+const ALL_GROUPS = 'all';
 
 const ACCENTS = [
     {
@@ -143,21 +159,118 @@ const EMPTY_FORM: CategoryForm = {
 };
 
 export default function CategoriesIndex() {
-    const { categories, groups, filters } = usePage()
-        .props as unknown as PageProps;
+    const {
+        categories,
+        groups,
+        optionCategories,
+        optionClusters,
+        optionSubClusters,
+        filters,
+    } = usePage().props as unknown as PageProps;
 
-    const [search, setSearch] = useState(filters.search);
-    const [sort, setSort] = useState(filters.sort);
-    const [group, setGroup] = useState(filters.group);
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [sort, setSort] = useState(filters.sort ?? '');
+    const [group, setGroup] = useState(filters.group || ALL_GROUPS);
     const [prevFilters, setPrevFilters] = useState(filters);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Category | null>(null);
     const [deleting, setDeleting] = useState<Category | null>(null);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [selGroup, setSelGroup] = useState('');
+    const [selCategory, setSelCategory] = useState('');
+    const [selCluster, setSelCluster] = useState('');
+    const [selSubCluster, setSelSubCluster] = useState('');
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const isProcessing = useIsProcessing();
 
+    const pageIds = categories.data.map((category) => category.id);
+    const allSelected =
+        pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
+    const toggleSelect = (id: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        setSelected(allSelected ? new Set() : new Set(pageIds));
+    };
+
     const form = useForm<CategoryForm>(EMPTY_FORM);
+
+    const cascadeCategories = (optionCategories ?? []).filter(
+        (item) => String(item.asset_group_id) === selGroup,
+    );
+    const cascadeClusters = (optionClusters ?? []).filter(
+        (item) => String(item.asset_category_id) === selCategory,
+    );
+    const cascadeSubClusters = (optionSubClusters ?? []).filter(
+        (item) => String(item.asset_cluster_id) === selCluster,
+    );
+
+    const applySelection = (
+        groupId: string,
+        category?: ClassificationOption,
+        cluster?: ClassificationOption,
+        subCluster?: ClassificationOption,
+    ) => {
+        const node = subCluster ?? cluster ?? category;
+        const selectedGroup = groups.find((item) => item.id === groupId);
+
+        form.setData('asset_group_id', groupId);
+        form.setData('code', node?.code ?? selectedGroup?.code ?? '');
+        form.setData('name', node?.name ?? selectedGroup?.name ?? '');
+    };
+
+    const handleSelectGroup = (value: string) => {
+        setSelGroup(value);
+        setSelCategory('');
+        setSelCluster('');
+        setSelSubCluster('');
+        applySelection(value);
+    };
+
+    const handleSelectCategory = (value: string) => {
+        setSelCategory(value);
+        setSelCluster('');
+        setSelSubCluster('');
+        applySelection(
+            selGroup,
+            optionCategories.find((item) => item.id === value),
+        );
+    };
+
+    const handleSelectCluster = (value: string) => {
+        setSelCluster(value);
+        setSelSubCluster('');
+        applySelection(
+            selGroup,
+            optionCategories.find((item) => item.id === selCategory),
+            optionClusters.find((item) => item.id === value),
+        );
+    };
+
+    const handleSelectSubCluster = (value: string) => {
+        setSelSubCluster(value);
+        applySelection(
+            selGroup,
+            optionCategories.find((item) => item.id === selCategory),
+            optionClusters.find((item) => item.id === selCluster),
+            optionSubClusters.find((item) => item.id === value),
+        );
+    };
 
     if (
         filters.search !== prevFilters.search ||
@@ -165,9 +278,9 @@ export default function CategoriesIndex() {
         filters.group !== prevFilters.group
     ) {
         setPrevFilters(filters);
-        setSearch(filters.search);
-        setSort(filters.sort);
-        setGroup(filters.group);
+        setSearch(filters.search ?? '');
+        setSort(filters.sort ?? '');
+        setGroup(filters.group || ALL_GROUPS);
     }
 
     useEffect(() => {
@@ -199,29 +312,39 @@ export default function CategoriesIndex() {
     }, []);
 
     const reload = (overrides: Record<string, string> = {}) => {
+        const currentSearch =
+            overrides.search !== undefined ? overrides.search : search;
+        const currentSort =
+            overrides.sort !== undefined ? overrides.sort : sort;
+        const currentGroup =
+            overrides.group !== undefined ? overrides.group : group;
+
         const params: Record<string, string> = {};
 
-        if (search.trim()) {
-            params.search = search.trim();
+        if (currentSearch.trim()) {
+            params.search = currentSearch.trim();
         }
 
-        if (sort) {
-            params.sort = sort;
+        if (currentSort) {
+            params.sort = currentSort;
         }
 
-        if (group && group !== ALL_GROUPS) {
-            params.group = group;
+        if (currentGroup && currentGroup !== ALL_GROUPS) {
+            params.group = currentGroup;
         }
 
-        router.get(
-            indexRoute().url,
-            { ...params, ...overrides },
-            {
-                preserveState: true,
-                replace: true,
-                only: ['categories', 'groups', 'filters'],
-            },
-        );
+        router.get(indexRoute().url, params, {
+            preserveState: true,
+            replace: true,
+            only: [
+                'categories',
+                'groups',
+                'filters',
+                'optionCategories',
+                'optionClusters',
+                'optionSubClusters',
+            ],
+        });
     };
 
     const handleSearchChange = (value: string) => {
@@ -249,19 +372,27 @@ export default function CategoriesIndex() {
     const clearFilters = () => {
         setSearch('');
         setGroup(ALL_GROUPS);
-        reload({ search: '', group: ALL_GROUPS });
+        setSort('');
+        reload({ search: '', group: ALL_GROUPS, sort: '' });
         searchInputRef.current?.focus();
     };
 
     const openCreate = () => {
         setEditing(null);
         form.reset();
-        form.setData('asset_group_id', groups[0]?.id ?? '');
+        setSelGroup('');
+        setSelCategory('');
+        setSelCluster('');
+        setSelSubCluster('');
         setFormOpen(true);
     };
 
     const openEdit = (category: Category) => {
         setEditing(category);
+        setSelGroup('');
+        setSelCategory('');
+        setSelCluster('');
+        setSelSubCluster('');
         form.setData({
             asset_group_id: category.asset_group_id,
             code: category.code ?? '',
@@ -273,6 +404,12 @@ export default function CategoriesIndex() {
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (!editing && !form.data.asset_group_id) {
+            toast.error('Pilih golongan dari klasifikasi terlebih dahulu.');
+
+            return;
+        }
 
         const options = {
             only: ['categories', 'groups', 'filters'],
@@ -312,6 +449,31 @@ export default function CategoriesIndex() {
                 toast.success('Kategori berhasil dihapus.');
             },
             onError: () => {
+                toast.error('Gagal menghapus kategori.');
+            },
+        });
+    };
+
+    const handleBulkDelete = () => {
+        if (selected.size === 0) {
+            return;
+        }
+
+        setBulkDeleting(true);
+
+        router.delete(destroyBulk().url, {
+            data: { ids: Array.from(selected) },
+            only: ['categories', 'groups', 'filters'],
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setBulkDeleting(false);
+                setBulkDeleteOpen(false);
+                setSelected(new Set());
+                toast.success('Kategori terpilih berhasil dihapus.');
+            },
+            onError: () => {
+                setBulkDeleting(false);
                 toast.error('Gagal menghapus kategori.');
             },
         });
@@ -426,6 +588,7 @@ export default function CategoriesIndex() {
                                             key={item.id}
                                             value={item.id}
                                         >
+                                            {item.code ? `${item.code} — ` : ''}
                                             {item.name}
                                         </SelectItem>
                                     ))}
@@ -458,9 +621,18 @@ export default function CategoriesIndex() {
                     </div>
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
-                        <h2 className="text-sm font-semibold tracking-wide text-foreground">
-                            Semua Kategori
-                        </h2>
+                        <div className="flex items-center gap-2.5">
+                            <Checkbox
+                                id="select-all-categories"
+                                aria-label="Pilih semua kategori"
+                                checked={allSelected}
+                                onCheckedChange={toggleSelectAll}
+                                disabled={categories.data.length === 0}
+                            />
+                            <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                                Semua Kategori
+                            </h2>
+                        </div>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
                             <Tags className="size-3.5" strokeWidth={1.75} />
                             {categories.total}
@@ -532,30 +704,47 @@ export default function CategoriesIndex() {
                                             )}
                                         />
                                         <div className="relative flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 items-center gap-3.5">
-                                                <div
-                                                    className={cn(
-                                                        'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
-                                                        accent.tile,
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                    aria-label={`Pilih ${category.name}`}
+                                                    checked={selected.has(
+                                                        category.id,
                                                     )}
-                                                >
-                                                    <Tags
-                                                        className="size-5"
-                                                        strokeWidth={1.75}
-                                                    />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-sm font-semibold text-foreground">
-                                                        {category.name}
-                                                    </h3>
-                                                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-                                                        <FolderTree
-                                                            className="size-3"
+                                                    onCheckedChange={() =>
+                                                        toggleSelect(
+                                                            category.id,
+                                                        )
+                                                    }
+                                                    className="mt-1 shrink-0"
+                                                />
+                                                <div className="flex min-w-0 items-center gap-3.5">
+                                                    <div
+                                                        className={cn(
+                                                            'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
+                                                            accent.tile,
+                                                        )}
+                                                    >
+                                                        <Tags
+                                                            className="size-5"
                                                             strokeWidth={1.75}
                                                         />
-                                                        {category.asset_group
-                                                            ?.name ?? '—'}
-                                                    </p>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="truncate text-sm font-semibold text-foreground">
+                                                            {category.name}
+                                                        </h3>
+                                                        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                                                            <FolderTree
+                                                                className="size-3"
+                                                                strokeWidth={
+                                                                    1.75
+                                                                }
+                                                            />
+                                                            {category
+                                                                .asset_group
+                                                                ?.name ?? '—'}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity duration-200 group-hover:opacity-100">
@@ -624,6 +813,40 @@ export default function CategoriesIndex() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {selected.size > 0 && (
+                        <div className="card-enter sticky bottom-4 z-20 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-background/85 px-4 py-3 shadow-xl backdrop-blur-xl delay-150">
+                            <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                    {selected.size}
+                                </span>
+                                <span className="truncate">
+                                    kategori dipilih
+                                </span>
+                            </p>
+                            <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-9 rounded-xl"
+                                    onClick={() => setSelected(new Set())}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-9 gap-2 rounded-xl"
+                                    onClick={() => setBulkDeleteOpen(true)}
+                                >
+                                    <Trash2 className="size-4" />
+                                    Hapus Terpilih
+                                </Button>
+                            </div>
                         </div>
                     )}
 
@@ -704,54 +927,242 @@ export default function CategoriesIndex() {
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="category-group">Golongan</Label>
-                            <Select
-                                value={form.data.asset_group_id}
-                                onValueChange={(value) =>
-                                    form.setData('asset_group_id', value)
-                                }
-                            >
-                                <SelectTrigger
-                                    id="category-group"
-                                    className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm"
-                                >
-                                    <SelectValue placeholder="Pilih golongan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {groups.map((group) => (
-                                        <SelectItem
-                                            key={group.id}
-                                            value={group.id}
+                        {!editing ? (
+                            <>
+                                <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3">
+                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15 text-primary">
+                                        <Layers
+                                            className="size-4"
+                                            strokeWidth={1.75}
+                                        />
+                                    </span>
+                                    <div>
+                                        <p className="text-xs font-semibold text-foreground">
+                                            Pilih dari Klasifikasi Aset
+                                        </p>
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                            Kode & nama mengikuti level terdalam
+                                            yang dipilih.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="grid gap-2">
+                                        <Label className="flex items-center gap-1">
+                                            Golongan
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Select
+                                            value={selGroup}
+                                            onValueChange={handleSelectGroup}
                                         >
-                                            {group.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {form.errors.asset_group_id && (
-                                <p className="text-xs text-destructive">
-                                    {form.errors.asset_group_id}
-                                </p>
-                            )}
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="category-code">Kode</Label>
-                            <Input
-                                id="category-code"
-                                value={form.data.code}
-                                onChange={(event) =>
-                                    form.setData('code', event.target.value)
-                                }
-                                placeholder="Contoh: 01.02"
-                                className="font-mono"
-                            />
-                            {form.errors.code && (
-                                <p className="text-xs text-destructive">
-                                    {form.errors.code}
-                                </p>
-                            )}
-                        </div>
+                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                                <SelectValue placeholder="Pilih Golongan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {groups.map((item) => (
+                                                    <SelectItem
+                                                        key={item.id}
+                                                        value={item.id}
+                                                    >
+                                                        {item.code
+                                                            ? `${item.code} — `
+                                                            : ''}
+                                                        {item.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {form.errors.asset_group_id && (
+                                            <p className="text-xs text-destructive">
+                                                {form.errors.asset_group_id}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Kategori</Label>
+                                        <Select
+                                            value={selCategory}
+                                            onValueChange={handleSelectCategory}
+                                            disabled={!selGroup}
+                                        >
+                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                                <SelectValue
+                                                    placeholder={
+                                                        selGroup
+                                                            ? 'Pilih Kategori'
+                                                            : 'Pilih golongan dulu'
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {cascadeCategories.map(
+                                                    (item) => (
+                                                        <SelectItem
+                                                            key={item.id}
+                                                            value={item.id}
+                                                        >
+                                                            {item.code
+                                                                ? `${item.code} — `
+                                                                : ''}
+                                                            {item.name}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Cluster</Label>
+                                        <Select
+                                            value={selCluster}
+                                            onValueChange={handleSelectCluster}
+                                            disabled={!selCategory}
+                                        >
+                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                                <SelectValue
+                                                    placeholder={
+                                                        selCategory
+                                                            ? 'Pilih Cluster'
+                                                            : 'Pilih kategori dulu'
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {cascadeClusters.map((item) => (
+                                                    <SelectItem
+                                                        key={item.id}
+                                                        value={item.id}
+                                                    >
+                                                        {item.code
+                                                            ? `${item.code} — `
+                                                            : ''}
+                                                        {item.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Sub Cluster</Label>
+                                        <Select
+                                            value={selSubCluster}
+                                            onValueChange={
+                                                handleSelectSubCluster
+                                            }
+                                            disabled={!selCluster}
+                                        >
+                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                                <SelectValue
+                                                    placeholder={
+                                                        selCluster
+                                                            ? 'Pilih Sub Cluster'
+                                                            : 'Pilih cluster dulu'
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {cascadeSubClusters.map(
+                                                    (item) => (
+                                                        <SelectItem
+                                                            key={item.id}
+                                                            value={item.id}
+                                                        >
+                                                            {item.code
+                                                                ? `${item.code} — `
+                                                                : ''}
+                                                            {item.name}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5">
+                                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/15 text-primary">
+                                        <Hash
+                                            className="size-3.5"
+                                            strokeWidth={2}
+                                        />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                            Kode Kategori Otomatis
+                                        </p>
+                                        <p className="truncate font-mono text-sm font-bold text-primary tabular-nums">
+                                            {form.data.code || '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="category-group">
+                                        Golongan
+                                    </Label>
+                                    <Select
+                                        value={form.data.asset_group_id}
+                                        onValueChange={(value) =>
+                                            form.setData(
+                                                'asset_group_id',
+                                                value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            id="category-group"
+                                            className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm"
+                                        >
+                                            <SelectValue placeholder="Pilih golongan" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {groups.map((group) => (
+                                                <SelectItem
+                                                    key={group.id}
+                                                    value={group.id}
+                                                >
+                                                    {group.code
+                                                        ? `${group.code} — `
+                                                        : ''}
+                                                    {group.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {form.errors.asset_group_id && (
+                                        <p className="text-xs text-destructive">
+                                            {form.errors.asset_group_id}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="category-code">Kode</Label>
+                                    <Input
+                                        id="category-code"
+                                        value={form.data.code}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'code',
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="Contoh: 01.02"
+                                        className="font-mono"
+                                    />
+                                    {form.errors.code && (
+                                        <p className="text-xs text-destructive">
+                                            {form.errors.code}
+                                        </p>
+                                    )}
+                                </div>
+                            </>
+                        )}
                         <div className="grid gap-2">
                             <Label htmlFor="category-name">Nama Kategori</Label>
                             <Input
@@ -760,8 +1171,12 @@ export default function CategoriesIndex() {
                                 onChange={(event) =>
                                     form.setData('name', event.target.value)
                                 }
-                                placeholder="Contoh: Komputer & Laptop"
-                                autoFocus
+                                placeholder={
+                                    editing
+                                        ? 'Contoh: Komputer & Laptop'
+                                        : 'Terisi otomatis dari klasifikasi'
+                                }
+                                autoFocus={Boolean(editing)}
                                 required
                             />
                             {form.errors.name && (
@@ -842,6 +1257,43 @@ export default function CategoriesIndex() {
                         >
                             <Trash2 className="mr-2 size-4" />
                             Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog
+                open={bulkDeleteOpen}
+                onOpenChange={(open) => !open && setBulkDeleteOpen(false)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Kategori</DialogTitle>
+                        <DialogDescription>
+                            Yakin ingin menghapus {selected.size} kategori
+                            terpilih? Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                            disabled={bulkDeleting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleBulkDelete}
+                            disabled={bulkDeleting}
+                        >
+                            {bulkDeleting ? (
+                                <Spinner className="mr-2 size-4" />
+                            ) : (
+                                <Trash2 className="mr-2 size-4" />
+                            )}
+                            Hapus {selected.size} Kategori
                         </Button>
                     </DialogFooter>
                 </DialogContent>

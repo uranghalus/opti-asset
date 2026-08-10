@@ -13,6 +13,7 @@ type EditProps = {
     items: { id: string; name: string; code: string }[];
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
+    employees: { id_employee: string; nama_employee: string }[];
 };
 
 export default function AssetEdit() {
@@ -61,6 +62,7 @@ export default function AssetEdit() {
                             items={props.items}
                             locations={props.locations}
                             departments={props.departments}
+                            employees={props.employees}
                         />
                     </div>
                 </div>

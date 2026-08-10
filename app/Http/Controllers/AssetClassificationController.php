@@ -395,7 +395,9 @@ class AssetClassificationController extends Controller
         }
     }
 
-    /** @param array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null} $row */
+    /**
+     * @param  array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}  $row
+     */
     private function importRow(array $row): void
     {
         $level = $row['level'];
@@ -404,11 +406,11 @@ class AssetClassificationController extends Controller
             'description' => $row['description'] ?? null,
         ];
 
-        $parentCode = $row['parent_code'] ?? null;
+        $segments = $this->codeSegments($row);
 
         if ($level === 'group') {
             AssetGroup::updateOrCreate(
-                ['code' => $row['code'] ?? null],
+                ['code' => $segments[0] ?? $row['code'] ?? null],
                 $data,
             );
 
@@ -416,11 +418,13 @@ class AssetClassificationController extends Controller
         }
 
         if ($level === 'category') {
-            $parent = AssetGroup::where('code', $parentCode)->first();
+            $parent = $segments[0] !== null
+                ? AssetGroup::query()->where('code', $segments[0])->first()
+                : null;
 
             if ($parent !== null) {
                 AssetCategory::updateOrCreate(
-                    ['asset_group_id' => $parent->id, 'code' => $row['code'] ?? null],
+                    ['asset_group_id' => $parent->id, 'code' => $segments[1] ?? null],
                     $data,
                 );
             }
@@ -429,11 +433,11 @@ class AssetClassificationController extends Controller
         }
 
         if ($level === 'cluster') {
-            $parent = AssetCategory::where('code', $parentCode)->first();
+            $parent = $this->resolveParent(AssetCategory::class, 'asset_group_id', $segments);
 
-            if ($parent !== null) {
+            if ($parent instanceof AssetCategory) {
                 AssetCluster::updateOrCreate(
-                    ['asset_category_id' => $parent->id, 'code' => $row['code'] ?? null],
+                    ['asset_category_id' => $parent->id, 'code' => $segments[2] ?? null],
                     $data,
                 );
             }
@@ -441,13 +445,88 @@ class AssetClassificationController extends Controller
             return;
         }
 
-        $parent = AssetCluster::where('code', $parentCode)->first();
+        $parent = $this->resolveParent(AssetCluster::class, 'asset_category_id', $segments);
 
-        if ($parent !== null) {
+        if ($parent instanceof AssetCluster) {
             AssetSubCluster::updateOrCreate(
-                ['asset_cluster_id' => $parent->id, 'code' => $row['code'] ?? null],
+                ['asset_cluster_id' => $parent->id, 'code' => $segments[3] ?? null],
                 $data,
             );
         }
+    }
+
+    /**
+     * Build the full hierarchical code segments from a row. Prefers the
+     * dotted `code` column (parent.child) and falls back to `parent_code`
+     * when the row only carries a short code.
+     *
+     * @param  array{code?: string|null, parent_code?: string|null}  $row
+     * @return array<int, string|null>
+     */
+    private function codeSegments(array $row): array
+    {
+        $code = $row['code'] ?? null;
+        $parentCode = $row['parent_code'] ?? null;
+
+        $split = fn (?string $value): array => $value === null || $value === ''
+            ? []
+            : array_values(array_filter(explode('.', $value), static fn (string $segment): bool => $segment !== ''));
+
+        $segments = $split($code);
+        $parentSegments = $split($parentCode);
+
+        if (count($segments) > 1) {
+            return array_pad($segments, 4, null);
+        }
+
+        $ownCode = $segments[0] ?? null;
+
+        return array_pad([...$parentSegments, $ownCode], 4, null);
+    }
+
+    /**
+     * Resolve a parent model by walking the segment chain scoped to each
+     * ancestor, so duplicated short codes never attach to the wrong parent.
+     *
+     * @param  class-string<AssetCategory|AssetCluster>  $model
+     * @param  array<int, string|null>  $segments
+     */
+    private function resolveParent(string $model, string $parentField, array $segments): AssetCategory|AssetCluster|null
+    {
+        $codeIndex = $model === AssetCategory::class ? 1 : 2;
+        $groupCode = $segments[0] ?? null;
+        $categoryCode = $segments[1] ?? null;
+        $ownCode = $segments[$codeIndex] ?? null;
+
+        if ($groupCode === null || $ownCode === null) {
+            return null;
+        }
+
+        $group = AssetGroup::query()->where('code', $groupCode)->first();
+
+        if ($group === null) {
+            return null;
+        }
+
+        $query = $model::query()->where($parentField, $group->id);
+
+        if ($model === AssetCluster::class) {
+            if ($categoryCode === null) {
+                return null;
+            }
+
+            $category = AssetCategory::query()
+                ->where('asset_group_id', $group->id)
+                ->where('code', $categoryCode)
+                ->first();
+
+            if ($category === null) {
+                return null;
+            }
+
+            $query = AssetCluster::query()->where('asset_category_id', $category->id);
+        }
+
+        return $query->where('code', $ownCode)->first();
     }
 }

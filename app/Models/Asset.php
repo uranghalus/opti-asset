@@ -30,10 +30,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $serial_number
  * @property string|null $no_spb
  * @property string|null $document_number
- * @property string|null $pic
+ * @property array<int, string>|null $pic
  * @property string|null $notes
- * @property string|null $photo_url
- * @property string|null $document_url
+ * @property array<int, string>|null $photo_url
+ * @property array<int, string>|null $document_url
  * @property string|null $kode_asset
  * @property Carbon|null $garansi_exp
  * @property string $status
@@ -91,6 +91,9 @@ class Asset extends Model
             'broken_date' => 'datetime',
             'warranty_expire' => 'datetime',
             'garansi_exp' => 'datetime',
+            'photo_url' => 'array',
+            'document_url' => 'array',
+            'pic' => 'array',
         ];
     }
 

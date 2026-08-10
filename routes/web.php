@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('categories', [AssetCategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [AssetCategoryController::class, 'store'])->name('categories.store');
+    Route::delete('categories/bulk', [AssetCategoryController::class, 'destroyBulk'])->name('categories.destroy-bulk');
     Route::patch('categories/{category}', [AssetCategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [AssetCategoryController::class, 'destroy'])->name('categories.destroy');
 
@@ -73,6 +74,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('assets/import/template', [AssetController::class, 'importTemplate'])->name('assets.import-template');
+    Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
+    Route::post('assets/upload', [AssetController::class, 'upload'])->name('assets.upload');
     Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
     Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
     Route::post('assets', [AssetController::class, 'store'])->name('assets.store');

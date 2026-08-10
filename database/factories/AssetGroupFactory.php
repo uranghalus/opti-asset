@@ -13,7 +13,7 @@ class AssetGroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => fake()->optional()->numerify('0#'),
+            'code' => fake()->unique()->numerify('0#'),
             'name' => fake()->words(2, true),
             'description' => fake()->optional()->sentence(),
         ];

@@ -399,4 +399,96 @@ class AssetClassificationTest extends TestCase
         $this->assertSame(1, AssetCluster::withoutGlobalScopes()->count());
         $this->assertSame(1, AssetSubCluster::withoutGlobalScopes()->count());
     }
+
+    public function test_import_attaches_children_to_correct_parent_when_codes_collide(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.import'), [
+                'rows' => [
+                    ['level' => 'group', 'code' => '01', 'name' => 'Golongan Tanah'],
+                    ['level' => 'group', 'code' => '02', 'name' => 'Golongan Bangunan'],
+                    ['level' => 'category', 'code' => '01.01', 'name' => 'Tanah', 'parent_code' => '01'],
+                    ['level' => 'category', 'code' => '02.01', 'name' => 'Tanah', 'parent_code' => '02'],
+                    ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+                    ['level' => 'cluster', 'code' => '02.01.01', 'name' => 'Standar', 'parent_code' => '02.01'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 100m2', 'parent_code' => '02.01.01'],
+                ],
+            ])
+            ->assertRedirect();
+
+        $groups = AssetGroup::withoutGlobalScopes()->orderBy('code')->get();
+        $this->assertCount(2, $groups);
+
+        $tanah01 = AssetCategory::withoutGlobalScopes()->where('asset_group_id', $groups[0]->id)->first();
+        $tanah02 = AssetCategory::withoutGlobalScopes()->where('asset_group_id', $groups[1]->id)->first();
+
+        $this->assertSame('01', $tanah01?->code);
+        $this->assertSame('01', $tanah02?->code);
+
+        $cluster01 = AssetCluster::withoutGlobalScopes()->where('asset_category_id', $tanah01->id)->first();
+        $sub01 = AssetSubCluster::withoutGlobalScopes()->where('asset_cluster_id', $cluster01->id)->first();
+        $this->assertSame('Kavling 60m2', $sub01?->name);
+
+        $cluster02 = AssetCluster::withoutGlobalScopes()->where('asset_category_id', $tanah02->id)->first();
+        $sub02 = AssetSubCluster::withoutGlobalScopes()->where('asset_cluster_id', $cluster02->id)->first();
+        $this->assertSame('Kavling 100m2', $sub02?->name);
+    }
+
+    public function test_import_hierarchy_format_with_short_codes_and_dotted_parent_path(): void
+    {
+        // Simulates the exact payload produced by the fixed rowsFromSheet() when
+        // parsing the 'gol asset dmb.xlsx' hierarchy format:
+        //   Col1=Golongan, Col2=Kategori, Col3=Kelompok (integer), Col4=Sub.Kelompok, Col5=Uraian
+        // Frontend builds parent_code as a full dotted path of all ancestors,
+        // e.g. sub-cluster '01' under group='03', category='03', cluster='11'
+        // gets parent_code='03.03.11'.
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.import'), [
+                'rows' => [
+                    ['level' => 'group',       'code' => '03', 'name' => 'Layanan Peralatan & Mesin', 'parent_code' => ''],
+                    ['level' => 'category',    'code' => '03', 'name' => 'Alat MEP',                  'parent_code' => '03'],
+                    ['level' => 'cluster',     'code' => '11', 'name' => 'Mechanical',                'parent_code' => '03.03'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Travelator',                'parent_code' => '03.03.11'],
+                    ['level' => 'sub-cluster', 'code' => '02', 'name' => 'Escalator',                 'parent_code' => '03.03.11'],
+                    ['level' => 'cluster',     'code' => '12', 'name' => 'Pendingin',                 'parent_code' => '03.03'],
+                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Chiller',                   'parent_code' => '03.03.12'],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, AssetGroup::withoutGlobalScopes()->count());
+        $this->assertSame(1, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(2, AssetCluster::withoutGlobalScopes()->count());
+        $this->assertSame(3, AssetSubCluster::withoutGlobalScopes()->count());
+
+        $group = AssetGroup::withoutGlobalScopes()->where('code', '03')->firstOrFail();
+        $category = AssetCategory::withoutGlobalScopes()->where('asset_group_id', $group->id)->firstOrFail();
+        $mechanical = AssetCluster::withoutGlobalScopes()
+            ->where('asset_category_id', $category->id)
+            ->where('code', '11')
+            ->firstOrFail();
+        $pendingin = AssetCluster::withoutGlobalScopes()
+            ->where('asset_category_id', $category->id)
+            ->where('code', '12')
+            ->firstOrFail();
+
+        $this->assertSame('Mechanical', $mechanical->name);
+        $this->assertSame('Pendingin', $pendingin->name);
+
+        $subClustersUnderMechanical = AssetSubCluster::withoutGlobalScopes()
+            ->where('asset_cluster_id', $mechanical->id)
+            ->orderBy('code')
+            ->pluck('name')
+            ->all();
+
+        $this->assertSame(['Travelator', 'Escalator'], $subClustersUnderMechanical);
+
+        $chiller = AssetSubCluster::withoutGlobalScopes()
+            ->where('asset_cluster_id', $pendingin->id)
+            ->where('code', '01')
+            ->first();
+
+        $this->assertSame('Chiller', $chiller?->name);
+    }
 }

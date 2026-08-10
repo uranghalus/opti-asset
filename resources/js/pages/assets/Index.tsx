@@ -2,7 +2,11 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     Boxes,
     Building2,
+    CheckCircle2,
+    Download,
+    FileSpreadsheet,
     FileText,
+    Filter,
     Inbox,
     Layers,
     MapPin,
@@ -11,8 +15,10 @@ import {
     Plus,
     Search,
     ShieldCheck,
+    SlidersHorizontal,
     Tags,
     Trash2,
+    UploadCloud,
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -27,6 +33,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -41,6 +48,8 @@ import {
     create as createRoute,
     destroy,
     edit as editRoute,
+    importMethod,
+    importTemplate,
     index as indexRoute,
 } from '@/routes/assets';
 
@@ -48,6 +57,9 @@ type Classification = {
     id: string;
     code: string | null;
     name: string;
+    asset_group_id?: string;
+    asset_category_id?: string;
+    asset_cluster_id?: string;
 };
 
 type Asset = {
@@ -60,6 +72,8 @@ type Asset = {
     condition: string | null;
     purchase_date: string | null;
     created_at: string;
+    photo_url: string[];
+    document_url: string[];
     item: { id: string; name: string; code: string } | null;
     location: { id: string; name: string } | null;
     department: { id_department: string; nama_department: string } | null;
@@ -89,11 +103,17 @@ type PaginatedData<T> = {
 type PageProps = {
     assets: PaginatedData<Asset>;
     groups: Classification[];
+    categories: Classification[];
+    clusters: Classification[];
+    subClusters: Classification[];
+    departments: { id_department: string; nama_department: string }[];
     filters: {
         search: string;
         group: string;
         category: string;
         status: string;
+        department: string;
+        condition: string;
     };
 };
 
@@ -102,6 +122,13 @@ const STATUS_OPTIONS = [
     { value: 'ACTIVE', label: 'Aktif' },
     { value: 'INACTIVE', label: 'Nonaktif' },
     { value: 'DISPOSED', label: 'Dihapus' },
+];
+
+const CONDITION_OPTIONS = [
+    { value: '', label: 'Semua Kondisi' },
+    { value: 'Baik', label: 'Baik' },
+    { value: 'Rusak Ringan', label: 'Rusak Ringan' },
+    { value: 'Rusak Berat', label: 'Rusak Berat' },
 ];
 
 const CONDITION_ACCENTS: Record<string, string> = {
@@ -145,11 +172,24 @@ function formatDate(value: string | null): string {
 }
 
 export default function AssetsIndex() {
-    const { assets, groups, filters } = usePage().props as unknown as PageProps;
+    const {
+        assets,
+        groups,
+        categories,
+        clusters,
+        subClusters,
+        departments,
+        filters,
+    } = usePage().props as unknown as PageProps;
 
     const [search, setSearch] = useState(filters.search);
     const [groupFilter, setGroupFilter] = useState(filters.group);
     const [statusFilter, setStatusFilter] = useState(filters.status);
+    const [departmentFilter, setDepartmentFilter] = useState(
+        filters.department,
+    );
+    const [conditionFilter, setConditionFilter] = useState(filters.condition);
+    const [filterOpen, setFilterOpen] = useState(false);
     const [deleting, setDeleting] = useState<Asset | null>(null);
     const [deletingState, setDeletingState] = useState(false);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -178,11 +218,40 @@ export default function AssetsIndex() {
             params.status = statusFilter;
         }
 
+        if (departmentFilter) {
+            params.department = departmentFilter;
+        }
+
+        if (conditionFilter) {
+            params.condition = conditionFilter;
+        }
+
         router.get(
             indexRoute().url,
             { ...params, ...overrides },
             { preserveState: true, replace: true, only: ['assets', 'filters'] },
         );
+    };
+
+    const applyFilters = () => {
+        setFilterOpen(false);
+        reload({});
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setGroupFilter('');
+        setStatusFilter('');
+        setDepartmentFilter('');
+        setConditionFilter('');
+        setFilterOpen(false);
+        reload({
+            search: '',
+            group: '',
+            status: '',
+            department: '',
+            condition: '',
+        });
     };
 
     const handleDelete = () => {
@@ -213,9 +282,75 @@ export default function AssetsIndex() {
         }
     };
 
-    const hasFilters = Boolean(
-        filters.search || filters.group || filters.status,
+    const activeFilterCount = [
+        groupFilter,
+        statusFilter,
+        departmentFilter,
+        conditionFilter,
+    ].filter(Boolean).length;
+
+    const [importOpen, setImportOpen] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
+    const [dragging, setDragging] = useState(false);
+    const [importGroup, setImportGroup] = useState('');
+    const [importCategory, setImportCategory] = useState('');
+    const [importCluster, setImportCluster] = useState('');
+    const [importSubCluster, setImportSubCluster] = useState('');
+
+    const importCategories = categories.filter(
+        (c) => c.asset_group_id === importGroup,
     );
+    const importClusters = clusters.filter(
+        (c) => c.asset_category_id === importCategory,
+    );
+    const importSubClusters = subClusters.filter(
+        (c) => c.asset_cluster_id === importCluster,
+    );
+
+    const classificationComplete = Boolean(
+        importGroup && importCategory && importCluster && importSubCluster,
+    );
+
+    const handleImportSubmit = () => {
+        if (!importFile || !classificationComplete || importing) {
+            return;
+        }
+
+        setImporting(true);
+        setImportError(null);
+
+        const data = new FormData();
+        data.append('file', importFile);
+        data.append('asset_group_id', importGroup);
+        data.append('asset_category_id', importCategory);
+        data.append('asset_cluster_id', importCluster);
+        data.append('asset_sub_cluster_id', importSubCluster);
+
+        router.post(importMethod().url, data, {
+            forceFormData: true,
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setImporting(false);
+                setImportOpen(false);
+                setImportFile(null);
+                setImportGroup('');
+                setImportCategory('');
+                setImportCluster('');
+                setImportSubCluster('');
+            },
+            onError: (errors) => {
+                setImporting(false);
+                setImportError(
+                    typeof errors.file === 'string'
+                        ? errors.file
+                        : 'Tidak dapat mengimpor file. Periksa kembali format file Anda.',
+                );
+            },
+        });
+    };
 
     return (
         <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
@@ -255,20 +390,31 @@ export default function AssetsIndex() {
                             </div>
                         </div>
 
-                        <Link href={createRoute().url}>
+                        <div className="flex shrink-0 items-center gap-2">
                             <Button
-                                size="sm"
-                                className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                                type="button"
+                                variant="outline"
+                                onClick={() => setImportOpen(true)}
+                                className="h-10 rounded-xl border-muted-foreground/30 bg-background/60 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
                             >
-                                <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
-                                    <Plus
-                                        className="size-3.5"
-                                        strokeWidth={2.25}
-                                    />
-                                </span>
-                                Tambah Aset
+                                <UploadCloud className="size-4" />
+                                Import
                             </Button>
-                        </Link>
+                            <Link href={createRoute().url}>
+                                <Button
+                                    size="sm"
+                                    className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                                >
+                                    <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
+                                        <Plus
+                                            className="size-3.5"
+                                            strokeWidth={2.25}
+                                        />
+                                    </span>
+                                    Tambah Aset
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="glass-panel card-enter mt-7 flex flex-col gap-3 rounded-2xl p-3 delay-100 lg:flex-row lg:items-center lg:gap-4">
@@ -309,48 +455,36 @@ export default function AssetsIndex() {
                             ) : null}
                         </div>
 
-                        <Select
-                            value={groupFilter}
-                            onValueChange={(value) => {
-                                setGroupFilter(value);
-                                reload({ group: value });
-                            }}
-                        >
-                            <SelectTrigger className="h-11! w-full justify-start rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl lg:w-56">
-                                <SelectValue placeholder="Semua Golongan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="">Semua Golongan</SelectItem>
-                                {groups.map((group) => (
-                                    <SelectItem key={group.id} value={group.id}>
-                                        {group.code ? `${group.code} — ` : ''}
-                                        {group.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex shrink-0 items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setFilterOpen(true)}
+                                className="h-11! shrink-0 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
+                            >
+                                <SlidersHorizontal className="size-4" />
+                                Filter
+                                {activeFilterCount > 0 && (
+                                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                            </Button>
 
-                        <Select
-                            value={statusFilter}
-                            onValueChange={(value) => {
-                                setStatusFilter(value);
-                                reload({ status: value });
-                            }}
-                        >
-                            <SelectTrigger className="h-11! w-full justify-start rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl lg:w-48">
-                                <SelectValue placeholder="Semua Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {STATUS_OPTIONS.map((option) => (
-                                    <SelectItem
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            {activeFilterCount > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={clearFilters}
+                                    className="h-11! w-11 shrink-0 rounded-xl"
+                                    aria-label="Hapus semua filter"
+                                    title="Hapus semua filter"
+                                >
+                                    <X className="size-4" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
@@ -358,25 +492,14 @@ export default function AssetsIndex() {
                             Semua Aset
                         </h2>
                         <div className="flex items-center gap-3">
-                            {hasFilters && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSearch('');
-                                        setGroupFilter('');
-                                        setStatusFilter('');
-                                        reload({
-                                            search: '',
-                                            group: '',
-                                            status: '',
-                                        });
-                                    }}
-                                    className="h-8 rounded-lg px-2.5 text-xs text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="mr-1 size-3.5" />
-                                    Hapus filter
-                                </Button>
+                            {activeFilterCount > 0 && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                                    <Filter
+                                        className="size-3.5"
+                                        strokeWidth={1.75}
+                                    />
+                                    {activeFilterCount} filter aktif
+                                </span>
                             )}
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
                                 <Boxes
@@ -395,12 +518,12 @@ export default function AssetsIndex() {
                             </div>
                             <div>
                                 <p className="text-base font-semibold text-foreground">
-                                    {hasFilters
+                                    {activeFilterCount > 0 || search
                                         ? 'Tidak ada hasil pencarian'
                                         : 'Belum ada aset'}
                                 </p>
                                 <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                    {hasFilters
+                                    {activeFilterCount > 0 || search
                                         ? 'Tidak ditemukan aset dengan filter tersebut. Coba kata kunci lain.'
                                         : 'Tambahkan aset pertama Anda untuk mulai mencatat inventaris.'}
                                 </p>
@@ -429,11 +552,38 @@ export default function AssetsIndex() {
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex min-w-0 items-center gap-3">
-                                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                                    <Package
-                                                        className="size-5"
-                                                        strokeWidth={1.75}
-                                                    />
+                                                <div className="relative size-11 shrink-0">
+                                                    {asset.photo_url?.[0] ? (
+                                                        <>
+                                                            <img
+                                                                src={
+                                                                    asset
+                                                                        .photo_url[0]
+                                                                }
+                                                                alt="Foto aset"
+                                                                className="size-11 rounded-xl border border-border/70 object-cover shadow-md ring-1 ring-primary/10"
+                                                            />
+                                                            {asset.photo_url
+                                                                .length > 1 && (
+                                                                <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-[9px] font-bold text-muted-foreground tabular-nums shadow-sm">
+                                                                    +
+                                                                    {asset
+                                                                        .photo_url
+                                                                        .length -
+                                                                        1}
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
+                                                            <Package
+                                                                className="size-5"
+                                                                strokeWidth={
+                                                                    1.75
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <h3 className="truncate text-sm font-semibold text-foreground">
@@ -565,6 +715,23 @@ export default function AssetsIndex() {
                                                         </span>
                                                     </p>
                                                 )}
+                                                {asset.document_url?.length >
+                                                    0 && (
+                                                    <p className="flex items-center gap-1.5 truncate text-muted-foreground">
+                                                        <FileText
+                                                            className="size-3.5 shrink-0"
+                                                            strokeWidth={2}
+                                                        />
+                                                        <span>
+                                                            {
+                                                                asset
+                                                                    .document_url
+                                                                    .length
+                                                            }{' '}
+                                                            dokumen
+                                                        </span>
+                                                    </p>
+                                                )}
                                                 {asset.location && (
                                                     <p className="flex items-center gap-1.5 truncate text-muted-foreground">
                                                         <MapPin
@@ -674,6 +841,450 @@ export default function AssetsIndex() {
                     )}
                 </div>
             </div>
+
+            <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Import Aset</DialogTitle>
+                        <DialogDescription>
+                            Unggah file spreadsheet untuk menambahkan banyak
+                            aset sekaligus.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4">
+                        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                            <Label className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-primary uppercase">
+                                <Layers className="size-3.5" />
+                                Klasifikasi Aset
+                            </Label>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Pilih golongan, kategori, cluster, dan sub
+                                cluster terlebih dahulu agar kode aset dibuat
+                                otomatis.
+                            </p>
+                            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <Label htmlFor="import-group">
+                                        Golongan
+                                    </Label>
+                                    <Select
+                                        value={importGroup}
+                                        onValueChange={(value) => {
+                                            setImportGroup(value);
+                                            setImportCategory('');
+                                            setImportCluster('');
+                                            setImportSubCluster('');
+                                        }}
+                                    >
+                                        <SelectTrigger
+                                            id="import-group"
+                                            className="mt-1.5 h-10 bg-background/70"
+                                        >
+                                            <SelectValue placeholder="Pilih Golongan" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {groups.map((group) => (
+                                                <SelectItem
+                                                    key={group.id}
+                                                    value={group.id}
+                                                >
+                                                    {group.code
+                                                        ? `${group.code} — `
+                                                        : ''}
+                                                    {group.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="import-category">
+                                        Kategori
+                                    </Label>
+                                    <Select
+                                        value={importCategory}
+                                        onValueChange={(value) => {
+                                            setImportCategory(value);
+                                            setImportCluster('');
+                                            setImportSubCluster('');
+                                        }}
+                                        disabled={!importGroup}
+                                    >
+                                        <SelectTrigger
+                                            id="import-category"
+                                            className="mt-1.5 h-10 bg-background/70"
+                                        >
+                                            <SelectValue
+                                                placeholder={
+                                                    importGroup
+                                                        ? 'Pilih Kategori'
+                                                        : 'Pilih golongan dulu'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {importCategories.map(
+                                                (category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.id}
+                                                    >
+                                                        {category.code
+                                                            ? `${category.code} — `
+                                                            : ''}
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="import-cluster">
+                                        Cluster
+                                    </Label>
+                                    <Select
+                                        value={importCluster}
+                                        onValueChange={(value) => {
+                                            setImportCluster(value);
+                                            setImportSubCluster('');
+                                        }}
+                                        disabled={!importCategory}
+                                    >
+                                        <SelectTrigger
+                                            id="import-cluster"
+                                            className="mt-1.5 h-10 bg-background/70"
+                                        >
+                                            <SelectValue
+                                                placeholder={
+                                                    importCategory
+                                                        ? 'Pilih Cluster'
+                                                        : 'Pilih kategori dulu'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {importClusters.map((cluster) => (
+                                                <SelectItem
+                                                    key={cluster.id}
+                                                    value={cluster.id}
+                                                >
+                                                    {cluster.code
+                                                        ? `${cluster.code} — `
+                                                        : ''}
+                                                    {cluster.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="import-sub-cluster">
+                                        Sub Cluster
+                                    </Label>
+                                    <Select
+                                        value={importSubCluster}
+                                        onValueChange={setImportSubCluster}
+                                        disabled={!importCluster}
+                                    >
+                                        <SelectTrigger
+                                            id="import-sub-cluster"
+                                            className="mt-1.5 h-10 bg-background/70"
+                                        >
+                                            <SelectValue
+                                                placeholder={
+                                                    importCluster
+                                                        ? 'Pilih Sub Cluster'
+                                                        : 'Pilih cluster dulu'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {importSubClusters.map(
+                                                (subCluster) => (
+                                                    <SelectItem
+                                                        key={subCluster.id}
+                                                        value={subCluster.id}
+                                                    >
+                                                        {subCluster.code
+                                                            ? `${subCluster.code} — `
+                                                            : ''}
+                                                        {subCluster.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            asChild
+                            className="h-auto justify-start gap-3 rounded-xl border-dashed py-3.5 text-left"
+                        >
+                            <a href={importTemplate().url}>
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <Download className="size-4" />
+                                </span>
+                                <span className="min-w-0">
+                                    <span className="block text-sm font-semibold">
+                                        Unduh Template Excel
+                                    </span>
+                                    <span className="block text-xs text-muted-foreground">
+                                        Gunakan template .xlsx resmi untuk
+                                        format yang benar
+                                    </span>
+                                </span>
+                            </a>
+                        </Button>
+
+                        <div
+                            className={cn(
+                                'group relative rounded-xl border-2 border-dashed p-6 text-center transition-colors',
+                                !classificationComplete &&
+                                    'pointer-events-none opacity-60',
+                                dragging
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:border-primary/40 hover:bg-accent/40',
+                            )}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                setDragging(true);
+                            }}
+                            onDragLeave={() => setDragging(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setDragging(false);
+
+                                const file = e.dataTransfer.files?.[0];
+
+                                if (file) {
+                                    setImportFile(file);
+                                    setImportError(null);
+                                }
+                            }}
+                        >
+                            <input
+                                id="import-file"
+                                type="file"
+                                accept=".xlsx,.csv,.ods"
+                                className="sr-only"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    setImportFile(file);
+                                    setImportError(null);
+                                }}
+                            />
+                            <label
+                                htmlFor="import-file"
+                                className="flex cursor-pointer flex-col items-center gap-2"
+                            >
+                                <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110">
+                                    <FileSpreadsheet
+                                        className="size-6"
+                                        strokeWidth={1.5}
+                                    />
+                                </span>
+                                <span className="text-sm font-semibold text-foreground">
+                                    {importFile
+                                        ? importFile.name
+                                        : 'Klik atau seret file ke sini'}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {classificationComplete
+                                        ? 'Format didukung: .xlsx, .csv, .ods (maks. 5 MB)'
+                                        : 'Lengkapi klasifikasi aset terlebih dahulu'}
+                                </span>
+                            </label>
+                            {importFile && (
+                                <button
+                                    type="button"
+                                    className="mt-3 inline-flex items-center gap-1 rounded-lg text-xs font-medium text-destructive hover:underline"
+                                    onClick={() => {
+                                        setImportFile(null);
+                                        setImportError(null);
+                                    }}
+                                >
+                                    <X className="size-3.5" />
+                                    Hapus file
+                                </button>
+                            )}
+                        </div>
+
+                        {importError && (
+                            <p className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                                <X className="size-3.5" />
+                                {importError}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setImportOpen(false);
+                                setImportFile(null);
+                                setImportGroup('');
+                                setImportCategory('');
+                                setImportCluster('');
+                                setImportSubCluster('');
+                                setImportError(null);
+                            }}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleImportSubmit}
+                            disabled={
+                                !importFile ||
+                                !classificationComplete ||
+                                importing
+                            }
+                            className="gap-2"
+                        >
+                            {importing ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <CheckCircle2 className="size-4" />
+                            )}
+                            {importing ? 'Mengimpor...' : 'Mulai Import'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Filter Aset</DialogTitle>
+                        <DialogDescription>
+                            Persempit daftar aset berdasarkan kriteria berikut.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <Label>Golongan</Label>
+                            <Select
+                                value={groupFilter}
+                                onValueChange={setGroupFilter}
+                            >
+                                <SelectTrigger className="mt-1.5">
+                                    <SelectValue placeholder="Semua Golongan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">
+                                        Semua Golongan
+                                    </SelectItem>
+                                    {groups.map((group) => (
+                                        <SelectItem
+                                            key={group.id}
+                                            value={group.id}
+                                        >
+                                            {group.code
+                                                ? `${group.code} — `
+                                                : ''}
+                                            {group.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Department</Label>
+                            <Select
+                                value={departmentFilter}
+                                onValueChange={setDepartmentFilter}
+                            >
+                                <SelectTrigger className="mt-1.5">
+                                    <SelectValue placeholder="Semua Department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">
+                                        Semua Department
+                                    </SelectItem>
+                                    {departments.map((department) => (
+                                        <SelectItem
+                                            key={department.id_department}
+                                            value={department.id_department}
+                                        >
+                                            {department.nama_department}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Status Aset</Label>
+                            <Select
+                                value={statusFilter}
+                                onValueChange={setStatusFilter}
+                            >
+                                <SelectTrigger className="mt-1.5">
+                                    <SelectValue placeholder="Semua Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {STATUS_OPTIONS.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Kondisi Aset</Label>
+                            <Select
+                                value={conditionFilter}
+                                onValueChange={setConditionFilter}
+                            >
+                                <SelectTrigger className="mt-1.5">
+                                    <SelectValue placeholder="Semua Kondisi" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CONDITION_OPTIONS.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:justify-between">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={clearFilters}
+                            className="text-muted-foreground"
+                        >
+                            <X className="size-4" />
+                            Reset
+                        </Button>
+                        <Button type="button" onClick={applyFilters}>
+                            <Filter className="size-4" />
+                            Terapkan Filter
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={!!deleting}

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\AssetCategory;
+use App\Models\AssetCluster;
 use App\Models\AssetGroup;
+use App\Models\AssetSubCluster;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,18 +32,21 @@ class AssetCategoryController extends Controller
         };
 
         $categories = AssetCategory::query()
-            ->with('assetGroup:id,name')
+            ->with('assetGroup:id,name,code')
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('code', 'like', "%{$search}%")))
-            ->when($group !== '', fn ($query) => $query->where('asset_group_id', $group))
+            ->when($group !== '' && $group !== 'all', fn ($query) => $query->where('asset_group_id', $group))
             ->orderBy($sortColumn, $sortDirection)
             ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('categories/Index', [
             'categories' => $categories,
-            'groups' => AssetGroup::query()->orderBy('name')->get(['id', 'name']),
+            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
+            'optionCategories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'asset_group_id', 'code', 'name']),
+            'optionClusters' => AssetCluster::query()->orderBy('sort_order')->get(['id', 'asset_category_id', 'code', 'name']),
+            'optionSubClusters' => AssetSubCluster::query()->orderBy('sort_order')->get(['id', 'asset_cluster_id', 'code', 'name']),
             'filters' => [
                 'search' => $search,
                 'sort' => $sort,
@@ -71,6 +76,18 @@ class AssetCategoryController extends Controller
     public function destroy(AssetCategory $category): RedirectResponse
     {
         $category->delete();
+
+        return back();
+    }
+
+    public function destroyBulk(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string'],
+        ]);
+
+        AssetCategory::query()->whereKey($validated['ids'])->delete();
 
         return back();
     }

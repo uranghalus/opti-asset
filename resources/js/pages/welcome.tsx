@@ -1,9 +1,41 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Head, usePage } from '@inertiajs/react';
-import { ArrowLeftRight, Database, Recycle, ScanLine } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+    ArrowLeftRight,
+    ArrowRight,
+    Building2,
+    CalendarDays,
+    Check,
+    ChevronRight,
+    ClipboardCheck,
+    Clock,
+    Database,
+    Fingerprint,
+    History,
+    MapPin,
+    Menu,
+    Moon,
+    Recycle,
+    RotateCcw,
+    ScanLine,
+    SearchCheck,
+    ShieldCheck,
+    Sun,
+    X,
+} from 'lucide-react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { useAppearance } from '@/hooks/use-appearance';
+
+/* ------------------------------------------------------------------ */
+/* Data                                                                */
+/* ------------------------------------------------------------------ */
+
+const BLUE = '#0080FF';
+const IRIS = '#6971ec';
+const TEAL = '#20B2AA';
+const PINK = '#EC4B9E';
 
 const features = [
     {
@@ -11,7 +43,7 @@ const features = [
         title: 'Manajemen Data Aset',
         description:
             'Satu sumber data terpadu untuk seluruh aset perusahaan. Lacak detail, status, dan riwayat setiap item dari pengadaan hingga pemutihan.',
-        color: '#0080FF',
+        color: BLUE,
         icon: Database,
         ops: [
             'Kategori & klasifikasi 4 level',
@@ -24,7 +56,7 @@ const features = [
         title: 'Pemindaian Barcode',
         description:
             'Temukan data aset secara instan hanya dengan memindai barcode. Proses pencarian yang cepat dan akurat untuk ribuan aset.',
-        color: '#20B2AA',
+        color: TEAL,
         icon: ScanLine,
         ops: [
             'Scan instan tanpa ketik manual',
@@ -37,7 +69,7 @@ const features = [
         title: 'Transfer Aset',
         description:
             'Pindahkan aset antar departemen atau lokasi dengan alur persetujuan yang terstruktur dan tercatat otomatis.',
-        color: '#6971ec',
+        color: IRIS,
         icon: ArrowLeftRight,
         ops: [
             'Alur persetujuan tercatat otomatis',
@@ -50,7 +82,7 @@ const features = [
         title: 'Disposal Aset',
         description:
             'Kelola proses disposisi aset dari pengajuan hingga persetujuan. Pantau status dan riwayat setiap aset yang didisposisi.',
-        color: '#EC4B9E',
+        color: PINK,
         icon: Recycle,
         ops: [
             'Pengajuan disposisi berjenjang',
@@ -63,21 +95,27 @@ const features = [
 const steps = [
     {
         title: 'Pindai Barcode',
+        tag: 'STEP 01 · SCAN',
         description:
             'Arahkan kamera ke barcode aset. Identifikasi instan tanpa perlu mengetik apa pun ke dalam sistem.',
-        color: '#20B2AA',
+        color: TEAL,
+        icon: ScanLine,
     },
     {
         title: 'Temukan Data',
+        tag: 'STEP 02 · DATA',
         description:
             'Catatan lengkap langsung muncul: lokasi, departemen pemegang, status kelayakan, dan riwayat.',
-        color: '#0080FF',
+        color: BLUE,
+        icon: SearchCheck,
     },
     {
         title: 'Kelola & Eksekusi',
+        tag: 'STEP 03 · ACTION',
         description:
             'Lanjutkan aksi — transfer, perawatan, atau disposisi — semua langsung tercatat dan diaudit otomatis.',
-        color: '#6971ec',
+        color: IRIS,
+        icon: ClipboardCheck,
     },
 ];
 
@@ -86,19 +124,16 @@ const scanLog = [
         id: 'AST-2024-0847',
         name: 'Laptop Dell Latitude 5440',
         loc: 'Lantai 3 · IT',
-        status: 'Aktif',
     },
     {
         id: 'AST-2024-0851',
         name: 'Printer HP LaserJet Pro',
         loc: 'Lantai 2 · Admin',
-        status: 'Aktif',
     },
     {
         id: 'AST-2023-1120',
         name: 'Meja Kerja Ergonomis',
         loc: 'Lantai 1 · HR',
-        status: 'Dipindah',
     },
 ];
 
@@ -106,54 +141,13 @@ const BARCODE = [
     3, 1, 1, 1, 2, 1, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 1, 1, 2, 3, 1, 1, 1, 2,
     1, 3, 1, 2, 1, 1, 3, 1, 1, 2, 1, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 1, 3,
 ];
-const WORDS = [
-    { word: 'Lacak', color: '#0080FF' },
-    { word: 'Pindai', color: '#20B2AA' },
-    { word: 'Kelola', color: '#6971ec' },
-    { word: 'Audit', color: '#EC4B9E' },
-];
+const BARCODE_TOTAL = BARCODE.reduce((a, b) => a + b, 0);
 
-const LEVELS = [
-    {
-        id: 'golongan',
-        name: 'Golongan',
-        code: 'GOL',
-        color: '#0080FF',
-        tilt: '-4deg',
-        depth: 10,
-        sway: '7s',
-        style: { top: '6%', left: '0%', width: '68%' },
-    },
-    {
-        id: 'kategori',
-        name: 'Kategori',
-        code: 'KAT',
-        color: '#6971ec',
-        tilt: '4deg',
-        depth: 16,
-        sway: '9s',
-        style: { top: '20%', right: '0%', width: '62%' },
-    },
-    {
-        id: 'cluster',
-        name: 'Cluster',
-        code: 'CLU',
-        color: '#EC4B9E',
-        tilt: '-3deg',
-        depth: 22,
-        sway: '11s',
-        style: { bottom: '10%', left: '2%', width: '70%' },
-    },
-    {
-        id: 'sub',
-        name: 'Sub Cluster',
-        code: 'SUB',
-        color: '#20B2AA',
-        tilt: '3.5deg',
-        depth: 28,
-        sway: '13s',
-        style: { top: '46%', left: '16%', width: '64%' },
-    },
+const WORDS = [
+    { word: 'Lacak', color: BLUE },
+    { word: 'Pindai', color: TEAL },
+    { word: 'Kelola', color: IRIS },
+    { word: 'Audit', color: PINK },
 ];
 
 const HIERARCHY = [
@@ -161,7 +155,7 @@ const HIERARCHY = [
         id: 'golongan',
         name: 'Golongan',
         code: 'GOL',
-        color: '#0080FF',
+        color: BLUE,
         desc: 'Kelompok aset tingkat tertinggi. Contoh data sintetis.',
         items: [
             { code: 'GOL-01', name: 'Perangkat IT', count: 4 },
@@ -173,7 +167,7 @@ const HIERARCHY = [
         id: 'kategori',
         name: 'Kategori',
         code: 'KAT',
-        color: '#6971ec',
+        color: IRIS,
         desc: 'Di bawah Golongan "Perangkat IT" — pembagian jenis.',
         items: [
             { code: 'KAT-11', name: 'Hardware', count: 3 },
@@ -185,7 +179,7 @@ const HIERARCHY = [
         id: 'cluster',
         name: 'Cluster',
         code: 'CLU',
-        color: '#EC4B9E',
+        color: PINK,
         desc: 'Di bawah Kategori "Hardware" — pengelompokan spesifik.',
         items: [
             { code: 'CLU-111', name: 'Komputer', count: 2 },
@@ -197,7 +191,7 @@ const HIERARCHY = [
         id: 'sub',
         name: 'Sub Cluster',
         code: 'SUB',
-        color: '#20B2AA',
+        color: TEAL,
         desc: 'Tingkat paling detail — entitas aset yang sesungguhnya.',
         items: [
             { code: 'SUB-1111', name: 'Laptop', count: 214 },
@@ -207,63 +201,53 @@ const HIERARCHY = [
     },
 ];
 
-function ThemeToggle() {
-    const { appearance, updateAppearance } = useAppearance();
-    const isDark =
-        appearance === 'dark' ||
-        (appearance === 'system' &&
-            typeof window !== 'undefined' &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches);
+const STATS = [
+    {
+        value: 12480,
+        decimals: 0,
+        suffix: '',
+        label: 'Aset terlacak',
+        note: '+328 bulan ini',
+        color: BLUE,
+    },
+    {
+        value: 4,
+        decimals: 0,
+        suffix: ' level',
+        label: 'Klasifikasi hirarki',
+        note: 'GOL · KAT · CLU · SUB',
+        color: IRIS,
+    },
+    {
+        value: 99.2,
+        decimals: 1,
+        suffix: '%',
+        label: 'Akurasi pencatatan',
+        note: 'audit kuartal terakhir',
+        color: TEAL,
+    },
+    {
+        value: 0.4,
+        decimals: 1,
+        suffix: ' dtk',
+        label: 'Respons pemindaian',
+        note: 'rata-rata lapangan',
+        color: PINK,
+    },
+];
 
-    return (
-        <button
-            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
-            className="group flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-900/10 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition-all duration-200 hover:scale-105 hover:bg-white focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-            aria-label="Ganti tema"
-        >
-            {isDark ? (
-                <svg
-                    className="size-[18px] transition-transform duration-300 group-hover:rotate-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.75}
-                    stroke="currentColor"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-                    />
-                </svg>
-            ) : (
-                <svg
-                    className="size-[18px] transition-transform duration-300 group-hover:-rotate-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.75}
-                    stroke="currentColor"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
-                    />
-                </svg>
-            )}
-        </button>
-    );
+const PANEL =
+    'rounded-2xl border border-white/60 bg-white/55 shadow-[0_10px_44px_-16px_rgba(15,35,80,0.22)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_10px_44px_-20px_rgba(0,0,0,0.7)]';
+const CARD =
+    'rounded-xl border border-white/60 bg-white/70 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.06]';
+
+function cssVars(v: Record<string, string | number>): CSSProperties {
+    return v as unknown as CSSProperties;
 }
 
-function NavLink({ href, children }: { href: string; children: string }) {
-    return (
-        <a
-            href={href}
-            className="text-sm font-medium text-slate-600 transition-colors duration-200 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-        >
-            {children}
-        </a>
-    );
-}
+/* ------------------------------------------------------------------ */
+/* Primitives                                                          */
+/* ------------------------------------------------------------------ */
 
 function Reveal({
     children,
@@ -310,7 +294,281 @@ function Reveal({
     );
 }
 
-function Canopy() {
+function Eyebrow({ label, color = BLUE }: { label: string; color?: string }) {
+    return (
+        <span className="inline-flex items-center gap-2 rounded-md border border-white/60 bg-white/60 px-3 py-1.5 font-mono text-[10px] font-bold tracking-[0.18em] text-slate-600 uppercase backdrop-blur-md dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+            <span
+                className="pulse-dot size-1.5 rounded-full"
+                style={{ background: color }}
+            />
+            {label}
+        </span>
+    );
+}
+
+function BarcodeStrip({
+    scale = 2,
+    barHeight = 30,
+    className = '',
+    withLaser = true,
+}: {
+    scale?: number;
+    barHeight?: number;
+    className?: string;
+    withLaser?: boolean;
+}) {
+    const width = BARCODE_TOTAL * scale;
+
+    return (
+        <div
+            className={`relative overflow-hidden ${className}`}
+            style={{ width, maxWidth: '100%' }}
+            aria-hidden
+        >
+            <div className="flex items-end">
+                {BARCODE.map((w, i) => (
+                    <span
+                        key={i}
+                        className="bg-current"
+                        style={{ width: w * scale, height: barHeight }}
+                    />
+                ))}
+            </div>
+            {withLaser && (
+                <span
+                    className="laser"
+                    style={cssVars({ '--scan-w': `${width}px` })}
+                />
+            )}
+        </div>
+    );
+}
+
+const SCRAMBLE_CHARS = 'ACDEHKMNPRTUX0123456789#/';
+
+function ScrambleWord({ words }: { words: { word: string; color: string }[] }) {
+    const [text, setText] = useState(words[0].word);
+    const [idx, setIdx] = useState(0);
+    const idxRef = useRef(0);
+
+    useEffect(() => {
+        const reduce = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches;
+        let alive = true;
+        let stepTimer = 0;
+
+        const scrambleTo = (target: string) => {
+            if (reduce) {
+                setText(target);
+
+                return;
+            }
+
+            let n = 0;
+            const total = Math.max(12, target.length * 4);
+
+            const run = () => {
+                if (!alive) {
+                    return;
+                }
+
+                n += 1;
+                const solved = Math.floor((n / total) * target.length);
+                let out = '';
+
+                for (let i = 0; i < target.length; i += 1) {
+                    out +=
+                        i < solved
+                            ? target[i]
+                            : SCRAMBLE_CHARS[
+                                  Math.floor(
+                                      Math.random() * SCRAMBLE_CHARS.length,
+                                  )
+                              ];
+                }
+
+                if (n >= total) {
+                    setText(target);
+                } else {
+                    setText(out);
+                    stepTimer = window.setTimeout(run, 34);
+                }
+            };
+            run();
+        };
+
+        const cycle = window.setInterval(() => {
+            idxRef.current = (idxRef.current + 1) % words.length;
+            setIdx(idxRef.current);
+            scrambleTo(words[idxRef.current].word);
+        }, 2800);
+
+        return () => {
+            alive = false;
+            window.clearInterval(cycle);
+            window.clearTimeout(stepTimer);
+        };
+    }, [words]);
+
+    return (
+        <span className="relative inline-grid align-baseline">
+            {words.map((w) => (
+                <span
+                    key={w.word}
+                    className="invisible col-start-1 row-start-1"
+                    aria-hidden
+                >
+                    {w.word}
+                </span>
+            ))}
+            <span
+                className="word-glow col-start-1 row-start-1 font-extrabold transition-colors duration-300"
+                style={{ color: words[idx].color }}
+            >
+                {text}
+            </span>
+        </span>
+    );
+}
+
+function useCountUp(target: number, decimals: number, duration = 1400) {
+    const ref = useRef<HTMLSpanElement | null>(null);
+    const [val, setVal] = useState(0);
+
+    useEffect(() => {
+        const el = ref.current;
+
+        if (!el) {
+            return;
+        }
+
+        let raf = 0;
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            setVal(target);
+
+            return;
+        }
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                if (!entries.some((e) => e.isIntersecting)) {
+                    return;
+                }
+
+                io.disconnect();
+                const t0 = performance.now();
+
+                const loop = (t: number) => {
+                    const p = Math.min(1, (t - t0) / duration);
+                    const eased = 1 - Math.pow(1 - p, 3);
+                    setVal(target * eased);
+
+                    if (p < 1) {
+                        raf = requestAnimationFrame(loop);
+                    }
+                };
+                raf = requestAnimationFrame(loop);
+            },
+            { threshold: 0.4 },
+        );
+        io.observe(el);
+
+        return () => {
+            io.disconnect();
+            cancelAnimationFrame(raf);
+        };
+    }, [target, duration]);
+
+    return {
+        ref,
+        text: val.toLocaleString('id-ID', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+        }),
+    };
+}
+
+function StatCell({
+    value,
+    decimals,
+    suffix,
+    label,
+    note,
+    color,
+}: (typeof STATS)[number]) {
+    const { ref, text } = useCountUp(value, decimals);
+
+    return (
+        <div className="bg-white/75 px-6 py-7 dark:bg-[#0b1322]/80">
+            <div
+                className="font-mono text-[10px] font-bold tracking-[0.18em] uppercase"
+                style={{ color }}
+            >
+                {label}
+            </div>
+            <div className="mt-2 flex items-baseline gap-1">
+                <span
+                    ref={ref}
+                    className="font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums md:text-4xl dark:text-white"
+                >
+                    {text}
+                </span>
+                <span className="font-mono text-sm font-bold text-slate-500 dark:text-slate-400">
+                    {suffix}
+                </span>
+            </div>
+            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {note}
+            </div>
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Chrome                                                              */
+/* ------------------------------------------------------------------ */
+
+function ThemeToggle() {
+    const { appearance, updateAppearance } = useAppearance();
+    const isDark =
+        appearance === 'dark' ||
+        (appearance === 'system' &&
+            typeof window !== 'undefined' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    return (
+        <button
+            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
+            className="group flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-900/10 bg-white/60 text-slate-700 backdrop-blur-xl transition-all duration-200 hover:bg-white/90 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label="Ganti tema"
+        >
+            {isDark ? (
+                <Sun className="size-[18px] transition-transform duration-300 group-hover:rotate-45" />
+            ) : (
+                <Moon className="size-[18px] transition-transform duration-300 group-hover:-rotate-12" />
+            )}
+        </button>
+    );
+}
+
+function NavLink({ href, children }: { href: string; children: string }) {
+    return (
+        <a
+            href={href}
+            className="rounded-md px-2 py-1 text-sm font-medium text-slate-600 transition-colors duration-200 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+        >
+            {children}
+        </a>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero — Scanner Deck                                                 */
+/* ------------------------------------------------------------------ */
+
+function ScannerDeck() {
     const stageRef = useRef<HTMLDivElement | null>(null);
 
     const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -343,227 +601,699 @@ function Canopy() {
             ref={stageRef}
             onPointerMove={handleMove}
             onPointerLeave={handleLeave}
-            className="relative h-[420px] w-full select-none sm:h-[460px]"
+            className="relative mx-auto w-full max-w-[480px] px-2 py-6 select-none sm:px-0 sm:py-4"
         >
-            <div className="absolute inset-0 overflow-hidden rounded-[2rem] border border-slate-900/10 bg-white/50 shadow-2xl shadow-[#0B3D6B]/10 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/50">
-                <div className="absolute -top-20 -left-16 size-72 rounded-full bg-[#0080FF]/15 blur-3xl" />
-                <div className="absolute right-[-4rem] bottom-[-3rem] size-72 rounded-full bg-[#EC4B9E]/10 blur-3xl" />
-                <div className="absolute top-[30%] left-[35%] size-56 rounded-full bg-[#20B2AA]/10 blur-3xl" />
+            <div
+                className="absolute inset-8 rounded-3xl bg-gradient-to-br from-[#0080FF]/25 via-[#6971ec]/20 to-[#EC4B9E]/20 blur-2xl"
+                aria-hidden
+            />
 
-                <div className="relative flex h-full flex-col p-4 sm:p-5">
-                    <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-slate-500 uppercase dark:text-slate-400">
-                            <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                            Hierarchy Live
+            <div
+                className="deck-para absolute inset-x-10 top-10 bottom-0 rotate-[4deg] rounded-2xl border border-white/40 bg-white/30 dark:border-white/10 dark:bg-white/[0.04]"
+                style={cssVars({ '--depth': '10px' })}
+                aria-hidden
+            />
+
+            {/* Kartu aset utama */}
+            <div
+                className="deck-para relative"
+                style={cssVars({ '--depth': '20px' })}
+            >
+                <div className={`${PANEL} overflow-hidden !rounded-2xl`}>
+                    <div className="flex items-center justify-between border-b border-slate-900/10 px-5 py-3 dark:border-white/10">
+                        <span className="flex items-center gap-2 font-mono text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400">
+                            <span className="pulse-dot size-1.5 rounded-full bg-emerald-500" />
+                            AST-2024-0847
                         </span>
-                        <span className="font-mono text-[10px] tracking-widest text-slate-500 uppercase dark:text-slate-500">
-                            SSE · SYNCED
+                        <span className="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 font-mono text-[10px] font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
+                            AKTIF
                         </span>
                     </div>
 
-                    <div className="relative mt-3 flex-1">
-                        {LEVELS.map((level, i) => {
-                            const next = LEVELS[(i + 1) % LEVELS.length];
+                    <div className="px-5 pt-4">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                            Laptop Dell Latitude 5440
+                        </h3>
+                        <p className="font-mono text-[11px] tracking-wider text-slate-400 dark:text-slate-500">
+                            GOL-01 ▸ KAT-11 ▸ CLU-111 ▸ SUB-1111
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 px-5 py-4">
+                        {[
+                            {
+                                k: 'LOKASI',
+                                v: 'Lantai 3 · Zona IT',
+                                icon: MapPin,
+                            },
+                            {
+                                k: 'DEPARTEMEN',
+                                v: 'IT — Infrastruktur',
+                                icon: Building2,
+                            },
+                            {
+                                k: 'PEROLEHAN',
+                                v: 'Jan 2024 · Rp 18,4 jt',
+                                icon: CalendarDays,
+                            },
+                        ].map((row) => {
+                            const RowIcon = row.icon;
 
                             return (
                                 <div
-                                    key={level.id}
-                                    className="canopy-band group absolute"
-                                    style={
-                                        {
-                                            ...level.style,
-                                            '--tilt': level.tilt,
-                                            '--depth': `${level.depth}px`,
-                                            '--sway': level.sway,
-                                            '--band': level.color,
-                                        } as unknown as CSSProperties
-                                    }
+                                    key={row.k}
+                                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-900/5 bg-white/60 px-3 py-2 dark:border-white/5 dark:bg-white/[0.04]"
                                 >
-                                    <div className="canopy-sway">
-                                        <div className="canopy-para">
-                                            <div className="canopy-glass flex items-center justify-between gap-3 rounded-2xl border border-white/40 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-md dark:border-white/10 dark:shadow-black/30">
-                                                <div className="flex min-w-0 items-center gap-3">
-                                                    <span
-                                                        className="size-2.5 shrink-0 rounded-full"
-                                                        style={{
-                                                            background:
-                                                                level.color,
-                                                            boxShadow: `0 0 0 4px ${level.color}26`,
-                                                        }}
-                                                    />
-                                                    <div className="min-w-0">
-                                                        <div
-                                                            className="font-mono text-[10px] font-bold tracking-widest uppercase"
-                                                            style={{
-                                                                color: level.color,
-                                                            }}
-                                                        >
-                                                            {level.code}
-                                                        </div>
-                                                        <div className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                                                            {level.name}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <span className="chord-badge shrink-0 rounded-lg border border-white/60 bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-slate-200">
-                                                    → {next.name}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <span className="flex items-center gap-2 font-mono text-[9px] font-bold tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                        <RowIcon className="size-3.5 text-[#0080FF]" />
+                                        {row.k}
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                        {row.v}
+                                    </span>
                                 </div>
                             );
                         })}
+                    </div>
 
-                        <div className="scan-strip absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-xl border border-white/50 bg-black/70 px-3 py-2 shadow-xl backdrop-blur-md dark:border-white/15 dark:bg-black/60">
-                            <div className="flex items-end gap-[2px]">
-                                {BARCODE.slice(0, 24).map((w, i) => (
-                                    <span
-                                        key={i}
-                                        className="bg-white"
-                                        style={{
-                                            width: `${w}px`,
-                                            height: '26px',
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                            <span className="scan-laser absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-transparent via-[#20B2AA] to-transparent shadow-[0_0_8px_2px_rgba(32,178,170,0.7)]" />
-                            <span className="font-mono text-[10px] tracking-widest text-emerald-400">
-                                SCAN
+                    <div className="mx-5 mb-4 rounded-xl bg-slate-900/95 p-4 text-white dark:bg-black/60">
+                        <div className="flex items-center justify-between">
+                            <BarcodeStrip
+                                scale={2}
+                                barHeight={28}
+                                className="text-white"
+                            />
+                        </div>
+                        <div className="mt-2 flex items-center justify-between font-mono text-[9px] tracking-[0.2em] text-white/40">
+                            <span>ID-TAG ORGANISASI</span>
+                            <span className="text-emerald-400">READY</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-900/10 px-5 py-3 dark:border-white/10">
+                        <span className="font-mono text-[10px] tracking-wider text-slate-400 dark:text-slate-500">
+                            NILAI BUKU · RP 12,1 JT
+                        </span>
+                        <div className="flex gap-2">
+                            <span className="flex items-center gap-1.5 rounded-md border border-slate-900/10 bg-white/70 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-600 dark:border-white/10 dark:bg-white/10 dark:text-slate-300">
+                                <History className="size-3" /> RIWAYAT
+                            </span>
+                            <span className="flex items-center gap-1.5 rounded-md bg-[#0080FF]/10 px-2.5 py-1 font-mono text-[10px] font-bold text-[#0080FF]">
+                                <ArrowLeftRight className="size-3" /> TRANSFER
                             </span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Chip melayang */}
+            <div
+                className="deck-para absolute -top-1 -left-1 sm:-left-6"
+                style={cssVars({ '--depth': '34px' })}
+            >
+                <div
+                    className="float-slow flex items-center gap-3 rounded-xl border border-white/60 bg-white/80 px-3.5 py-2.5 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[#0e1628]/90"
+                    style={{ animationDelay: '0.4s' }}
+                >
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-[#20B2AA]/15 text-[#20B2AA]">
+                        <ScanLine className="size-4" />
+                    </span>
+                    <span>
+                        <span className="block font-mono text-[9px] font-bold tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            SCAN DITERIMA
+                        </span>
+                        <span className="block text-xs font-bold text-slate-800 dark:text-white">
+                            AST-2024-0851 · 0,4 dtk
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div
+                className="deck-para absolute top-1/2 -right-1 sm:-right-5"
+                style={cssVars({ '--depth': '28px' })}
+            >
+                <div
+                    className="float-slow flex items-center gap-3 rounded-xl border border-white/60 bg-white/80 px-3.5 py-2.5 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[#0e1628]/90"
+                    style={{ animationDelay: '1.2s' }}
+                >
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-[#6971ec]/15 text-[#6971ec]">
+                        <ArrowLeftRight className="size-4" />
+                    </span>
+                    <span>
+                        <span className="block font-mono text-[9px] font-bold tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            TRANSFER DISETUJUI
+                        </span>
+                        <span className="block text-xs font-bold text-slate-800 dark:text-white">
+                            IT → HR · 10:24
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div
+                className="deck-para absolute -bottom-4 left-1/2 -translate-x-1/2"
+                style={cssVars({ '--depth': '42px' })}
+            >
+                <div
+                    className="float-slow flex items-center gap-3 rounded-xl border border-white/60 bg-white/85 px-4 py-2.5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-[#0e1628]/95"
+                    style={{ animationDelay: '0.8s' }}
+                >
+                    <BarcodeStrip
+                        scale={1}
+                        barHeight={16}
+                        withLaser={false}
+                        className="text-slate-900 dark:text-white"
+                    />
+                    <span className="font-mono text-[9px] font-bold tracking-[0.16em] whitespace-nowrap text-slate-500 dark:text-slate-400">
+                        48 ITEM DIPINDAI HARI INI
+                    </span>
                 </div>
             </div>
         </div>
     );
 }
 
+/* ------------------------------------------------------------------ */
+/* Feature visuals                                                     */
+/* ------------------------------------------------------------------ */
+
+function DatabaseVisual() {
+    const rows = [
+        {
+            code: 'GOL-01',
+            name: 'Perangkat IT',
+            meta: '1.240 item',
+            color: BLUE,
+        },
+        {
+            code: 'GOL-02',
+            name: 'Fasilitas Kantor',
+            meta: '846 item',
+            color: IRIS,
+        },
+        {
+            code: 'GOL-03',
+            name: 'Kendaraan Operasional',
+            meta: '132 unit',
+            color: PINK,
+        },
+    ];
+
+    return (
+        <div className="mx-auto w-full max-w-md">
+            <div className="mb-2 flex items-center justify-between px-1 font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <span>KODE</span>
+                <span>NAMA GOLONGAN</span>
+                <span>JUMLAH</span>
+            </div>
+            <div className="relative">
+                <span
+                    className="row-crawler pointer-events-none absolute inset-x-0 top-0 z-10 h-14 rounded-lg bg-[#0080FF]/10 ring-1 ring-[#0080FF]/40"
+                    aria-hidden
+                />
+                <div className="space-y-2">
+                    {rows.map((row) => (
+                        <div
+                            key={row.code}
+                            className="relative flex h-14 items-center gap-3 rounded-lg border border-white/60 bg-white/80 px-4 dark:border-white/10 dark:bg-white/[0.07]"
+                        >
+                            <span
+                                className="size-2 shrink-0 rounded-full"
+                                style={{ background: row.color }}
+                            />
+                            <span
+                                className="w-16 font-mono text-[10px] font-bold"
+                                style={{ color: row.color }}
+                            >
+                                {row.code}
+                            </span>
+                            <span className="flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {row.name}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                                {row.meta}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <p className="mt-3 text-center font-mono text-[9px] tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                SUMBER TUNGGAL · TERSINKRON REAL-TIME
+            </p>
+        </div>
+    );
+}
+
+function ScanVisual() {
+    return (
+        <div className="relative mx-auto w-full max-w-sm rounded-xl border border-white/60 bg-white/70 p-6 dark:border-white/10 dark:bg-white/[0.05]">
+            <span
+                className="absolute top-2 left-2 size-4 border-t-2 border-l-2 border-[#20B2AA]"
+                aria-hidden
+            />
+            <span
+                className="absolute top-2 right-2 size-4 border-t-2 border-r-2 border-[#20B2AA]"
+                aria-hidden
+            />
+            <span
+                className="absolute bottom-2 left-2 size-4 border-b-2 border-l-2 border-[#20B2AA]"
+                aria-hidden
+            />
+            <span
+                className="absolute right-2 bottom-2 size-4 border-r-2 border-b-2 border-[#20B2AA]"
+                aria-hidden
+            />
+
+            <div className="flex items-center justify-between font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <span className="flex items-center gap-1.5">
+                    <span className="pulse-dot size-1.5 rounded-full bg-[#20B2AA]" />
+                    MEMINDAI
+                </span>
+                <span>AST-2024-0851</span>
+            </div>
+
+            <div className="mt-5 flex justify-center text-slate-900 dark:text-slate-100">
+                <BarcodeStrip scale={2.2} barHeight={44} />
+            </div>
+
+            <div className="scan-pop mt-5 flex items-center justify-center gap-2 rounded-lg border border-[#20B2AA]/40 bg-[#20B2AA]/10 px-3 py-2">
+                <Check className="size-3.5 text-[#20B2AA]" strokeWidth={3} />
+                <span className="font-mono text-[10px] font-bold tracking-wider text-[#20B2AA]">
+                    COCOK · PRINTER HP LASERJET · ADMIN
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function TransferVisual() {
+    return (
+        <div className="mx-auto w-full max-w-md">
+            <div className="flex items-center justify-between gap-2">
+                <div className={`${CARD} w-[104px] p-3 text-center`}>
+                    <Building2 className="mx-auto size-5 text-[#6971ec]" />
+                    <div className="mt-1.5 text-sm font-bold text-slate-800 dark:text-white">
+                        IT
+                    </div>
+                    <div className="font-mono text-[9px] tracking-wider text-slate-400 dark:text-slate-500">
+                        LANTAI 3
+                    </div>
+                </div>
+
+                <div className="relative h-6 flex-1" aria-hidden>
+                    <span className="dash-line absolute top-1/2 right-0 left-0 h-px -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                    <span
+                        className="packet"
+                        style={{
+                            offsetPath: "path('M3 12 L100% 12')",
+                            background: IRIS,
+                            boxShadow: `0 0 10px ${IRIS}`,
+                        }}
+                    />
+                </div>
+
+                <div className={`${CARD} w-[104px] p-3 text-center`}>
+                    <Building2 className="mx-auto size-5 text-[#20B2AA]" />
+                    <div className="mt-1.5 text-sm font-bold text-slate-800 dark:text-white">
+                        HR
+                    </div>
+                    <div className="font-mono text-[9px] tracking-wider text-slate-400 dark:text-slate-500">
+                        LANTAI 1
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-5 flex flex-col items-center gap-2">
+                <span className="inline-flex -rotate-2 items-center gap-1.5 rounded-md border-2 border-[#20B2AA]/60 px-3 py-1 font-mono text-[11px] font-bold tracking-[0.18em] text-[#20B2AA]">
+                    <Check className="size-3" strokeWidth={3} /> DISETUJUI ·
+                    10:24
+                </span>
+                <span className="font-mono text-[9px] tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                    TRF-2024-0311 · TERCATAT OTOMATIS
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function DisposalVisual() {
+    const rows = [
+        { t: 'Diajukan', d: '09:12 · AST-2023-1120', done: true },
+        { t: 'Ditinjau manajer', d: '09:40 · komentar lengkap', done: true },
+        { t: 'Disetujui', d: '10:05 · DSP-0092', done: true },
+        { t: 'Eksekusi lelang', d: 'menunggu giliran', done: false },
+    ];
+
+    return (
+        <div className="mx-auto w-full max-w-sm">
+            {rows.map((row, i) => (
+                <div key={row.t} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                        {row.done ? (
+                            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#20B2AA] text-white">
+                                <Check className="size-3" strokeWidth={3} />
+                            </span>
+                        ) : (
+                            <span className="pulse-dot flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-slate-400 text-slate-400 dark:border-slate-600">
+                                <Clock className="size-3" />
+                            </span>
+                        )}
+                        {i < rows.length - 1 && (
+                            <span className="w-px flex-1 bg-slate-300 dark:bg-white/15" />
+                        )}
+                    </div>
+                    <div className={i < rows.length - 1 ? 'pb-4' : ''}>
+                        <div
+                            className={`text-sm font-semibold ${row.done ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}
+                        >
+                            {row.t}
+                        </div>
+                        <div className="font-mono text-[10px] tracking-wider text-slate-400 dark:text-slate-500">
+                            {row.d}
+                        </div>
+                    </div>
+                </div>
+            ))}
+            <p className="mt-3 text-center font-mono text-[9px] tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                JEJAK AUDIT TERKUNCI PER KEPUTUSAN
+            </p>
+        </div>
+    );
+}
+
+function FeatureVisual({ code }: { code: string }) {
+    switch (code) {
+        case '01':
+            return <DatabaseVisual />;
+        case '02':
+            return <ScanVisual />;
+        case '03':
+            return <TransferVisual />;
+        default:
+            return <DisposalVisual />;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Pipeline connector                                                  */
+/* ------------------------------------------------------------------ */
+
+function FlowConnector({ color }: { color: string }) {
+    return (
+        <>
+            <div
+                className="relative hidden h-6 w-14 shrink-0 self-center md:block"
+                aria-hidden
+            >
+                <span className="dash-line absolute top-1/2 right-0 left-0 h-px -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                <span
+                    className="packet"
+                    style={{
+                        offsetPath: "path('M3 12 L53 12')",
+                        background: color,
+                        boxShadow: `0 0 10px ${color}`,
+                    }}
+                />
+            </div>
+            <div className="relative mx-auto h-9 w-6 md:hidden" aria-hidden>
+                <span className="dash-line-v absolute top-0 bottom-0 left-1/2 w-px -translate-x-1/2 text-slate-400 dark:text-slate-600" />
+                <span
+                    className="packet"
+                    style={{
+                        offsetPath: "path('M12 3 L12 33')",
+                        background: color,
+                        boxShadow: `0 0 10px ${color}`,
+                    }}
+                />
+            </div>
+        </>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Hierarchy explorer                                                  */
+/* ------------------------------------------------------------------ */
+
 function HierarchyExplorer() {
     const [active, setActive] = useState(0);
     const level = HIERARCHY[active];
+    const isLast = active >= HIERARCHY.length - 1;
 
     const drill = () => {
-        if (active < HIERARCHY.length - 1) {
+        if (!isLast) {
             setActive(active + 1);
         }
     };
 
     return (
-        <div className="relative overflow-hidden rounded-[2rem] border border-slate-900/10 bg-white/50 shadow-2xl shadow-[#0B3D6B]/10 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/50">
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-900/10 p-4 sm:p-5 dark:border-white/10">
-                {HIERARCHY.map((lvl, i) => (
-                    <button
-                        key={lvl.id}
-                        onClick={() => setActive(i)}
-                        className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none ${
-                            i === active
-                                ? 'border-transparent text-white shadow-lg'
-                                : 'border-slate-900/10 bg-white/70 text-slate-600 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10'
-                        }`}
-                        style={
-                            i === active ? { background: lvl.color } : undefined
-                        }
-                    >
+        <div className={`${PANEL} overflow-hidden`}>
+            <div className="grid lg:grid-cols-[260px_1fr]">
+                <aside className="border-b border-slate-900/10 p-5 md:p-6 lg:border-r lg:border-b-0 dark:border-white/10">
+                    <div className="font-mono text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
+                        STRUKTUR
+                    </div>
+
+                    <div className="relative mt-4">
                         <span
-                            className="size-1.5 rounded-full"
-                            style={{
-                                background: i === active ? '#fff' : lvl.color,
-                            }}
+                            className="absolute top-4 bottom-4 left-[17px] w-px bg-gradient-to-b from-[#0080FF]/50 via-[#EC4B9E]/40 to-[#20B2AA]/50"
+                            aria-hidden
                         />
-                        {lvl.name}
-                    </button>
-                ))}
-            </div>
+                        <div className="space-y-1.5">
+                            {HIERARCHY.map((lvl, i) => (
+                                <button
+                                    key={lvl.id}
+                                    onClick={() => setActive(i)}
+                                    aria-current={i === active}
+                                    className={`relative flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none ${
+                                        i === active
+                                            ? 'bg-white/90 dark:bg-white/[0.12]'
+                                            : 'hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                                    }`}
+                                    style={
+                                        i === active
+                                            ? {
+                                                  boxShadow: `0 10px 30px -14px ${lvl.color}80, inset 0 0 0 1px ${lvl.color}55`,
+                                              }
+                                            : undefined
+                                    }
+                                >
+                                    <span
+                                        className="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-lg font-mono text-[10px] font-bold text-white"
+                                        style={{ background: lvl.color }}
+                                    >
+                                        L{i + 1}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-sm font-semibold text-slate-800 dark:text-white">
+                                            {lvl.name}
+                                        </span>
+                                        <span
+                                            className="block font-mono text-[10px] font-bold tracking-wider"
+                                            style={{ color: lvl.color }}
+                                        >
+                                            {lvl.code}
+                                        </span>
+                                    </span>
+                                    {i === active && (
+                                        <ChevronRight
+                                            className="size-4 shrink-0"
+                                            style={{ color: lvl.color }}
+                                        />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-            <div key={level.id} className="level-panel p-5 sm:p-7">
-                <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] tracking-wider text-slate-500 uppercase dark:text-slate-400">
-                    {HIERARCHY.slice(0, active + 1).map((lvl, i) => (
-                        <span
-                            key={lvl.id}
-                            className="flex items-center gap-1.5"
-                        >
-                            {i > 0 && (
-                                <span className="text-slate-300 dark:text-slate-600">
-                                    /
+                    <div className="mt-6">
+                        <div className="flex items-center justify-between font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
+                            <span>Kedalaman</span>
+                            <span>L{active + 1}/4</span>
+                        </div>
+                        <div className="mt-2 flex gap-1.5">
+                            {HIERARCHY.map((lvl, i) => (
+                                <span
+                                    key={lvl.id}
+                                    className="h-1.5 flex-1 rounded-full transition-colors duration-300"
+                                    style={{
+                                        background:
+                                            i <= active
+                                                ? lvl.color
+                                                : 'rgba(100,116,139,0.25)',
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </aside>
+
+                <div key={level.id} className="level-in p-6 md:p-8">
+                    <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold tracking-wider uppercase">
+                        {HIERARCHY.slice(0, active + 1).map((lvl, i) => (
+                            <Fragment key={lvl.id}>
+                                {i > 0 && (
+                                    <span className="text-slate-300 dark:text-slate-600">
+                                        ▸
+                                    </span>
+                                )}
+                                <span
+                                    className="rounded-md border px-2 py-1"
+                                    style={{
+                                        borderColor: `${lvl.color}44`,
+                                        color: lvl.color,
+                                        background: `${lvl.color}14`,
+                                    }}
+                                >
+                                    {lvl.code} · {lvl.name}
                                 </span>
-                            )}
-                            <span style={{ color: lvl.color }}>{lvl.name}</span>
-                        </span>
-                    ))}
-                </div>
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                    {level.desc}
-                </p>
+                            </Fragment>
+                        ))}
+                    </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    {level.items.map((item) => (
-                        <button
-                            key={item.code}
-                            onClick={drill}
-                            disabled={active >= HIERARCHY.length - 1}
-                            className="group flex items-center justify-between gap-2 rounded-2xl border border-slate-900/10 bg-white/80 px-4 py-4 text-left shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none disabled:cursor-default disabled:hover:translate-y-0 dark:border-white/10 dark:bg-white/[0.06]"
-                            style={
-                                {
-                                    '--band': level.color,
-                                } as CSSProperties
-                            }
-                        >
-                            <div className="min-w-0">
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        {level.desc}
+                    </p>
+
+                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                        {level.items.map((item) => (
+                            <button
+                                key={item.code}
+                                onClick={drill}
+                                disabled={isLast}
+                                className="h-item group relative overflow-hidden rounded-xl border border-slate-900/10 bg-white/80 p-4 text-left backdrop-blur transition-all duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none disabled:cursor-default disabled:opacity-80 disabled:hover:translate-y-0 dark:border-white/10 dark:bg-white/[0.06]"
+                                style={cssVars({ '--band': level.color })}
+                            >
+                                <span
+                                    className="absolute inset-y-0 left-0 w-[3px]"
+                                    style={{
+                                        background: level.color,
+                                        opacity: 0.75,
+                                    }}
+                                    aria-hidden
+                                />
                                 <div
                                     className="font-mono text-[10px] font-bold tracking-wider"
                                     style={{ color: level.color }}
                                 >
                                     {item.code}
                                 </div>
-                                <div className="mt-0.5 truncate text-sm font-bold text-slate-900 dark:text-white">
+                                <div className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-white">
                                     {item.name}
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {item.count} entitas
+                                <div className="mt-1.5 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        {item.count} entitas
+                                    </span>
+                                    {!isLast && (
+                                        <span
+                                            className="flex items-center gap-0.5 font-mono text-[9px] font-bold tracking-wider opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                                            style={{ color: level.color }}
+                                        >
+                                            DRILL{' '}
+                                            <ChevronRight className="size-3" />
+                                        </span>
+                                    )}
                                 </div>
-                            </div>
-                            {active < HIERARCHY.length - 1 && (
-                                <span
-                                    className="shrink-0 rounded-lg bg-slate-900/5 px-2 py-1 text-[10px] font-bold text-slate-500 transition-all duration-200 group-hover:text-white dark:bg-white/10 dark:text-slate-300"
-                                    style={{
-                                        transitionProperty:
-                                            'background-color,color',
-                                    }}
-                                >
-                                    <span className="group-hover:hidden">
-                                        ▼
-                                    </span>
-                                    <span
-                                        className="hidden group-hover:inline"
-                                        style={{ color: level.color }}
-                                    >
-                                        Drill ↓
-                                    </span>
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                            </button>
+                        ))}
+                    </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-slate-900/10 pt-4 dark:border-white/10">
-                    <span className="font-mono text-[10px] tracking-widest text-slate-500 uppercase dark:text-slate-500">
-                        {active < HIERARCHY.length - 1
-                            ? 'Klik kartu untuk memperdalam'
-                            : 'Tingkat terdalam — entitas aset'}
-                    </span>
-                    <button
-                        onClick={() => setActive(0)}
-                        className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none dark:text-slate-400 dark:hover:text-white"
-                    >
-                        Mulai ulang
-                    </button>
+                    <div className="mt-6 flex items-center justify-between border-t border-slate-900/10 pt-4 dark:border-white/10">
+                        <span className="font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
+                            {isLast
+                                ? 'LEVEL TERDALAM — ENTITAS ASET SESUNGGUHNYA'
+                                : 'KLIK KARTU UNTUK MASUK LEBIH DALAM'}
+                        </span>
+                        <button
+                            onClick={() => setActive(0)}
+                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none dark:text-slate-400 dark:hover:text-white"
+                        >
+                            <RotateCcw className="size-3" />
+                            Mulai ulang
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
+/* ------------------------------------------------------------------ */
+/* Keycard                                                             */
+/* ------------------------------------------------------------------ */
+
+function AccessKeycard() {
+    return (
+        <div className="relative mx-auto w-full max-w-sm">
+            <div
+                className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[#0080FF]/30 via-[#6971ec]/25 to-[#EC4B9E]/25 blur-2xl"
+                aria-hidden
+            />
+            <div className="relative overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-br from-white/75 to-white/40 p-6 backdrop-blur-xl dark:border-white/15 dark:from-white/[0.12] dark:to-white/[0.04]">
+                <span className="keycard-sheen" aria-hidden />
+
+                <div className="flex items-center justify-between">
+                    <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white shadow-lg shadow-[#0080FF]/25">
+                        <Fingerprint className="size-5" />
+                    </span>
+                    <span className="text-right font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                        KARTU AKSES
+                        <br />
+                        SSO KORPORAT
+                    </span>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                    {[
+                        { k: 'PEMEGANG', v: 'anda@korporasi.co.id' },
+                        { k: 'PERAN', v: 'Pengelola Aset' },
+                        { k: 'ORGANISASI', v: 'PT Conto Nusantara' },
+                    ].map((row) => (
+                        <div
+                            key={row.k}
+                            className="flex items-center justify-between border-b border-slate-900/5 pb-2 last:border-0 dark:border-white/5"
+                        >
+                            <span className="font-mono text-[9px] font-bold tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                                {row.k}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                {row.v}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-xl bg-slate-900/95 p-3.5 text-white dark:bg-black/60">
+                    <BarcodeStrip
+                        scale={1.3}
+                        barHeight={20}
+                        withLaser={false}
+                        className="text-white"
+                    />
+                    <span className="font-mono text-[9px] tracking-[0.18em] text-white/40">
+                        ACC-2026-0847
+                    </span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-wider text-emerald-500">
+                        <ShieldCheck className="size-3.5" /> TERENKRIPSI
+                    </span>
+                    <span className="flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-wider text-[#0080FF]">
+                        <Check className="size-3.5" strokeWidth={3} /> TANPA
+                        PASSWORD
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 export default function Welcome() {
     const { auth } = usePage().props as {
@@ -582,33 +1312,49 @@ export default function Welcome() {
     }, []);
 
     const ctaHref = auth?.user ? '/dashboard' : '/auth/redirect';
-    const ctaLabel = auth?.user ? 'Buka Dashboard' : 'Masuk SSO';
+    const ctaLabel = auth?.user ? 'Buka Dashboard' : 'Masuk via SSO';
+
+    const navLinks: [string, string][] = [
+        ['#fitur', 'Fitur'],
+        ['#hirarki', 'Hirarki'],
+        ['#cara-kerja', 'Cara Kerja'],
+        ...(auth?.user
+            ? ([['/organizations', 'Organisasi']] as [string, string][])
+            : []),
+    ];
 
     return (
         <>
-            {/* CONTRACT: OptiAsset Welcome — Canopy Sutra. THESIS: 4-level classification as translucent silk canopy; overlap = parent-child chord. OWN-WORLD: Electric Blue, Neon Purple, Vivid Pink, Teal silk panels over bright glass field. STORY: visitor grasps 4-level classification hierarchy linking every asset. FIRST VIEWPORT: word-roll headline + CTA left; 4-band hierarchy stage with pointer-reactivity right. FORM: surface concept #5 from roll 61e77c09. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md. */}
             <Head title="OptiAsset - Sistem Manajemen Aset" />
-            <div className="relative min-h-[100dvh] overflow-hidden text-slate-900 dark:text-white">
-                <div className="pointer-events-none fixed inset-0 overflow-hidden bg-[#F6F8FD] dark:bg-[#0a0f1e]">
-                    <div className="absolute -top-[20%] -left-[10%] h-[560px] w-[560px] rounded-full bg-[#0080FF]/20 blur-[130px] dark:bg-[#0080FF]/15" />
-                    <div className="absolute top-[12%] right-[-10%] h-[520px] w-[520px] rounded-full bg-[#6971ec]/20 blur-[140px] dark:bg-[#6971ec]/15" />
-                    <div className="absolute bottom-[-15%] left-[28%] h-[480px] w-[480px] rounded-full bg-[#20B2AA]/15 blur-[130px] dark:bg-[#20B2AA]/10" />
-                    <div className="absolute top-[40%] left-[-6%] h-[340px] w-[340px] rounded-full bg-[#EC4B9E]/10 blur-[120px] dark:bg-[#EC4B9E]/10" />
-                    <div className="absolute top-[35%] left-[42%] h-[300px] w-[300px] rounded-full bg-[#6971ec]/10 blur-[110px] dark:bg-[#6971ec]/[0.08]" />
-                    <div className="absolute right-[18%] bottom-[6%] h-[260px] w-[260px] rounded-full bg-[#0080FF]/10 blur-[110px] dark:bg-[#0080FF]/[0.06]" />
+
+            <div className="relative min-h-[100dvh] overflow-x-clip bg-[#F3F6FC] text-slate-900 dark:bg-[#070c18] dark:text-white">
+                {/* Latar aurora + noise */}
+                <div
+                    className="pointer-events-none fixed inset-0 z-0"
+                    aria-hidden
+                >
+                    <div className="blob-drift-a absolute -top-[18%] -left-[8%] h-[560px] w-[560px] rounded-full bg-[#0080FF]/20 blur-[130px] dark:bg-[#0080FF]/15" />
+                    <div className="blob-drift-b absolute top-[14%] right-[-10%] h-[520px] w-[520px] rounded-full bg-[#6971ec]/20 blur-[140px] dark:bg-[#6971ec]/15" />
+                    <div className="absolute bottom-[-14%] left-[26%] h-[480px] w-[480px] rounded-full bg-[#20B2AA]/15 blur-[130px] dark:bg-[#20B2AA]/10" />
+                    <div className="absolute top-[42%] left-[-6%] h-[340px] w-[340px] rounded-full bg-[#EC4B9E]/10 blur-[120px]" />
+                    <div className="dotgrid absolute inset-x-0 top-0 h-[70%] [mask-image:linear-gradient(to_bottom,black,transparent)] opacity-60" />
+                    <div className="noise-layer" />
                 </div>
 
-                <header
-                    className={`sticky top-0 z-40 px-4 transition-all duration-300 md:px-6 ${scrolled ? 'pt-3' : 'pt-5'}`}
-                >
+                {/* Header */}
+                <header className="sticky top-0 z-[100] px-4 transition-all duration-300 md:px-6">
                     <nav
-                        className={`mx-auto flex max-w-6xl items-center justify-between gap-6 rounded-2xl border px-4 py-3 backdrop-blur-2xl transition-all duration-300 ${scrolled ? 'border-slate-900/10 bg-white/80 shadow-lg shadow-[#0B3D6B]/5 dark:border-white/10 dark:bg-[#0a0f1e]/80' : 'border-transparent bg-transparent'}`}
+                        className={`mx-auto mt-3 flex max-w-7xl items-center justify-between gap-6 rounded-xl border px-4 py-3 transition-all duration-300 ${
+                            scrolled
+                                ? 'border-white/60 bg-white/75 shadow-lg shadow-[#0B3D6B]/5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#0a1120]/80'
+                                : 'border-transparent bg-transparent'
+                        }`}
                     >
                         <a
                             href="#"
-                            className="flex items-center gap-2.5 transition-transform hover:scale-105"
+                            className="flex items-center gap-2.5 transition-transform duration-200 hover:scale-[1.03]"
                         >
-                            <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white shadow-md shadow-[#0080FF]/20">
+                            <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white shadow-md shadow-[#0080FF]/25">
                                 <AppLogoIcon className="size-5" />
                             </span>
                             <span className="font-mono text-sm font-bold tracking-tight text-slate-900 dark:text-white">
@@ -616,37 +1362,22 @@ export default function Welcome() {
                             </span>
                         </a>
 
-                        <div className="hidden items-center gap-8 md:flex">
-                            <NavLink href="#fitur">Fitur</NavLink>
-                            <NavLink href="#cara-kerja">Cara Kerja</NavLink>
-                            <NavLink href="#hirarki">Hirarki</NavLink>
-                            {auth?.user && (
-                                <NavLink href="/organizations">
-                                    Organisasi
+                        <div className="hidden items-center gap-6 md:flex">
+                            {navLinks.map(([href, label]) => (
+                                <NavLink key={href} href={href}>
+                                    {label}
                                 </NavLink>
-                            )}
+                            ))}
                         </div>
 
                         <div className="hidden items-center gap-3 md:flex">
                             <ThemeToggle />
                             <a
                                 href={ctaHref}
-                                className="group relative inline-flex items-center gap-2 rounded-xl bg-[#0080FF] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/40 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none active:translate-y-0 active:scale-95"
+                                className="group inline-flex items-center gap-2 rounded-lg bg-[#0080FF] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#006fdd] focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:translate-y-0 active:scale-95"
                             >
-                                {ctaLabel}
-                                <svg
-                                    className="size-4 transition-transform duration-300 group-hover:translate-x-1"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={2}
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                    />
-                                </svg>
+                                {auth?.user ? 'Dashboard' : 'Masuk'}
+                                <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                             </a>
                         </div>
 
@@ -654,42 +1385,23 @@ export default function Welcome() {
                             <ThemeToggle />
                             <button
                                 onClick={() => setMobileOpen(!mobileOpen)}
-                                className="flex size-10 items-center justify-center rounded-xl border border-slate-900/10 bg-white/70 text-slate-700 shadow-sm backdrop-blur-md focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                className="flex size-10 items-center justify-center rounded-lg border border-slate-900/10 bg-white/60 text-slate-700 backdrop-blur-md focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
                                 aria-label="Buka menu"
                                 aria-expanded={mobileOpen}
                             >
-                                <svg
-                                    className="size-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={2}
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d={
-                                            mobileOpen
-                                                ? 'M6 18 18 6M6 6l12 12'
-                                                : 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'
-                                        }
-                                    />
-                                </svg>
+                                {mobileOpen ? (
+                                    <X className="size-5" />
+                                ) : (
+                                    <Menu className="size-5" />
+                                )}
                             </button>
                         </div>
                     </nav>
 
                     {mobileOpen && (
-                        <div className="mx-auto mt-2 max-w-6xl overflow-hidden rounded-2xl border border-slate-900/10 bg-white/95 shadow-xl backdrop-blur-2xl md:hidden dark:border-white/10 dark:bg-[#0a0f1e]/95">
+                        <div className="level-in mx-auto mt-2 max-w-7xl overflow-hidden rounded-xl border border-white/60 bg-white/90 shadow-xl backdrop-blur-2xl md:hidden dark:border-white/10 dark:bg-[#0a1120]/95">
                             <div className="flex flex-col p-3">
-                                {[
-                                    ['#fitur', 'Fitur'],
-                                    ['#cara-kerja', 'Cara Kerja'],
-                                    ['#hirarki', 'Hirarki'],
-                                    ...(auth?.user
-                                        ? [['/organizations', 'Organisasi']]
-                                        : []),
-                                ].map(([href, label]) => (
+                                {navLinks.map(([href, label]) => (
                                     <a
                                         key={href}
                                         href={href}
@@ -701,7 +1413,7 @@ export default function Welcome() {
                                 ))}
                                 <a
                                     href={ctaHref}
-                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0080FF] px-4 py-3 text-sm font-semibold text-white shadow-md active:scale-95"
+                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0080FF] px-4 py-3 text-sm font-semibold text-white shadow-md active:scale-95"
                                 >
                                     {ctaLabel}
                                 </a>
@@ -710,212 +1422,258 @@ export default function Welcome() {
                     )}
                 </header>
 
-                <main className="relative z-10 mx-auto max-w-6xl px-4 md:px-8">
-                    <section className="flex flex-col items-center gap-14 pt-14 pb-24 md:pt-20 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:pb-36">
-                        <div className="flex max-w-xl flex-col items-start text-left">
+                <main className="relative z-10 mx-auto max-w-7xl px-4 md:px-8">
+                    {/* HERO */}
+                    <section className="grid items-center gap-14 pt-12 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:pt-20 lg:pb-24">
+                        <div className="flex flex-col items-start">
                             <Reveal>
-                                <h1 className="text-4xl leading-[1.05] font-extrabold tracking-tight md:text-6xl lg:text-[4.25rem] dark:text-white">
-                                    <span className="relative inline-block h-[1.05em] overflow-hidden align-bottom">
-                                        <span className="word-roll flex flex-col">
-                                            {[...WORDS, WORDS[0]].map(
-                                                (w, i) => (
-                                                    <span
-                                                        key={`${w.word}-${i}`}
-                                                        className="block leading-[1.05]"
-                                                        style={{
-                                                            color: w.color,
-                                                        }}
-                                                    >
-                                                        {w.word}
-                                                    </span>
-                                                ),
-                                            )}
-                                        </span>
-                                    </span>{' '}
-                                    setiap aset.
+                                <Eyebrow label="SISTEM MANAJEMEN ASET INTERNAL" />
+                            </Reveal>
+
+                            <Reveal delay={80}>
+                                <h1 className="mt-6 text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-5xl lg:text-[3.9rem]">
+                                    <ScrambleWord words={WORDS} /> setiap aset.
                                     <br />
-                                    <span className="font-semibold text-slate-400 dark:text-slate-500">
-                                        Catatan lengkap
-                                    </span>{' '}
-                                    terkelola.
+                                    <span className="font-bold text-slate-400 dark:text-slate-500">
+                                        Kendali penuh sampai tuntas.
+                                    </span>
                                 </h1>
                             </Reveal>
-                            <Reveal delay={80}>
-                                <p className="mt-7 max-w-lg text-lg leading-relaxed text-slate-600 dark:text-slate-400">
+
+                            <Reveal delay={160}>
+                                <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-600 dark:text-slate-400">
                                     OptiAsset menyatukan data, lokasi, dan
-                                    riwayat setiap aset dalam satu single source
-                                    of truth. Pindai, temukan, kelola — secepat
-                                    kilat.
+                                    riwayat seluruh aset organisasi dalam satu
+                                    sumber kebenaran — tercatat otomatis sejak
+                                    pengadaan hingga penghapusan.
                                 </p>
                             </Reveal>
-                            <Reveal delay={160}>
-                                <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
+
+                            <Reveal delay={240}>
+                                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <a
                                         href={ctaHref}
-                                        className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#0080FF] px-7 py-4 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/40 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none active:translate-y-0 active:scale-95"
+                                        className="group inline-flex items-center justify-center gap-2.5 rounded-lg bg-[#0080FF] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#0080FF]/30 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#006fdd] focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:translate-y-0 active:scale-95"
                                     >
                                         {auth?.user
                                             ? 'Buka Dashboard'
-                                            : 'Mulai Sekarang'}
-                                        <svg
-                                            className="size-4 transition-transform duration-300 group-hover:translate-x-1"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2.5}
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                            />
-                                        </svg>
+                                            : 'Masuk via SSO'}
+                                        <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
                                     </a>
                                     <a
                                         href="#fitur"
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-900/10 bg-white/40 px-7 py-3.5 text-sm font-medium text-slate-700 shadow-sm backdrop-blur-xl transition-all duration-300 hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-900/15 bg-white/50 px-7 py-3.5 text-sm font-semibold text-slate-700 backdrop-blur-xl transition-all duration-200 hover:bg-white/85 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:scale-95 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
                                     >
-                                        Lihat Kemampuan
+                                        Jelajahi Fitur
                                     </a>
                                 </div>
                             </Reveal>
-                            <Reveal delay={240}>
-                                <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3 font-mono text-[11px] tracking-wider text-slate-500 uppercase dark:text-slate-400">
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="size-1.5 rounded-full bg-emerald-500" />{' '}
-                                        SSO korporat
-                                    </span>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="size-1.5 rounded-full bg-[#0080FF]" />{' '}
-                                        Multi-dept
-                                    </span>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="size-1.5 rounded-full bg-amber-500" />{' '}
-                                        Real-time
-                                    </span>
+
+                            <Reveal delay={320}>
+                                <div className="mt-9 flex flex-wrap gap-2.5">
+                                    {[
+                                        {
+                                            icon: ShieldCheck,
+                                            label: 'SSO KORPORAT',
+                                            color: BLUE,
+                                        },
+                                        {
+                                            icon: Building2,
+                                            label: 'MULTI-DEPARTEMEN',
+                                            color: IRIS,
+                                        },
+                                        {
+                                            icon: History,
+                                            label: 'JEJAK AUDIT PENUH',
+                                            color: TEAL,
+                                        },
+                                    ].map((chip) => {
+                                        const ChipIcon = chip.icon;
+
+                                        return (
+                                            <span
+                                                key={chip.label}
+                                                className="flex items-center gap-2 rounded-lg border border-white/60 bg-white/55 px-3 py-2 font-mono text-[10px] font-bold tracking-[0.14em] text-slate-500 backdrop-blur-md dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
+                                            >
+                                                <ChipIcon
+                                                    className="size-3.5"
+                                                    style={{
+                                                        color: chip.color,
+                                                    }}
+                                                />
+                                                {chip.label}
+                                            </span>
+                                        );
+                                    })}
                                 </div>
                             </Reveal>
                         </div>
 
-                        <Reveal delay={120} className="w-full max-w-lg">
-                            <Canopy />
+                        <Reveal delay={200}>
+                            <ScannerDeck />
                         </Reveal>
                     </section>
 
-                    <div className="overflow-hidden rounded-2xl border border-slate-900/10 bg-white/40 p-1.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
-                        <div className="marquee-track flex w-max items-center rounded-xl px-4 py-3 font-mono text-[11px] tracking-wider whitespace-nowrap uppercase">
-                            {Array.from({ length: 2 }).map((_, dup) => (
-                                <span
-                                    key={dup}
-                                    className="flex items-center"
-                                    aria-hidden={dup === 1}
-                                >
-                                    {scanLog.map((row) => (
-                                        <span
-                                            key={row.id}
-                                            className="flex items-center gap-4 pr-12"
-                                        >
-                                            <span className="text-emerald-500">
-                                                ●
-                                            </span>
-                                            <span className="font-semibold text-slate-900 dark:text-white">
-                                                {row.name}
-                                            </span>
-                                            <span className="text-[#0080FF] dark:text-[#6971ec]">
-                                                {row.id}
-                                            </span>
-                                            <span className="text-slate-400 dark:text-slate-600">
-                                                /
-                                            </span>
-                                            <span className="text-slate-500 dark:text-slate-400">
-                                                {row.loc}
-                                            </span>
-                                        </span>
-                                    ))}
-                                </span>
-                            ))}
+                    {/* TICKER */}
+                    <Reveal>
+                        <div className="marquee-mask overflow-hidden rounded-xl border border-white/60 bg-white/45 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
+                            <div className="marquee-track flex w-max items-center py-3 font-mono text-[11px] tracking-wider uppercase">
+                                {[0, 1].map((dup) => (
+                                    <div
+                                        key={dup}
+                                        className="flex items-center"
+                                        aria-hidden={dup === 1}
+                                    >
+                                        {[...scanLog, ...scanLog].map(
+                                            (row, ri) => (
+                                                <span
+                                                    key={`${dup}-${row.id}-${ri}`}
+                                                    className="flex items-center gap-3 px-6"
+                                                >
+                                                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                        {row.name}
+                                                    </span>
+                                                    <span className="text-[#0080FF]">
+                                                        {row.id}
+                                                    </span>
+                                                    <span className="text-slate-400">
+                                                        ·
+                                                    </span>
+                                                    <span className="text-slate-500 dark:text-slate-400">
+                                                        {row.loc}
+                                                    </span>
+                                                    <span className="pl-5 text-slate-300 dark:text-slate-700">
+                                                        /
+                                                    </span>
+                                                </span>
+                                            ),
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </Reveal>
 
-                    <section id="fitur" className="scroll-mt-32 py-24 md:py-36">
-                        <div className="mb-16 flex max-w-2xl flex-col items-start">
-                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl lg:text-[3.4rem] dark:text-white">
-                                Siklus penuh aset,
-                                <br />
-                                <span className="text-slate-400 dark:text-slate-500">
-                                    terkontrol sempurna.
-                                </span>
-                            </h2>
-                            <p className="mt-5 max-w-lg text-lg text-slate-600 dark:text-slate-400">
-                                Dari pengada hingga penghapusan — setiap langkah
-                                tercatat otomatis, setiap keputusan tervalidasi.
-                            </p>
+                    {/* STATISTIK */}
+                    <Reveal delay={80}>
+                        <div className="mt-6 overflow-hidden rounded-2xl border border-white/60 bg-white/50 shadow-[0_10px_44px_-16px_rgba(15,35,80,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
+                            <div className="grid grid-cols-2 gap-px bg-slate-900/10 lg:grid-cols-4 dark:bg-white/10">
+                                {STATS.map((stat) => (
+                                    <StatCell key={stat.label} {...stat} />
+                                ))}
+                            </div>
                         </div>
+                    </Reveal>
 
-                        <div className="space-y-5">
+                    {/* FITUR — zig-zag */}
+                    <section id="fitur" className="section-gap scroll-mt-28">
+                        <Reveal>
+                            <div className="mb-14 max-w-2xl">
+                                <Eyebrow label="KEMAMPUAN INTI" />
+                                <h2 className="mt-5 text-3xl font-extrabold tracking-tight md:text-[2.75rem] md:leading-[1.08]">
+                                    Siklus aset dikawal
+                                    <br />
+                                    <span className="text-slate-400 dark:text-slate-500">
+                                        dari ujung ke ujung.
+                                    </span>
+                                </h2>
+                                <p className="mt-5 max-w-lg text-lg text-slate-600 dark:text-slate-400">
+                                    Empat modul bekerja sebagai satu alur — data
+                                    terpusat, pemindaian cepat, perpindahan
+                                    tercatat, dan penghapusan yang bisa
+                                    dipertanggungjawabkan.
+                                </p>
+                            </div>
+                        </Reveal>
+
+                        <div className="space-y-6">
                             {features.map((feature, i) => {
                                 const Icon = feature.icon;
+                                const flipped = i % 2 === 1;
 
                                 return (
-                                    <Reveal key={feature.code} delay={i * 60}>
+                                    <Reveal key={feature.code} delay={80}>
                                         <article
-                                            className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-900/10 bg-white/50 p-7 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#0B0B6B]/10 md:p-9 lg:flex-row lg:items-center lg:gap-10 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
-                                            style={
-                                                {
-                                                    '--band': feature.color,
-                                                } as CSSProperties
-                                            }
+                                            className={`${PANEL} grid items-center gap-8 p-7 md:p-10 lg:grid-cols-2 lg:gap-14`}
                                         >
                                             <div
-                                                className="pointer-events-none absolute inset-y-0 left-0 w-1 opacity-70 transition-opacity duration-300 group-hover:opacity-100"
-                                                style={{
-                                                    background: `linear-gradient(to bottom, ${feature.color}, ${feature.color}66)`,
-                                                }}
-                                            />
-                                            <div className="flex items-center gap-5 lg:w-1/2 lg:pl-4">
+                                                className={`relative ${flipped ? 'lg:order-2' : ''}`}
+                                            >
                                                 <span
-                                                    className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg"
-                                                    style={{
-                                                        background: `linear-gradient(135deg, ${feature.color}, ${feature.color}99)`,
-                                                    }}
+                                                    className="pointer-events-none absolute -top-12 -left-1 font-mono text-[6.5rem] leading-none font-bold text-slate-900/[0.05] select-none dark:text-white/[0.05]"
+                                                    aria-hidden
                                                 >
-                                                    <Icon className="size-6" />
+                                                    {feature.code}
                                                 </span>
-                                                <div>
-                                                    <div
-                                                        className="font-mono text-[10px] font-bold tracking-widest uppercase"
+
+                                                <div className="flex items-center gap-3">
+                                                    <span
+                                                        className="flex size-11 items-center justify-center rounded-xl text-white shadow-lg"
+                                                        style={{
+                                                            background: `linear-gradient(135deg, ${feature.color}, ${feature.color}99)`,
+                                                            boxShadow: `0 10px 24px -8px ${feature.color}66`,
+                                                        }}
+                                                    >
+                                                        <Icon className="size-5" />
+                                                    </span>
+                                                    <span
+                                                        className="font-mono text-[10px] font-bold tracking-[0.18em] uppercase"
                                                         style={{
                                                             color: feature.color,
                                                         }}
                                                     >
-                                                        Tahap {feature.code}
-                                                    </div>
-                                                    <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
-                                                        {feature.title}
-                                                    </h3>
+                                                        MODUL {feature.code}
+                                                    </span>
                                                 </div>
-                                            </div>
-                                            <div className="mt-5 lg:mt-0 lg:w-1/2 lg:pr-4">
-                                                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+
+                                                <h3 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                                    {feature.title}
+                                                </h3>
+                                                <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-400">
                                                     {feature.description}
                                                 </p>
-                                                <ul className="mt-5 flex flex-wrap gap-2">
+
+                                                <ul className="mt-6 space-y-2.5">
                                                     {feature.ops.map((op) => (
                                                         <li
                                                             key={op}
-                                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/70 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur transition-all duration-200 group-hover:border-transparent dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300"
+                                                            className="flex items-start gap-3 text-sm font-medium text-slate-700 dark:text-slate-300"
                                                         >
                                                             <span
-                                                                className="size-1.5 rounded-full"
+                                                                className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md"
                                                                 style={{
-                                                                    background:
-                                                                        feature.color,
+                                                                    background: `${feature.color}1a`,
+                                                                    color: feature.color,
                                                                 }}
-                                                            />
+                                                            >
+                                                                <Check
+                                                                    className="size-3"
+                                                                    strokeWidth={
+                                                                        3
+                                                                    }
+                                                                />
+                                                            </span>
                                                             {op}
                                                         </li>
                                                     ))}
                                                 </ul>
+                                            </div>
+
+                                            <div
+                                                className={`relative ${flipped ? 'lg:order-1' : ''}`}
+                                            >
+                                                <div className="relative flex min-h-[260px] items-center justify-center overflow-hidden rounded-xl border border-white/60 bg-white/40 p-6 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
+                                                    <div
+                                                        className="dotgrid absolute inset-0 opacity-50"
+                                                        aria-hidden
+                                                    />
+                                                    <div className="relative w-full">
+                                                        <FeatureVisual
+                                                            code={feature.code}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </article>
                                     </Reveal>
@@ -924,173 +1682,204 @@ export default function Welcome() {
                         </div>
                     </section>
 
+                    {/* HIRARKI */}
                     <section
                         id="hirarki"
-                        className="scroll-mt-32 pb-24 md:pb-32"
+                        className="section-gap scroll-mt-28 !pt-0"
                     >
-                        <div className="mb-14 flex flex-col items-start">
-                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl lg:text-[3.4rem] dark:text-white">
-                                Empat lapis,
-                                <br />
-                                <span className="text-slate-400 dark:text-slate-500">
-                                    satu kanopi hirarki.
-                                </span>
-                            </h2>
-                            <p className="mt-5 max-w-lg text-lg text-slate-600 dark:text-slate-400">
-                                Golongan → Kategori → Cluster → Sub Cluster.
-                                Jelajahi sendiri — setiap lapis menautkan aset
-                                ke keputusan.
-                            </p>
-                        </div>
                         <Reveal>
+                            <div className="mb-12 max-w-2xl">
+                                <Eyebrow
+                                    label="STRUKTUR KLASIFIKASI"
+                                    color={IRIS}
+                                />
+                                <h2 className="mt-5 text-3xl font-extrabold tracking-tight md:text-[2.75rem] md:leading-[1.08]">
+                                    Empat level,
+                                    <br />
+                                    <span className="text-slate-400 dark:text-slate-500">
+                                        satu rantai keputusan.
+                                    </span>
+                                </h2>
+                                <p className="mt-5 max-w-lg text-lg text-slate-600 dark:text-slate-400">
+                                    Setiap aset menempati satu titik pasti:
+                                    Golongan ▸ Kategori ▸ Cluster ▸ Sub Cluster.
+                                    Jelajahi contoh datanya — klik untuk masuk
+                                    lebih dalam.
+                                </p>
+                            </div>
+                        </Reveal>
+                        <Reveal delay={120}>
                             <HierarchyExplorer />
                         </Reveal>
                     </section>
 
+                    {/* CARA KERJA */}
                     <section
                         id="cara-kerja"
-                        className="scroll-mt-32 pb-24 md:pb-32"
+                        className="section-gap scroll-mt-28 !pt-0"
                     >
-                        <div className="mb-14 flex flex-col items-start">
-                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl dark:text-white">
-                                Tiga langkah mudah.
-                            </h2>
-                            <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">
-                                Alur kerja yang intuitif untuk semua peran.
-                            </p>
-                        </div>
-
-                        <div className="relative">
-                            <svg
-                                className="pointer-events-none absolute top-8 left-0 hidden h-8 w-full md:block"
-                                viewBox="0 0 1200 32"
-                                fill="none"
-                                preserveAspectRatio="none"
-                                aria-hidden
-                            >
-                                <path
-                                    className="path-line"
-                                    d="M 0 16 H 400 Q 460 4 520 16 H 680 Q 740 28 800 16 H 1200"
-                                    stroke="url(#pathGrad)"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                />
-                                <defs>
-                                    <linearGradient
-                                        id="pathGrad"
-                                        x1="0"
-                                        y1="0"
-                                        x2="1200"
-                                        y2="0"
-                                        gradientUnits="userSpaceOnUse"
-                                    >
-                                        <stop stopColor="#20B2AA" />
-                                        <stop
-                                            offset="0.5"
-                                            stopColor="#0080FF"
-                                        />
-                                        <stop offset="1" stopColor="#6971ec" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-
-                            <div className="relative grid gap-6 md:grid-cols-3 md:gap-4">
-                                {steps.map((step, i) => (
-                                    <Reveal key={step.title} delay={i * 120}>
-                                        <div className="group relative rounded-3xl border border-slate-900/10 bg-white/45 p-8 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.04]">
-                                            <div
-                                                className="mb-6 flex size-14 items-center justify-center rounded-2xl text-2xl font-black text-white shadow-lg"
-                                                style={{
-                                                    background: `linear-gradient(135deg, ${step.color}, ${step.color}99)`,
-                                                }}
-                                            >
-                                                {i + 1}
-                                            </div>
-                                            <h3
-                                                className="text-xl font-bold text-slate-900 dark:text-white"
-                                                style={{ color: 'inherit' }}
-                                            >
-                                                {step.title}
-                                            </h3>
-                                            <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                                {step.description}
-                                            </p>
-                                        </div>
-                                    </Reveal>
-                                ))}
+                        <Reveal>
+                            <div className="mb-12 max-w-2xl">
+                                <Eyebrow label="ALUR KERJA" color={TEAL} />
+                                <h2 className="mt-5 text-3xl font-extrabold tracking-tight md:text-[2.75rem] md:leading-[1.08]">
+                                    Dari lapangan ke laporan,
+                                    <br />
+                                    <span className="text-slate-400 dark:text-slate-500">
+                                        cukup tiga langkah.
+                                    </span>
+                                </h2>
                             </div>
-                        </div>
+                        </Reveal>
+
+                        <Reveal delay={120}>
+                            <div
+                                className={`${PANEL} relative overflow-hidden p-7 md:p-10`}
+                            >
+                                <div
+                                    className="dotgrid absolute inset-0 opacity-40"
+                                    aria-hidden
+                                />
+                                <div className="relative flex flex-col md:flex-row md:items-stretch">
+                                    {steps.map((step, i) => {
+                                        const StepIcon = step.icon;
+
+                                        return (
+                                            <Fragment key={step.title}>
+                                                {i > 0 && (
+                                                    <FlowConnector
+                                                        color={step.color}
+                                                    />
+                                                )}
+                                                <div
+                                                    className={`${CARD} relative flex-1 p-6 transition-transform duration-200 hover:-translate-y-1`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span
+                                                            className="flex size-11 items-center justify-center rounded-xl text-white shadow-lg"
+                                                            style={{
+                                                                background: `linear-gradient(135deg, ${step.color}, ${step.color}99)`,
+                                                                boxShadow: `0 8px 20px -8px ${step.color}66`,
+                                                            }}
+                                                        >
+                                                            <StepIcon className="size-5" />
+                                                        </span>
+                                                        <span
+                                                            className="font-mono text-[9px] font-bold tracking-[0.18em]"
+                                                            style={{
+                                                                color: step.color,
+                                                            }}
+                                                        >
+                                                            {step.tag}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="mt-5 text-lg font-bold text-slate-900 dark:text-white">
+                                                        {step.title}
+                                                    </h3>
+                                                    <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                                        {step.description}
+                                                    </p>
+                                                </div>
+                                            </Fragment>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </Reveal>
                     </section>
 
-                    <section className="pb-24 md:pb-36">
+                    {/* CTA */}
+                    <section className="section-gap !pt-0 pb-20">
                         <Reveal>
-                            <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-900/10 bg-white/40 px-8 py-20 text-center shadow-2xl shadow-[#0B0B3B]/10 backdrop-blur-2xl md:px-16 dark:border-white/10 dark:bg-white/[0.04]">
-                                <div className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-[#0080FF]/20 blur-[100px]" />
-                                <div className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-[#6971ec]/20 blur-[100px]" />
-                                <div className="pointer-events-none absolute top-1/2 left-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#EC4B9E]/10 blur-[90px]" />
-                                <div className="relative z-10">
-                                    <h2 className="mx-auto max-w-2xl text-3xl leading-tight font-extrabold tracking-tight md:text-5xl dark:text-white">
-                                        Kendalikan aset Anda hari ini.
-                                    </h2>
-                                    <p className="mx-auto mt-6 max-w-xl text-lg text-slate-600 dark:text-slate-400">
-                                        Gunakan akun SSO korporat Anda untuk
-                                        masuk dan mulai mengelola ribuan aset
-                                        dalam hitungan menit.
-                                    </p>
-                                    <a
-                                        href={ctaHref}
-                                        className="group mt-10 inline-flex items-center gap-2.5 rounded-2xl bg-[#0080FF] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[#0080FF]/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0b6fd4] hover:shadow-[#0080FF]/45 focus-visible:ring-2 focus-visible:ring-[#0080FF]/60 focus-visible:outline-none active:translate-y-0 active:scale-95"
-                                    >
-                                        {auth?.user
-                                            ? 'Lanjutkan ke Dashboard'
-                                            : 'Masuk via SSO Sekarang'}
-                                        <svg
-                                            className="size-5 transition-transform duration-300 group-hover:translate-x-1"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2.5}
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                            />
-                                        </svg>
-                                    </a>
+                            <div
+                                className={`${PANEL} relative overflow-hidden`}
+                            >
+                                <div
+                                    className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-[#0080FF]/20 blur-[100px]"
+                                    aria-hidden
+                                />
+                                <div
+                                    className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-[#6971ec]/20 blur-[100px]"
+                                    aria-hidden
+                                />
+
+                                <div className="relative grid items-center gap-12 p-8 md:p-14 lg:grid-cols-[1.1fr_0.9fr]">
+                                    <div>
+                                        <Eyebrow
+                                            label="AKSES INSTAN"
+                                            color={PINK}
+                                        />
+                                        <h2 className="mt-5 text-3xl leading-tight font-extrabold tracking-tight md:text-[2.75rem]">
+                                            Satu pintu menuju
+                                            <br />
+                                            <span className="text-slate-400 dark:text-slate-500">
+                                                seluruh aset Anda.
+                                            </span>
+                                        </h2>
+                                        <p className="mt-5 max-w-md text-lg text-slate-600 dark:text-slate-400">
+                                            Gunakan akun SSO korporat Anda —
+                                            tanpa password tambahan — dan mulai
+                                            kelola ribuan aset dalam hitungan
+                                            menit.
+                                        </p>
+                                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                                            <a
+                                                href={ctaHref}
+                                                className="group inline-flex items-center justify-center gap-2.5 rounded-lg bg-[#0080FF] px-7 py-4 text-sm font-semibold text-white shadow-xl shadow-[#0080FF]/30 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#006fdd] focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:translate-y-0 active:scale-95"
+                                            >
+                                                {auth?.user
+                                                    ? 'Lanjutkan ke Dashboard'
+                                                    : 'Masuk via SSO Sekarang'}
+                                                <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
+                                            </a>
+                                            <a
+                                                href="#hirarki"
+                                                className="inline-flex items-center justify-center rounded-lg border border-slate-900/15 bg-white/50 px-7 py-4 text-sm font-semibold text-slate-700 backdrop-blur-xl transition-all duration-200 hover:bg-white/85 focus-visible:ring-2 focus-visible:ring-[#0080FF]/50 focus-visible:outline-none active:scale-95 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                                            >
+                                                Lihat Hirarki
+                                            </a>
+                                        </div>
+                                        <p className="mt-6 font-mono text-[10px] font-bold tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                                            SSO KORPORAT · TANPA PASSWORD ·
+                                            JEJAK AUDIT
+                                        </p>
+                                    </div>
+
+                                    <AccessKeycard />
                                 </div>
                             </div>
                         </Reveal>
                     </section>
                 </main>
 
-                <footer className="relative z-10 border-t border-slate-900/10 bg-white/30 px-6 py-14 backdrop-blur-xl md:px-8 dark:border-white/[0.06] dark:bg-black/20">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr]">
+                {/* FOOTER */}
+                <footer className="relative z-10 border-t border-slate-900/10 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-black/20">
+                    <div className="mx-auto max-w-7xl px-6 py-14 md:px-8">
+                        <div className="grid gap-12 md:grid-cols-[1.7fr_1fr_1fr_1.3fr]">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white">
+                                    <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#0080FF] to-[#6971ec] text-white">
                                         <AppLogoIcon className="size-5" />
                                     </span>
                                     <span className="font-mono text-base font-bold text-slate-900 dark:text-white">
                                         OptiAsset
                                     </span>
                                 </div>
-                                <p className="mt-6 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                                    Sistem manajemen aset internal canggih untuk
-                                    organisasi modern. Tersentral, jejak penuh,
-                                    integrasi aman.
+                                <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                    Sistem manajemen aset internal untuk
+                                    organisasi modern: terpusat, tercatat penuh,
+                                    dan aman lewat SSO korporat.
                                 </p>
                             </div>
+
                             <div>
-                                <h4 className="font-mono text-xs font-bold tracking-widest text-slate-900 uppercase dark:text-white">
+                                <h4 className="font-mono text-[11px] font-bold tracking-[0.18em] text-slate-900 uppercase dark:text-white">
                                     Navigasi
                                 </h4>
-                                <ul className="mt-6 space-y-3">
+                                <ul className="mt-5 space-y-3">
                                     {[
                                         ['#fitur', 'Fitur Utama'],
-                                        ['#cara-kerja', 'Cara Kerja'],
                                         ['#hirarki', 'Hirarki'],
+                                        ['#cara-kerja', 'Cara Kerja'],
                                         ...(auth?.user
                                             ? [['/organizations', 'Organisasi']]
                                             : []),
@@ -1106,11 +1895,12 @@ export default function Welcome() {
                                     ))}
                                 </ul>
                             </div>
+
                             <div>
-                                <h4 className="font-mono text-xs font-bold tracking-widest text-slate-900 uppercase dark:text-white">
+                                <h4 className="font-mono text-[11px] font-bold tracking-[0.18em] text-slate-900 uppercase dark:text-white">
                                     Akses
                                 </h4>
-                                <ul className="mt-6 space-y-3">
+                                <ul className="mt-5 space-y-3">
                                     <li>
                                         <a
                                             href={ctaHref}
@@ -1129,12 +1919,32 @@ export default function Welcome() {
                                     </li>
                                 </ul>
                             </div>
+
+                            <div className={`${CARD} h-fit p-5`}>
+                                <div className="flex items-center gap-2 font-mono text-[10px] font-bold tracking-[0.16em] text-emerald-500">
+                                    <span className="pulse-dot size-1.5 rounded-full bg-emerald-500" />
+                                    SEMUA LAYANAN NORMAL
+                                </div>
+                                <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                    <span>Uptime 30 hari</span>
+                                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                                        99,98%
+                                    </span>
+                                </div>
+                                <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                    <span>Versi</span>
+                                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                                        2026.08
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="mt-12 flex flex-col items-center justify-between border-t border-slate-900/10 pt-8 sm:flex-row dark:border-white/10">
+
+                        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-900/10 pt-8 sm:flex-row dark:border-white/10">
                             <span className="text-sm text-slate-500 dark:text-slate-500">
                                 © {new Date().getFullYear()} OptiAsset Inc.
                             </span>
-                            <span className="mt-2 text-sm text-slate-500 sm:mt-0 dark:text-slate-500">
+                            <span className="font-mono text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                                 Internal Asset Management System
                             </span>
                         </div>
@@ -1145,73 +1955,71 @@ export default function Welcome() {
             <style
                 dangerouslySetInnerHTML={{
                     __html: `
-                    ::selection { background: rgba(0, 128, 255, 0.25); }
-                    * { scrollbar-width: thin; scrollbar-color: rgba(0, 128, 255, 0.4) transparent; }
+                    @import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/latin-400.css');
+                    @import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/latin-700.css');
 
-                    @keyframes scanSweep {
-                        0%, 100% { transform: translateX(0); opacity: 0; }
-                        15% { opacity: 1; }
-                        50% { transform: translateX(118px); opacity: 1; }
-                        85% { opacity: 1; }
-                        100% { transform: translateX(0); opacity: 0; }
-                    }
-                    .scan-laser { animation: scanSweep 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+                    ::selection { background: rgba(0, 128, 255, 0.22); }
+                    * { scrollbar-width: thin; scrollbar-color: rgba(0, 128, 255, 0.35) transparent; }
+                    html { scroll-behavior: smooth; }
 
-                    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-                    .marquee-track { animation: marquee 30s linear infinite; }
+                    .font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; }
 
-                    @keyframes wordRoll {
-                        0%, 16% { transform: translateY(0); }
-                        20%, 36% { transform: translateY(-20%); }
-                        40%, 56% { transform: translateY(-40%); }
-                        60%, 76% { transform: translateY(-60%); }
-                        80%, 96% { transform: translateY(-80%); }
-                        100% { transform: translateY(-80%); }
-                    }
-                    .word-roll { animation: wordRoll 8s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+                    .section-gap { padding-block: clamp(4rem, 7vw, 7.5rem); }
 
-                    .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+                    .noise-layer { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 180px 180px; opacity: .045; mix-blend-mode: multiply; pointer-events: none; }
+                    .dark .noise-layer { opacity: .08; mix-blend-mode: screen; }
+
+                    .dotgrid { background-image: radial-gradient(rgba(15, 23, 42, .12) 1px, transparent 1.4px); background-size: 18px 18px; }
+                    .dark .dotgrid { background-image: radial-gradient(rgba(255, 255, 255, .12) 1px, transparent 1.4px); }
+
+                    .blob-drift-a { animation: blobDriftA 22s ease-in-out infinite alternate; }
+                    .blob-drift-b { animation: blobDriftB 26s ease-in-out infinite alternate; }
+                    @keyframes blobDriftA { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(60px, 40px, 0) scale(1.08); } }
+                    @keyframes blobDriftB { from { transform: translate3d(0, 0, 0) scale(1.05); } to { transform: translate3d(-50px, -30px, 0) scale(.96); } }
+
+                    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .42s ease-out, transform .42s cubic-bezier(.22, 1, .36, 1); }
                     .reveal.is-in { opacity: 1; transform: none; }
 
-                    .canopy-band { transform: rotate(var(--tilt)); }
-                    @keyframes silkSway {
-                        from { transform: rotate(-1.2deg) translateY(0); }
-                        to { transform: rotate(1.2deg) translateY(9px); }
-                    }
-                    .canopy-sway { animation: silkSway var(--sway) ease-in-out infinite alternate; will-change: transform; }
-                    .canopy-para {
-                        transform: translate(calc(var(--px, 0) * var(--depth)), calc(var(--py, 0) * var(--depth)));
-                        transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-                        will-change: transform;
-                    }
-                    .canopy-glass {
-                        transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                            box-shadow 0.35s, border-color 0.35s, background-color 0.35s;
-                    }
-                    .canopy-band:hover .canopy-glass {
-                        transform: translateY(-6px) scale(1.02);
-                        box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.25);
-                        border-color: color-mix(in srgb, var(--band) 50%, transparent);
-                    }
-                    .chord-badge { opacity: 0; transform: translateY(4px); transition: opacity 0.25s, transform 0.25s; }
-                    .canopy-band:hover .chord-badge { opacity: 1; transform: none; }
+                    .marquee-mask { mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); }
+                    @keyframes marqueeMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+                    .marquee-track { animation: marqueeMove 36s linear infinite; }
 
-                    .level-panel { animation: levelIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-                    @keyframes levelIn {
-                        from { opacity: 0; transform: translateY(10px); }
-                        to { opacity: 1; transform: none; }
-                    }
+                    .laser { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; opacity: 0; background: linear-gradient(to bottom, transparent, #20B2AA 30%, #7CF5EC 50%, #20B2AA 70%, transparent); box-shadow: 0 0 12px 2px rgba(32, 178, 170, .65); animation: laserSweep 2.4s cubic-bezier(.45, 0, .55, 1) infinite; }
+                    @keyframes laserSweep { 0% { transform: translateX(0); opacity: 0; } 7% { opacity: 1; } 86% { opacity: 1; } 96%, 100% { transform: translateX(var(--scan-w, 220px)); opacity: 0; } }
 
-                    .feature-card-item:hover { background: color-mix(in srgb, var(--band) 14%, transparent) !important; }
+                    .deck-para { transform: translate(calc(var(--px, 0) * var(--depth, 12px)), calc(var(--py, 0) * var(--depth, 12px))); transition: transform .5s cubic-bezier(.22, 1, .36, 1); will-change: transform; }
+                    @keyframes floatY { from { transform: translateY(-4px); } to { transform: translateY(5px); } }
+                    .float-slow { animation: floatY 5.5s ease-in-out infinite alternate; }
 
-                    .path-line { stroke-dasharray: 1300; stroke-dashoffset: 1300; }
-                    .reveal.is-in .path-line { animation: drawLine 1.8s ease-out 0.2s forwards; }
-                    @keyframes drawLine { to { stroke-dashoffset: 0; } }
+                    .level-in { animation: levelIn .42s cubic-bezier(.22, 1, .36, 1) both; }
+                    @keyframes levelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+                    .h-item:hover:not(:disabled) { border-color: color-mix(in srgb, var(--band) 50%, transparent); box-shadow: 0 14px 30px -16px color-mix(in srgb, var(--band) 55%, transparent); }
+
+                    @keyframes rowCrawl { 0%, 24% { transform: translateY(0); } 33%, 57% { transform: translateY(64px); } 66%, 90% { transform: translateY(128px); } 100% { transform: translateY(0); } }
+                    .row-crawler { animation: rowCrawl 7.5s ease-in-out infinite; }
+
+                    @keyframes scanPop { 0% { opacity: 0; transform: translateY(8px); } 16% { opacity: 1; transform: none; } 80% { opacity: 1; } 96%, 100% { opacity: 0; transform: translateY(-4px); } }
+                    .scan-pop { animation: scanPop 2.4s ease-in-out infinite; }
+
+                    .dash-line { background-image: repeating-linear-gradient(90deg, currentColor 0 5px, transparent 5px 11px); }
+                    .dash-line-v { background-image: repeating-linear-gradient(180deg, currentColor 0 5px, transparent 5px 11px); }
+                    .packet { position: absolute; top: 0; left: 0; width: 7px; height: 7px; border-radius: 9999px; offset-rotate: 0deg; animation: packetMove 2.6s linear infinite; }
+                    @keyframes packetMove { 0% { offset-distance: 0%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+
+                    .keycard-sheen { position: absolute; top: -20%; bottom: -20%; width: 45%; left: 0; transform: translateX(-130%) skewX(-14deg); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .4), transparent); animation: sheen 5.5s ease-in-out infinite; pointer-events: none; }
+                    @keyframes sheen { 0%, 55% { transform: translateX(-130%) skewX(-14deg); } 85%, 100% { transform: translateX(330%) skewX(-14deg); } }
+
+                    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
+                    .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+
+                    .word-glow { text-shadow: 0 0 32px color-mix(in srgb, currentColor 38%, transparent); }
 
                     @media (prefers-reduced-motion: reduce) {
-                        .scan-laser, .marquee-track, .word-roll, .canopy-sway, .canopy-para, .level-panel { animation: none !important; transition: none !important; transform: none !important; opacity: 1 !important; }
-                        .reveal { opacity: 1; transform: none; transition: none; }
-                        .path-line { stroke-dashoffset: 0; }
+                        html { scroll-behavior: auto; }
+                        .marquee-track, .laser, .deck-para, .float-slow, .row-crawler, .scan-pop, .packet, .keycard-sheen, .blob-drift-a, .blob-drift-b, .pulse-dot { animation: none !important; }
+                        .laser, .packet, .scan-pop { opacity: 0 !important; }
+                        .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
                     }
                 `,
                 }}

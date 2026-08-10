@@ -15,7 +15,7 @@ class AssetCategoryFactory extends Factory
     {
         return [
             'asset_group_id' => AssetGroup::factory(),
-            'code' => fake()->optional()->numerify('0#.0#'),
+            'code' => fake()->unique()->numerify('##.##'),
             'name' => fake()->words(2, true),
             'description' => fake()->optional()->sentence(),
         ];

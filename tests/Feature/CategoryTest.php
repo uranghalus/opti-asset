@@ -149,6 +149,24 @@ class CategoryTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->where('categories.total', 1));
     }
 
+    public function test_index_loads_classification_options_for_the_form(): void
+    {
+        $group = AssetGroup::factory()->create(['name' => 'Bangunan']);
+        $category = AssetCategory::factory()->create([
+            'asset_group_id' => $group->id,
+            'name' => 'Kategori A',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('categories.index'))
+            ->assertInertia(
+                fn (Assert $page) => $page
+                    ->has('optionCategories', 1)
+                    ->where('optionCategories.0.asset_group_id', $group->id)
+                    ->where('optionCategories.0.id', $category->id)
+            );
+    }
+
     public function test_category_can_be_created(): void
     {
         $group = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
@@ -307,5 +325,29 @@ class CategoryTest extends TestCase
             ->assertNotFound();
 
         $this->assertSame(1, AssetCategory::withoutGlobalScopes()->count());
+    }
+
+    public function test_categories_can_be_bulk_deleted(): void
+    {
+        $group = AssetGroup::factory()->create();
+        AssetCategory::factory()->count(3)->create(['asset_group_id' => $group->id]);
+        $ids = AssetCategory::query()->pluck('id')->all();
+
+        $this->actingAs($this->user)
+            ->from(route('categories.index'))
+            ->delete(route('categories.destroy-bulk'), ['ids' => $ids])
+            ->assertRedirect();
+
+        $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
+    }
+
+    public function test_bulk_delete_requires_ids(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('categories.index'))
+            ->delete(route('categories.destroy-bulk'), ['ids' => []])
+            ->assertSessionHasErrors(['ids']);
+
+        $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
     }
 }

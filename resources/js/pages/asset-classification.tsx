@@ -308,7 +308,17 @@ function rowsFromSheet(data: string[][]): ImportRow[] {
             }
 
             const node = filled[filled.length - 1];
-            const parent = filled.length > 1 ? filled[filled.length - 2] : null;
+            // Build the full dotted ancestor path so the backend can
+            // unambiguously resolve the parent chain regardless of depth.
+            // e.g. sub-cluster under group='03', category='03', cluster='11'
+            // → parent_code='03.03.11'  (not just '11')
+            const parentPath =
+                filled.length > 1
+                    ? filled
+                          .slice(0, -1)
+                          .map((col) => col.value)
+                          .join('.')
+                    : '';
 
             return {
                 level: node.level,
@@ -321,7 +331,7 @@ function rowsFromSheet(data: string[][]): ImportRow[] {
                     keteranganIndex === -1
                         ? ''
                         : (cells[keteranganIndex]?.trim() ?? ''),
-                parent_code: parent?.value ?? '',
+                parent_code: parentPath,
             };
         })
         .filter((row): row is ImportRow => row !== null && row.name !== '');
@@ -650,20 +660,26 @@ export default function AssetClassification() {
         const walk = (
             nodes: ClassificationNode[],
             level: string,
-            parentCode: string,
+            parentFullCode: string,
         ) => {
             for (const node of nodes) {
+                const fullCode = node.code
+                    ? parentFullCode
+                        ? `${parentFullCode}.${node.code}`
+                        : node.code
+                    : parentFullCode;
+
                 lines.push([
                     level,
-                    node.code ?? '',
+                    fullCode,
                     node.name,
                     node.description ?? '',
-                    parentCode,
+                    parentFullCode,
                 ]);
                 walk(
                     node.children ?? [],
                     childLevel(level as ClassificationLevel),
-                    node.code ?? '',
+                    fullCode,
                 );
             }
         };

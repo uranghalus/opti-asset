@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ClassificationLevel;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetHistory;
 use App\Models\AssetSubCluster;
+use App\Models\Category;
 use App\Models\Department;
 use App\Models\Item;
 use App\Models\Location;
@@ -65,7 +67,7 @@ class AssetTest extends TestCase
     {
         $asset = Asset::factory()->create();
 
-        $this->assertSame('ACTIVE', $asset->status);
+        $this->assertSame('ACT', $asset->status->value);
         $this->assertSame('AVAILABLE', $asset->assigned_status);
     }
 
@@ -127,6 +129,30 @@ class AssetTest extends TestCase
         $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '01']);
 
         return [$group, $category, $cluster, $subCluster];
+    }
+
+    /**
+     * Build the full classification chain plus an Item whose category
+     * resolves to the deepest (sub cluster) node. Pass a distinct $code
+     * when creating more than one chain in the same test.
+     */
+    private function itemWithCategory(string $code = '01'): array
+    {
+        $group = AssetGroup::factory()->create(['code' => $code]);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => $code]);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => $code]);
+        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => $code]);
+
+        $cat = Category::create([
+            'name' => 'Kategori '.$subCluster->name,
+            'code' => implode('.', array_fill(0, 4, $code)),
+            'classification_id' => $subCluster->id,
+            'classification_type' => ClassificationLevel::SUBCLUSTER,
+        ]);
+
+        $item = Item::factory()->create(['category_id' => $cat->id]);
+
+        return [$group, $category, $cluster, $subCluster, $cat, $item];
     }
 
     public function test_index_renders_assets(): void
@@ -260,10 +286,6 @@ class AssetTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Create')
-                ->has('groups')
-                ->has('categories')
-                ->has('clusters')
-                ->has('subClusters')
                 ->has('items')
                 ->has('locations')
                 ->has('departments')
@@ -282,19 +304,15 @@ class AssetTest extends TestCase
                 ->where('asset.id', $asset->id));
     }
 
-    public function test_store_generates_kode_asset_from_classification_chain(): void
+    public function test_store_generates_kode_asset_from_item_category(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [$group, $category, $cluster, $subCluster, $cat, $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
-                'item_id' => Item::factory()->create()->id,
+                'item_id' => $item->id,
                 'serial_number' => 'SN-TEST-001',
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -303,21 +321,24 @@ class AssetTest extends TestCase
             'serial_number' => 'SN-TEST-001',
             'tenant_id' => 'acme',
         ]);
+
+        $asset = Asset::query()->where('serial_number', 'SN-TEST-001')->firstOrFail();
+        $this->assertSame($group->id, $asset->asset_group_id);
+        $this->assertSame($category->id, $asset->asset_category_id);
+        $this->assertSame($cluster->id, $asset->asset_cluster_id);
+        $this->assertSame($subCluster->id, $asset->asset_sub_cluster_id);
     }
 
-    public function test_store_increments_sequence_within_same_sub_cluster(): void
+    public function test_store_increments_sequence_within_same_item_category(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         foreach (['SN-A-001', 'SN-A-002'] as $serial) {
             $this->actingAs($this->user)
                 ->from(route('assets.index'))
                 ->post(route('assets.store'), [
+                    'item_id' => $item->id,
                     'serial_number' => $serial,
-                    'asset_group_id' => $group->id,
-                    'asset_category_id' => $category->id,
-                    'asset_cluster_id' => $cluster->id,
-                    'asset_sub_cluster_id' => $subCluster->id,
                 ])
                 ->assertRedirect(route('assets.index'));
         }
@@ -326,56 +347,44 @@ class AssetTest extends TestCase
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-A-002', 'kode_asset' => '01.01.01.01.002']);
     }
 
-    public function test_store_keeps_sequence_independent_per_classification(): void
+    public function test_store_keeps_sequence_independent_per_item(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
-        $otherSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
+        [, , , , , $itemA] = $this->itemWithCategory();
+        [, , , , , $itemB] = $this->itemWithCategory('02');
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $itemA->id,
                 'serial_number' => 'SN-C1-001',
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
             ])
             ->assertRedirect(route('assets.index'));
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $itemB->id,
                 'serial_number' => 'SN-C2-001',
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $otherSub->id,
             ])
             ->assertRedirect(route('assets.index'));
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C1-001', 'kode_asset' => '01.01.01.01.001']);
-        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C2-001', 'kode_asset' => '01.01.01.02.001']);
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C2-001', 'kode_asset' => '02.02.02.02.001']);
     }
 
     public function test_store_continues_sequence_after_deletion(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $first = Asset::factory()->create([
             'serial_number' => 'SN-DEL-001',
             'kode_asset' => '01.01.01.01.001',
-            'asset_group_id' => $group->id,
-            'asset_category_id' => $category->id,
-            'asset_cluster_id' => $cluster->id,
-            'asset_sub_cluster_id' => $subCluster->id,
+            'item_id' => $item->id,
         ]);
         Asset::factory()->create([
             'serial_number' => 'SN-DEL-002',
             'kode_asset' => '01.01.01.01.002',
-            'asset_group_id' => $group->id,
-            'asset_category_id' => $category->id,
-            'asset_cluster_id' => $cluster->id,
-            'asset_sub_cluster_id' => $subCluster->id,
+            'item_id' => $item->id,
         ]);
 
         $first->delete();
@@ -383,11 +392,8 @@ class AssetTest extends TestCase
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $item->id,
                 'serial_number' => 'SN-DEL-003',
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -396,18 +402,15 @@ class AssetTest extends TestCase
 
     public function test_store_persists_multiple_media_urls(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $item->id,
                 'serial_number' => 'SN-MEDIA-001',
                 'photo_url' => ['/storage/photos/a.jpg', '/storage/photos/b.jpg'],
                 'document_url' => ['/storage/docs/faktur.pdf'],
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -457,17 +460,14 @@ class AssetTest extends TestCase
 
     public function test_store_persists_multiple_pics(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $item->id,
                 'serial_number' => 'SN-PIC-001',
                 'pic' => ['Budi', 'Siti'],
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -476,52 +476,65 @@ class AssetTest extends TestCase
         $this->assertSame(['Budi', 'Siti'], $asset->pic);
     }
 
-    public function test_store_requires_group(): void
+    public function test_store_requires_item(): void
     {
-        [$group, $category, $cluster] = $this->classificationChain();
-
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
+                'serial_number' => 'SN-NO-ITEM',
             ])
-            ->assertSessionHasErrors(['asset_group_id']);
+            ->assertSessionHasErrors(['item_id']);
 
         $this->assertSame(0, Asset::count());
     }
 
-    public function test_store_generates_code_from_group_only(): void
+    public function test_store_generates_code_from_item_with_group_level_category(): void
     {
         [$group] = $this->classificationChain();
+
+        $cat = Category::create([
+            'name' => 'Kategori Golongan',
+            'code' => '01',
+            'classification_id' => $group->id,
+            'classification_type' => ClassificationLevel::GROUP,
+        ]);
+        $item = Item::factory()->create(['category_id' => $cat->id]);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $item->id,
                 'serial_number' => 'SN-GROUP-ONLY',
-                'asset_group_id' => $group->id,
             ])
             ->assertRedirect(route('assets.index'));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-GROUP-ONLY',
             'kode_asset' => '01.001',
+            'asset_group_id' => $group->id,
             'asset_category_id' => null,
             'asset_cluster_id' => null,
             'asset_sub_cluster_id' => null,
         ]);
     }
 
-    public function test_store_generates_code_up_to_category(): void
+    public function test_store_generates_code_from_item_with_category_level_category(): void
     {
         [$group, $category] = $this->classificationChain();
+
+        $cat = Category::create([
+            'name' => 'Kategori Kategori',
+            'code' => '01.01',
+            'classification_id' => $category->id,
+            'classification_type' => ClassificationLevel::CATEGORY,
+        ]);
+        $item = Item::factory()->create(['category_id' => $cat->id]);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.store'), [
+                'item_id' => $item->id,
                 'serial_number' => 'SN-UPTO-CAT',
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -533,42 +546,59 @@ class AssetTest extends TestCase
         ]);
     }
 
-    public function test_update_regenerates_kode_asset_when_classification_changes(): void
+    public function test_store_allows_item_without_category(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        $item = Item::factory()->create(['category_id' => null]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'item_id' => $item->id,
+                'serial_number' => 'SN-NO-CAT',
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('assets', [
+            'serial_number' => 'SN-NO-CAT',
+            'kode_asset' => null,
+            'item_id' => $item->id,
+        ]);
+    }
+
+    public function test_update_regenerates_kode_asset_when_item_changes(): void
+    {
+        [, , , , , $itemA] = $this->itemWithCategory();
+        [, , , , , $itemB] = $this->itemWithCategory('02');
+
         $asset = Asset::factory()->create([
-            'asset_group_id' => $group->id,
-            'asset_category_id' => $category->id,
-            'asset_cluster_id' => $cluster->id,
-            'asset_sub_cluster_id' => $subCluster->id,
+            'item_id' => $itemA->id,
             'kode_asset' => '01.01.01.01',
         ]);
-
-        $newSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->patch(route('assets.update', $asset), [
+                'item_id' => $itemB->id,
                 'serial_number' => 'SN-BARU-001',
-                'asset_sub_cluster_id' => $newSub->id,
             ])
             ->assertRedirect(route('assets.index'));
 
         $this->assertDatabaseHas('assets', [
             'id' => $asset->id,
-            'kode_asset' => '01.01.01.02.001',
+            'kode_asset' => '02.02.02.02.001',
             'serial_number' => 'SN-BARU-001',
+            'item_id' => $itemB->id,
         ]);
     }
 
     public function test_update_records_lifecycle_history(): void
     {
-        $asset = Asset::factory()->create(['status' => 'ACTIVE', 'condition' => 'Baik']);
+        $asset = Asset::factory()->create(['status' => 'ACT', 'condition' => 'Baik']);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->patch(route('assets.update', $asset), [
-                'status' => 'INACTIVE',
+                'status' => 'LOAN',
                 'condition' => 'Rusak Ringan',
             ])
             ->assertRedirect(route('assets.index'));
@@ -576,8 +606,8 @@ class AssetTest extends TestCase
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
             'field' => 'status',
-            'old_value' => 'ACTIVE',
-            'new_value' => 'INACTIVE',
+            'old_value' => 'ACT',
+            'new_value' => 'LOAN',
             'changed_by' => $this->user->id,
         ]);
         $this->assertDatabaseHas('asset_histories', [
@@ -588,23 +618,58 @@ class AssetTest extends TestCase
         ]);
     }
 
-    public function test_update_records_classification_change_history(): void
+    public function test_store_rejects_invalid_status(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
-        $asset = Asset::factory()->create([
-            'kode_asset' => '01.01.01.01.001',
-            'asset_group_id' => $group->id,
-            'asset_category_id' => $category->id,
-            'asset_cluster_id' => $cluster->id,
-            'asset_sub_cluster_id' => $subCluster->id,
-        ]);
+        [, , , , , $item] = $this->itemWithCategory();
 
-        $newSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'item_id' => $item->id,
+                'status' => 'BOGUS',
+            ])
+            ->assertSessionHasErrors(['status']);
+
+        $this->assertSame(0, Asset::count());
+    }
+
+    public function test_import_normalizes_status_labels(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $csv = implode(',', ['brand', 'model', 'serial_number', 'status'])."\n"
+            .implode(',', ['Brand X', 'Model Y', 'SN-STATUS-001', 'Dalam Perbaikan'])."\n";
+
+        $file = UploadedFile::fake()->createWithContent('assets.csv', $csv);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('assets', [
+            'serial_number' => 'SN-STATUS-001',
+            'status' => 'RPR',
+        ]);
+    }
+
+    public function test_update_records_kode_asset_change_history(): void
+    {
+        [, , , , , $itemA] = $this->itemWithCategory();
+        [, , , , , $itemB] = $this->itemWithCategory('02');
+
+        $asset = Asset::factory()->create([
+            'item_id' => $itemA->id,
+            'kode_asset' => '01.01.01.01.001',
+        ]);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->patch(route('assets.update', $asset), [
-                'asset_sub_cluster_id' => $newSub->id,
+                'item_id' => $itemB->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -612,7 +677,7 @@ class AssetTest extends TestCase
             'asset_id' => $asset->id,
             'field' => 'kode_asset',
             'old_value' => '01.01.01.01.001',
-            'new_value' => '01.01.01.02.001',
+            'new_value' => '02.02.02.02.001',
         ]);
     }
 
@@ -663,10 +728,9 @@ class AssetTest extends TestCase
 
     public function test_import_creates_assets_from_spreadsheet(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $csv = $this->csvContent([
-            'Elevator',
             'Brand X',
             'Model Y',
             'SN-IMPORT-001',
@@ -678,10 +742,7 @@ class AssetTest extends TestCase
             ->from(route('assets.index'))
             ->post(route('assets.import'), [
                 'file' => $file,
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
+                'item_id' => $item->id,
             ])
             ->assertRedirect(route('assets.index'));
 
@@ -690,14 +751,13 @@ class AssetTest extends TestCase
         $this->assertSame('01.01.01.01.001', Asset::query()->first()?->kode_asset);
     }
 
-    public function test_import_creates_item_when_name_not_found(): void
+    public function test_import_uses_selected_item_for_all_rows(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $csv = $this->csvContent([
-            'Elevator Baru',
-            '',
-            '',
+            'Brand X',
+            'Model Y',
             'SN-IMPORT-ITEM',
         ]);
 
@@ -707,79 +767,39 @@ class AssetTest extends TestCase
             ->from(route('assets.index'))
             ->post(route('assets.import'), [
                 'file' => $file,
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
+                'item_id' => $item->id,
             ])
             ->assertRedirect(route('assets.index'));
 
-        $this->assertDatabaseHas('items', ['name' => 'Elevator Baru']);
-        $item = Item::query()->where('name', 'Elevator Baru')->first();
-        $this->assertNotNull($item);
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-IMPORT-ITEM',
-            'item_id' => $item->id,
-        ]);
-    }
-
-    public function test_import_reuses_existing_item_by_name(): void
-    {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
-        $item = Item::factory()->create(['name' => 'Elevator']);
-
-        $csv = $this->csvContent([
-            'Elevator',
-            '',
-            '',
-            'SN-IMPORT-REUSE',
-        ]);
-
-        $file = UploadedFile::fake()->createWithContent('assets.csv', $csv);
-
-        $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
-                'file' => $file,
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
-            ])
-            ->assertRedirect(route('assets.index'));
-
-        $this->assertDatabaseHas('assets', [
-            'serial_number' => 'SN-IMPORT-REUSE',
             'item_id' => $item->id,
         ]);
         $this->assertSame(1, Asset::count());
     }
 
-    public function test_import_requires_classification_chain(): void
+    public function test_import_requires_item(): void
     {
         $file = UploadedFile::fake()->createWithContent(
             'assets.csv',
-            $this->csvContent(['Elevator', '', '', 'SN-IMPORT-X']),
+            $this->csvContent(['Brand X', '', 'SN-IMPORT-X']),
         );
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.import'), ['file' => $file])
-            ->assertSessionHasErrors(['asset_group_id']);
+            ->assertSessionHasErrors(['item_id']);
     }
 
     public function test_import_requires_valid_file(): void
     {
-        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
             ->post(route('assets.import'), [
                 'file' => UploadedFile::fake()->create('assets.txt'),
-                'asset_group_id' => $group->id,
-                'asset_category_id' => $category->id,
-                'asset_cluster_id' => $cluster->id,
-                'asset_sub_cluster_id' => $subCluster->id,
+                'item_id' => $item->id,
             ])
             ->assertSessionHasErrors(['file']);
     }
@@ -788,7 +808,6 @@ class AssetTest extends TestCase
     private function csvContent(array $values): string
     {
         $headers = [
-            'item',
             'brand',
             'model',
             'serial_number',

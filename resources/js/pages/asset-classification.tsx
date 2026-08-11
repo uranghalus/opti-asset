@@ -247,11 +247,28 @@ const HIERARCHY_COLUMNS = [
 ];
 
 function rowsFromSheet(data: string[][]): ImportRow[] {
-    if (data.length === 0) {
+    const headerIndex = data.findIndex((row) => {
+        const header = row.map((h) =>
+            String(h ?? '')
+                .trim()
+                .toLowerCase(),
+        );
+
+        return (
+            (header.includes('level') && header.includes('name')) ||
+            HIERARCHY_COLUMNS.some((column) => header.includes(column.key))
+        );
+    });
+
+    if (headerIndex === -1) {
         return [];
     }
 
-    const header = data[0].map((h) => h.trim().toLowerCase());
+    const header = data[headerIndex].map((h) =>
+        String(h ?? '')
+            .trim()
+            .toLowerCase(),
+    );
 
     const hasColumn = (name: string) => header.includes(name);
 
@@ -260,7 +277,7 @@ function rowsFromSheet(data: string[][]): ImportRow[] {
         const indexOf = (name: string) => header.indexOf(name);
 
         return data
-            .slice(1)
+            .slice(headerIndex + 1)
             .map((cells) => {
                 const at = (name: string) =>
                     indexOf(name) === -1
@@ -294,7 +311,7 @@ function rowsFromSheet(data: string[][]): ImportRow[] {
     const keteranganIndex = header.indexOf('keterangan');
 
     return data
-        .slice(1)
+        .slice(headerIndex + 1)
         .map((cells) => {
             const filled = columns
                 .filter((column) => (cells[column.index]?.trim() ?? '') !== '')
@@ -351,6 +368,7 @@ export default function AssetClassification() {
     const [dragId, setDragId] = useState<string | null>(null);
     const [over, setOver] = useState<{ id: string; pos: DropPos } | null>(null);
     const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
+    const [importFile, setImportFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -697,6 +715,7 @@ export default function AssetClassification() {
     }, [groups]);
 
     const handleImportFile = useCallback((file: File) => {
+        setImportFile(file);
         const reader = new FileReader();
 
         reader.onload = () => {
@@ -733,32 +752,31 @@ export default function AssetClassification() {
     }, []);
 
     const runImport = useCallback(() => {
-        if (!importRows || importing) {
+        if (!importFile || !importRows || importing) {
             return;
         }
 
         setImporting(true);
 
-        router.post(
-            importMethod().url,
-            { rows: importRows },
-            {
-                only: ['groups'],
-                preserveState: true,
-                onSuccess: () => {
-                    setImporting(false);
-                    setImportRows(null);
-                    toast.success(
-                        `${importRows.length} baris berhasil diimpor.`,
-                    );
-                },
-                onError: () => {
-                    setImporting(false);
-                    toast.error('Impor gagal. Periksa format dan kode unik.');
-                },
+        const data = new FormData();
+        data.append('file', importFile);
+
+        router.post(importMethod().url, data, {
+            forceFormData: true,
+            only: ['groups'],
+            preserveState: true,
+            onSuccess: () => {
+                setImporting(false);
+                setImportRows(null);
+                setImportFile(null);
+                toast.success(`${importRows.length} baris berhasil diimpor.`);
             },
-        );
-    }, [importRows, importing]);
+            onError: () => {
+                setImporting(false);
+                toast.error('Impor gagal. Periksa format dan kode unik.');
+            },
+        });
+    }, [importFile, importRows, importing]);
 
     const openCreate = (
         level: ClassificationLevel,
@@ -1402,7 +1420,12 @@ export default function AssetClassification() {
 
             <Dialog
                 open={importRows !== null}
-                onOpenChange={(open) => !open && setImportRows(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setImportRows(null);
+                        setImportFile(null);
+                    }
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -1475,7 +1498,10 @@ export default function AssetClassification() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setImportRows(null)}
+                            onClick={() => {
+                                setImportRows(null);
+                                setImportFile(null);
+                            }}
                         >
                             Batal
                         </Button>

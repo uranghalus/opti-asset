@@ -32,6 +32,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { assetStatusChip, assetStatusLabel } from '@/lib/asset-status';
 import { cn } from '@/lib/utils';
 import {
     destroy,
@@ -90,20 +91,6 @@ type HistoryEntry = {
 
 type PageProps = {
     asset: AssetDetail;
-};
-
-const STATUS_STYLES: Record<string, string> = {
-    ACTIVE: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    INACTIVE:
-        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
-    DISPOSED:
-        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    ACTIVE: 'Aktif',
-    INACTIVE: 'Nonaktif',
-    DISPOSED: 'Dihapus',
 };
 
 const CONDITION_STYLES: Record<string, string> = {
@@ -304,12 +291,10 @@ export default function AssetShow() {
                                 <span
                                     className={cn(
                                         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
-                                        STATUS_STYLES[asset.status] ??
-                                            STATUS_STYLES.INACTIVE,
+                                        assetStatusChip(asset.status),
                                     )}
                                 >
-                                    {STATUS_LABELS[asset.status] ??
-                                        asset.status}
+                                    {assetStatusLabel(asset.status)}
                                 </span>
                             </div>
                             <p className="mt-1 truncate font-mono text-sm font-bold text-primary tabular-nums">
@@ -620,12 +605,10 @@ export default function AssetShow() {
                                     <span
                                         className={cn(
                                             'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
-                                            STATUS_STYLES[asset.status] ??
-                                                STATUS_STYLES.INACTIVE,
+                                            assetStatusChip(asset.status),
                                         )}
                                     >
-                                        {STATUS_LABELS[asset.status] ??
-                                            asset.status}
+                                        {assetStatusLabel(asset.status)}
                                     </span>
                                 </div>
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3.5">

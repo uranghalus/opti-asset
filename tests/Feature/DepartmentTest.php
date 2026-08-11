@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -164,5 +165,35 @@ class DepartmentTest extends TestCase
         $this->assertNotNull($it);
         $this->assertSame('Teknologi Informasi', $it->nama_department);
         $this->assertSame($this->tenant->id, $it->tenant_id);
+    }
+
+    public function test_sync_command_fails_without_portal_configuration(): void
+    {
+        config([
+            'services.optigate_portal.url' => null,
+            'services.optigate_portal.token' => null,
+        ]);
+
+        $this->artisan('app:sync-departments')->assertExitCode(Command::FAILURE);
+
+        $this->assertDatabaseCount('tb_department', 0);
+    }
+
+    public function test_sync_failure_does_not_create_departments(): void
+    {
+        config([
+            'services.optigate_portal.url' => 'https://portal.example',
+            'services.optigate_portal.token' => 'secret',
+        ]);
+
+        Http::fake([
+            'https://portal.example/api/departments' => Http::response([], 500),
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('departments.sync'))
+            ->assertRedirect(route('departments.index'));
+
+        $this->assertDatabaseCount('tb_department', 0);
     }
 }

@@ -22,6 +22,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { assetStatusChip, assetStatusLabel } from '@/lib/asset-status';
 import { cn } from '@/lib/utils';
 import {
     index as indexRoute,
@@ -52,20 +53,6 @@ type ScannedAsset = {
 };
 
 const SCANNER_ID = 'asset-scanner-region';
-
-const STATUS_LABELS: Record<string, string> = {
-    ACTIVE: 'Aktif',
-    INACTIVE: 'Nonaktif',
-    DISPOSED: 'Dihapus',
-};
-
-const STATUS_ACCENTS: Record<string, string> = {
-    ACTIVE: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    INACTIVE:
-        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
-    DISPOSED:
-        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
-};
 
 export default function AssetScan() {
     const [cameraActive, setCameraActive] = useState(false);
@@ -366,12 +353,10 @@ export default function AssetScan() {
                                     <span
                                         className={cn(
                                             'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
-                                            STATUS_ACCENTS[result.status] ??
-                                                STATUS_ACCENTS.INACTIVE,
+                                            assetStatusChip(result.status),
                                         )}
                                     >
-                                        {STATUS_LABELS[result.status] ??
-                                            result.status}
+                                        {assetStatusLabel(result.status)}
                                     </span>
                                 </div>
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3">

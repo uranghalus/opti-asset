@@ -3,46 +3,37 @@
 namespace App\Actions;
 
 use App\Models\Asset;
-use App\Models\AssetCategory;
-use App\Models\AssetCluster;
-use App\Models\AssetGroup;
-use App\Models\AssetSubCluster;
+use App\Models\Category;
 
 class GenerateAssetCodeAction
 {
     /**
-     * Build the asset code from the selected classification chain.
+     * Build the asset code from the item's category.
      *
-     * The base is the joined segment codes of every selected level (e.g.
-     * group "01" + category "01" + cluster "01" => "01.01.01"), and a per
-     * combination sequence is appended so each classification combination
-     * numbers its assets independently:
+     * The base code is the category's stored code (the joined segment
+     * codes of the whole classification chain, e.g. "01.01.01.01"), and a
+     * per category sequence is appended so every category numbers its
+     * assets independently:
      *
-     *   golongan only  -> 01.001
-     *   up to kategori -> 01.01.001
-     *   up to cluster  -> 01.01.01.001
-     *   full chain     -> 01.01.01.01.001
+     *   category code "01.01.01.01" -> 01.01.01.01.001
      *
      * The next sequence continues from the highest number already used for
      * the same base code, so deleting an asset never reuses a number.
      *
-     * @return array{code: string|null, asset_group_id: string|null, asset_category_id: string|null, asset_cluster_id: string|null, asset_sub_cluster_id: string|null}
+     * @return array{kode_asset: string|null, asset_group_id: string|null, asset_category_id: string|null, asset_cluster_id: string|null, asset_sub_cluster_id: string|null}
      */
-    public function fromIds(
-        ?string $groupId,
-        ?string $categoryId,
-        ?string $clusterId,
-        ?string $subClusterId,
-        ?string $exceptAssetId = null,
-    ): array {
-        $baseCode = $this->chainCode($groupId, $categoryId, $clusterId, $subClusterId);
+    public function fromCategory(Category $category, ?string $exceptAssetId = null): array
+    {
+        $chain = Category::chainFor($category->classification_type, $category->classification_id);
+
+        $nodeAt = static fn (int $index): ?string => $chain[$index]['id'] ?? null;
 
         return [
-            'code' => $baseCode === null ? null : $this->withSequence($baseCode, $exceptAssetId),
-            'asset_group_id' => $groupId,
-            'asset_category_id' => $categoryId,
-            'asset_cluster_id' => $clusterId,
-            'asset_sub_cluster_id' => $subClusterId,
+            'kode_asset' => $category->code === null ? null : $this->withSequence($category->code, $exceptAssetId),
+            'asset_group_id' => $nodeAt(0),
+            'asset_category_id' => $nodeAt(1),
+            'asset_cluster_id' => $nodeAt(2),
+            'asset_sub_cluster_id' => $nodeAt(3),
         ];
     }
 
@@ -76,26 +67,6 @@ class GenerateAssetCodeAction
         }
 
         return array_map(static fn (int $max): int => $max + 1, $maxByBase);
-    }
-
-    /**
-     * Join the segment codes of every selected level down to the deepest one,
-     * e.g. group "01" + category "01" + cluster "01" => "01.01.01".
-     */
-    private function chainCode(
-        ?string $groupId,
-        ?string $categoryId,
-        ?string $clusterId,
-        ?string $subClusterId,
-    ): ?string {
-        $segments = array_values(array_filter([
-            $groupId !== null && $groupId !== '' ? AssetGroup::find($groupId)?->code : null,
-            $categoryId !== null && $categoryId !== '' ? AssetCategory::find($categoryId)?->code : null,
-            $clusterId !== null && $clusterId !== '' ? AssetCluster::find($clusterId)?->code : null,
-            $subClusterId !== null && $subClusterId !== '' ? AssetSubCluster::find($subClusterId)?->code : null,
-        ], static fn (?string $code): bool => $code !== null && $code !== ''));
-
-        return $segments === [] ? null : implode('.', $segments);
     }
 
     private function withSequence(string $baseCode, ?string $exceptAssetId, int $padding = 3): string

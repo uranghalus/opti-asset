@@ -171,4 +171,81 @@ class ItemTest extends TestCase
 
         $this->assertSame(0, Item::withoutGlobalScopes()->count());
     }
+
+    public function test_batch_assign_category_updates_selected_items(): void
+    {
+        $category = Category::factory()->create();
+        $items = Item::factory()->count(3)->create(['category_id' => null]);
+
+        $this->actingAs($this->user)
+            ->from(route('items.index'))
+            ->post(route('items.batch-category'), [
+                'ids' => $items->pluck('id')->all(),
+                'category_id' => $category->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(3, Item::where('category_id', $category->id)->count());
+    }
+
+    public function test_batch_assign_category_does_not_touch_other_items(): void
+    {
+        $category = Category::factory()->create();
+        $other = Category::factory()->create();
+        $target = Item::factory()->create(['category_id' => $other->id]);
+        $untouched = Item::factory()->create(['category_id' => $other->id]);
+
+        $this->actingAs($this->user)
+            ->from(route('items.index'))
+            ->post(route('items.batch-category'), [
+                'ids' => [$target->id],
+                'category_id' => $category->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($category->id, $target->fresh()->category_id);
+        $this->assertSame($other->id, $untouched->fresh()->category_id);
+    }
+
+    public function test_batch_assign_category_requires_ids(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('items.index'))
+            ->post(route('items.batch-category'), [])
+            ->assertSessionHasErrors(['ids']);
+    }
+
+    public function test_batch_assign_category_can_clear_category(): void
+    {
+        $category = Category::factory()->create();
+        $items = Item::factory()->count(2)->create(['category_id' => $category->id]);
+
+        $this->actingAs($this->user)
+            ->from(route('items.index'))
+            ->post(route('items.batch-category'), [
+                'ids' => $items->pluck('id')->all(),
+                'category_id' => '',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(0, Item::where('category_id', $category->id)->count());
+    }
+
+    public function test_batch_assign_category_only_updates_current_tenants_items(): void
+    {
+        $category = Category::factory()->create();
+        Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+        $foreign = Item::factory()->create(['category_id' => null]);
+        $foreign->forceFill(['tenant_id' => 'other'])->save();
+
+        $this->actingAs($this->user)
+            ->from(route('items.index'))
+            ->post(route('items.batch-category'), [
+                'ids' => [$foreign->id],
+                'category_id' => $category->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertNull($foreign->fresh()->category_id);
+    }
 }

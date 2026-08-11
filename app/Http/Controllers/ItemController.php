@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Item;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +59,24 @@ class ItemController extends Controller
     public function store(StoreItemRequest $request): RedirectResponse
     {
         Item::create($request->validated());
+
+        return back();
+    }
+
+    /**
+     * Assign a category to many items at once.
+     */
+    public function assignCategoryBatch(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string'],
+            'category_id' => ['nullable', 'string', Rule::exists('categories', 'id')],
+        ]);
+
+        Item::query()
+            ->whereKey($validated['ids'])
+            ->update(['category_id' => $validated['category_id']]);
 
         return back();
     }

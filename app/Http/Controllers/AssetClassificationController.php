@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ImportClassificationsAction;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
@@ -9,8 +10,9 @@ use App\Models\AssetSubCluster;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -340,22 +342,32 @@ class AssetClassificationController extends Controller
         return back();
     }
 
-    public function import(Request $request): RedirectResponse
+    public function import(Request $request, ImportClassificationsAction $action): RedirectResponse
     {
-        $validated = $request->validate([
-            'rows' => ['required', 'array', 'min:1'],
-            'rows.*.level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
-            'rows.*.name' => ['required', 'string', 'max:255'],
-            'rows.*.code' => ['nullable', 'string', 'max:20'],
-            'rows.*.description' => ['nullable', 'string'],
-            'rows.*.parent_code' => ['nullable', 'string', 'max:20'],
-        ]);
+        if ($request->hasFile('file')) {
+            /** @var UploadedFile $file */
+            $file = $request->file('file');
+            $tempPath = $file->store('classification/imports', ['disk' => 'local']);
 
-        DB::transaction(function () use ($validated): void {
-            foreach ($validated['rows'] as $row) {
-                $this->importRow($row);
+            if (! is_string($tempPath)) {
+                throw new \RuntimeException('Tidak dapat menyimpan file sementara.');
             }
-        });
+
+            $action->fromFile(Storage::disk('local')->path($tempPath));
+
+            Storage::disk('local')->delete($tempPath);
+        } else {
+            $validated = $request->validate([
+                'rows' => ['required', 'array', 'min:1'],
+                'rows.*.level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
+                'rows.*.name' => ['required', 'string', 'max:255'],
+                'rows.*.code' => ['nullable', 'string', 'max:20'],
+                'rows.*.description' => ['nullable', 'string'],
+                'rows.*.parent_code' => ['nullable', 'string', 'max:20'],
+            ]);
+
+            $action->fromRows($validated['rows']);
+        }
 
         return back();
     }
@@ -393,140 +405,5 @@ class AssetClassificationController extends Controller
 
             $model->save();
         }
-    }
-
-    /**
-     * @param  array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}  $row
-     */
-    private function importRow(array $row): void
-    {
-        $level = $row['level'];
-        $data = [
-            'name' => $row['name'],
-            'description' => $row['description'] ?? null,
-        ];
-
-        $segments = $this->codeSegments($row);
-
-        if ($level === 'group') {
-            AssetGroup::updateOrCreate(
-                ['code' => $segments[0] ?? $row['code'] ?? null],
-                $data,
-            );
-
-            return;
-        }
-
-        if ($level === 'category') {
-            $parent = $segments[0] !== null
-                ? AssetGroup::query()->where('code', $segments[0])->first()
-                : null;
-
-            if ($parent !== null) {
-                AssetCategory::updateOrCreate(
-                    ['asset_group_id' => $parent->id, 'code' => $segments[1] ?? null],
-                    $data,
-                );
-            }
-
-            return;
-        }
-
-        if ($level === 'cluster') {
-            $parent = $this->resolveParent(AssetCategory::class, 'asset_group_id', $segments);
-
-            if ($parent instanceof AssetCategory) {
-                AssetCluster::updateOrCreate(
-                    ['asset_category_id' => $parent->id, 'code' => $segments[2] ?? null],
-                    $data,
-                );
-            }
-
-            return;
-        }
-
-        $parent = $this->resolveParent(AssetCluster::class, 'asset_category_id', $segments);
-
-        if ($parent instanceof AssetCluster) {
-            AssetSubCluster::updateOrCreate(
-                ['asset_cluster_id' => $parent->id, 'code' => $segments[3] ?? null],
-                $data,
-            );
-        }
-    }
-
-    /**
-     * Build the full hierarchical code segments from a row. Prefers the
-     * dotted `code` column (parent.child) and falls back to `parent_code`
-     * when the row only carries a short code.
-     *
-     * @param  array{code?: string|null, parent_code?: string|null}  $row
-     * @return array<int, string|null>
-     */
-    private function codeSegments(array $row): array
-    {
-        $code = $row['code'] ?? null;
-        $parentCode = $row['parent_code'] ?? null;
-
-        $split = fn (?string $value): array => $value === null || $value === ''
-            ? []
-            : array_values(array_filter(explode('.', $value), static fn (string $segment): bool => $segment !== ''));
-
-        $segments = $split($code);
-        $parentSegments = $split($parentCode);
-
-        if (count($segments) > 1) {
-            return array_pad($segments, 4, null);
-        }
-
-        $ownCode = $segments[0] ?? null;
-
-        return array_pad([...$parentSegments, $ownCode], 4, null);
-    }
-
-    /**
-     * Resolve a parent model by walking the segment chain scoped to each
-     * ancestor, so duplicated short codes never attach to the wrong parent.
-     *
-     * @param  class-string<AssetCategory|AssetCluster>  $model
-     * @param  array<int, string|null>  $segments
-     */
-    private function resolveParent(string $model, string $parentField, array $segments): AssetCategory|AssetCluster|null
-    {
-        $codeIndex = $model === AssetCategory::class ? 1 : 2;
-        $groupCode = $segments[0] ?? null;
-        $categoryCode = $segments[1] ?? null;
-        $ownCode = $segments[$codeIndex] ?? null;
-
-        if ($groupCode === null || $ownCode === null) {
-            return null;
-        }
-
-        $group = AssetGroup::query()->where('code', $groupCode)->first();
-
-        if ($group === null) {
-            return null;
-        }
-
-        $query = $model::query()->where($parentField, $group->id);
-
-        if ($model === AssetCluster::class) {
-            if ($categoryCode === null) {
-                return null;
-            }
-
-            $category = AssetCategory::query()
-                ->where('asset_group_id', $group->id)
-                ->where('code', $categoryCode)
-                ->first();
-
-            if ($category === null) {
-                return null;
-            }
-
-            $query = AssetCluster::query()->where('asset_category_id', $category->id);
-        }
-
-        return $query->where('code', $ownCode)->first();
     }
 }

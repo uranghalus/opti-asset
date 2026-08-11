@@ -11,7 +11,6 @@ use Spatie\SimpleExcel\SimpleExcelWriter;
 class GenerateAssetImportTemplateAction
 {
     private const HEADERS = [
-        'Item',
         'Brand',
         'Model',
         'Serial Number',
@@ -57,7 +56,6 @@ class GenerateAssetImportTemplateAction
     private function exampleRow(): ?array
     {
         return [
-            'Elevator',
             'Otis',
             'Gen2',
             'SN-CONTOH-001',

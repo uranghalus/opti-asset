@@ -12,11 +12,10 @@ use Illuminate\Support\Str;
 use Spatie\SimpleExcel\SimpleExcelReader;
 
 /**
- * @phpstan-type ClassificationIds array{
- *     asset_group_id: string,
- *     asset_category_id: string,
- *     asset_cluster_id: string,
- *     asset_sub_cluster_id: string,
+ * @phpstan-type ImportResult array{
+ *     imported: int,
+ *     skipped: int,
+ *     errors: array<int, array{row: int, message: string}>,
  * }
  */
 class ImportAssetsAction
@@ -26,16 +25,18 @@ class ImportAssetsAction
     ) {}
 
     /**
-     * @param  ClassificationIds  $classification
-     * @return array{imported: int, created_items: int, skipped: int, errors: array<int, array{row: int, message: string}>}
+     * Import spreadsheet rows as assets belonging to the given item. The
+     * asset code is derived from the item's category.
      */
-    public function __invoke(string $filePath, array $classification): array
+    public function __invoke(string $filePath, Item $item): array
     {
         $rows = SimpleExcelReader::create($filePath)
             ->headersToSnakeCase()
             ->getRows();
 
-        $itemsByName = Item::query()->pluck('id', 'name');
+        $category = $item->category;
+        $chain = $category ? $this->generateCode->fromCategory($category) : null;
+
         $locations = Location::pluck('id', 'name');
         $departments = Department::pluck('id_department', 'nama_department');
         $existingSerials = Asset::query()
@@ -45,20 +46,21 @@ class ImportAssetsAction
             ->all();
 
         $imported = 0;
-        $createdItems = 0;
         $skipped = 0;
         $errors = [];
         $serials = $existingSerials;
+        $lastAssetId = null;
 
         DB::transaction(function () use (
             $rows,
+            $item,
+            $category,
+            $chain,
             &$imported,
-            &$createdItems,
             &$skipped,
             &$errors,
             &$serials,
-            $classification,
-            &$itemsByName,
+            &$lastAssetId,
             $locations,
             $departments,
         ): void {
@@ -83,22 +85,12 @@ class ImportAssetsAction
                     $serials[$normalized] = true;
                 }
 
-                [$itemId, $itemWasCreated] = $this->resolveItem($row['item'] ?? null, $itemsByName);
-
-                if ($itemWasCreated) {
-                    $createdItems++;
+                if ($category && $chain) {
+                    $chain = $this->generateCode->fromCategory($category, $lastAssetId);
                 }
 
-                $assetCode = $this->generateCode->fromIds(
-                    groupId: $classification['asset_group_id'],
-                    categoryId: $classification['asset_category_id'],
-                    clusterId: $classification['asset_cluster_id'],
-                    subClusterId: $classification['asset_sub_cluster_id'],
-                )['code'];
-
                 $data = [
-                    'kode_asset' => $assetCode ?? null,
-                    'item_id' => $itemId,
+                    'item_id' => $item->id,
                     'condition' => $this->valueOrNull($row['kondisi'] ?? null),
                     'purchase_date' => $this->parseDate($row['tanggal_pembelian'] ?? null),
                     'purchase_price' => $this->parsePrice($row['harga_pembelian'] ?? null),
@@ -114,10 +106,15 @@ class ImportAssetsAction
                     'notes' => $this->valueOrNull($row['catatan'] ?? null),
                     'status' => $this->normalizeStatus($row['status'] ?? null),
                     'vendor_name' => $this->valueOrNull($row['vendor'] ?? null),
-                    ...$classification,
+                    'kode_asset' => $chain['kode_asset'] ?? null,
+                    'asset_group_id' => $chain['asset_group_id'] ?? null,
+                    'asset_category_id' => $chain['asset_category_id'] ?? null,
+                    'asset_cluster_id' => $chain['asset_cluster_id'] ?? null,
+                    'asset_sub_cluster_id' => $chain['asset_sub_cluster_id'] ?? null,
                 ];
 
-                Asset::query()->create($data);
+                $asset = Asset::query()->create($data);
+                $lastAssetId = $asset->id;
 
                 $imported++;
             }
@@ -125,55 +122,9 @@ class ImportAssetsAction
 
         return [
             'imported' => $imported,
-            'created_items' => $createdItems,
             'skipped' => $skipped,
             'errors' => $errors,
         ];
-    }
-
-    /**
-     * Resolve an item by its exact name, falling back to a case-insensitive
-     * match, then creating a new item when none exists. Created items are
-     * reused across rows in the same import.
-     *
-     * @param  Collection<string, string>  $itemsByName
-     * @return array{string|null, bool}
-     */
-    private function resolveItem(mixed $value, Collection $itemsByName): array
-    {
-        $name = $this->valueOrNull($value);
-
-        if ($name === null) {
-            return [null, false];
-        }
-
-        $id = $itemsByName[$name]
-            ?? $itemsByName->first(fn ($id, $key) => mb_strtolower((string) $key) === mb_strtolower($name))
-            ?? Item::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->value('id');
-
-        if (is_string($id) && $id !== '') {
-            return [$id, false];
-        }
-
-        $item = Item::query()->create([
-            'code' => $this->makeItemCode($name),
-            'name' => $name,
-        ]);
-
-        $itemsByName->put($item->name, $item->id);
-
-        return [$item->id, true];
-    }
-
-    private function makeItemCode(string $name): string
-    {
-        $base = 'ITM-'.Str::upper(Str::substr(Str::slug($name, ''), 0, 6));
-
-        do {
-            $code = $base.'-'.Str::upper(Str::random(4));
-        } while (Item::query()->where('code', $code)->exists());
-
-        return $code;
     }
 
     /**
@@ -251,13 +202,15 @@ class ImportAssetsAction
         $value = $this->valueOrNull($value);
 
         if ($value === null) {
-            return 'ACTIVE';
+            return 'ACT';
         }
 
         return match (mb_strtolower($value)) {
-            'aktif', 'active' => 'ACTIVE',
-            'nonaktif', 'inactive' => 'INACTIVE',
-            'dihapus', 'disposed' => 'DISPOSED',
+            'aktif', 'active', 'act' => 'ACT',
+            'dipinjamkan', 'loan', 'dipinjam' => 'LOAN',
+            'dalam perbaikan', 'perbaikan', 'maintenance', 'rpr', 'rusak' => 'RPR',
+            'dimutasi', 'mutasi', 'mut' => 'MUT',
+            'dihapus', 'disposed', 'pensiun', 'dsp' => 'DSP',
             default => mb_strtoupper($value),
         };
     }

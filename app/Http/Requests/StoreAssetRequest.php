@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AssetStatus;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ class StoreAssetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'item_id' => ['nullable', 'exists:items,id'],
+            'item_id' => ['required', 'exists:items,id'],
             'condition' => ['nullable', 'string', 'max:100'],
             'purchase_date' => ['nullable', 'date'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
@@ -44,12 +45,8 @@ class StoreAssetRequest extends FormRequest
             'document_url' => ['nullable', 'array'],
             'document_url.*' => ['string'],
             'garansi_exp' => ['nullable', 'date'],
-            'status' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', Rule::enum(AssetStatus::class)],
             'vendor_name' => ['nullable', 'string', 'max:100'],
-            'asset_group_id' => ['required', 'exists:asset_groups,id'],
-            'asset_category_id' => ['nullable', 'exists:asset_categories,id'],
-            'asset_cluster_id' => ['nullable', 'exists:asset_clusters,id'],
-            'asset_sub_cluster_id' => ['nullable', 'exists:asset_sub_clusters,id'],
         ];
     }
 }

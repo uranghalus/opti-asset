@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AssetStatus;
 use App\Models\Concerns\BelongsToTenant;
 use Database\Factories\AssetFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -37,7 +38,7 @@ use Illuminate\Support\Carbon;
  * @property array<int, string>|null $document_url
  * @property string|null $kode_asset
  * @property Carbon|null $garansi_exp
- * @property string $status
+ * @property AssetStatus $status
  * @property string|null $vendor_name
  * @property string|null $asset_group_id
  * @property string|null $asset_category_id
@@ -86,6 +87,7 @@ class Asset extends Model
     protected function casts(): array
     {
         return [
+            'status' => AssetStatus::class,
             'purchase_date' => 'datetime',
             'purchase_price' => 'decimal:2',
             'in_come_date' => 'datetime',

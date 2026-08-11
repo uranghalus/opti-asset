@@ -4,6 +4,7 @@ import {
     Building2,
     CalendarClock,
     Check,
+    CheckCircle2,
     CircleAlert,
     FolderTree,
     Hash,
@@ -20,6 +21,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -40,7 +42,13 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
-import { destroy, index as indexRoute, store, update } from '@/routes/items';
+import {
+    batchCategory,
+    destroy,
+    index as indexRoute,
+    store,
+    update,
+} from '@/routes/items';
 
 type Category = {
     id: string;
@@ -166,6 +174,10 @@ export default function ItemsIndex() {
     const [editing, setEditing] = useState<Item | null>(null);
     const [deleting, setDeleting] = useState<Item | null>(null);
     const [deletingState, setDeletingState] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [assignOpen, setAssignOpen] = useState(false);
+    const [assignCategory, setAssignCategory] = useState('');
+    const [assigning, setAssigning] = useState(false);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const isProcessing = useIsProcessing();
@@ -354,6 +366,62 @@ export default function ItemsIndex() {
         }
     };
 
+    const pageIds = items.data.map((item) => item.id);
+    const allSelected =
+        pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
+    const toggleSelect = (id: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        setSelected(allSelected ? new Set() : new Set(pageIds));
+    };
+
+    const handleAssignSubmit = () => {
+        if (selected.size === 0 || !assignCategory || assigning) {
+            return;
+        }
+
+        setAssigning(true);
+
+        router.post(
+            batchCategory().url,
+            {
+                ids: Array.from(selected),
+                category_id: assignCategory,
+            },
+            {
+                only: ['items'],
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setAssigning(false);
+                    setAssignOpen(false);
+                    setAssignCategory('');
+                    setSelected(new Set());
+                    toast.success(
+                        `${selected.size} item berhasil diubah kategorinya.`,
+                    );
+                },
+                onError: () => {
+                    setAssigning(false);
+                    toast.error('Gagal mengubah kategori item.');
+                },
+            },
+        );
+    };
+
     const activeSort = SORT_OPTIONS.find((option) => option.value === sort);
 
     return (
@@ -510,9 +578,18 @@ export default function ItemsIndex() {
                     </div>
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
-                        <h2 className="text-sm font-semibold tracking-wide text-foreground">
-                            Semua Item
-                        </h2>
+                        <div className="flex items-center gap-2.5">
+                            <Checkbox
+                                id="select-all-items"
+                                aria-label="Pilih semua item"
+                                checked={allSelected}
+                                onCheckedChange={toggleSelectAll}
+                                disabled={items.data.length === 0}
+                            />
+                            <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                                Semua Item
+                            </h2>
+                        </div>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
                             <Package className="size-3.5" strokeWidth={1.75} />
                             {items.total}
@@ -584,26 +661,39 @@ export default function ItemsIndex() {
                                             )}
                                         />
                                         <div className="relative flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 items-center gap-3.5">
-                                                <div
-                                                    className={cn(
-                                                        'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
-                                                        accent.tile,
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <Checkbox
+                                                    aria-label={`Pilih ${item.name}`}
+                                                    checked={selected.has(
+                                                        item.id,
                                                     )}
-                                                >
-                                                    <Package
-                                                        className="size-5"
-                                                        strokeWidth={1.75}
-                                                    />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-sm font-semibold text-foreground">
-                                                        {item.name}
-                                                    </h3>
-                                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                                        {item.category?.name ??
-                                                            'Tanpa kategori'}
-                                                    </p>
+                                                    onCheckedChange={() =>
+                                                        toggleSelect(item.id)
+                                                    }
+                                                    className="mt-1 shrink-0"
+                                                />
+                                                <div className="flex min-w-0 items-center gap-3.5">
+                                                    <div
+                                                        className={cn(
+                                                            'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
+                                                            accent.tile,
+                                                        )}
+                                                    >
+                                                        <Package
+                                                            className="size-5"
+                                                            strokeWidth={1.75}
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="truncate text-sm font-semibold text-foreground">
+                                                            {item.name}
+                                                        </h3>
+                                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                            {item.category
+                                                                ?.name ??
+                                                                'Tanpa kategori'}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity duration-200 group-hover:opacity-100">
@@ -694,6 +784,37 @@ export default function ItemsIndex() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {selected.size > 0 && (
+                        <div className="card-enter sticky bottom-4 z-20 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-background/85 px-4 py-3 shadow-xl backdrop-blur-xl delay-150">
+                            <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                    {selected.size}
+                                </span>
+                                <span className="truncate">item dipilih</span>
+                            </p>
+                            <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-9 rounded-xl"
+                                    onClick={() => setSelected(new Set())}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="h-9 gap-2 rounded-xl"
+                                    onClick={() => setAssignOpen(true)}
+                                >
+                                    <FolderTree className="size-4" />
+                                    Assign Kategori
+                                </Button>
+                            </div>
                         </div>
                     )}
 
@@ -982,6 +1103,91 @@ export default function ItemsIndex() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={assignOpen}
+                onOpenChange={(open) => {
+                    if (!open && !assigning) {
+                        setAssignOpen(false);
+                        setAssignCategory('');
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                            <span className="glass-card flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-600/15 text-primary shadow-md ring-1 ring-primary/10">
+                                <FolderTree
+                                    className="size-5"
+                                    strokeWidth={1.75}
+                                />
+                            </span>
+                            Assign Kategori
+                        </DialogTitle>
+                        <DialogDescription>
+                            Ubah kategori untuk{' '}
+                            <span className="font-semibold text-foreground">
+                                {selected.size} item
+                            </span>{' '}
+                            yang dipilih sekaligus.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-2.5">
+                        <Label htmlFor="assign-category">Kategori</Label>
+                        <Select
+                            value={assignCategory}
+                            onValueChange={setAssignCategory}
+                        >
+                            <SelectTrigger
+                                id="assign-category"
+                                className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm"
+                            >
+                                <SelectValue placeholder="Pilih kategori" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                        {item.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-muted-foreground">
+                            Item yang dipilih akan mengganti kategorinya dengan
+                            kategori baru ini.
+                        </p>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:justify-between">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setAssignOpen(false);
+                                setAssignCategory('');
+                            }}
+                            disabled={assigning}
+                            className="text-muted-foreground"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleAssignSubmit}
+                            disabled={!assignCategory || assigning}
+                            className="gap-2"
+                        >
+                            {assigning ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <CheckCircle2 className="size-4" />
+                            )}
+                            {assigning ? 'Menyimpan...' : 'Terapkan Kategori'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

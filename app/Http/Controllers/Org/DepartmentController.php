@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use Illuminate\Console\Command;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -54,13 +55,13 @@ class DepartmentController extends Controller
      */
     public function sync(): RedirectResponse
     {
-        try {
-            Artisan::call('app:sync-departments');
+        $exitCode = Artisan::call('app:sync-departments');
+        $message = trim(Artisan::output());
 
-            Inertia::flash('toast', ['type' => 'success', 'message' => 'Sinkronisasi departemen berhasil dilakukan.']);
-        } catch (\Throwable $th) {
-            Inertia::flash('toast', ['type' => 'error', 'message' => 'Gagal sinkronisasi: '.$th->getMessage()]);
-        }
+        Inertia::flash('toast', [
+            'type' => $exitCode === Command::SUCCESS ? 'success' : 'error',
+            'message' => $exitCode === Command::SUCCESS ? 'Sinkronisasi departemen berhasil dilakukan.' : $message,
+        ]);
 
         return redirect()->route('departments.index');
     }

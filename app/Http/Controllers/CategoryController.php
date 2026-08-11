@@ -64,7 +64,7 @@ class CategoryController extends Controller
 
         $level = ClassificationLevel::from($validated['classification_type']);
 
-        if ($this->chainFor($level, $validated['classification_id']) === []) {
+        if (Category::chainFor($level, $validated['classification_id']) === []) {
             abort(404);
         }
 
@@ -88,7 +88,7 @@ class CategoryController extends Controller
 
         $level = ClassificationLevel::from($validated['classification_type']);
 
-        if ($this->chainFor($level, $validated['classification_id']) === []) {
+        if (Category::chainFor($level, $validated['classification_id']) === []) {
             abort(404);
         }
 
@@ -126,9 +126,7 @@ class CategoryController extends Controller
      */
     private function serialize(Category $category): array
     {
-        $chain = $category->classification_type !== null && $category->classification_id !== null
-            ? $this->chainFor($category->classification_type, $category->classification_id)
-            : [];
+        $chain = Category::chainFor($category->classification_type, $category->classification_id);
 
         return [
             'id' => $category->id,
@@ -141,100 +139,10 @@ class CategoryController extends Controller
         ];
     }
 
-    /**
-     * @return array<int, array{level: string, id: string, code: string|null, name: string}>
-     */
-    private function chainFor(ClassificationLevel $level, string $id): array
-    {
-        return match ($level) {
-            ClassificationLevel::GROUP => $this->groupChain(AssetGroup::find($id)),
-            ClassificationLevel::CATEGORY => $this->categoryChain(AssetCategory::with('assetGroup')->find($id)),
-            ClassificationLevel::CLUSTER => $this->clusterChain(AssetCluster::with('assetCategory.assetGroup')->find($id)),
-            ClassificationLevel::SUBCLUSTER => $this->subClusterChain(AssetSubCluster::with('assetCluster.assetCategory.assetGroup')->find($id)),
-        };
-    }
-
-    /**
-     * @return array<int, array{level: string, id: string, code: string|null, name: string}>
-     */
-    private function groupChain(?AssetGroup $group): array
-    {
-        if (! $group) {
-            return [];
-        }
-
-        return [[
-            'level' => ClassificationLevel::GROUP->value,
-            'id' => $group->id,
-            'code' => $group->code,
-            'name' => $group->name,
-        ]];
-    }
-
-    /**
-     * @return array<int, array{level: string, id: string, code: string|null, name: string}>
-     */
-    private function categoryChain(?AssetCategory $category): array
-    {
-        if (! $category) {
-            return [];
-        }
-
-        return [
-            ...$this->groupChain($category->assetGroup),
-            [
-                'level' => ClassificationLevel::CATEGORY->value,
-                'id' => $category->id,
-                'code' => $category->code,
-                'name' => $category->name,
-            ],
-        ];
-    }
-
-    /**
-     * @return array<int, array{level: string, id: string, code: string|null, name: string}>
-     */
-    private function clusterChain(?AssetCluster $cluster): array
-    {
-        if (! $cluster) {
-            return [];
-        }
-
-        return [
-            ...$this->categoryChain($cluster->assetCategory),
-            [
-                'level' => ClassificationLevel::CLUSTER->value,
-                'id' => $cluster->id,
-                'code' => $cluster->code,
-                'name' => $cluster->name,
-            ],
-        ];
-    }
-
-    /**
-     * @return array<int, array{level: string, id: string, code: string|null, name: string}>
-     */
-    private function subClusterChain(?AssetSubCluster $subCluster): array
-    {
-        if (! $subCluster) {
-            return [];
-        }
-
-        return [
-            ...$this->clusterChain($subCluster->assetCluster),
-            [
-                'level' => ClassificationLevel::SUBCLUSTER->value,
-                'id' => $subCluster->id,
-                'code' => $subCluster->code,
-                'name' => $subCluster->name,
-            ],
-        ];
-    }
-
     private function buildCode(ClassificationLevel $level, string $id): ?string
     {
         $codes = array_values(array_filter(
-            array_map(fn (array $node): ?string => $node['code'], $this->chainFor($level, $id)),
+            array_map(fn (array $node): ?string => $node['code'], Category::chainFor($level, $id)),
             static fn (?string $code): bool => $code !== null && $code !== '',
         ));
 

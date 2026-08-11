@@ -37,7 +37,7 @@ class AssetFactory extends Factory
             'document_url' => null,
             'kode_asset' => fake()->optional()->numerify('AST-####'),
             'garansi_exp' => fake()->optional()->dateTimeThisDecade(),
-            'status' => 'ACTIVE',
+            'status' => 'ACT',
             'vendor_name' => fake()->optional()->company(),
             'asset_group_id' => null,
             'asset_category_id' => null,

@@ -8,7 +8,12 @@
       "Bash(cd *)",
       "Bash(type *)",
       "Bash(get-content *)",
-      "Bash(select-object *)"
+      "Bash(select-object *)",
+      "Bash(vendor\\bin\\phpunit *)",
+      "Bash(more)",
+      "Bash(del *)",
+      "Bash(php *)",
+      "Bash(vendor\\bin\\pint *)"
     ]
   },
   "$version": 4

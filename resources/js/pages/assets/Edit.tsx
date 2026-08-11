@@ -6,11 +6,7 @@ import { index as indexRoute } from '@/routes/assets';
 
 type EditProps = {
     asset: AssetInitial;
-    groups: AssetOption[];
-    categories: AssetOption[];
-    clusters: AssetOption[];
-    subClusters: AssetOption[];
-    items: { id: string; name: string; code: string }[];
+    items: AssetOption[];
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
     employees: { id_employee: string; nama_employee: string }[];
@@ -56,10 +52,6 @@ export default function AssetEdit() {
                         <AssetForm
                             mode="edit"
                             asset={props.asset}
-                            groups={props.groups}
-                            categories={props.categories}
-                            clusters={props.clusters}
-                            subClusters={props.subClusters}
                             items={props.items}
                             locations={props.locations}
                             departments={props.departments}

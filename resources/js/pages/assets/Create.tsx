@@ -5,11 +5,7 @@ import type { AssetOption } from '@/components/assets/asset-form';
 import { index as indexRoute } from '@/routes/assets';
 
 type CreateProps = {
-    groups: AssetOption[];
-    categories: AssetOption[];
-    clusters: AssetOption[];
-    subClusters: AssetOption[];
-    items: { id: string; name: string; code: string }[];
+    items: AssetOption[];
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
     employees: { id_employee: string; nama_employee: string }[];
@@ -47,8 +43,8 @@ export default function AssetCreate() {
                                     Tambah Aset
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Pilih klasifikasi untuk membuat kode aset
-                                    otomatis, lalu lengkapi data aset.
+                                    Pilih item untuk membuat kode aset otomatis,
+                                    lalu lengkapi data aset.
                                 </p>
                             </div>
                         </div>
@@ -61,10 +57,6 @@ export default function AssetCreate() {
                     <div className="glass-panel card-enter mt-4 rounded-2xl p-5 delay-100 md:p-7">
                         <AssetForm
                             mode="create"
-                            groups={props.groups}
-                            categories={props.categories}
-                            clusters={props.clusters}
-                            subClusters={props.subClusters}
                             items={props.items}
                             locations={props.locations}
                             departments={props.departments}

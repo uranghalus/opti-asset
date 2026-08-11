@@ -1,12 +1,12 @@
 import { useForm } from '@inertiajs/react';
 import {
+    Boxes,
     Building2,
     CalendarClock,
     Camera,
     CircleAlert,
     ClipboardList,
     FileText,
-    Layers,
     MapPin,
     Package,
     ShoppingBag,
@@ -14,7 +14,7 @@ import {
     UserRound,
     Wallet,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { MediaUploader } from '@/components/assets/media-uploader';
 import { MultiSelect } from '@/components/multi-select';
@@ -36,11 +36,9 @@ import { store, update } from '@/routes/assets';
 
 export type AssetOption = {
     id: string;
-    code: string | null;
+    code: string;
     name: string;
-    asset_group_id?: string;
-    asset_category_id?: string;
-    asset_cluster_id?: string;
+    category_code: string | null;
 };
 
 export type AssetInitial = {
@@ -68,20 +66,12 @@ export type AssetInitial = {
     notes: string | null;
     photo_url: string[];
     document_url: string[];
-    asset_group_id: string | null;
-    asset_category_id: string | null;
-    asset_cluster_id: string | null;
-    asset_sub_cluster_id: string | null;
 };
 
 type AssetFormProps = {
     mode: 'create' | 'edit';
     asset?: AssetInitial;
-    groups: AssetOption[];
-    categories: AssetOption[];
-    clusters: AssetOption[];
-    subClusters: AssetOption[];
-    items: { id: string; name: string; code: string }[];
+    items: AssetOption[];
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
     employees: { id_employee: string; nama_employee: string }[];
@@ -89,9 +79,11 @@ type AssetFormProps = {
 };
 
 const ASSET_OPTIONS = [
-    { value: 'ACTIVE', label: 'Aktif' },
-    { value: 'INACTIVE', label: 'Nonaktif' },
-    { value: 'DISPOSED', label: 'Dihapus' },
+    { value: 'ACT', label: 'Aktif' },
+    { value: 'LOAN', label: 'Dipinjamkan' },
+    { value: 'RPR', label: 'Dalam Perbaikan' },
+    { value: 'MUT', label: 'Dimutasi' },
+    { value: 'DSP', label: 'Dihapus' },
 ];
 
 const CONDITION_OPTIONS = [
@@ -99,17 +91,6 @@ const CONDITION_OPTIONS = [
     { value: 'Rusak Ringan', label: 'Rusak Ringan' },
     { value: 'Rusak Berat', label: 'Rusak Berat' },
 ];
-
-function buildAssetCode(
-    group?: AssetOption | null,
-    category?: AssetOption | null,
-    cluster?: AssetOption | null,
-    subCluster?: AssetOption | null,
-): string {
-    return [group?.code, category?.code, cluster?.code, subCluster?.code]
-        .filter((code): code is string => Boolean(code))
-        .join('.');
-}
 
 function SectionHeader({
     icon: Icon,
@@ -153,24 +134,12 @@ function FieldError({ message }: { message?: string }) {
 export function AssetForm({
     mode,
     asset,
-    groups,
-    categories,
-    clusters,
-    subClusters,
     items,
     locations,
     departments,
     employees,
     nextSequences,
 }: AssetFormProps) {
-    const [selGroup, setSelGroup] = useState(asset?.asset_group_id ?? '');
-    const [selCategory, setSelCategory] = useState(
-        asset?.asset_category_id ?? '',
-    );
-    const [selCluster, setSelCluster] = useState(asset?.asset_cluster_id ?? '');
-    const [selSubCluster, setSelSubCluster] = useState(
-        asset?.asset_sub_cluster_id ?? '',
-    );
     const [photoBusy, setPhotoBusy] = useState(false);
     const [docBusy, setDocBusy] = useState(false);
 
@@ -199,89 +168,22 @@ export function AssetForm({
         photo_url: asset?.photo_url ?? [],
         document_url: asset?.document_url ?? [],
         garansi_exp: asset?.garansi_exp ?? '',
-        status: asset?.status ?? 'ACTIVE',
+        status: asset?.status ?? 'ACT',
         vendor_name: asset?.vendor_name ?? '',
-        asset_group_id: asset?.asset_group_id ?? '',
-        asset_category_id: asset?.asset_category_id ?? '',
-        asset_cluster_id: asset?.asset_cluster_id ?? '',
-        asset_sub_cluster_id: asset?.asset_sub_cluster_id ?? '',
     });
 
-    const filteredCategories = useMemo(
-        () => categories.filter((c) => c.asset_group_id === selGroup),
-        [categories, selGroup],
-    );
-    const filteredClusters = useMemo(
-        () => clusters.filter((c) => c.asset_category_id === selCategory),
-        [clusters, selCategory],
-    );
-    const filteredSubClusters = useMemo(
-        () => subClusters.filter((c) => c.asset_cluster_id === selCluster),
-        [subClusters, selCluster],
-    );
+    const selectedItem = items.find((item) => item.id === form.data.item_id);
 
-    const previewCode = buildAssetCode(
-        groups.find((g) => g.id === selGroup),
-        categories.find((c) => c.id === selCategory),
-        clusters.find((c) => c.id === selCluster),
-        subClusters.find((c) => c.id === selSubCluster),
-    );
+    const itemUnchanged =
+        mode === 'edit' && asset?.item_id === form.data.item_id;
 
-    const nextSequence = previewCode ? (nextSequences[previewCode] ?? 1) : null;
-
-    const classificationUnchanged =
-        mode === 'edit' &&
-        asset?.asset_group_id === selGroup &&
-        asset.asset_category_id === selCategory &&
-        asset.asset_cluster_id === selCluster &&
-        asset.asset_sub_cluster_id === selSubCluster;
-
-    const fullPreviewCode = classificationUnchanged
+    const previewCode = itemUnchanged
         ? (asset?.kode_asset ?? '')
-        : nextSequence
-          ? `${previewCode}.${String(nextSequence).padStart(3, '0')}`
+        : selectedItem?.category_code
+          ? `${selectedItem.category_code}.${String(
+                nextSequences[selectedItem.category_code] ?? 1,
+            ).padStart(3, '0')}`
           : '';
-
-    const handleSelectGroup = (value: string) => {
-        setSelGroup(value);
-        setSelCategory('');
-        setSelCluster('');
-        setSelSubCluster('');
-        form.setData((prev) => ({
-            ...prev,
-            asset_group_id: value,
-            asset_category_id: '',
-            asset_cluster_id: '',
-            asset_sub_cluster_id: '',
-        }));
-    };
-
-    const handleSelectCategory = (value: string) => {
-        setSelCategory(value);
-        setSelCluster('');
-        setSelSubCluster('');
-        form.setData((prev) => ({
-            ...prev,
-            asset_category_id: value,
-            asset_cluster_id: '',
-            asset_sub_cluster_id: '',
-        }));
-    };
-
-    const handleSelectCluster = (value: string) => {
-        setSelCluster(value);
-        setSelSubCluster('');
-        form.setData((prev) => ({
-            ...prev,
-            asset_cluster_id: value,
-            asset_sub_cluster_id: '',
-        }));
-    };
-
-    const handleSelectSubCluster = (value: string) => {
-        setSelSubCluster(value);
-        form.setData('asset_sub_cluster_id', value);
-    };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -292,8 +194,8 @@ export function AssetForm({
             return;
         }
 
-        if (!form.data.asset_group_id) {
-            toast.error('Pilih golongan terlebih dahulu.');
+        if (!form.data.item_id) {
+            toast.error('Pilih item terlebih dahulu.');
 
             return;
         }
@@ -322,169 +224,52 @@ export function AssetForm({
         <form onSubmit={handleSubmit} className="space-y-8">
             <section className="space-y-5">
                 <SectionHeader
-                    icon={Layers}
-                    title="Klasifikasi Aset"
-                    description="Pilih golongan (wajib), lalu tambah kategori, cluster, atau sub cluster bila diperlukan. Kode aset mengikuti level terdalam yang dipilih."
+                    icon={Boxes}
+                    title="Item Aset"
+                    description="Pilih item (wajib). Kode aset dibuat otomatis dari kategori item."
                 />
 
                 <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-sm md:p-5">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
                             <Label
-                                htmlFor="asset-group"
+                                htmlFor="item"
                                 className="flex items-center gap-1"
                             >
-                                Golongan
+                                Item
                                 <span className="text-destructive">*</span>
                             </Label>
                             <Select
-                                value={selGroup}
-                                onValueChange={handleSelectGroup}
+                                value={form.data.item_id}
+                                onValueChange={(value) =>
+                                    form.setData('item_id', value)
+                                }
                             >
                                 <SelectTrigger
-                                    id="asset-group"
+                                    id="item"
                                     className="mt-1.5 h-10 bg-background/70"
                                 >
-                                    <SelectValue placeholder="Pilih Golongan" />
+                                    <SelectValue placeholder="Pilih Item" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {groups.map((group) => (
+                                    {items.map((item) => (
                                         <SelectItem
-                                            key={group.id}
-                                            value={group.id}
+                                            key={item.id}
+                                            value={item.id}
                                         >
-                                            {group.code
-                                                ? `${group.code} — `
-                                                : ''}
-                                            {group.name}
+                                            {item.code} — {item.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="asset-category"
-                                className="flex items-center gap-1"
-                            >
-                                Kategori
-                            </Label>
-                            <Select
-                                value={selCategory}
-                                onValueChange={handleSelectCategory}
-                                disabled={!selGroup}
-                            >
-                                <SelectTrigger
-                                    id="asset-category"
-                                    className="mt-1.5 h-10 bg-background/70"
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            selGroup
-                                                ? 'Pilih Kategori'
-                                                : 'Pilih golongan dulu'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredCategories.map((category) => (
-                                        <SelectItem
-                                            key={category.id}
-                                            value={category.id}
-                                        >
-                                            {category.code
-                                                ? `${category.code} — `
-                                                : ''}
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="asset-cluster"
-                                className="flex items-center gap-1"
-                            >
-                                Cluster
-                            </Label>
-                            <Select
-                                value={selCluster}
-                                onValueChange={handleSelectCluster}
-                                disabled={!selCategory}
-                            >
-                                <SelectTrigger
-                                    id="asset-cluster"
-                                    className="mt-1.5 h-10 bg-background/70"
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            selCategory
-                                                ? 'Pilih Cluster'
-                                                : 'Pilih kategori dulu'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredClusters.map((cluster) => (
-                                        <SelectItem
-                                            key={cluster.id}
-                                            value={cluster.id}
-                                        >
-                                            {cluster.code
-                                                ? `${cluster.code} — `
-                                                : ''}
-                                            {cluster.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="asset-sub-cluster"
-                                className="flex items-center gap-1"
-                            >
-                                Sub Cluster
-                            </Label>
-                            <Select
-                                value={selSubCluster}
-                                onValueChange={handleSelectSubCluster}
-                                disabled={!selCluster}
-                            >
-                                <SelectTrigger
-                                    id="asset-sub-cluster"
-                                    className="mt-1.5 h-10 bg-background/70"
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            selCluster
-                                                ? 'Pilih Sub Cluster'
-                                                : 'Pilih cluster dulu'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredSubClusters.map((subCluster) => (
-                                        <SelectItem
-                                            key={subCluster.id}
-                                            value={subCluster.id}
-                                        >
-                                            {subCluster.code
-                                                ? `${subCluster.code} — `
-                                                : ''}
-                                            {subCluster.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <FieldError message={form.errors.item_id} />
                         </div>
                     </div>
 
                     <div
                         className={cn(
                             'mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors',
-                            fullPreviewCode
+                            previewCode
                                 ? 'border-primary/30 bg-primary/5'
                                 : 'border-dashed border-border bg-background/40',
                         )}
@@ -492,7 +277,7 @@ export function AssetForm({
                         <div
                             className={cn(
                                 'flex size-8 shrink-0 items-center justify-center rounded-lg border',
-                                fullPreviewCode
+                                previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
                                     : 'border-border bg-background text-muted-foreground',
                             )}
@@ -506,22 +291,26 @@ export function AssetForm({
                             <p
                                 className={cn(
                                     'mt-0.5 font-mono text-lg font-bold tracking-tight tabular-nums',
-                                    fullPreviewCode
+                                    previewCode
                                         ? 'text-primary'
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {fullPreviewCode || '—'}
+                                {previewCode || '—'}
                             </p>
-                            {fullPreviewCode ? (
+                            {previewCode ? (
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Nomor urut dihitung otomatis per kombinasi
-                                    klasifikasi.
+                                    Nomor urut dihitung otomatis per kategori
+                                    item.
                                 </p>
-                            ) : null}
+                            ) : (
+                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                    Pilih item yang memiliki kategori untuk
+                                    membuat kode aset.
+                                </p>
+                            )}
                         </div>
                     </div>
-                    <FieldError message={form.errors.asset_sub_cluster_id} />
                 </div>
             </section>
 
@@ -533,26 +322,6 @@ export function AssetForm({
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <Label htmlFor="item">Item</Label>
-                        <Select
-                            value={form.data.item_id}
-                            onValueChange={(value) =>
-                                form.setData('item_id', value)
-                            }
-                        >
-                            <SelectTrigger id="item" className="mt-1.5 h-10">
-                                <SelectValue placeholder="Pilih item (opsional)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {items.map((item) => (
-                                    <SelectItem key={item.id} value={item.id}>
-                                        {item.code} — {item.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <div>
                         <Label htmlFor="brand">Brand</Label>
                         <Input

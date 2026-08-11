@@ -45,6 +45,12 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { useIsProcessing } from '@/hooks/use-is-processing';
+import {
+    ASSET_STATUSES,
+    assetStatusChip,
+    assetStatusDot,
+    assetStatusLabel,
+} from '@/lib/asset-status';
 import { cn } from '@/lib/utils';
 import {
     create as createRoute,
@@ -109,9 +115,12 @@ type PaginatedData<T> = {
 type PageProps = {
     assets: PaginatedData<Asset>;
     groups: Classification[];
-    categories: Classification[];
-    clusters: Classification[];
-    subClusters: Classification[];
+    items: {
+        id: string;
+        code: string;
+        name: string;
+        category_code: string | null;
+    }[];
     departments: { id_department: string; nama_department: string }[];
     filters: {
         search: string;
@@ -125,9 +134,10 @@ type PageProps = {
 
 const STATUS_OPTIONS = [
     { value: '', label: 'Semua Status' },
-    { value: 'ACTIVE', label: 'Aktif' },
-    { value: 'INACTIVE', label: 'Nonaktif' },
-    { value: 'DISPOSED', label: 'Dihapus' },
+    ...ASSET_STATUSES.map((status) => ({
+        value: status.value,
+        label: status.label,
+    })),
 ];
 
 const CONDITION_OPTIONS = [
@@ -143,26 +153,6 @@ const CONDITION_ACCENTS: Record<string, string> = {
         'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
     'Rusak Berat':
         'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    ACTIVE: 'Aktif',
-    INACTIVE: 'Nonaktif',
-    DISPOSED: 'Dihapus',
-};
-
-const STATUS_ACCENTS: Record<string, string> = {
-    ACTIVE: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    INACTIVE:
-        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
-    DISPOSED:
-        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
-};
-
-const STATUS_DOTS: Record<string, string> = {
-    ACTIVE: 'bg-emerald-500',
-    INACTIVE: 'bg-slate-400',
-    DISPOSED: 'bg-rose-500',
 };
 
 function conditionAccent(condition: string | null): string {
@@ -189,15 +179,8 @@ function formatDate(value: string | null): string {
 }
 
 export default function AssetsIndex() {
-    const {
-        assets,
-        groups,
-        categories,
-        clusters,
-        subClusters,
-        departments,
-        filters,
-    } = usePage().props as unknown as PageProps;
+    const { assets, groups, items, departments, filters } = usePage()
+        .props as unknown as PageProps;
 
     const [search, setSearch] = useState(filters.search);
     const [groupFilter, setGroupFilter] = useState(filters.group);
@@ -344,27 +327,10 @@ export default function AssetsIndex() {
     const [importing, setImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
-    const [importGroup, setImportGroup] = useState('');
-    const [importCategory, setImportCategory] = useState('');
-    const [importCluster, setImportCluster] = useState('');
-    const [importSubCluster, setImportSubCluster] = useState('');
-
-    const importCategories = categories.filter(
-        (c) => c.asset_group_id === importGroup,
-    );
-    const importClusters = clusters.filter(
-        (c) => c.asset_category_id === importCategory,
-    );
-    const importSubClusters = subClusters.filter(
-        (c) => c.asset_cluster_id === importCluster,
-    );
-
-    const classificationComplete = Boolean(
-        importGroup && importCategory && importCluster && importSubCluster,
-    );
+    const [importItemId, setImportItemId] = useState('');
 
     const handleImportSubmit = () => {
-        if (!importFile || !classificationComplete || importing) {
+        if (!importFile || !importItemId || importing) {
             return;
         }
 
@@ -373,10 +339,7 @@ export default function AssetsIndex() {
 
         const data = new FormData();
         data.append('file', importFile);
-        data.append('asset_group_id', importGroup);
-        data.append('asset_category_id', importCategory);
-        data.append('asset_cluster_id', importCluster);
-        data.append('asset_sub_cluster_id', importSubCluster);
+        data.append('item_id', importItemId);
 
         router.post(importMethod().url, data, {
             forceFormData: true,
@@ -386,10 +349,7 @@ export default function AssetsIndex() {
                 setImporting(false);
                 setImportOpen(false);
                 setImportFile(null);
-                setImportGroup('');
-                setImportCategory('');
-                setImportCluster('');
-                setImportSubCluster('');
+                setImportItemId('');
             },
             onError: (errors) => {
                 setImporting(false);
@@ -754,22 +714,20 @@ export default function AssetsIndex() {
                                             <span
                                                 className={cn(
                                                     'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
-                                                    STATUS_ACCENTS[
-                                                        asset.status
-                                                    ] ??
-                                                        STATUS_ACCENTS.INACTIVE,
+                                                    assetStatusChip(
+                                                        asset.status,
+                                                    ),
                                                 )}
                                             >
                                                 <span
                                                     className={cn(
                                                         'size-1.5 rounded-full',
-                                                        STATUS_DOTS[
-                                                            asset.status
-                                                        ] ?? 'bg-slate-400',
+                                                        assetStatusDot(
+                                                            asset.status,
+                                                        ),
                                                     )}
                                                 />
-                                                {STATUS_LABELS[asset.status] ??
-                                                    asset.status}
+                                                {assetStatusLabel(asset.status)}
                                             </span>
                                         </div>
 
@@ -999,167 +957,36 @@ export default function AssetsIndex() {
                         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                             <Label className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-primary uppercase">
                                 <Layers className="size-3.5" />
-                                Klasifikasi Aset
+                                Item Aset
                             </Label>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                Pilih golongan, kategori, cluster, dan sub
-                                cluster terlebih dahulu agar kode aset dibuat
-                                otomatis.
+                                Pilih item (wajib). Semua baris di file akan
+                                diimpor sebagai aset dari item ini, dengan kode
+                                otomatis dari kategori item.
                             </p>
-                            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
-                                    <Label htmlFor="import-group">
-                                        Golongan
-                                    </Label>
-                                    <Select
-                                        value={importGroup}
-                                        onValueChange={(value) => {
-                                            setImportGroup(value);
-                                            setImportCategory('');
-                                            setImportCluster('');
-                                            setImportSubCluster('');
-                                        }}
+                            <div className="mt-3">
+                                <Label htmlFor="import-item">Item</Label>
+                                <Select
+                                    value={importItemId}
+                                    onValueChange={setImportItemId}
+                                >
+                                    <SelectTrigger
+                                        id="import-item"
+                                        className="mt-1.5 h-10 bg-background/70"
                                     >
-                                        <SelectTrigger
-                                            id="import-group"
-                                            className="mt-1.5 h-10 bg-background/70"
-                                        >
-                                            <SelectValue placeholder="Pilih Golongan" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {groups.map((group) => (
-                                                <SelectItem
-                                                    key={group.id}
-                                                    value={group.id}
-                                                >
-                                                    {group.code
-                                                        ? `${group.code} — `
-                                                        : ''}
-                                                    {group.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="import-category">
-                                        Kategori
-                                    </Label>
-                                    <Select
-                                        value={importCategory}
-                                        onValueChange={(value) => {
-                                            setImportCategory(value);
-                                            setImportCluster('');
-                                            setImportSubCluster('');
-                                        }}
-                                        disabled={!importGroup}
-                                    >
-                                        <SelectTrigger
-                                            id="import-category"
-                                            className="mt-1.5 h-10 bg-background/70"
-                                        >
-                                            <SelectValue
-                                                placeholder={
-                                                    importGroup
-                                                        ? 'Pilih Kategori'
-                                                        : 'Pilih golongan dulu'
-                                                }
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {importCategories.map(
-                                                (category) => (
-                                                    <SelectItem
-                                                        key={category.id}
-                                                        value={category.id}
-                                                    >
-                                                        {category.code
-                                                            ? `${category.code} — `
-                                                            : ''}
-                                                        {category.name}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="import-cluster">
-                                        Cluster
-                                    </Label>
-                                    <Select
-                                        value={importCluster}
-                                        onValueChange={(value) => {
-                                            setImportCluster(value);
-                                            setImportSubCluster('');
-                                        }}
-                                        disabled={!importCategory}
-                                    >
-                                        <SelectTrigger
-                                            id="import-cluster"
-                                            className="mt-1.5 h-10 bg-background/70"
-                                        >
-                                            <SelectValue
-                                                placeholder={
-                                                    importCategory
-                                                        ? 'Pilih Cluster'
-                                                        : 'Pilih kategori dulu'
-                                                }
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {importClusters.map((cluster) => (
-                                                <SelectItem
-                                                    key={cluster.id}
-                                                    value={cluster.id}
-                                                >
-                                                    {cluster.code
-                                                        ? `${cluster.code} — `
-                                                        : ''}
-                                                    {cluster.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="import-sub-cluster">
-                                        Sub Cluster
-                                    </Label>
-                                    <Select
-                                        value={importSubCluster}
-                                        onValueChange={setImportSubCluster}
-                                        disabled={!importCluster}
-                                    >
-                                        <SelectTrigger
-                                            id="import-sub-cluster"
-                                            className="mt-1.5 h-10 bg-background/70"
-                                        >
-                                            <SelectValue
-                                                placeholder={
-                                                    importCluster
-                                                        ? 'Pilih Sub Cluster'
-                                                        : 'Pilih cluster dulu'
-                                                }
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {importSubClusters.map(
-                                                (subCluster) => (
-                                                    <SelectItem
-                                                        key={subCluster.id}
-                                                        value={subCluster.id}
-                                                    >
-                                                        {subCluster.code
-                                                            ? `${subCluster.code} — `
-                                                            : ''}
-                                                        {subCluster.name}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                        <SelectValue placeholder="Pilih Item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {items.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code} — {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
@@ -1188,7 +1015,7 @@ export default function AssetsIndex() {
                         <div
                             className={cn(
                                 'group relative rounded-xl border-2 border-dashed p-6 text-center transition-colors',
-                                !classificationComplete &&
+                                !importItemId &&
                                     'pointer-events-none opacity-60',
                                 dragging
                                     ? 'border-primary bg-primary/5'
@@ -1238,9 +1065,9 @@ export default function AssetsIndex() {
                                         : 'Klik atau seret file ke sini'}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                    {classificationComplete
+                                    {importItemId
                                         ? 'Format didukung: .xlsx, .csv, .ods (maks. 5 MB)'
-                                        : 'Lengkapi klasifikasi aset terlebih dahulu'}
+                                        : 'Pilih item terlebih dahulu'}
                                 </span>
                             </label>
                             {importFile && (
@@ -1273,10 +1100,7 @@ export default function AssetsIndex() {
                             onClick={() => {
                                 setImportOpen(false);
                                 setImportFile(null);
-                                setImportGroup('');
-                                setImportCategory('');
-                                setImportCluster('');
-                                setImportSubCluster('');
+                                setImportItemId('');
                                 setImportError(null);
                             }}
                         >
@@ -1285,11 +1109,7 @@ export default function AssetsIndex() {
                         <Button
                             type="button"
                             onClick={handleImportSubmit}
-                            disabled={
-                                !importFile ||
-                                !classificationComplete ||
-                                importing
-                            }
+                            disabled={!importFile || !importItemId || importing}
                             className="gap-2"
                         >
                             {importing ? (

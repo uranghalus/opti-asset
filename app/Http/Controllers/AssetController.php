@@ -10,10 +10,7 @@ use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
 use App\Http\Requests\UploadAssetMediaRequest;
 use App\Models\Asset;
-use App\Models\AssetCategory;
-use App\Models\AssetCluster;
 use App\Models\AssetGroup;
-use App\Models\AssetSubCluster;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Item;
@@ -74,10 +71,10 @@ class AssetController extends Controller
         return Inertia::render('assets/Index', [
             'assets' => $assets,
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
-            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'asset_group_id', 'code', 'name']),
-            'clusters' => AssetCluster::query()->orderBy('sort_order')->get(['id', 'asset_category_id', 'code', 'name']),
-            'subClusters' => AssetSubCluster::query()->orderBy('sort_order')->get(['id', 'asset_cluster_id', 'code', 'name']),
-            'items' => Item::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'items' => Item::query()
+                ->with('category:id,code')
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'category_id']),
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'filters' => [
@@ -199,14 +196,13 @@ class AssetController extends Controller
     {
         $validated = $request->validated();
 
-        $chain = $this->generateAssetCode->fromIds(
-            $validated['asset_group_id'] ?? null,
-            $validated['asset_category_id'] ?? null,
-            $validated['asset_cluster_id'] ?? null,
-            $validated['asset_sub_cluster_id'] ?? null,
-        );
+        $item = Item::with('category')->findOrFail($validated['item_id']);
 
-        Asset::create([...$validated, 'kode_asset' => $chain['code']]);
+        $chain = $item->category !== null
+            ? $this->generateAssetCode->fromCategory($item->category)
+            : $this->emptyChain();
+
+        Asset::create([...$validated, ...$chain]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil ditambahkan.']);
 
@@ -217,22 +213,23 @@ class AssetController extends Controller
     {
         $validated = $request->validated();
 
-        $groupId = $validated['asset_group_id'] ?? $asset->asset_group_id;
-        $categoryId = $validated['asset_category_id'] ?? $asset->asset_category_id;
-        $clusterId = $validated['asset_cluster_id'] ?? $asset->asset_cluster_id;
-        $subClusterId = $validated['asset_sub_cluster_id'] ?? $asset->asset_sub_cluster_id;
-
-        $classificationChanged = $groupId !== $asset->asset_group_id
-            || $categoryId !== $asset->asset_category_id
-            || $clusterId !== $asset->asset_cluster_id
-            || $subClusterId !== $asset->asset_sub_cluster_id;
+        $itemId = $validated['item_id'] ?? $asset->item_id;
+        $itemChanged = $itemId !== $asset->item_id;
 
         $data = $validated;
 
-        if ($classificationChanged) {
-            $chain = $this->generateAssetCode->fromIds($groupId, $categoryId, $clusterId, $subClusterId, $asset->id);
+        if ($itemChanged) {
+            $item = Item::with('category')->findOrFail($itemId);
 
-            $data['kode_asset'] = $chain['code'] ?? $asset->kode_asset;
+            $chain = $item->category !== null
+                ? $this->generateAssetCode->fromCategory($item->category, $asset->id)
+                : $this->emptyChain();
+
+            $data['kode_asset'] = $chain['kode_asset'] ?? $asset->kode_asset;
+            $data['asset_group_id'] = $chain['asset_group_id'];
+            $data['asset_category_id'] = $chain['asset_category_id'];
+            $data['asset_cluster_id'] = $chain['asset_cluster_id'];
+            $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'];
         }
 
         $this->recordHistory($asset, $validated, $data['kode_asset'] ?? null, $request->user());
@@ -242,6 +239,20 @@ class AssetController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
         return redirect()->route('assets.index');
+    }
+
+    /**
+     * @return array{kode_asset: null, asset_group_id: null, asset_category_id: null, asset_cluster_id: null, asset_sub_cluster_id: null}
+     */
+    private function emptyChain(): array
+    {
+        return [
+            'kode_asset' => null,
+            'asset_group_id' => null,
+            'asset_category_id' => null,
+            'asset_cluster_id' => null,
+            'asset_sub_cluster_id' => null,
+        ];
     }
 
     /**
@@ -257,8 +268,8 @@ class AssetController extends Controller
 
         $entries = [];
 
-        if (array_key_exists('status', $validated) && $validated['status'] !== $asset->status) {
-            $entries[] = ['status', $asset->status, $validated['status']];
+        if (array_key_exists('status', $validated) && $validated['status'] !== $asset->status->value) {
+            $entries[] = ['status', $asset->status->value, $validated['status']];
         }
 
         if (array_key_exists('condition', $validated) && $validated['condition'] !== $asset->condition) {
@@ -382,12 +393,7 @@ class AssetController extends Controller
             throw new \RuntimeException('Tidak dapat menyimpan file sementara.');
         }
 
-        $result = $action(Storage::disk('local')->path($tempPath), [
-            'asset_group_id' => $request->string('asset_group_id')->toString(),
-            'asset_category_id' => $request->string('asset_category_id')->toString(),
-            'asset_cluster_id' => $request->string('asset_cluster_id')->toString(),
-            'asset_sub_cluster_id' => $request->string('asset_sub_cluster_id')->toString(),
-        ]);
+        $result = $action(Storage::disk('local')->path($tempPath), Item::findOrFail($request->string('item_id')->toString()));
 
         Storage::disk('local')->delete($tempPath);
 
@@ -421,11 +427,17 @@ class AssetController extends Controller
     private function formProps(?string $exceptAssetId = null): array
     {
         return [
-            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
-            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'asset_group_id', 'code', 'name']),
-            'clusters' => AssetCluster::query()->orderBy('sort_order')->get(['id', 'asset_category_id', 'code', 'name']),
-            'subClusters' => AssetSubCluster::query()->orderBy('sort_order')->get(['id', 'asset_cluster_id', 'code', 'name']),
-            'items' => Item::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'items' => Item::query()
+                ->with('category:id,code')
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'category_id'])
+                ->map(fn (Item $item): array => [
+                    'id' => $item->id,
+                    'code' => $item->code,
+                    'name' => $item->name,
+                    'category_code' => $item->category?->code,
+                ])
+                ->values(),
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'employees' => Employee::query()->orderBy('nama_employee')->get(['id_employee', 'nama_employee']),

@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('items', [ItemController::class, 'index'])->name('items.index');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
+    Route::post('items/batch-category', [ItemController::class, 'assignCategoryBatch'])->name('items.batch-category');
     Route::patch('items/{item}', [ItemController::class, 'update'])->name('items.update');
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 

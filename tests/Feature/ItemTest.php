@@ -2,8 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AssetCategory;
-use App\Models\AssetGroup;
+use App\Models\Category;
 use App\Models\Item;
 use App\Models\Tenant;
 use App\Models\User;
@@ -62,9 +61,8 @@ class ItemTest extends TestCase
 
     public function test_index_filters_by_category_and_department(): void
     {
-        $group = AssetGroup::factory()->create(['code' => '1']);
-        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
-        $other = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
+        $category = Category::factory()->create();
+        $other = Category::factory()->create();
 
         Item::factory()->create(['name' => 'Kategori Satu', 'category_id' => $category->id]);
         Item::factory()->create(['name' => 'Kategori Dua', 'category_id' => $other->id]);

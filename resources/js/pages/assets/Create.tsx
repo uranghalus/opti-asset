@@ -13,6 +13,7 @@ type CreateProps = {
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
     employees: { id_employee: string; nama_employee: string }[];
+    nextSequences: Record<string, number>;
 };
 
 export default function AssetCreate() {
@@ -68,6 +69,7 @@ export default function AssetCreate() {
                             locations={props.locations}
                             departments={props.departments}
                             employees={props.employees}
+                            nextSequences={props.nextSequences}
                         />
                     </div>
                 </div>

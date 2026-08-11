@@ -13,6 +13,9 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return null;
+            case name === 'assets/Labels':
+            case name === 'assets/LabelsBatch':
+                return null;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:

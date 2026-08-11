@@ -2,7 +2,7 @@ import { router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowUpDown,
     CalendarClock,
-    FolderTree,
+    ChevronRight,
     Hash,
     Inbox,
     Layers,
@@ -45,12 +45,6 @@ import {
     update,
 } from '@/routes/categories';
 
-type Group = {
-    id: string;
-    code: string | null;
-    name: string;
-};
-
 type ClassificationOption = {
     id: string;
     code: string | null;
@@ -60,14 +54,23 @@ type ClassificationOption = {
     asset_cluster_id?: string;
 };
 
-type Category = {
+type ClassificationLevel = 'GROUP' | 'CATEGORY' | 'CLUSTER' | 'SUBCLUSTER';
+
+type ChainNode = {
+    level: ClassificationLevel;
     id: string;
-    asset_group_id: string;
     code: string | null;
     name: string;
-    description: string | null;
+};
+
+type Category = {
+    id: string;
+    name: string;
+    code: string | null;
+    classification_type: ClassificationLevel | null;
+    classification_id: string | null;
+    chain: ChainNode[];
     created_at: string;
-    asset_group: Group | null;
 };
 
 type PaginationLink = {
@@ -90,7 +93,6 @@ type PaginatedData<T> = {
 type Filters = {
     search: string;
     sort: string;
-    group: string;
 };
 
 type PageProps = {
@@ -109,8 +111,6 @@ const SORT_OPTIONS = [
     { value: 'code', label: 'Kode (A–Z)' },
     { value: '-code', label: 'Kode (Z–A)' },
 ];
-
-const ALL_GROUPS = 'all';
 
 const ACCENTS = [
     {
@@ -136,6 +136,13 @@ const ACCENTS = [
     },
 ];
 
+const LEVEL_LABELS: Record<ClassificationLevel, string> = {
+    GROUP: 'Golongan',
+    CATEGORY: 'Kategori',
+    CLUSTER: 'Cluster',
+    SUBCLUSTER: 'Sub Cluster',
+};
+
 function formatDate(value: string): string {
     return new Date(value).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -145,17 +152,15 @@ function formatDate(value: string): string {
 }
 
 type CategoryForm = {
-    asset_group_id: string;
-    code: string;
     name: string;
-    description: string;
+    classification_type: ClassificationLevel | '';
+    classification_id: string;
 };
 
 const EMPTY_FORM: CategoryForm = {
-    asset_group_id: '',
-    code: '',
     name: '',
-    description: '',
+    classification_type: '',
+    classification_id: '',
 };
 
 export default function CategoriesIndex() {
@@ -170,7 +175,6 @@ export default function CategoriesIndex() {
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [sort, setSort] = useState(filters.sort ?? '');
-    const [group, setGroup] = useState(filters.group || ALL_GROUPS);
     const [prevFilters, setPrevFilters] = useState(filters);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Category | null>(null);
@@ -211,14 +215,40 @@ export default function CategoriesIndex() {
     const form = useForm<CategoryForm>(EMPTY_FORM);
 
     const cascadeCategories = (optionCategories ?? []).filter(
-        (item) => String(item.asset_group_id) === selGroup,
+        (item) => selGroup && item.asset_group_id === selGroup,
     );
     const cascadeClusters = (optionClusters ?? []).filter(
-        (item) => String(item.asset_category_id) === selCategory,
+        (item) => selCategory && item.asset_category_id === selCategory,
     );
     const cascadeSubClusters = (optionSubClusters ?? []).filter(
-        (item) => String(item.asset_cluster_id) === selCluster,
+        (item) => selCluster && item.asset_cluster_id === selCluster,
     );
+
+    const selectedLevel: ClassificationLevel | null = selSubCluster
+        ? 'SUBCLUSTER'
+        : selCluster
+          ? 'CLUSTER'
+          : selCategory
+            ? 'CATEGORY'
+            : selGroup
+              ? 'GROUP'
+              : null;
+
+    const selectedCode = [
+        groups.find((item) => item.id === selGroup)?.code,
+        cascadeCategories.find((item) => item.id === selCategory)?.code,
+        cascadeClusters.find((item) => item.id === selCluster)?.code,
+        cascadeSubClusters.find((item) => item.id === selSubCluster)?.code,
+    ]
+        .filter((code): code is string => Boolean(code))
+        .join('.');
+
+    const selectedNode =
+        cascadeSubClusters.find((item) => item.id === selSubCluster) ??
+        cascadeClusters.find((item) => item.id === selCluster) ??
+        cascadeCategories.find((item) => item.id === selCategory) ??
+        groups.find((item) => item.id === selGroup) ??
+        null;
 
     const applySelection = (
         groupId: string,
@@ -229,8 +259,6 @@ export default function CategoriesIndex() {
         const node = subCluster ?? cluster ?? category;
         const selectedGroup = groups.find((item) => item.id === groupId);
 
-        form.setData('asset_group_id', groupId);
-        form.setData('code', node?.code ?? selectedGroup?.code ?? '');
         form.setData('name', node?.name ?? selectedGroup?.name ?? '');
     };
 
@@ -274,13 +302,11 @@ export default function CategoriesIndex() {
 
     if (
         filters.search !== prevFilters.search ||
-        filters.sort !== prevFilters.sort ||
-        filters.group !== prevFilters.group
+        filters.sort !== prevFilters.sort
     ) {
         setPrevFilters(filters);
         setSearch(filters.search ?? '');
         setSort(filters.sort ?? '');
-        setGroup(filters.group || ALL_GROUPS);
     }
 
     useEffect(() => {
@@ -316,8 +342,6 @@ export default function CategoriesIndex() {
             overrides.search !== undefined ? overrides.search : search;
         const currentSort =
             overrides.sort !== undefined ? overrides.sort : sort;
-        const currentGroup =
-            overrides.group !== undefined ? overrides.group : group;
 
         const params: Record<string, string> = {};
 
@@ -327,10 +351,6 @@ export default function CategoriesIndex() {
 
         if (currentSort) {
             params.sort = currentSort;
-        }
-
-        if (currentGroup && currentGroup !== ALL_GROUPS) {
-            params.group = currentGroup;
         }
 
         router.get(indexRoute().url, params, {
@@ -364,16 +384,10 @@ export default function CategoriesIndex() {
         reload({ sort: value });
     };
 
-    const handleGroupChange = (value: string) => {
-        setGroup(value);
-        reload({ group: value });
-    };
-
     const clearFilters = () => {
         setSearch('');
-        setGroup(ALL_GROUPS);
         setSort('');
-        reload({ search: '', group: ALL_GROUPS, sort: '' });
+        reload({ search: '', sort: '' });
         searchInputRef.current?.focus();
     };
 
@@ -389,27 +403,30 @@ export default function CategoriesIndex() {
 
     const openEdit = (category: Category) => {
         setEditing(category);
-        setSelGroup('');
-        setSelCategory('');
-        setSelCluster('');
-        setSelSubCluster('');
+        form.reset();
         form.setData({
-            asset_group_id: category.asset_group_id,
-            code: category.code ?? '',
             name: category.name,
-            description: category.description ?? '',
+            classification_type: category.classification_type ?? '',
+            classification_id: category.classification_id ?? '',
         });
+        setSelGroup(category.chain[0]?.id ?? '');
+        setSelCategory(category.chain[1]?.id ?? '');
+        setSelCluster(category.chain[2]?.id ?? '');
+        setSelSubCluster(category.chain[3]?.id ?? '');
         setFormOpen(true);
     };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!editing && !form.data.asset_group_id) {
+        if (!selectedLevel || !selectedNode) {
             toast.error('Pilih golongan dari klasifikasi terlebih dahulu.');
 
             return;
         }
+
+        form.setData('classification_type', selectedLevel);
+        form.setData('classification_id', selectedNode.id);
 
         const options = {
             only: ['categories', 'groups', 'filters'],
@@ -516,11 +533,11 @@ export default function CategoriesIndex() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    Kategori
+                                    Kategori Item
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Kelola kategori aset di bawah golongan
-                                    klasifikasi Anda.
+                                    Kelola kategori untuk mengelompokkan item
+                                    berdasarkan klasifikasi aset Anda.
                                 </p>
                             </div>
                         </div>
@@ -570,54 +587,24 @@ export default function CategoriesIndex() {
                             className="hidden h-8 w-px shrink-0 bg-border/60 lg:block"
                         />
 
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <Select
-                                value={group}
-                                onValueChange={handleGroupChange}
-                            >
-                                <SelectTrigger className="h-11! w-full justify-start rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl sm:w-48">
-                                    <FolderTree className="size-4 shrink-0 text-muted-foreground" />
-                                    <SelectValue placeholder="Semua Golongan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={ALL_GROUPS}>
-                                        Semua Golongan
+                        <Select value={sort} onValueChange={handleSortChange}>
+                            <SelectTrigger className="h-11! w-full justify-start rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl sm:w-44">
+                                <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" />
+                                <SelectValue
+                                    placeholder={activeSort?.label ?? 'Urutkan'}
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {SORT_OPTIONS.map((option) => (
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
                                     </SelectItem>
-                                    {groups.map((item) => (
-                                        <SelectItem
-                                            key={item.id}
-                                            value={item.id}
-                                        >
-                                            {item.code ? `${item.code} — ` : ''}
-                                            {item.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={sort}
-                                onValueChange={handleSortChange}
-                            >
-                                <SelectTrigger className="h-11! w-full justify-start rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl sm:w-44">
-                                    <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" />
-                                    <SelectValue
-                                        placeholder={
-                                            activeSort?.label ?? 'Urutkan'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {SORT_OPTIONS.map((option) => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
@@ -646,19 +633,17 @@ export default function CategoriesIndex() {
                             </div>
                             <div>
                                 <p className="text-base font-semibold text-foreground">
-                                    {search.trim() || group !== ALL_GROUPS
+                                    {search.trim()
                                         ? 'Tidak ada hasil pencarian'
                                         : 'Belum ada kategori'}
                                 </p>
                                 <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
                                     {search.trim()
                                         ? `Tidak ditemukan kategori untuk "${search}". Coba kata kunci lain.`
-                                        : group !== ALL_GROUPS
-                                          ? 'Tidak ada kategori di golongan yang dipilih.'
-                                          : 'Buat kategori pertama untuk mulai mengelompokkan aset Anda.'}
+                                        : 'Buat kategori pertama untuk mulai mengelompokkan item Anda.'}
                                 </p>
                             </div>
-                            {search.trim() || group !== ALL_GROUPS ? (
+                            {search.trim() ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -734,15 +719,30 @@ export default function CategoriesIndex() {
                                                             {category.name}
                                                         </h3>
                                                         <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-                                                            <FolderTree
-                                                                className="size-3"
-                                                                strokeWidth={
-                                                                    1.75
-                                                                }
-                                                            />
-                                                            {category
-                                                                .asset_group
-                                                                ?.name ?? '—'}
+                                                            {category.chain
+                                                                .length > 0 ? (
+                                                                category.chain.map(
+                                                                    (
+                                                                        node,
+                                                                        i,
+                                                                    ) => (
+                                                                        <span
+                                                                            key={`${node.level}-${node.id}`}
+                                                                            className="flex items-center gap-1"
+                                                                        >
+                                                                            {i >
+                                                                                0 && (
+                                                                                <ChevronRight className="size-3 text-muted-foreground/60" />
+                                                                            )}
+                                                                            {
+                                                                                node.name
+                                                                            }
+                                                                        </span>
+                                                                    ),
+                                                                )
+                                                            ) : (
+                                                                <span>—</span>
+                                                            )}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -773,15 +773,24 @@ export default function CategoriesIndex() {
                                             </div>
                                         </div>
 
-                                        <div className="relative mt-3 flex min-h-[2.5rem] flex-1">
-                                            {category.description && (
-                                                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                                                    {category.description}
-                                                </p>
-                                            )}
-                                        </div>
-
                                         <div className="relative mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+                                            <span
+                                                className={cn(
+                                                    'inline-flex items-center gap-1.5 rounded-md bg-gradient-to-br px-2 py-1 text-xs font-semibold shadow-sm ring-1',
+                                                    accent.badge,
+                                                )}
+                                            >
+                                                <Layers
+                                                    className="size-3.5"
+                                                    strokeWidth={2}
+                                                />
+                                                {category.classification_type
+                                                    ? LEVEL_LABELS[
+                                                          category
+                                                              .classification_type
+                                                      ]
+                                                    : '—'}
+                                            </span>
                                             <p
                                                 className={cn(
                                                     'flex items-center gap-1.5 text-xs font-medium',
@@ -797,6 +806,9 @@ export default function CategoriesIndex() {
                                                     category.created_at,
                                                 )}
                                             </p>
+                                        </div>
+
+                                        <div className="relative mt-3 flex items-center justify-between gap-3">
                                             <span
                                                 className={cn(
                                                     'inline-flex items-center gap-1 rounded-md bg-gradient-to-br px-2 py-1 font-mono text-[11px] font-semibold shadow-sm ring-1',
@@ -922,247 +934,173 @@ export default function CategoriesIndex() {
                         </DialogTitle>
                         <DialogDescription>
                             {editing
-                                ? 'Perbarui informasi kategori.'
-                                : 'Buat kategori aset baru.'}
+                                ? 'Perbarui informasi kategori item.'
+                                : 'Buat kategori item baru.'}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="grid gap-4">
-                        {!editing ? (
-                            <>
-                                <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3">
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15 text-primary">
-                                        <Layers
-                                            className="size-4"
-                                            strokeWidth={1.75}
-                                        />
-                                    </span>
-                                    <div>
-                                        <p className="text-xs font-semibold text-foreground">
-                                            Pilih dari Klasifikasi Aset
-                                        </p>
-                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                            Kode & nama mengikuti level terdalam
-                                            yang dipilih.
-                                        </p>
-                                    </div>
-                                </div>
+                        <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3">
+                            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15 text-primary">
+                                <Layers className="size-4" strokeWidth={1.75} />
+                            </span>
+                            <div>
+                                <p className="text-xs font-semibold text-foreground">
+                                    Pilih dari Klasifikasi Aset
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    Kode & nama mengikuti level terdalam yang
+                                    dipilih.
+                                </p>
+                            </div>
+                        </div>
 
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="grid gap-2">
-                                        <Label className="flex items-center gap-1">
-                                            Golongan
-                                            <span className="text-destructive">
-                                                *
-                                            </span>
-                                        </Label>
-                                        <Select
-                                            value={selGroup}
-                                            onValueChange={handleSelectGroup}
-                                        >
-                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
-                                                <SelectValue placeholder="Pilih Golongan" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {groups.map((item) => (
-                                                    <SelectItem
-                                                        key={item.id}
-                                                        value={item.id}
-                                                    >
-                                                        {item.code
-                                                            ? `${item.code} — `
-                                                            : ''}
-                                                        {item.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {form.errors.asset_group_id && (
-                                            <p className="text-xs text-destructive">
-                                                {form.errors.asset_group_id}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label>Kategori</Label>
-                                        <Select
-                                            value={selCategory}
-                                            onValueChange={handleSelectCategory}
-                                            disabled={!selGroup}
-                                        >
-                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
-                                                <SelectValue
-                                                    placeholder={
-                                                        selGroup
-                                                            ? 'Pilih Kategori'
-                                                            : 'Pilih golongan dulu'
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {cascadeCategories.map(
-                                                    (item) => (
-                                                        <SelectItem
-                                                            key={item.id}
-                                                            value={item.id}
-                                                        >
-                                                            {item.code
-                                                                ? `${item.code} — `
-                                                                : ''}
-                                                            {item.name}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label>Cluster</Label>
-                                        <Select
-                                            value={selCluster}
-                                            onValueChange={handleSelectCluster}
-                                            disabled={!selCategory}
-                                        >
-                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
-                                                <SelectValue
-                                                    placeholder={
-                                                        selCategory
-                                                            ? 'Pilih Cluster'
-                                                            : 'Pilih kategori dulu'
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {cascadeClusters.map((item) => (
-                                                    <SelectItem
-                                                        key={item.id}
-                                                        value={item.id}
-                                                    >
-                                                        {item.code
-                                                            ? `${item.code} — `
-                                                            : ''}
-                                                        {item.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label>Sub Cluster</Label>
-                                        <Select
-                                            value={selSubCluster}
-                                            onValueChange={
-                                                handleSelectSubCluster
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label className="flex items-center gap-1">
+                                    Golongan
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Select
+                                    value={selGroup}
+                                    onValueChange={handleSelectGroup}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                        <SelectValue placeholder="Pilih Golongan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {groups.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code
+                                                    ? `${item.code} — `
+                                                    : ''}
+                                                {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {form.errors.classification_id && (
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.classification_id}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Kategori</Label>
+                                <Select
+                                    value={selCategory}
+                                    onValueChange={handleSelectCategory}
+                                    disabled={!selGroup}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                        <SelectValue
+                                            placeholder={
+                                                selGroup
+                                                    ? 'Pilih Kategori'
+                                                    : 'Pilih golongan dulu'
                                             }
-                                            disabled={!selCluster}
-                                        >
-                                            <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
-                                                <SelectValue
-                                                    placeholder={
-                                                        selCluster
-                                                            ? 'Pilih Sub Cluster'
-                                                            : 'Pilih cluster dulu'
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {cascadeSubClusters.map(
-                                                    (item) => (
-                                                        <SelectItem
-                                                            key={item.id}
-                                                            value={item.id}
-                                                        >
-                                                            {item.code
-                                                                ? `${item.code} — `
-                                                                : ''}
-                                                            {item.name}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2.5 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5">
-                                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/15 text-primary">
-                                        <Hash
-                                            className="size-3.5"
-                                            strokeWidth={2}
                                         />
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                                            Kode Kategori Otomatis
-                                        </p>
-                                        <p className="truncate font-mono text-sm font-bold text-primary tabular-nums">
-                                            {form.data.code || '—'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="category-group">
-                                        Golongan
-                                    </Label>
-                                    <Select
-                                        value={form.data.asset_group_id}
-                                        onValueChange={(value) =>
-                                            form.setData(
-                                                'asset_group_id',
-                                                value,
-                                            )
-                                        }
-                                    >
-                                        <SelectTrigger
-                                            id="category-group"
-                                            className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm"
-                                        >
-                                            <SelectValue placeholder="Pilih golongan" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {groups.map((group) => (
-                                                <SelectItem
-                                                    key={group.id}
-                                                    value={group.id}
-                                                >
-                                                    {group.code
-                                                        ? `${group.code} — `
-                                                        : ''}
-                                                    {group.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {form.errors.asset_group_id && (
-                                        <p className="text-xs text-destructive">
-                                            {form.errors.asset_group_id}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="category-code">Kode</Label>
-                                    <Input
-                                        id="category-code"
-                                        value={form.data.code}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'code',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="Contoh: 01.02"
-                                        className="font-mono"
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {cascadeCategories.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code
+                                                    ? `${item.code} — `
+                                                    : ''}
+                                                {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Cluster</Label>
+                                <Select
+                                    value={selCluster}
+                                    onValueChange={handleSelectCluster}
+                                    disabled={!selCategory}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                        <SelectValue
+                                            placeholder={
+                                                selCategory
+                                                    ? 'Pilih Cluster'
+                                                    : 'Pilih kategori dulu'
+                                            }
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {cascadeClusters.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code
+                                                    ? `${item.code} — `
+                                                    : ''}
+                                                {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Sub Cluster</Label>
+                                <Select
+                                    value={selSubCluster}
+                                    onValueChange={handleSelectSubCluster}
+                                    disabled={!selCluster}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                        <SelectValue
+                                            placeholder={
+                                                selCluster
+                                                    ? 'Pilih Sub Cluster'
+                                                    : 'Pilih cluster dulu'
+                                            }
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {cascadeSubClusters.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code
+                                                    ? `${item.code} — `
+                                                    : ''}
+                                                {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {selectedLevel && (
+                            <div className="flex items-center gap-2.5 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5">
+                                <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/15 text-primary">
+                                    <Hash
+                                        className="size-3.5"
+                                        strokeWidth={2}
                                     />
-                                    {form.errors.code && (
-                                        <p className="text-xs text-destructive">
-                                            {form.errors.code}
-                                        </p>
-                                    )}
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Kode Kategori Otomatis
+                                    </p>
+                                    <p className="truncate font-mono text-sm font-bold text-primary tabular-nums">
+                                        {selectedCode || '—'}
+                                    </p>
                                 </div>
-                            </>
+                            </div>
                         )}
+
                         <div className="grid gap-2">
                             <Label htmlFor="category-name">Nama Kategori</Label>
                             <Input
@@ -1182,27 +1120,6 @@ export default function CategoriesIndex() {
                             {form.errors.name && (
                                 <p className="text-xs text-destructive">
                                     {form.errors.name}
-                                </p>
-                            )}
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="category-description">
-                                Deskripsi
-                            </Label>
-                            <Input
-                                id="category-description"
-                                value={form.data.description}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'description',
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="Keterangan singkat kategori"
-                            />
-                            {form.errors.description && (
-                                <p className="text-xs text-destructive">
-                                    {form.errors.description}
                                 </p>
                             )}
                         </div>

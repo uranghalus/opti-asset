@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ClassificationLevel;
 use App\Models\AssetCategory;
+use App\Models\AssetCluster;
 use App\Models\AssetGroup;
+use App\Models\AssetSubCluster;
+use App\Models\Category;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,9 +39,9 @@ class CategoryTest extends TestCase
     {
         $group = AssetGroup::factory()->create();
 
-        AssetCategory::factory()->count(20)->create([
-            'asset_group_id' => $group->id,
-            'code' => null,
+        Category::factory()->count(20)->create([
+            'classification_id' => $group->id,
+            'classification_type' => ClassificationLevel::GROUP,
         ]);
 
         $this->actingAs($this->user)
@@ -54,15 +58,11 @@ class CategoryTest extends TestCase
 
     public function test_index_searches_categories_by_name_or_code(): void
     {
-        $group = AssetGroup::factory()->create();
-
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
+        Category::factory()->create([
             'code' => '01.01',
             'name' => 'Komputer & Laptop',
         ]);
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
+        Category::factory()->create([
             'code' => '01.02',
             'name' => 'Printer',
         ]);
@@ -81,20 +81,10 @@ class CategoryTest extends TestCase
                 ->where('categories.data.0.code', '01.02'));
     }
 
-    public function test_index_filters_by_sort_order(): void
+    public function test_index_sorts_categories_by_name_and_code(): void
     {
-        $group = AssetGroup::factory()->create();
-
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'code' => '02',
-            'name' => 'Zulu',
-        ]);
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'code' => '01',
-            'name' => 'Alpha',
-        ]);
+        Category::factory()->create(['name' => 'Zulu', 'code' => '02']);
+        Category::factory()->create(['name' => 'Alpha', 'code' => '01']);
 
         $this->actingAs($this->user)
             ->get(route('categories.index', ['sort' => 'name']))
@@ -109,39 +99,12 @@ class CategoryTest extends TestCase
                 ->where('categories.data.1.code', '01'));
     }
 
-    public function test_index_filters_by_group(): void
-    {
-        $group = AssetGroup::factory()->create(['name' => 'Elektronik']);
-        $otherGroup = AssetGroup::factory()->create(['name' => 'Furnitur']);
-
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'name' => 'Komputer',
-        ]);
-        AssetCategory::factory()->create([
-            'asset_group_id' => $otherGroup->id,
-            'name' => 'Meja',
-        ]);
-
-        $this->actingAs($this->user)
-            ->get(route('categories.index', ['group' => $group->id]))
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('categories.total', 1)
-                ->where('categories.data.0.name', 'Komputer')
-                ->where('filters.group', $group->id));
-    }
-
     public function test_index_only_lists_current_tenants_categories(): void
     {
-        $group = AssetGroup::factory()->create();
-
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'name' => 'Milik Saya',
-        ]);
+        Category::factory()->create(['name' => 'Milik Saya']);
 
         Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
-        $foreign = AssetCategory::factory()->create(['name' => 'Asing']);
+        $foreign = Category::factory()->create(['name' => 'Asing']);
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
@@ -167,23 +130,76 @@ class CategoryTest extends TestCase
             );
     }
 
-    public function test_category_can_be_created(): void
+    public function test_index_serializes_the_classification_chain(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
+        $category = AssetCategory::factory()->create([
+            'asset_group_id' => $group->id,
+            'code' => '01',
+            'name' => 'Komputer',
+        ]);
+        $cluster = AssetCluster::factory()->create([
+            'asset_category_id' => $category->id,
+            'code' => '01',
+            'name' => 'Laptop',
+        ]);
+        $subCluster = AssetSubCluster::factory()->create([
+            'asset_cluster_id' => $cluster->id,
+            'code' => '01',
+            'name' => 'Notebook',
+        ]);
+
+        Category::factory()->create([
+            'code' => '01.01.01.01',
+            'classification_id' => $subCluster->id,
+            'classification_type' => ClassificationLevel::SUBCLUSTER,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('categories.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('categories.data.0.classification_type', 'SUBCLUSTER')
+                ->where('categories.data.0.chain.0.name', 'Elektronik')
+                ->where('categories.data.0.chain.1.name', 'Komputer')
+                ->where('categories.data.0.chain.2.name', 'Laptop')
+                ->where('categories.data.0.chain.3.name', 'Notebook'));
+    }
+
+    public function test_category_can_be_created_at_group_level(): void
     {
         $group = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
 
         $this->actingAs($this->user)->post(route('categories.store'), [
-            'asset_group_id' => $group->id,
-            'code' => '01.01',
-            'name' => 'Komputer',
-            'description' => 'Perangkat komputasi',
+            'name' => 'Elektronik',
+            'classification_type' => ClassificationLevel::GROUP->value,
+            'classification_id' => $group->id,
         ])->assertRedirect();
 
-        $category = AssetCategory::first();
+        $category = Category::first();
 
         $this->assertNotNull($category);
-        $this->assertSame($group->id, $category->asset_group_id);
         $this->assertSame($this->tenant->id, $category->tenant_id);
-        $this->assertSame('Komputer', $category->name);
+        $this->assertSame('Elektronik', $category->name);
+        $this->assertSame('01', $category->code);
+        $this->assertSame(ClassificationLevel::GROUP, $category->classification_type);
+        $this->assertSame($group->id, $category->classification_id);
+    }
+
+    public function test_category_code_built_from_selected_level(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '01']);
+        $category = AssetCategory::factory()->create([
+            'asset_group_id' => $group->id,
+            'code' => '01',
+        ]);
+
+        $this->actingAs($this->user)->post(route('categories.store'), [
+            'name' => 'Komputer',
+            'classification_type' => ClassificationLevel::CATEGORY->value,
+            'classification_id' => $category->id,
+        ])->assertRedirect();
+
+        $this->assertSame('01.01', Category::first()->code);
     }
 
     public function test_category_name_is_required(): void
@@ -193,52 +209,52 @@ class CategoryTest extends TestCase
         $this->actingAs($this->user)
             ->from(route('categories.index'))
             ->post(route('categories.store'), [
-                'asset_group_id' => $group->id,
-                'code' => '01',
                 'name' => '',
+                'classification_type' => ClassificationLevel::GROUP->value,
+                'classification_id' => $group->id,
             ])
             ->assertSessionHasErrors('name');
     }
 
-    public function test_category_code_must_be_unique_within_group(): void
+    public function test_category_classification_type_must_be_valid(): void
     {
         $group = AssetGroup::factory()->create();
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'code' => '01.01',
-        ]);
 
         $this->actingAs($this->user)
             ->from(route('categories.index'))
             ->post(route('categories.store'), [
-                'asset_group_id' => $group->id,
-                'code' => '01.01',
-                'name' => 'Duplikat',
+                'name' => 'X',
+                'classification_type' => 'BOGUS',
+                'classification_id' => $group->id,
             ])
-            ->assertSessionHasErrors('code');
+            ->assertSessionHasErrors('classification_type');
     }
 
-    public function test_same_category_code_allowed_in_another_group(): void
+    public function test_category_classification_id_is_required(): void
     {
-        $group = AssetGroup::factory()->create();
-        $otherGroup = AssetGroup::factory()->create();
-        AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
-            'code' => '01.01',
-        ]);
-
         $this->actingAs($this->user)
+            ->from(route('categories.index'))
             ->post(route('categories.store'), [
-                'asset_group_id' => $otherGroup->id,
-                'code' => '01.01',
-                'name' => 'Kategori',
+                'name' => 'X',
+                'classification_type' => ClassificationLevel::GROUP->value,
+                'classification_id' => '',
             ])
-            ->assertRedirect();
-
-        $this->assertSame(2, AssetCategory::count());
+            ->assertSessionHasErrors('classification_id');
     }
 
-    public function test_category_cannot_be_created_under_another_tenants_group(): void
+    public function test_category_cannot_point_to_a_missing_classification_node(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('categories.index'))
+            ->post(route('categories.store'), [
+                'name' => 'X',
+                'classification_type' => ClassificationLevel::GROUP->value,
+                'classification_id' => (string) fake()->uuid(),
+            ])
+            ->assertNotFound();
+    }
+
+    public function test_category_cannot_point_to_another_tenants_classification_node(): void
     {
         Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
         $foreignGroup = AssetGroup::factory()->create();
@@ -247,98 +263,93 @@ class CategoryTest extends TestCase
         $this->actingAs($this->user)
             ->from(route('categories.index'))
             ->post(route('categories.store'), [
-                'asset_group_id' => $foreignGroup->id,
-                'name' => 'Kategori Asing',
+                'name' => 'X',
+                'classification_type' => ClassificationLevel::GROUP->value,
+                'classification_id' => $foreignGroup->id,
             ])
             ->assertNotFound();
     }
 
     public function test_category_can_be_updated(): void
     {
-        $group = AssetGroup::factory()->create();
-        $category = AssetCategory::factory()->create([
-            'asset_group_id' => $group->id,
+        $initialGroup = AssetGroup::factory()->create(['code' => '01']);
+        $category = Category::factory()->create([
             'name' => 'Lama',
+            'classification_id' => $initialGroup->id,
+            'classification_type' => ClassificationLevel::GROUP,
         ]);
 
-        $this->actingAs($this->user)
-            ->patch(route('categories.update', $category->id), [
-                'asset_group_id' => $group->id,
-                'name' => 'Baru',
-            ])
-            ->assertRedirect();
-
-        $this->assertSame('Baru', $category->fresh()->name);
-    }
-
-    public function test_category_can_keep_its_own_code_on_update(): void
-    {
-        $group = AssetGroup::factory()->create();
-        $category = AssetCategory::factory()->create([
+        $group = AssetGroup::factory()->create(['code' => '02']);
+        $categoryNode = AssetCategory::factory()->create([
             'asset_group_id' => $group->id,
-            'code' => '01.01',
+            'code' => '01',
         ]);
 
         $this->actingAs($this->user)
             ->patch(route('categories.update', $category->id), [
-                'asset_group_id' => $group->id,
-                'code' => '01.01',
-                'name' => 'Tetap',
+                'name' => 'Baru',
+                'classification_type' => ClassificationLevel::CATEGORY->value,
+                'classification_id' => $categoryNode->id,
             ])
             ->assertRedirect();
+
+        $category->refresh();
+
+        $this->assertSame('Baru', $category->name);
+        $this->assertSame('02.01', $category->code);
+        $this->assertSame($categoryNode->id, $category->classification_id);
     }
 
     public function test_category_from_another_tenant_cannot_be_updated(): void
     {
         Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
-        $foreign = AssetCategory::factory()->create();
+        $foreign = Category::factory()->create();
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
             ->patch(route('categories.update', $foreign->id), [
-                'asset_group_id' => $foreign->asset_group_id,
                 'name' => 'X',
+                'classification_type' => ClassificationLevel::GROUP->value,
+                'classification_id' => $foreign->classification_id,
             ])
             ->assertNotFound();
     }
 
     public function test_category_can_be_deleted(): void
     {
-        $group = AssetGroup::factory()->create();
-        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
+        $category = Category::factory()->create();
 
         $this->actingAs($this->user)
             ->delete(route('categories.destroy', $category->id))
             ->assertRedirect();
 
-        $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(0, Category::withoutGlobalScopes()->count());
     }
 
     public function test_category_from_another_tenant_cannot_be_deleted(): void
     {
         Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
-        $foreign = AssetCategory::factory()->create();
+        $foreign = Category::factory()->create();
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
             ->delete(route('categories.destroy', $foreign->id))
             ->assertNotFound();
 
-        $this->assertSame(1, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(1, Category::withoutGlobalScopes()->count());
     }
 
     public function test_categories_can_be_bulk_deleted(): void
     {
-        $group = AssetGroup::factory()->create();
-        AssetCategory::factory()->count(3)->create(['asset_group_id' => $group->id]);
-        $ids = AssetCategory::query()->pluck('id')->all();
+        Category::factory()->count(3)->create();
+        $ids = Category::query()->pluck('id')->all();
 
         $this->actingAs($this->user)
             ->from(route('categories.index'))
             ->delete(route('categories.destroy-bulk'), ['ids' => $ids])
             ->assertRedirect();
 
-        $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(0, Category::withoutGlobalScopes()->count());
     }
 
     public function test_bulk_delete_requires_ids(): void
@@ -348,6 +359,6 @@ class CategoryTest extends TestCase
             ->delete(route('categories.destroy-bulk'), ['ids' => []])
             ->assertSessionHasErrors(['ids']);
 
-        $this->assertSame(0, AssetCategory::withoutGlobalScopes()->count());
+        $this->assertSame(0, Category::withoutGlobalScopes()->count());
     }
 }

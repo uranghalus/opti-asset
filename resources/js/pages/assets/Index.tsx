@@ -1,8 +1,10 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    Barcode,
     Boxes,
     Building2,
     CheckCircle2,
+    ChevronRight,
     Download,
     FileSpreadsheet,
     FileText,
@@ -13,10 +15,9 @@ import {
     Package,
     Pencil,
     Plus,
+    ScanLine,
     Search,
-    ShieldCheck,
     SlidersHorizontal,
-    Tags,
     Trash2,
     UploadCloud,
     X,
@@ -24,6 +25,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -51,6 +53,10 @@ import {
     importMethod,
     importTemplate,
     index as indexRoute,
+    labels as labelsRoute,
+    labelsBatch as labelsBatchRoute,
+    scan as scanRoute,
+    show as showRoute,
 } from '@/routes/assets';
 
 type Classification = {
@@ -77,10 +83,10 @@ type Asset = {
     item: { id: string; name: string; code: string } | null;
     location: { id: string; name: string } | null;
     department: { id_department: string; nama_department: string } | null;
-    assetGroup: Classification | null;
-    assetCategory: Classification | null;
-    assetCluster: Classification | null;
-    assetSubCluster: Classification | null;
+    asset_group: Classification | null;
+    asset_category: Classification | null;
+    asset_cluster: Classification | null;
+    asset_sub_cluster: Classification | null;
 };
 
 type PaginationLink = {
@@ -139,14 +145,25 @@ const CONDITION_ACCENTS: Record<string, string> = {
         'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
 };
 
-const CHAIN_ACCENTS = [
-    'bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300',
-    'bg-violet-500/10 text-violet-700 ring-violet-500/20 dark:text-violet-300',
-    'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
-    'bg-teal-500/10 text-teal-700 ring-teal-500/20 dark:text-teal-300',
-];
+const STATUS_LABELS: Record<string, string> = {
+    ACTIVE: 'Aktif',
+    INACTIVE: 'Nonaktif',
+    DISPOSED: 'Dihapus',
+};
 
-const CHAIN_ICONS = [Layers, Boxes, Tags, ShieldCheck];
+const STATUS_ACCENTS: Record<string, string> = {
+    ACTIVE: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
+    INACTIVE:
+        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
+    DISPOSED:
+        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+};
+
+const STATUS_DOTS: Record<string, string> = {
+    ACTIVE: 'bg-emerald-500',
+    INACTIVE: 'bg-slate-400',
+    DISPOSED: 'bg-rose-500',
+};
 
 function conditionAccent(condition: string | null): string {
     if (!condition) {
@@ -192,8 +209,41 @@ export default function AssetsIndex() {
     const [filterOpen, setFilterOpen] = useState(false);
     const [deleting, setDeleting] = useState<Asset | null>(null);
     const [deletingState, setDeletingState] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
+
+    const pageIds = assets.data.map((asset) => asset.id);
+    const allSelected =
+        pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
+    const toggleSelect = (id: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        setSelected(allSelected ? new Set() : new Set(pageIds));
+    };
+
+    const openLabels = () => {
+        if (selected.size === 0) {
+            return;
+        }
+
+        router.visit(labelsRoute().url, {
+            data: { ids: Array.from(selected) },
+        });
+    };
 
     useEffect(() => {
         return () => {
@@ -390,16 +440,53 @@ export default function AssetsIndex() {
                             </div>
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                            <Link href={scanRoute().url}>
+                                <Button
+                                    variant="outline"
+                                    className="h-10 gap-2 rounded-xl border-primary/25 bg-primary/5 px-4 text-sm font-medium text-primary shadow-sm backdrop-blur-xl"
+                                >
+                                    <ScanLine className="size-4" />
+                                    Scan
+                                </Button>
+                            </Link>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setImportOpen(true)}
-                                className="h-10 rounded-xl border-muted-foreground/30 bg-background/60 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
+                                className="h-10 gap-2 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
                             >
                                 <UploadCloud className="size-4" />
                                 Import
                             </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={openLabels}
+                                disabled={selected.size === 0}
+                                title={
+                                    selected.size === 0
+                                        ? 'Pilih aset terlebih dahulu'
+                                        : undefined
+                                }
+                                className="h-10 gap-2 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
+                            >
+                                <Barcode className="size-4" />
+                                Cetak Barcode
+                            </Button>
+                            <Link href={labelsBatchRoute().url}>
+                                <Button
+                                    variant="outline"
+                                    className="h-10 gap-2 rounded-xl border-primary/25 bg-primary/5 px-4 text-sm font-medium text-primary shadow-sm backdrop-blur-xl"
+                                >
+                                    <Layers className="size-4" />
+                                    Cetak Massal
+                                </Button>
+                            </Link>
+                            <span
+                                aria-hidden
+                                className="hidden h-6 w-px bg-border/70 sm:block"
+                            />
                             <Link href={createRoute().url}>
                                 <Button
                                     size="sm"
@@ -488,9 +575,18 @@ export default function AssetsIndex() {
                     </div>
 
                     <div className="card-enter mt-8 flex items-center justify-between gap-2 border-b border-border/40 pb-3 delay-150">
-                        <h2 className="text-sm font-semibold tracking-wide text-foreground">
-                            Semua Aset
-                        </h2>
+                        <div className="flex items-center gap-2.5">
+                            <Checkbox
+                                id="select-all-assets"
+                                aria-label="Pilih semua aset"
+                                checked={allSelected}
+                                onCheckedChange={toggleSelectAll}
+                                disabled={assets.data.length === 0}
+                            />
+                            <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                                Semua Aset
+                            </h2>
+                        </div>
                         <div className="flex items-center gap-3">
                             {activeFilterCount > 0 && (
                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -539,10 +635,10 @@ export default function AssetsIndex() {
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {assets.data.map((asset) => {
                                 const chain = [
-                                    asset.assetGroup,
-                                    asset.assetCategory,
-                                    asset.assetCluster,
-                                    asset.assetSubCluster,
+                                    asset.asset_group,
+                                    asset.asset_category,
+                                    asset.asset_cluster,
+                                    asset.asset_sub_cluster,
                                 ].filter(Boolean) as Classification[];
 
                                 return (
@@ -551,53 +647,75 @@ export default function AssetsIndex() {
                                         className="glass-card ease-premium group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]"
                                     >
                                         <div className="flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className="relative size-11 shrink-0">
-                                                    {asset.photo_url?.[0] ? (
-                                                        <>
-                                                            <img
-                                                                src={
-                                                                    asset
-                                                                        .photo_url[0]
-                                                                }
-                                                                alt="Foto aset"
-                                                                className="size-11 rounded-xl border border-border/70 object-cover shadow-md ring-1 ring-primary/10"
-                                                            />
-                                                            {asset.photo_url
-                                                                .length > 1 && (
-                                                                <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-[9px] font-bold text-muted-foreground tabular-nums shadow-sm">
-                                                                    +
-                                                                    {asset
-                                                                        .photo_url
-                                                                        .length -
-                                                                        1}
-                                                                </span>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                                            <Package
-                                                                className="size-5"
-                                                                strokeWidth={
-                                                                    1.75
-                                                                }
-                                                            />
-                                                        </div>
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <Checkbox
+                                                    aria-label={`Pilih ${asset.kode_asset ?? asset.id}`}
+                                                    checked={selected.has(
+                                                        asset.id,
                                                     )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-sm font-semibold text-foreground">
-                                                        {asset.item?.name ??
-                                                            'Aset'}
-                                                    </h3>
-                                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                                        {[
-                                                            asset.brand,
-                                                            asset.model,
-                                                        ]
-                                                            .filter(Boolean)
-                                                            .join(' · ') || '—'}
-                                                    </p>
+                                                    onCheckedChange={() =>
+                                                        toggleSelect(asset.id)
+                                                    }
+                                                    className="mt-1 shrink-0"
+                                                />
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <div className="relative size-11 shrink-0">
+                                                        {asset
+                                                            .photo_url?.[0] ? (
+                                                            <>
+                                                                <img
+                                                                    src={
+                                                                        asset
+                                                                            .photo_url[0]
+                                                                    }
+                                                                    alt="Foto aset"
+                                                                    className="size-11 rounded-xl border border-border/70 object-cover shadow-md ring-1 ring-primary/10"
+                                                                />
+                                                                {asset.photo_url
+                                                                    .length >
+                                                                    1 && (
+                                                                    <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-[9px] font-bold text-muted-foreground tabular-nums shadow-sm">
+                                                                        +
+                                                                        {asset
+                                                                            .photo_url
+                                                                            .length -
+                                                                            1}
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
+                                                                <Package
+                                                                    className="size-5"
+                                                                    strokeWidth={
+                                                                        1.75
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <Link
+                                                            href={
+                                                                showRoute(
+                                                                    asset.id,
+                                                                ).url
+                                                            }
+                                                            className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                                                        >
+                                                            {asset.item?.name ??
+                                                                'Aset'}
+                                                        </Link>
+                                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                            {[
+                                                                asset.brand,
+                                                                asset.model,
+                                                            ]
+                                                                .filter(Boolean)
+                                                                .join(' · ') ||
+                                                                '—'}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex shrink-0 gap-1">
@@ -635,58 +753,52 @@ export default function AssetsIndex() {
                                             </span>
                                             <span
                                                 className={cn(
-                                                    'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
-                                                    asset.status === 'ACTIVE'
-                                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                                                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+                                                    'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                                    STATUS_ACCENTS[
+                                                        asset.status
+                                                    ] ??
+                                                        STATUS_ACCENTS.INACTIVE,
                                                 )}
                                             >
                                                 <span
                                                     className={cn(
                                                         'size-1.5 rounded-full',
-                                                        asset.status ===
-                                                            'ACTIVE'
-                                                            ? 'bg-emerald-500'
-                                                            : 'bg-slate-400',
+                                                        STATUS_DOTS[
+                                                            asset.status
+                                                        ] ?? 'bg-slate-400',
                                                     )}
                                                 />
-                                                {asset.status}
+                                                {STATUS_LABELS[asset.status] ??
+                                                    asset.status}
                                             </span>
                                         </div>
 
                                         <div className="relative mt-3.5 flex flex-1 flex-col gap-2">
                                             <div className="flex flex-wrap items-center gap-1">
-                                                {chain.map(
-                                                    (level, chainIndex) => {
-                                                        const Icon =
-                                                            CHAIN_ICONS[
-                                                                chainIndex %
-                                                                    CHAIN_ICONS.length
-                                                            ];
-
-                                                        return (
+                                                {chain.length > 0 ? (
+                                                    chain.map(
+                                                        (level, index) => (
                                                             <span
-                                                                key={chainIndex}
-                                                                className={cn(
-                                                                    'inline-flex max-w-40 items-center gap-1 truncate rounded-md px-2 py-0.5 text-[10px] font-semibold ring-1',
-                                                                    CHAIN_ACCENTS[
-                                                                        chainIndex %
-                                                                            CHAIN_ACCENTS.length
-                                                                    ],
-                                                                )}
+                                                                key={`${level.id}-${index}`}
+                                                                className="inline-flex items-center"
                                                             >
-                                                                <Icon
-                                                                    className="size-3 shrink-0"
-                                                                    strokeWidth={
-                                                                        2
-                                                                    }
-                                                                />
-                                                                <span className="truncate">
-                                                                    {level.name}
+                                                                {index > 0 && (
+                                                                    <ChevronRight className="size-3 shrink-0 text-muted-foreground/50" />
+                                                                )}
+                                                                <span className="inline-flex max-w-40 items-center gap-1 truncate rounded-md px-2 py-0.5 text-[10px] font-semibold text-muted-foreground ring-1 ring-border/70">
+                                                                    <span className="truncate">
+                                                                        {
+                                                                            level.name
+                                                                        }
+                                                                    </span>
                                                                 </span>
                                                             </span>
-                                                        );
-                                                    },
+                                                        ),
+                                                    )
+                                                ) : (
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        Belum ada klasifikasi
+                                                    </span>
                                                 )}
                                             </div>
 
@@ -783,6 +895,37 @@ export default function AssetsIndex() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {selected.size > 0 && (
+                        <div className="card-enter sticky bottom-4 z-20 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-background/85 px-4 py-3 shadow-xl backdrop-blur-xl delay-150">
+                            <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                    {selected.size}
+                                </span>
+                                <span className="truncate">aset dipilih</span>
+                            </p>
+                            <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-9 rounded-xl"
+                                    onClick={() => setSelected(new Set())}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="h-9 gap-2 rounded-xl"
+                                    onClick={openLabels}
+                                >
+                                    <Barcode className="size-4" />
+                                    Cetak Barcode
+                                </Button>
+                            </div>
                         </div>
                     )}
 

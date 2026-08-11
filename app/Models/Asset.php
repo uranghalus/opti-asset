@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -137,6 +138,12 @@ class Asset extends Model
     public function assetSubCluster(): BelongsTo
     {
         return $this->belongsTo(AssetSubCluster::class, 'asset_sub_cluster_id');
+    }
+
+    /** @return HasMany<AssetHistory, $this> */
+    public function histories(): HasMany
+    {
+        return $this->hasMany(AssetHistory::class, 'asset_id');
     }
 
     /** @return BelongsTo<Tenant, $this> */

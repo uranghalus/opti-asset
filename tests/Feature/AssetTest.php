@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
+use App\Models\AssetHistory;
 use App\Models\AssetSubCluster;
 use App\Models\Department;
 use App\Models\Item;
@@ -121,9 +122,9 @@ class AssetTest extends TestCase
     private function classificationChain(): array
     {
         $group = AssetGroup::factory()->create(['code' => '01']);
-        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '01.01']);
-        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '01.01.01']);
-        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '01.01.01.01']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '01']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '01']);
+        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '01']);
 
         return [$group, $category, $cluster, $subCluster];
     }
@@ -138,6 +139,118 @@ class AssetTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
                 ->has('assets.data', 2));
+    }
+
+    public function test_show_page_renders_with_relations(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        $item = Item::factory()->create();
+        $location = Location::factory()->create();
+        $asset = Asset::factory()->create([
+            'kode_asset' => '01.01.01.01.001',
+            'item_id' => $item->id,
+            'location_id' => $location->id,
+            'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.show', $asset))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Show')
+                ->where('asset.kode_asset', '01.01.01.01.001')
+                ->where('asset.item.name', $item->name)
+                ->where('asset.location.name', $location->name)
+                ->where('asset.asset_group.name', $group->name)
+                ->where('asset.asset_category.name', $category->name)
+                ->where('asset.asset_cluster.name', $cluster->name)
+                ->where('asset.asset_sub_cluster.name', $subCluster->name));
+    }
+
+    public function test_show_page_blocks_another_tenants_asset(): void
+    {
+        Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+        $foreign = Asset::factory()->create();
+        $foreign->forceFill(['tenant_id' => 'other'])->save();
+
+        $this->actingAs($this->user)
+            ->get(route('assets.show', $foreign))
+            ->assertNotFound();
+    }
+
+    public function test_scan_page_renders(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('assets.scan'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('assets/Scan'));
+    }
+
+    public function test_scan_lookup_finds_asset_by_code(): void
+    {
+        $asset = Asset::factory()->create(['kode_asset' => '01.01.01.01.001']);
+
+        $this->actingAs($this->user)
+            ->getJson(route('assets.scan-lookup', ['code' => '01.01.01.01.001']))
+            ->assertOk()
+            ->assertJsonPath('asset.id', $asset->id)
+            ->assertJsonPath('asset.kode_asset', '01.01.01.01.001');
+    }
+
+    public function test_scan_lookup_returns_404_when_not_found(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson(route('assets.scan-lookup', ['code' => 'TIDAK-ADA']))
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Aset tidak ditemukan.');
+    }
+
+    public function test_scan_lookup_requires_code(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('assets.scan'))
+            ->get(route('assets.scan-lookup'))
+            ->assertSessionHasErrors(['code']);
+    }
+
+    public function test_labels_page_renders_selected_assets(): void
+    {
+        $first = Asset::factory()->create(['kode_asset' => '01.01.01.01.001']);
+        $second = Asset::factory()->create(['kode_asset' => '01.01.01.02.001']);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.labels', ['ids' => [$first->id, $second->id]]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Labels')
+                ->has('assets', 2)
+                ->where('assets.0.kode_asset', '01.01.01.01.001'));
+    }
+
+    public function test_labels_page_requires_ids(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->get(route('assets.labels'))
+            ->assertSessionHasErrors(['ids']);
+    }
+
+    public function test_labels_page_only_lists_current_tenants_assets(): void
+    {
+        $own = Asset::factory()->create(['kode_asset' => '01.01.01.01.001']);
+
+        Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+        $foreign = Asset::factory()->create(['kode_asset' => '02.02.02.02.001']);
+        $foreign->forceFill(['tenant_id' => 'other'])->save();
+
+        $this->actingAs($this->user)
+            ->get(route('assets.labels', ['ids' => [$own->id, $foreign->id]]))
+            ->assertInertia(fn ($page) => $page
+                ->has('assets', 1)
+                ->where('assets.0.id', $own->id));
     }
 
     public function test_create_page_renders(): void
@@ -211,6 +324,74 @@ class AssetTest extends TestCase
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-A-001', 'kode_asset' => '01.01.01.01.001']);
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-A-002', 'kode_asset' => '01.01.01.01.002']);
+    }
+
+    public function test_store_keeps_sequence_independent_per_classification(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        $otherSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'serial_number' => 'SN-C1-001',
+                'asset_group_id' => $group->id,
+                'asset_category_id' => $category->id,
+                'asset_cluster_id' => $cluster->id,
+                'asset_sub_cluster_id' => $subCluster->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'serial_number' => 'SN-C2-001',
+                'asset_group_id' => $group->id,
+                'asset_category_id' => $category->id,
+                'asset_cluster_id' => $cluster->id,
+                'asset_sub_cluster_id' => $otherSub->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C1-001', 'kode_asset' => '01.01.01.01.001']);
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C2-001', 'kode_asset' => '01.01.01.02.001']);
+    }
+
+    public function test_store_continues_sequence_after_deletion(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+
+        $first = Asset::factory()->create([
+            'serial_number' => 'SN-DEL-001',
+            'kode_asset' => '01.01.01.01.001',
+            'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+        Asset::factory()->create([
+            'serial_number' => 'SN-DEL-002',
+            'kode_asset' => '01.01.01.01.002',
+            'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+
+        $first->delete();
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'serial_number' => 'SN-DEL-003',
+                'asset_group_id' => $group->id,
+                'asset_category_id' => $category->id,
+                'asset_cluster_id' => $cluster->id,
+                'asset_sub_cluster_id' => $subCluster->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-DEL-003', 'kode_asset' => '01.01.01.01.003']);
     }
 
     public function test_store_persists_multiple_media_urls(): void
@@ -363,7 +544,7 @@ class AssetTest extends TestCase
             'kode_asset' => '01.01.01.01',
         ]);
 
-        $newSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '01.01.01.02']);
+        $newSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
@@ -378,6 +559,86 @@ class AssetTest extends TestCase
             'kode_asset' => '01.01.01.02.001',
             'serial_number' => 'SN-BARU-001',
         ]);
+    }
+
+    public function test_update_records_lifecycle_history(): void
+    {
+        $asset = Asset::factory()->create(['status' => 'ACTIVE', 'condition' => 'Baik']);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->patch(route('assets.update', $asset), [
+                'status' => 'INACTIVE',
+                'condition' => 'Rusak Ringan',
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('asset_histories', [
+            'asset_id' => $asset->id,
+            'field' => 'status',
+            'old_value' => 'ACTIVE',
+            'new_value' => 'INACTIVE',
+            'changed_by' => $this->user->id,
+        ]);
+        $this->assertDatabaseHas('asset_histories', [
+            'asset_id' => $asset->id,
+            'field' => 'condition',
+            'old_value' => 'Baik',
+            'new_value' => 'Rusak Ringan',
+        ]);
+    }
+
+    public function test_update_records_classification_change_history(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        $asset = Asset::factory()->create([
+            'kode_asset' => '01.01.01.01.001',
+            'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+
+        $newSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '02']);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->patch(route('assets.update', $asset), [
+                'asset_sub_cluster_id' => $newSub->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseHas('asset_histories', [
+            'asset_id' => $asset->id,
+            'field' => 'kode_asset',
+            'old_value' => '01.01.01.01.001',
+            'new_value' => '01.01.01.02.001',
+        ]);
+    }
+
+    public function test_update_without_changes_records_no_history(): void
+    {
+        $asset = Asset::factory()->create(['notes' => 'Awal']);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->patch(route('assets.update', $asset), [
+                'notes' => 'Diperbarui',
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertSame(0, AssetHistory::count());
+    }
+
+    public function test_show_renders_histories(): void
+    {
+        $asset = Asset::factory()->create();
+        AssetHistory::factory()->count(3)->create(['asset_id' => $asset->id]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.show', $asset))
+            ->assertInertia(fn ($page) => $page
+                ->has('asset.histories', 3));
     }
 
     public function test_destroy_deletes_asset(): void

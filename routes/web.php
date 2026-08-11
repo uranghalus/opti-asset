@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LocationController;
@@ -62,11 +62,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('locations/{location}', [LocationController::class, 'update'])->name('locations.update');
     Route::delete('locations/{location}', [LocationController::class, 'destroy'])->name('locations.destroy');
 
-    Route::get('categories', [AssetCategoryController::class, 'index'])->name('categories.index');
-    Route::post('categories', [AssetCategoryController::class, 'store'])->name('categories.store');
-    Route::delete('categories/bulk', [AssetCategoryController::class, 'destroyBulk'])->name('categories.destroy-bulk');
-    Route::patch('categories/{category}', [AssetCategoryController::class, 'update'])->name('categories.update');
-    Route::delete('categories/{category}', [AssetCategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::delete('categories/bulk', [CategoryController::class, 'destroyBulk'])->name('categories.destroy-bulk');
+    Route::patch('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     Route::get('items', [ItemController::class, 'index'])->name('items.index');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
@@ -74,10 +74,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('assets/scan', [AssetController::class, 'scan'])->name('assets.scan');
+    Route::get('assets/scan/lookup', [AssetController::class, 'scanLookup'])->name('assets.scan-lookup');
+    Route::get('assets/labels', [AssetController::class, 'labels'])->name('assets.labels');
+    Route::get('assets/labels-batch', [AssetController::class, 'labelsBatch'])->name('assets.labels-batch');
     Route::get('assets/import/template', [AssetController::class, 'importTemplate'])->name('assets.import-template');
     Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
     Route::post('assets/upload', [AssetController::class, 'upload'])->name('assets.upload');
     Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
+    Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
     Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
     Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
     Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');

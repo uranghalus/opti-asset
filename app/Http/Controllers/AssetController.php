@@ -19,6 +19,7 @@ use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Location;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -90,9 +91,90 @@ class AssetController extends Controller
         ]);
     }
 
+    public function labels(Request $request): Response
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string'],
+        ]);
+
+        $assets = Asset::query()
+            ->whereKey($validated['ids'])
+            ->with($this->labelRelations())
+            ->orderBy('kode_asset')
+            ->get();
+
+        return Inertia::render('assets/Labels', [
+            'assets' => $assets,
+        ]);
+    }
+
+    public function labelsBatch(Request $request): Response
+    {
+        $assets = Asset::query()
+            ->with($this->labelRelations())
+            ->orderBy('kode_asset')
+            ->get();
+
+        return Inertia::render('assets/LabelsBatch', [
+            'assets' => $assets,
+        ]);
+    }
+
+    public function scan(): Response
+    {
+        return Inertia::render('assets/Scan');
+    }
+
+    public function scanLookup(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:100'],
+        ]);
+
+        $asset = Asset::query()
+            ->where('kode_asset', $validated['code'])
+            ->with([
+                'item:id,name,code',
+                'location:id,name',
+                'department:id_department,nama_department',
+                'assetGroup:id,code,name',
+                'assetCategory:id,code,name',
+                'assetCluster:id,code,name',
+                'assetSubCluster:id,code,name',
+            ])
+            ->first();
+
+        if ($asset === null) {
+            return response()->json(['message' => 'Aset tidak ditemukan.'], 404);
+        }
+
+        return response()->json(['asset' => $asset]);
+    }
+
     public function create(): Response
     {
         return Inertia::render('assets/Create', $this->formProps());
+    }
+
+    public function show(Asset $asset): Response
+    {
+        $asset->load([
+            'item:id,name,code',
+            'location:id,name',
+            'department:id_department,nama_department',
+            'assetGroup:id,code,name',
+            'assetCategory:id,code,name',
+            'assetCluster:id,code,name',
+            'assetSubCluster:id,code,name',
+            'histories' => fn ($query) => $query
+                ->latest()
+                ->limit(50),
+        ]);
+
+        return Inertia::render('assets/Show', [
+            'asset' => $asset,
+        ]);
     }
 
     public function edit(Asset $asset): Response
@@ -108,7 +190,7 @@ class AssetController extends Controller
         ]);
 
         return Inertia::render('assets/Edit', [
-            ...$this->formProps(),
+            ...$this->formProps($asset->id),
             'asset' => $asset,
         ]);
     }
@@ -135,19 +217,118 @@ class AssetController extends Controller
     {
         $validated = $request->validated();
 
-        $chain = $this->generateAssetCode->fromIds(
-            $validated['asset_group_id'] ?? $asset->asset_group_id,
-            $validated['asset_category_id'] ?? $asset->asset_category_id,
-            $validated['asset_cluster_id'] ?? $asset->asset_cluster_id,
-            $validated['asset_sub_cluster_id'] ?? $asset->asset_sub_cluster_id,
-            $asset->id,
-        );
+        $groupId = $validated['asset_group_id'] ?? $asset->asset_group_id;
+        $categoryId = $validated['asset_category_id'] ?? $asset->asset_category_id;
+        $clusterId = $validated['asset_cluster_id'] ?? $asset->asset_cluster_id;
+        $subClusterId = $validated['asset_sub_cluster_id'] ?? $asset->asset_sub_cluster_id;
 
-        $asset->update([...$validated, 'kode_asset' => $chain['code'] ?? $asset->kode_asset]);
+        $classificationChanged = $groupId !== $asset->asset_group_id
+            || $categoryId !== $asset->asset_category_id
+            || $clusterId !== $asset->asset_cluster_id
+            || $subClusterId !== $asset->asset_sub_cluster_id;
+
+        $data = $validated;
+
+        if ($classificationChanged) {
+            $chain = $this->generateAssetCode->fromIds($groupId, $categoryId, $clusterId, $subClusterId, $asset->id);
+
+            $data['kode_asset'] = $chain['code'] ?? $asset->kode_asset;
+        }
+
+        $this->recordHistory($asset, $validated, $data['kode_asset'] ?? null, $request->user());
+
+        $asset->update($data);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
         return redirect()->route('assets.index');
+    }
+
+    /**
+     * Persist lifecycle changes (status, condition, placement, PIC,
+     * classification) so the detail page can show an audit trail.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function recordHistory(Asset $asset, array $validated, ?string $kodeAsset, ?User $actor): void
+    {
+        $actorName = $actor->name ?? null;
+        $actorId = $actor->id ?? null;
+
+        $entries = [];
+
+        if (array_key_exists('status', $validated) && $validated['status'] !== $asset->status) {
+            $entries[] = ['status', $asset->status, $validated['status']];
+        }
+
+        if (array_key_exists('condition', $validated) && $validated['condition'] !== $asset->condition) {
+            $entries[] = ['condition', $asset->condition, $validated['condition']];
+        }
+
+        if (array_key_exists('location_id', $validated) && $validated['location_id'] !== $asset->location_id) {
+            $entries[] = [
+                'location_id',
+                $this->locationName($asset->location_id),
+                $this->locationName($validated['location_id']),
+            ];
+        }
+
+        if (array_key_exists('department_id', $validated) && $validated['department_id'] !== $asset->department_id) {
+            $entries[] = [
+                'department_id',
+                $this->departmentName($asset->department_id),
+                $this->departmentName($validated['department_id']),
+            ];
+        }
+
+        if (array_key_exists('pic', $validated) && $validated['pic'] !== $asset->pic) {
+            $entries[] = [
+                'pic',
+                is_array($asset->pic) ? implode(', ', $asset->pic) : (string) $asset->pic,
+                is_array($validated['pic']) ? implode(', ', $validated['pic']) : (string) $validated['pic'],
+            ];
+        }
+
+        if ($kodeAsset !== null && $kodeAsset !== $asset->kode_asset) {
+            $entries[] = ['kode_asset', $asset->kode_asset, $kodeAsset];
+        }
+
+        if ($entries === []) {
+            return;
+        }
+
+        $now = now();
+
+        $asset->histories()->createMany(array_map(
+            fn (array $entry) => [
+                'field' => $entry[0],
+                'old_value' => $entry[1],
+                'new_value' => $entry[2],
+                'changed_by' => $actorId,
+                'changed_by_name' => $actorName,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $entries,
+        ));
+    }
+
+    private function locationName(?string $id): ?string
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        return Location::query()->whereKey($id)->value('name');
+    }
+
+    private function departmentName(?string $id): ?string
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        return Department::query()->whereKey($id)->value('nama_department');
     }
 
     public function destroy(Asset $asset): RedirectResponse
@@ -221,9 +402,23 @@ class AssetController extends Controller
     }
 
     /**
+     * @return array<int, string>
+     */
+    private function labelRelations(): array
+    {
+        return [
+            'item:id,name,code',
+            'assetGroup:id,code,name',
+            'assetCategory:id,code,name',
+            'assetCluster:id,code,name',
+            'assetSubCluster:id,code,name',
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
-    private function formProps(): array
+    private function formProps(?string $exceptAssetId = null): array
     {
         return [
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
@@ -234,6 +429,7 @@ class AssetController extends Controller
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'employees' => Employee::query()->orderBy('nama_employee')->get(['id_employee', 'nama_employee']),
+            'nextSequences' => $this->generateAssetCode->nextSequenceMap($exceptAssetId),
         ];
     }
 }

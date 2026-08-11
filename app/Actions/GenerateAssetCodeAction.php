@@ -11,36 +11,20 @@ use App\Models\AssetSubCluster;
 class GenerateAssetCodeAction
 {
     /**
-     * Build the asset code from the deepest selected classification level.
+     * Build the asset code from the selected classification chain.
      *
-     * The base is the selected level's own code (which already carries the
-     * parent path, e.g. "01.01.01"), and a per-level sequence is appended so
-     * every asset under the same selection stays unique:
+     * The base is the joined segment codes of every selected level (e.g.
+     * group "01" + category "01" + cluster "01" => "01.01.01"), and a per
+     * combination sequence is appended so each classification combination
+     * numbers its assets independently:
      *
      *   golongan only  -> 01.001
      *   up to kategori -> 01.01.001
+     *   up to cluster  -> 01.01.01.001
      *   full chain     -> 01.01.01.01.001
      *
-     * @return string|null null when no classification level is selected
-     */
-    public function execute(
-        ?string $code,
-        ?string $levelField,
-        ?string $levelId,
-        ?string $exceptAssetId = null,
-        int $padding = 3,
-    ): ?string {
-        if ($code === null || $code === '' || $levelField === null || $levelId === null) {
-            return null;
-        }
-
-        $sequence = $this->nextSequence($levelField, $levelId, $exceptAssetId);
-
-        return $code.'.'.str_pad((string) $sequence, $padding, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * Resolve the deepest selected classification level and build the code.
+     * The next sequence continues from the highest number already used for
+     * the same base code, so deleting an asset never reuses a number.
      *
      * @return array{code: string|null, asset_group_id: string|null, asset_category_id: string|null, asset_cluster_id: string|null, asset_sub_cluster_id: string|null}
      */
@@ -51,10 +35,10 @@ class GenerateAssetCodeAction
         ?string $subClusterId,
         ?string $exceptAssetId = null,
     ): array {
-        [$model, $field, $id] = $this->resolveDeepest($groupId, $categoryId, $clusterId, $subClusterId);
+        $baseCode = $this->chainCode($groupId, $categoryId, $clusterId, $subClusterId);
 
         return [
-            'code' => $this->execute($model?->code, $field, $id, $exceptAssetId),
+            'code' => $baseCode === null ? null : $this->withSequence($baseCode, $exceptAssetId),
             'asset_group_id' => $groupId,
             'asset_category_id' => $categoryId,
             'asset_cluster_id' => $clusterId,
@@ -63,56 +47,97 @@ class GenerateAssetCodeAction
     }
 
     /**
-     * @return array{AssetGroup|AssetCategory|AssetCluster|AssetSubCluster|null, string|null, string|null}
+     * Map of base code => next sequence number for every combination that
+     * already has assets. Used by the frontend to preview the full code.
+     *
+     * @return array<string, int>
      */
-    private function resolveDeepest(
-        ?string $groupId,
-        ?string $categoryId,
-        ?string $clusterId,
-        ?string $subClusterId,
-    ): array {
-        if ($subClusterId !== null && $subClusterId !== '') {
-            return [AssetSubCluster::find($subClusterId), 'asset_sub_cluster_id', $subClusterId];
-        }
-
-        if ($clusterId !== null && $clusterId !== '') {
-            return [AssetCluster::find($clusterId), 'asset_cluster_id', $clusterId];
-        }
-
-        if ($categoryId !== null && $categoryId !== '') {
-            return [AssetCategory::find($categoryId), 'asset_category_id', $categoryId];
-        }
-
-        if ($groupId !== null && $groupId !== '') {
-            return [AssetGroup::find($groupId), 'asset_group_id', $groupId];
-        }
-
-        return [null, null, null];
-    }
-
-    private function nextSequence(string $levelField, string $levelId, ?string $exceptAssetId): int
+    public function nextSequenceMap(?string $exceptAssetId = null): array
     {
-        $query = Asset::query()->where($levelField, $levelId);
-
-        foreach ($this->deeperFields($levelField) as $field) {
-            $query->whereNull($field);
-        }
+        $query = Asset::query()->whereNotNull('kode_asset');
 
         if ($exceptAssetId !== null) {
             $query->whereKeyNot($exceptAssetId);
         }
 
-        return $query->count() + 1;
+        $maxByBase = [];
+
+        foreach ($query->pluck('kode_asset') as $kode) {
+            $lastDot = strrpos((string) $kode, '.');
+
+            if ($lastDot === false) {
+                continue;
+            }
+
+            $base = substr((string) $kode, 0, $lastDot);
+            $sequence = (int) substr((string) $kode, $lastDot + 1);
+
+            $maxByBase[$base] = max($maxByBase[$base] ?? 0, $sequence);
+        }
+
+        return array_map(static fn (int $max): int => $max + 1, $maxByBase);
     }
 
-    /** @return array<int, string> */
-    private function deeperFields(string $levelField): array
+    /**
+     * Join the segment codes of every selected level down to the deepest one,
+     * e.g. group "01" + category "01" + cluster "01" => "01.01.01".
+     */
+    private function chainCode(
+        ?string $groupId,
+        ?string $categoryId,
+        ?string $clusterId,
+        ?string $subClusterId,
+    ): ?string {
+        $segments = array_values(array_filter([
+            $groupId !== null && $groupId !== '' ? AssetGroup::find($groupId)?->code : null,
+            $categoryId !== null && $categoryId !== '' ? AssetCategory::find($categoryId)?->code : null,
+            $clusterId !== null && $clusterId !== '' ? AssetCluster::find($clusterId)?->code : null,
+            $subClusterId !== null && $subClusterId !== '' ? AssetSubCluster::find($subClusterId)?->code : null,
+        ], static fn (?string $code): bool => $code !== null && $code !== ''));
+
+        return $segments === [] ? null : implode('.', $segments);
+    }
+
+    private function withSequence(string $baseCode, ?string $exceptAssetId, int $padding = 3): string
     {
-        return match ($levelField) {
-            'asset_group_id' => ['asset_category_id', 'asset_cluster_id', 'asset_sub_cluster_id'],
-            'asset_category_id' => ['asset_cluster_id', 'asset_sub_cluster_id'],
-            'asset_cluster_id' => ['asset_sub_cluster_id'],
-            default => [],
-        };
+        return $baseCode.'.'.str_pad((string) $this->nextSequence($baseCode, $exceptAssetId), $padding, '0', STR_PAD_LEFT);
+    }
+
+    private function nextSequence(string $baseCode, ?string $exceptAssetId): int
+    {
+        $query = Asset::query()
+            ->where('kode_asset', 'like', $baseCode.'.%');
+
+        if ($exceptAssetId !== null) {
+            $query->whereKeyNot($exceptAssetId);
+        }
+
+        $max = $query->pluck('kode_asset')
+            ->map(fn (?string $kode): ?int => $this->extractSequence($baseCode, $kode))
+            ->filter()
+            ->max();
+
+        return ($max ?? 0) + 1;
+    }
+
+    private function extractSequence(string $baseCode, ?string $kode): ?int
+    {
+        if ($kode === null) {
+            return null;
+        }
+
+        $prefix = $baseCode.'.';
+
+        if (! str_starts_with($kode, $prefix)) {
+            return null;
+        }
+
+        $suffix = substr($kode, strlen($prefix));
+
+        if ($suffix === '' || ! ctype_digit($suffix)) {
+            return null;
+        }
+
+        return (int) $suffix;
     }
 }

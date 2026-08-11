@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreItemRequest;
 use App\Http\Requests\UpdateItemRequest;
-use App\Models\AssetCategory;
+use App\Models\Category;
 use App\Models\Department;
 use App\Models\Item;
 use Illuminate\Http\RedirectResponse;
@@ -44,7 +44,7 @@ class ItemController extends Controller
 
         return Inertia::render('items/Index', [
             'items' => $items,
-            'categories' => AssetCategory::query()->orderBy('name')->get(['id', 'name']),
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'filters' => [
                 'search' => $search,

@@ -85,6 +85,7 @@ type AssetFormProps = {
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
     employees: { id_employee: string; nama_employee: string }[];
+    nextSequences: Record<string, number>;
 };
 
 const ASSET_OPTIONS = [
@@ -105,7 +106,9 @@ function buildAssetCode(
     cluster?: AssetOption | null,
     subCluster?: AssetOption | null,
 ): string {
-    return (subCluster ?? cluster ?? category ?? group)?.code ?? '';
+    return [group?.code, category?.code, cluster?.code, subCluster?.code]
+        .filter((code): code is string => Boolean(code))
+        .join('.');
 }
 
 function SectionHeader({
@@ -158,6 +161,7 @@ export function AssetForm({
     locations,
     departments,
     employees,
+    nextSequences,
 }: AssetFormProps) {
     const [selGroup, setSelGroup] = useState(asset?.asset_group_id ?? '');
     const [selCategory, setSelCategory] = useState(
@@ -222,6 +226,21 @@ export function AssetForm({
         clusters.find((c) => c.id === selCluster),
         subClusters.find((c) => c.id === selSubCluster),
     );
+
+    const nextSequence = previewCode ? (nextSequences[previewCode] ?? 1) : null;
+
+    const classificationUnchanged =
+        mode === 'edit' &&
+        asset?.asset_group_id === selGroup &&
+        asset.asset_category_id === selCategory &&
+        asset.asset_cluster_id === selCluster &&
+        asset.asset_sub_cluster_id === selSubCluster;
+
+    const fullPreviewCode = classificationUnchanged
+        ? (asset?.kode_asset ?? '')
+        : nextSequence
+          ? `${previewCode}.${String(nextSequence).padStart(3, '0')}`
+          : '';
 
     const handleSelectGroup = (value: string) => {
         setSelGroup(value);
@@ -465,7 +484,7 @@ export function AssetForm({
                     <div
                         className={cn(
                             'mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors',
-                            previewCode
+                            fullPreviewCode
                                 ? 'border-primary/30 bg-primary/5'
                                 : 'border-dashed border-border bg-background/40',
                         )}
@@ -473,7 +492,7 @@ export function AssetForm({
                         <div
                             className={cn(
                                 'flex size-8 shrink-0 items-center justify-center rounded-lg border',
-                                previewCode
+                                fullPreviewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
                                     : 'border-border bg-background text-muted-foreground',
                             )}
@@ -487,16 +506,17 @@ export function AssetForm({
                             <p
                                 className={cn(
                                     'mt-0.5 font-mono text-lg font-bold tracking-tight tabular-nums',
-                                    previewCode
+                                    fullPreviewCode
                                         ? 'text-primary'
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {previewCode || '—'}
+                                {fullPreviewCode || '—'}
                             </p>
-                            {previewCode ? (
+                            {fullPreviewCode ? (
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                    + nomor urut otomatis saat disimpan
+                                    Nomor urut dihitung otomatis per kombinasi
+                                    klasifikasi.
                                 </p>
                             ) : null}
                         </div>

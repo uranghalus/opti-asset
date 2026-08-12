@@ -26,7 +26,9 @@ class AssetClassificationTest extends TestCase
     {
         parent::setUp();
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
         Cache::flush();
 
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);

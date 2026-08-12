@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-#[Signature('app:sync-departments')]
+#[Signature('app:sync-departments {--tenant= : ID tenant tujuan (default: tenant aktif)}')]
 #[Description('Auto-sync departments data from Optigate Portal API to local database')]
 class SyncDepartments extends Command
 {
@@ -25,10 +25,10 @@ class SyncDepartments extends Command
             return Command::FAILURE;
         }
 
-        $tenantId = Tenant::current()?->id;
+        $tenantId = $this->option('tenant') ?: Tenant::current()?->id;
 
         if (! $tenantId) {
-            $this->error('Tidak ada tenant aktif. Sinkronisasi dibatalkan.');
+            $this->error('Tidak ada tenant aktif. Gunakan --tenant=<id> atau aktifkan tenant terlebih dahulu.');
 
             return Command::FAILURE;
         }

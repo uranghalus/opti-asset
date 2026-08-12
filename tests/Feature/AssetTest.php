@@ -33,7 +33,9 @@ class AssetTest extends TestCase
     {
         parent::setUp();
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
 
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
@@ -716,6 +718,30 @@ class AssetTest extends TestCase
             ->assertRedirect(route('assets.index'));
 
         $this->assertSame(0, Asset::count());
+    }
+
+    public function test_store_records_created_history(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.store'), [
+                'item_id' => $item->id,
+                'brand' => 'Brand Baru',
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::first();
+
+        $this->assertNotNull($asset);
+        $this->assertDatabaseHas('asset_histories', [
+            'asset_id' => $asset->id,
+            'field' => 'created',
+            'old_value' => null,
+            'new_value' => $asset->kode_asset,
+            'changed_by' => $this->user->id,
+        ]);
     }
 
     public function test_import_template_downloads_xlsx(): void

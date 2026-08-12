@@ -927,7 +927,7 @@ export default function CategoriesIndex() {
                 open={formOpen}
                 onOpenChange={(open) => !open && setFormOpen(false)}
             >
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="bg-card/95 backdrop-blur-xl sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>
                             {editing ? 'Edit Kategori' : 'Tambah Kategori'}
@@ -964,19 +964,25 @@ export default function CategoriesIndex() {
                                     value={selGroup}
                                     onValueChange={handleSelectGroup}
                                 >
-                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                    <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
                                         <SelectValue placeholder="Pilih Golongan" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent
+                                        className="max-h-60 max-w-full overflow-y-auto"
+                                        position="item-aligned"
+                                        align="start"
+                                    >
                                         {groups.map((item) => (
                                             <SelectItem
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code
-                                                    ? `${item.code} — `
-                                                    : ''}
-                                                {item.name}
+                                                <div className="max-w-full truncate">
+                                                    {item.code
+                                                        ? `${item.code} — `
+                                                        : ''}
+                                                    {item.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -994,7 +1000,7 @@ export default function CategoriesIndex() {
                                     onValueChange={handleSelectCategory}
                                     disabled={!selGroup}
                                 >
-                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                    <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
                                         <SelectValue
                                             placeholder={
                                                 selGroup
@@ -1003,16 +1009,22 @@ export default function CategoriesIndex() {
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent
+                                        className="max-h-60 max-w-full overflow-y-auto"
+                                        position="item-aligned"
+                                        align="start"
+                                    >
                                         {cascadeCategories.map((item) => (
                                             <SelectItem
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code
-                                                    ? `${item.code} — `
-                                                    : ''}
-                                                {item.name}
+                                                <div className="max-w-full truncate">
+                                                    {item.code
+                                                        ? `${item.code} — `
+                                                        : ''}
+                                                    {item.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -1025,7 +1037,7 @@ export default function CategoriesIndex() {
                                     onValueChange={handleSelectCluster}
                                     disabled={!selCategory}
                                 >
-                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                    <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
                                         <SelectValue
                                             placeholder={
                                                 selCategory
@@ -1034,16 +1046,22 @@ export default function CategoriesIndex() {
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent
+                                        className="max-h-60 max-w-full overflow-y-auto"
+                                        position="item-aligned"
+                                        align="start"
+                                    >
                                         {cascadeClusters.map((item) => (
                                             <SelectItem
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code
-                                                    ? `${item.code} — `
-                                                    : ''}
-                                                {item.name}
+                                                <div className="max-w-full truncate">
+                                                    {item.code
+                                                        ? `${item.code} — `
+                                                        : ''}
+                                                    {item.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -1056,7 +1074,7 @@ export default function CategoriesIndex() {
                                     onValueChange={handleSelectSubCluster}
                                     disabled={!selCluster}
                                 >
-                                    <SelectTrigger className="h-11 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
+                                    <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-card/70 text-sm shadow-sm">
                                         <SelectValue
                                             placeholder={
                                                 selCluster
@@ -1065,16 +1083,22 @@ export default function CategoriesIndex() {
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent
+                                        className="max-h-60 max-w-full overflow-y-auto"
+                                        position="item-aligned"
+                                        align="start"
+                                    >
                                         {cascadeSubClusters.map((item) => (
                                             <SelectItem
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code
-                                                    ? `${item.code} — `
-                                                    : ''}
-                                                {item.name}
+                                                <div className="max-w-full truncate">
+                                                    {item.code
+                                                        ? `${item.code} — `
+                                                        : ''}
+                                                    {item.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

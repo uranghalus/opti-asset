@@ -25,7 +25,9 @@ class DepartmentTest extends TestCase
     {
         parent::setUp();
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
 
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
@@ -177,6 +179,31 @@ class DepartmentTest extends TestCase
         $this->artisan('app:sync-departments')->assertExitCode(Command::FAILURE);
 
         $this->assertDatabaseCount('tb_department', 0);
+    }
+
+    public function test_sync_command_targets_specific_tenant(): void
+    {
+        config([
+            'services.optigate_portal.url' => 'https://portal.example',
+            'services.optigate_portal.token' => 'secret',
+        ]);
+
+        Http::fake([
+            'https://portal.example/api/departments' => Http::response([
+                'data' => [
+                    ['id' => 'dept-1', 'name' => 'Teknologi Informasi', 'code' => 'IT'],
+                ],
+            ]),
+        ]);
+
+        $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+
+        $this->artisan('app:sync-departments', ['--tenant' => $other->id])
+            ->assertExitCode(Command::SUCCESS);
+
+        $department = Department::withoutGlobalScopes()->where('kode_department', 'IT')->first();
+        $this->assertNotNull($department);
+        $this->assertSame($other->id, $department->tenant_id);
     }
 
     public function test_sync_failure_does_not_create_departments(): void

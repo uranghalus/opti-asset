@@ -10,21 +10,21 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-#[Signature('app:sync-employees')]
+#[Signature('app:sync-employees {--tenant= : ID tenant tujuan (default: tenant aktif)}')]
 #[Description('Auto-sync employees data from Optigate Portal API to local database')]
 class SyncEmployees extends Command
 {
-    public function handle(): void
+    public function handle(): int
     {
         $url = config('services.optigate_portal.url').'/api/users';
         $token = config('services.optigate_portal.token');
 
-        $tenantId = Tenant::current()?->id;
+        $tenantId = $this->option('tenant') ?: Tenant::current()?->id;
 
         if (! $tenantId) {
-            $this->error('Tidak ada tenant aktif. Sinkronisasi dibatalkan.');
+            $this->error('Tidak ada tenant aktif. Gunakan --tenant=<id> atau aktifkan tenant terlebih dahulu.');
 
-            return;
+            return Command::FAILURE;
         }
 
         $this->info("Memulai sinkronisasi employee untuk tenant {$tenantId}...");
@@ -59,15 +59,21 @@ class SyncEmployees extends Command
 
                 $this->info("Sinkronisasi selesai! $count data berhasil diproses.");
                 Log::info("Auto-sync Employee berhasil: $count data.");
-            } else {
-                $errorMsg = 'Gagal mengambil data employee dari API Portal: '.$response->body();
-                $this->error($errorMsg);
-                Log::error($errorMsg);
+
+                return Command::SUCCESS;
             }
+
+            $errorMsg = 'Gagal mengambil data employee dari API Portal: '.$response->body();
+            $this->error($errorMsg);
+            Log::error($errorMsg);
+
+            return Command::FAILURE;
         } catch (\Throwable $th) {
             $errorMsg = 'Exception API Employee: '.$th->getMessage();
             $this->error($errorMsg);
             Log::error($errorMsg);
+
+            return Command::FAILURE;
         }
     }
 }

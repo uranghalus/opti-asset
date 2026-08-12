@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignEmployeeRolesRequest;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -79,7 +80,9 @@ class EmployeeController extends Controller
     public function sync(): RedirectResponse
     {
         try {
-            Artisan::call('app:sync-employees');
+            Artisan::call('app:sync-employees', [
+                '--tenant' => Tenant::current()?->id,
+            ]);
 
             Inertia::flash('toast', ['type' => 'success', 'message' => 'Sinkronisasi employee berhasil dilakukan.']);
         } catch (\Throwable $th) {

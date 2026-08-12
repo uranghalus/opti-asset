@@ -24,7 +24,9 @@ class RolePermissionTest extends TestCase
     {
         parent::setUp();
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 

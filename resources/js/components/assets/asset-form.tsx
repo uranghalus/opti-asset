@@ -252,14 +252,20 @@ export function AssetForm({
                                     <SelectValue placeholder="Pilih Item" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {items.map((item) => (
-                                        <SelectItem
-                                            key={item.id}
-                                            value={item.id}
-                                        >
-                                            {item.code} — {item.name}
+                                    {items.length === 0 ? (
+                                        <SelectItem value="__none__" disabled>
+                                            Tidak ada item tersedia
                                         </SelectItem>
-                                    ))}
+                                    ) : (
+                                        items.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.code} — {item.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                             <FieldError message={form.errors.item_id} />
@@ -489,14 +495,20 @@ export function AssetForm({
                                     <SelectValue placeholder="Pilih Lokasi" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {locations.map((location) => (
-                                        <SelectItem
-                                            key={location.id}
-                                            value={location.id}
-                                        >
-                                            {location.name}
+                                    {locations.length === 0 ? (
+                                        <SelectItem value="__none__" disabled>
+                                            Tidak ada lokasi tersedia
                                         </SelectItem>
-                                    ))}
+                                    ) : (
+                                        locations.map((location) => (
+                                            <SelectItem
+                                                key={location.id}
+                                                value={location.id}
+                                            >
+                                                {location.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -518,14 +530,20 @@ export function AssetForm({
                                     <SelectValue placeholder="Pilih Department" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {departments.map((department) => (
-                                        <SelectItem
-                                            key={department.id_department}
-                                            value={department.id_department}
-                                        >
-                                            {department.nama_department}
+                                    {departments.length === 0 ? (
+                                        <SelectItem value="__none__" disabled>
+                                            Tidak ada department tersedia
                                         </SelectItem>
-                                    ))}
+                                    ) : (
+                                        departments.map((department) => (
+                                            <SelectItem
+                                                key={department.id_department}
+                                                value={department.id_department}
+                                            >
+                                                {department.nama_department}
+                                            </SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>

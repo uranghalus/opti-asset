@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\GenerateAssetCodeAction;
 use App\Actions\GenerateAssetImportTemplateAction;
 use App\Actions\ImportAssetsAction;
+use App\Actions\RecordAssetHistoryAction;
 use App\Http\Requests\ImportAssetsRequest;
 use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
@@ -16,7 +17,6 @@ use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Location;
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +31,7 @@ class AssetController extends Controller
 {
     public function __construct(
         private GenerateAssetCodeAction $generateAssetCode,
+        private RecordAssetHistoryAction $recordHistory,
     ) {}
 
     public function index(Request $request): Response
@@ -202,7 +203,13 @@ class AssetController extends Controller
             ? $this->generateAssetCode->fromCategory($item->category)
             : $this->emptyChain();
 
-        Asset::create([...$validated, ...$chain]);
+        $asset = Asset::create([...$validated, ...$chain]);
+
+        $this->recordHistory->record(
+            $asset,
+            [['created', null, $asset->kode_asset ?? $asset->item_id ?? $asset->id]],
+            $request->user(),
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil ditambahkan.']);
 
@@ -232,7 +239,7 @@ class AssetController extends Controller
             $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'];
         }
 
-        $this->recordHistory($asset, $validated, $data['kode_asset'] ?? null, $request->user());
+        $this->recordHistory->fromUpdate($asset, $validated, $data['kode_asset'] ?? null, $request->user());
 
         $asset->update($data);
 
@@ -253,93 +260,6 @@ class AssetController extends Controller
             'asset_cluster_id' => null,
             'asset_sub_cluster_id' => null,
         ];
-    }
-
-    /**
-     * Persist lifecycle changes (status, condition, placement, PIC,
-     * classification) so the detail page can show an audit trail.
-     *
-     * @param  array<string, mixed>  $validated
-     */
-    private function recordHistory(Asset $asset, array $validated, ?string $kodeAsset, ?User $actor): void
-    {
-        $actorName = $actor->name ?? null;
-        $actorId = $actor->id ?? null;
-
-        $entries = [];
-
-        if (array_key_exists('status', $validated) && $validated['status'] !== $asset->status->value) {
-            $entries[] = ['status', $asset->status->value, $validated['status']];
-        }
-
-        if (array_key_exists('condition', $validated) && $validated['condition'] !== $asset->condition) {
-            $entries[] = ['condition', $asset->condition, $validated['condition']];
-        }
-
-        if (array_key_exists('location_id', $validated) && $validated['location_id'] !== $asset->location_id) {
-            $entries[] = [
-                'location_id',
-                $this->locationName($asset->location_id),
-                $this->locationName($validated['location_id']),
-            ];
-        }
-
-        if (array_key_exists('department_id', $validated) && $validated['department_id'] !== $asset->department_id) {
-            $entries[] = [
-                'department_id',
-                $this->departmentName($asset->department_id),
-                $this->departmentName($validated['department_id']),
-            ];
-        }
-
-        if (array_key_exists('pic', $validated) && $validated['pic'] !== $asset->pic) {
-            $entries[] = [
-                'pic',
-                is_array($asset->pic) ? implode(', ', $asset->pic) : (string) $asset->pic,
-                is_array($validated['pic']) ? implode(', ', $validated['pic']) : (string) $validated['pic'],
-            ];
-        }
-
-        if ($kodeAsset !== null && $kodeAsset !== $asset->kode_asset) {
-            $entries[] = ['kode_asset', $asset->kode_asset, $kodeAsset];
-        }
-
-        if ($entries === []) {
-            return;
-        }
-
-        $now = now();
-
-        $asset->histories()->createMany(array_map(
-            fn (array $entry) => [
-                'field' => $entry[0],
-                'old_value' => $entry[1],
-                'new_value' => $entry[2],
-                'changed_by' => $actorId,
-                'changed_by_name' => $actorName,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            $entries,
-        ));
-    }
-
-    private function locationName(?string $id): ?string
-    {
-        if ($id === null || $id === '') {
-            return null;
-        }
-
-        return Location::query()->whereKey($id)->value('name');
-    }
-
-    private function departmentName(?string $id): ?string
-    {
-        if ($id === null || $id === '') {
-            return null;
-        }
-
-        return Department::query()->whereKey($id)->value('nama_department');
     }
 
     public function destroy(Asset $asset): RedirectResponse

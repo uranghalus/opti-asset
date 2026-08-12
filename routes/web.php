@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetTransferController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
@@ -88,6 +89,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
     Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
     Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+
+    Route::get('asset-transfers', [AssetTransferController::class, 'index'])->name('asset-transfers.index');
+    Route::get('asset-transfers/create', [AssetTransferController::class, 'create'])->name('asset-transfers.create');
+    Route::post('asset-transfers', [AssetTransferController::class, 'store'])->name('asset-transfers.store');
+    Route::get('asset-transfers/{assetTransfer}', [AssetTransferController::class, 'show'])->name('asset-transfers.show');
+    Route::post('asset-transfers/{assetTransfer}/approve', [AssetTransferController::class, 'approve'])->name('asset-transfers.approve');
+    Route::post('asset-transfers/{assetTransfer}/reject', [AssetTransferController::class, 'reject'])->name('asset-transfers.reject');
 
     Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::get('departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');

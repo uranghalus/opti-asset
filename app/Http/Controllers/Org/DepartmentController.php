@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Org;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Tenant;
 use Illuminate\Console\Command;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +56,9 @@ class DepartmentController extends Controller
      */
     public function sync(): RedirectResponse
     {
-        $exitCode = Artisan::call('app:sync-departments');
+        $exitCode = Artisan::call('app:sync-departments', [
+            '--tenant' => Tenant::current()?->id,
+        ]);
         $message = trim(Artisan::output());
 
         Inertia::flash('toast', [

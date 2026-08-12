@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -25,7 +26,9 @@ class EmployeeTest extends TestCase
     {
         parent::setUp();
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
 
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
@@ -270,5 +273,34 @@ class EmployeeTest extends TestCase
         $this->assertSame(1, Employee::count());
         $employee = Employee::withoutGlobalScopes()->first();
         $this->assertSame('other', $employee->tenant_id);
+    }
+
+    public function test_sync_command_targets_specific_tenant(): void
+    {
+        config([
+            'services.optigate_portal.url' => 'https://portal.example',
+            'services.optigate_portal.token' => 'secret',
+        ]);
+
+        Http::fake([
+            'https://portal.example/api/users' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'emp-1',
+                        'name' => 'Budi',
+                        'nik' => 'NIK-001',
+                    ],
+                ],
+            ]),
+        ]);
+
+        $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+
+        $this->artisan('app:sync-employees', ['--tenant' => $other->id])
+            ->assertExitCode(Command::SUCCESS);
+
+        $employee = Employee::withoutGlobalScopes()->where('nik_employee', 'NIK-001')->first();
+        $this->assertNotNull($employee);
+        $this->assertSame($other->id, $employee->tenant_id);
     }
 }

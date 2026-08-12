@@ -608,6 +608,16 @@ export default function AssetClassification() {
                     `Gagal menghapus "${item.name}". Silakan coba lagi.`,
                 );
             },
+            onHttpException: () => {
+                setDeletingId(null);
+                toast.error(
+                    `"${item.name}" tidak ditemukan atau sudah terhapus.`,
+                );
+            },
+            onNetworkError: () => {
+                setDeletingId(null);
+                toast.error('Koneksi bermasalah. Silakan coba lagi.');
+            },
         });
     }, [deleteState, selectedId]);
 
@@ -627,17 +637,29 @@ export default function AssetClassification() {
 
     const bulkDelete = useCallback(() => {
         const topmost = Array.from(selectedIds).filter((id) => {
-            const info = findInfo(groups, id);
+            let parent = findInfo(groups, id)?.parent ?? null;
 
-            return !info?.parent || !selectedIds.has(info.parent.id);
+            while (parent) {
+                if (selectedIds.has(parent.id)) {
+                    return false;
+                }
+
+                parent = findInfo(groups, parent.id)?.parent ?? null;
+            }
+
+            return true;
         });
 
-        const run = (ids: string[], index = 0) => {
+        const run = (ids: string[], index = 0, skipped = 0) => {
             if (index >= ids.length) {
                 setSelectedIds(new Set());
                 setMultiSelect(false);
                 setDeletingId(null);
-                toast.success(`${ids.length} item berhasil dihapus.`);
+                toast.success(
+                    skipped > 0
+                        ? `${ids.length - skipped} item dihapus, ${skipped} dilewati (sudah terhapus).`
+                        : `${ids.length} item berhasil dihapus.`,
+                );
 
                 return;
             }
@@ -646,7 +668,7 @@ export default function AssetClassification() {
             const info = findInfo(groups, id);
 
             if (!info) {
-                run(ids, index + 1);
+                run(ids, index + 1, skipped);
 
                 return;
             }
@@ -657,12 +679,11 @@ export default function AssetClassification() {
                 only: ['groups'],
                 preserveState: true,
                 preserveScroll: true,
-                onSuccess: () => run(ids, index + 1),
-                onError: () => {
+                onSuccess: () => run(ids, index + 1, skipped),
+                onHttpException: () => run(ids, index + 1, skipped + 1),
+                onNetworkError: () => {
                     setDeletingId(null);
-                    toast.error(
-                        `Gagal menghapus "${info.node.name}". Dihentikan.`,
-                    );
+                    toast.error('Koneksi bermasalah. Batch dihentikan.');
                 },
             });
         };

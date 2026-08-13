@@ -12,6 +12,7 @@ import {
     Inbox,
     Layers,
     MapPin,
+    MoreHorizontal,
     Package,
     Pencil,
     Plus,
@@ -34,6 +35,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -400,53 +408,59 @@ export default function AssetsIndex() {
                             </div>
                         </div>
 
-                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2">
                             <Link href={scanRoute().url}>
                                 <Button
                                     variant="outline"
-                                    className="h-10 gap-2 rounded-xl border-primary/25 bg-primary/5 px-4 text-sm font-medium text-primary shadow-sm backdrop-blur-xl"
+                                    size="icon"
+                                    className="h-10 w-10 shrink-0 rounded-xl border-primary/25 bg-primary/5 shadow-sm backdrop-blur-xl"
                                 >
-                                    <ScanLine className="size-4" />
-                                    Scan
+                                    <ScanLine className="size-4 text-primary" />
                                 </Button>
                             </Link>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setImportOpen(true)}
-                                className="h-10 gap-2 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
-                            >
-                                <UploadCloud className="size-4" />
-                                Import
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={openLabels}
-                                disabled={selected.size === 0}
-                                title={
-                                    selected.size === 0
-                                        ? 'Pilih aset terlebih dahulu'
-                                        : undefined
-                                }
-                                className="h-10 gap-2 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
-                            >
-                                <Barcode className="size-4" />
-                                Cetak Barcode
-                            </Button>
-                            <Link href={labelsBatchRoute().url}>
-                                <Button
-                                    variant="outline"
-                                    className="h-10 gap-2 rounded-xl border-primary/25 bg-primary/5 px-4 text-sm font-medium text-primary shadow-sm backdrop-blur-xl"
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-10 w-10 shrink-0 rounded-xl border-border/70 bg-card/70 shadow-sm backdrop-blur-xl"
+                                    >
+                                        <MoreHorizontal className="size-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="min-w-[200px]"
                                 >
-                                    <Layers className="size-4" />
-                                    Cetak Massal
-                                </Button>
-                            </Link>
-                            <span
-                                aria-hidden
-                                className="hidden h-6 w-px bg-border/70 sm:block"
-                            />
+                                    <DropdownMenuItem
+                                        onClick={() => setImportOpen(true)}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <UploadCloud className="size-4" />
+                                        Import Spreadsheet
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={openLabels}
+                                        disabled={selected.size === 0}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Barcode className="size-4" />
+                                        Cetak Barcode
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href={labelsBatchRoute().url}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Layers className="size-4" />
+                                            Cetak Massal
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
                             <Link href={createRoute().url}>
                                 <Button
                                     size="sm"

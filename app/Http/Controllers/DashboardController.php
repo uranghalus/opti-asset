@@ -2,42 +2,92 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\Tenant;
-use App\Models\User;
+use App\Models\Asset;
+use App\Models\AssetTransfer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $user = $request->user();
-        $tenantId = session('current_tenant_id');
+        $assetCounts = Asset::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
 
-        $totalUsers = User::count();
-        $totalTenants = Tenant::count();
-        $totalDepartments = Department::count();
-        $totalPasskeys = $user->passkeys()->count();
+        $totalAssets = array_sum($assetCounts);
 
-        $recentUsers = User::latest('created_at')
+        $pendingTransfers = AssetTransfer::query()
+            ->where('status', 'pending')
+            ->count();
+
+        $warrantyAlerts = $this->getWarrantyAlerts();
+
+        $recentAssets = Asset::query()
+            ->with('item:id,name')
+            ->latest()
             ->take(5)
-            ->get(['id', 'name', 'email', 'created_at']);
-
-        $recentDepartments = Department::latest('created_at')
-            ->take(5)
-            ->get(['id_department', 'kode_department', 'nama_department', 'created_at']);
+            ->get(['id', 'item_id', 'kode_asset', 'brand', 'model', 'status', 'created_at']);
 
         return Inertia::render('dashboard', [
             'stats' => [
-                'total_users' => $totalUsers,
-                'total_tenants' => $totalTenants,
-                'total_departments' => $totalDepartments,
-                'total_passkeys' => $totalPasskeys,
+                'total_assets' => $totalAssets,
+                'asset_by_status' => [
+                    'ACT' => $assetCounts['ACT'] ?? 0,
+                    'LOAN' => $assetCounts['LOAN'] ?? 0,
+                    'RPR' => $assetCounts['RPR'] ?? 0,
+                    'MUT' => $assetCounts['MUT'] ?? 0,
+                    'DSP' => $assetCounts['DSP'] ?? 0,
+                ],
+                'pending_transfers' => $pendingTransfers,
             ],
-            'recent_users' => $recentUsers,
-            'recent_departments' => $recentDepartments,
-            'current_tenant_id' => $tenantId,
+            'warranty_alerts' => $warrantyAlerts,
+            'recent_assets' => $recentAssets,
         ]);
+    }
+
+    /**
+     * @return array{expired: int, expiring_soon: int, expiring_30: int, assets: array<int, array{id: string, kode_asset: string|null, brand: string|null, model: string|null, warranty_expire: string, days_until: int}>}
+     */
+    private function getWarrantyAlerts(): array
+    {
+        $now = Carbon::now();
+        $thirtyDays = Carbon::now()->addDays(30);
+
+        $expired = Asset::query()
+            ->whereNotNull('warranty_expire')
+            ->where('warranty_expire', '<', $now)
+            ->count();
+
+        $expiringSoon = Asset::query()
+            ->whereNotNull('warranty_expire')
+            ->whereBetween('warranty_expire', [$now, $thirtyDays])
+            ->count();
+
+        $assets = Asset::query()
+            ->whereNotNull('warranty_expire')
+            ->where('warranty_expire', '<=', $thirtyDays)
+            ->orderBy('warranty_expire')
+            ->take(10)
+            ->get(['id', 'kode_asset', 'brand', 'model', 'warranty_expire'])
+            ->map(fn (Asset $asset): array => [
+                'id' => $asset->id,
+                'kode_asset' => $asset->kode_asset,
+                'brand' => $asset->brand,
+                'model' => $asset->model,
+                'warranty_expire' => $asset->warranty_expire->toIso8601String(),
+                'days_until' => (int) $asset->warranty_expire->diffInDays($now, absolute: false),
+            ])
+            ->toArray();
+
+        return [
+            'expired' => $expired,
+            'expiring_soon' => $expiringSoon,
+            'expiring_30' => $expired + $expiringSoon,
+            'assets' => $assets,
+        ];
     }
 }

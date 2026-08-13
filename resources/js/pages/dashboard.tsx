@@ -1,41 +1,58 @@
 import { Head, usePage } from '@inertiajs/react';
 import { CalendarDays, Download } from 'lucide-react';
 import { useState } from 'react';
-import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { ChartOverview } from '@/components/dashboard/chart-overview';
 import { KpiCards } from '@/components/dashboard/kpi-cards';
-import { ProjectList } from '@/components/dashboard/project-list';
 import { StatusDonut } from '@/components/dashboard/status-donut';
-import { UpcomingEvents } from '@/components/dashboard/upcoming-events';
+import { WarrantyAlerts } from '@/components/dashboard/warranty-alerts';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 
+type AssetByStatus = {
+    ACT: number;
+    LOAN: number;
+    RPR: number;
+    MUT: number;
+    DSP: number;
+};
+
 type Stats = {
-    total_users: number;
-    total_tenants: number;
-    total_departments: number;
-    total_passkeys: number;
+    total_assets: number;
+    asset_by_status: AssetByStatus;
+    pending_transfers: number;
 };
 
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    created_at: string;
+type WarrantyAsset = {
+    id: string;
+    kode_asset: string | null;
+    brand: string | null;
+    model: string | null;
+    warranty_expire: string;
+    days_until: number;
 };
 
-type Department = {
-    id_department: string;
-    kode_department: string;
-    nama_department: string;
+type WarrantyAlerts = {
+    expired: number;
+    expiring_soon: number;
+    expiring_30: number;
+    assets: WarrantyAsset[];
+};
+
+type RecentAsset = {
+    id: string;
+    item_id: string | null;
+    kode_asset: string | null;
+    brand: string | null;
+    model: string | null;
+    status: string;
     created_at: string;
+    item?: { id: string; name: string } | null;
 };
 
 type PageProps = {
     stats: Stats;
-    recent_users: User[];
-    recent_departments: Department[];
-    current_tenant_id: string | null;
+    warranty_alerts: WarrantyAlerts;
+    recent_assets: RecentAsset[];
 };
 
 function GreetingHeader() {
@@ -96,7 +113,7 @@ function GreetingHeader() {
 }
 
 export default function Dashboard() {
-    const { stats, recent_users, recent_departments } = usePage()
+    const { stats, warranty_alerts } = usePage()
         .props as unknown as PageProps;
 
     return (
@@ -117,11 +134,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                    <ProjectList departments={recent_departments} />
-                    <ActivityFeed users={recent_users} />
-                    <UpcomingEvents />
-                </div>
+                <WarrantyAlerts alerts={warranty_alerts} />
             </div>
         </>
     );

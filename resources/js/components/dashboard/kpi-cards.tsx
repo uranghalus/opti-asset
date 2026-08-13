@@ -1,17 +1,17 @@
-import {
-    ArrowDownRight,
-    ArrowUpRight,
-    Building2,
-    CheckCircle,
-    KeyRound,
-    Users,
-} from 'lucide-react';
+import { CircleCheck, Hammer, MoveRight } from 'lucide-react';
+
+type AssetByStatus = {
+    ACT: number;
+    LOAN: number;
+    RPR: number;
+    MUT: number;
+    DSP: number;
+};
 
 type Stats = {
-    total_users: number;
-    total_tenants: number;
-    total_departments: number;
-    total_passkeys: number;
+    total_assets: number;
+    asset_by_status: AssetByStatus;
+    pending_transfers: number;
 };
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
@@ -67,39 +67,31 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 export function KpiCards({ stats }: { stats: Stats }) {
     const kpiData = [
         {
-            label: 'Total Pengguna',
-            value: stats.total_users.toLocaleString('id-ID'),
-            change: '+',
-            trend: 'up' as const,
-            icon: Users,
+            label: 'Total Aset',
+            value: stats.total_assets.toLocaleString('id-ID'),
+            icon: CircleCheck,
             sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
             color: '#006FCF',
         },
         {
-            label: 'Organisasi',
-            value: stats.total_tenants.toLocaleString('id-ID'),
-            change: '+',
-            trend: 'up' as const,
-            icon: Building2,
-            sparkline: [40, 38, 45, 42, 50, 48, 55, 52, 60, 58, 62, 68],
+            label: 'Aktif',
+            value: stats.asset_by_status.ACT.toLocaleString('id-ID'),
+            icon: CircleCheck,
+            sparkline: [20, 25, 22, 28, 25, 30, 28, 32, 30, 35, 33, 38],
             color: '#00875A',
         },
         {
-            label: 'Departemen',
-            value: stats.total_departments.toLocaleString('id-ID'),
-            change: '+',
-            trend: 'up' as const,
-            icon: CheckCircle,
-            sparkline: [20, 25, 18, 22, 15, 20, 16, 12, 18, 14, 10, 8],
+            label: 'Dalam Perbaikan',
+            value: stats.asset_by_status.RPR.toLocaleString('id-ID'),
+            icon: Hammer,
+            sparkline: [5, 3, 4, 6, 8, 7, 9, 8, 10, 9, 11, 10],
             color: '#B95000',
         },
         {
-            label: 'Passkeys',
-            value: stats.total_passkeys.toLocaleString('id-ID'),
-            change: '+',
-            trend: 'up' as const,
-            icon: KeyRound,
-            sparkline: [35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 75],
+            label: 'Menunggu Mutasi',
+            value: stats.pending_transfers.toLocaleString('id-ID'),
+            icon: MoveRight,
+            sparkline: [8, 10, 12, 9, 11, 13, 15, 14, 16, 18, 17, 20],
             color: '#BF9B30',
         },
     ];
@@ -127,20 +119,6 @@ export function KpiCards({ stats }: { stats: Stats }) {
                                     className="h-5 w-5"
                                     style={{ color: kpi.color }}
                                 />
-                            </div>
-                            <div
-                                className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                    kpi.trend === 'up'
-                                        ? 'bg-[#00875A]/[0.08] text-[#00875A]'
-                                        : 'bg-[#C52720]/[0.08] text-[#C52720]'
-                                }`}
-                            >
-                                {kpi.trend === 'up' ? (
-                                    <ArrowUpRight className="h-3 w-3" />
-                                ) : (
-                                    <ArrowDownRight className="h-3 w-3" />
-                                )}
-                                {kpi.change}
                             </div>
                         </div>
                         <div className="mt-4">

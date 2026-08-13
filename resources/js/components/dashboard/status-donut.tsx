@@ -1,24 +1,44 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 
+type AssetByStatus = {
+    ACT: number;
+    LOAN: number;
+    RPR: number;
+    MUT: number;
+    DSP: number;
+};
+
 type Stats = {
-    total_users: number;
-    total_tenants: number;
-    total_departments: number;
-    total_passkeys: number;
+    total_assets: number;
+    asset_by_status: AssetByStatus;
+    pending_transfers: number;
+};
+
+const STATUS_COLORS: Record<string, string> = {
+    ACT: '#00875A',
+    LOAN: '#006FCF',
+    RPR: '#B95000',
+    MUT: '#7C3AED',
+    DSP: '#C52720',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+    ACT: 'Aktif',
+    LOAN: 'Dipinjamkan',
+    RPR: 'Dalam Perbaikan',
+    MUT: 'Dimutasi',
+    DSP: 'Dihapus',
 };
 
 export function StatusDonut({ stats }: { stats: Stats }) {
-    const data = [
-        { name: 'Pengguna', value: stats.total_users, color: '#00875A' },
-        { name: 'Organisasi', value: stats.total_tenants, color: '#B95000' },
-        {
-            name: 'Departemen',
-            value: stats.total_departments,
-            color: '#BF9B30',
-        },
-        { name: 'Passkeys', value: stats.total_passkeys, color: '#006FCF' },
-    ];
+    const data = Object.entries(stats.asset_by_status)
+        .filter(([, value]) => value > 0)
+        .map(([key, value]) => ({
+            name: STATUS_LABELS[key] ?? key,
+            value,
+            color: STATUS_COLORS[key] ?? '#86888C',
+        }));
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -30,7 +50,7 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                         Status
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                        Breakdown Sistem
+                        Distribusi Aset
                     </h3>
                 </div>
                 <Button

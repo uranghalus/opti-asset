@@ -134,23 +134,19 @@ export function ClassificationDetailPanel({
 
     return (
         <div className="flex h-full flex-col">
-            <div className="glass-header relative overflow-hidden px-4 py-3">
+            <div className="relative overflow-hidden border-b border-border/60 px-4 py-3">
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_100%_0%,rgba(0,128,255,0.25),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_100%_0%,rgba(90,169,236,0.3),transparent_60%)]"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/[0.1]"
                 />
                 <div className="relative flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
-                        <span
-                            className="size-2 shrink-0 rounded-full"
-                            style={{ background: tint.solid }}
-                            aria-hidden
-                        />
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                        <LevelIcon level={level} size="sm" />
+                        <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
                             {LEVEL_LABELS[level]}
                         </span>
                         {node.code && (
-                            <span className="inline-flex shrink-0 items-center rounded-md bg-background/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                            <span className="inline-flex shrink-0 items-center rounded-md bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                                 {node.code}
                             </span>
                         )}
@@ -159,7 +155,7 @@ export function ClassificationDetailPanel({
                         variant="ghost"
                         size="icon"
                         onClick={onClose}
-                        className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
+                        className="size-7 text-muted-foreground transition-colors duration-150 hover:bg-muted/80 hover:text-foreground"
                         aria-label="Tutup panel"
                     >
                         <X className="size-4" />
@@ -169,7 +165,7 @@ export function ClassificationDetailPanel({
 
             <div className="flex-1 overflow-y-auto p-4">
                 <nav
-                    className="mb-5 flex flex-wrap items-center gap-1 text-xs"
+                    className="mb-4 flex flex-wrap items-center gap-1 text-xs"
                     aria-label="Jalur klasifikasi"
                 >
                     {crumbs.map((crumb, index) => (
@@ -191,40 +187,33 @@ export function ClassificationDetailPanel({
                     ))}
                 </nav>
 
-                <div className="mb-6 flex items-start gap-3">
-                    <LevelIcon level={level} open />
-                    <div className="min-w-0">
-                        <h2 className="text-lg font-bold tracking-tight text-foreground">
-                            {node.name}
-                        </h2>
-                        {node.description && (
-                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                                {node.description}
-                            </p>
-                        )}
-                    </div>
+                <div className="mb-5">
+                    <h2 className="text-base font-bold text-foreground">
+                        {node.name}
+                    </h2>
+                    {node.description && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {node.description}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mb-6 grid grid-cols-2 gap-3">
+                <div className="mb-5 grid grid-cols-2 gap-2.5">
                     <div
                         className={cn(
-                            'ease-premium group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
+                            'rounded-xl p-3.5 transition-colors',
                             tint.bg,
                         )}
                     >
-                        <div
-                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
-                            style={{ background: tint.solid }}
-                        />
                         <p
                             className={cn(
-                                'text-[11px] font-semibold tracking-wider uppercase',
+                                'text-[10px] font-semibold tracking-wider uppercase',
                                 tint.fg,
                             )}
                         >
                             {level === 'sub-cluster' ? 'Aset' : 'Anak'}
                         </p>
-                        <p className="mt-1.5 text-2xl font-bold text-foreground tabular-nums">
+                        <p className="mt-1 text-xl font-bold text-foreground tabular-nums">
                             {level === 'sub-cluster'
                                 ? (node.item_count ?? 0)
                                 : node.child_count}
@@ -232,35 +221,31 @@ export function ClassificationDetailPanel({
                     </div>
                     <div
                         className={cn(
-                            'ease-premium group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
+                            'rounded-xl p-3.5 transition-colors',
                             tint.bg,
                         )}
                     >
-                        <div
-                            className="absolute top-0 left-0 h-full w-0.5 rounded-l"
-                            style={{ background: tint.solid }}
-                        />
                         <p
                             className={cn(
-                                'text-[11px] font-semibold tracking-wider uppercase',
+                                'text-[10px] font-semibold tracking-wider uppercase',
                                 tint.fg,
                             )}
                         >
                             Level
                         </p>
-                        <p className="mt-1.5 text-2xl font-bold text-foreground tabular-nums">
+                        <p className="mt-1 text-xl font-bold text-foreground tabular-nums">
                             {LEVEL_ORDER.indexOf(level) + 1}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="mb-6 flex flex-wrap gap-1.5">
                     {canAddChild && (
                         <Button
                             type="button"
                             size="sm"
                             onClick={() => onAddChild(childLevel)}
-                            className="ease-premium rounded-lg bg-primary px-4 text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                            className="gap-1.5 rounded-lg bg-primary px-3 text-primary-foreground shadow-sm"
                         >
                             <Plus className="size-3.5" strokeWidth={2} />
                             Tambah {CHILD_LABEL[level]}
@@ -271,7 +256,7 @@ export function ClassificationDetailPanel({
                         variant="outline"
                         size="sm"
                         onClick={onEdit}
-                        className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                        className="gap-1.5 rounded-lg"
                     >
                         <Pencil className="size-3.5" strokeWidth={1.75} />
                         Edit
@@ -281,7 +266,7 @@ export function ClassificationDetailPanel({
                         variant="outline"
                         size="sm"
                         onClick={onDuplicate}
-                        className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                        className="gap-1.5 rounded-lg"
                     >
                         <Copy className="size-3.5" strokeWidth={1.75} />
                         Duplikat
@@ -290,7 +275,7 @@ export function ClassificationDetailPanel({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="ease-premium rounded-lg text-destructive transition-all duration-200 hover:bg-destructive/10 hover:text-destructive active:scale-[0.98]"
+                        className="gap-1.5 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={onDelete}
                     >
                         <Trash2 className="size-3.5" strokeWidth={1.75} />
@@ -298,22 +283,22 @@ export function ClassificationDetailPanel({
                     </Button>
                 </div>
 
-                <div className="mt-8 border-t border-border pt-6">
-                    <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <span
-                            className="size-1.5 rounded-full"
-                            style={{ background: tint.solid }}
-                            aria-hidden
-                        />
+                <div className="border-t border-border/60 pt-5">
+                    <h3 className="mb-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Detail Informasi
                     </h3>
 
                     <form
                         onSubmit={handleSubmit}
-                        className="flex flex-col gap-4"
+                        className="flex flex-col gap-3.5"
                     >
-                        <div className="grid gap-2">
-                            <Label htmlFor="detail-code">Kode</Label>
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="detail-code"
+                                className="text-xs text-muted-foreground"
+                            >
+                                Kode
+                            </Label>
                             <Input
                                 id="detail-code"
                                 value={form.data.code}
@@ -322,6 +307,7 @@ export function ClassificationDetailPanel({
                                 }
                                 placeholder="Contoh: 01.02"
                                 maxLength={20}
+                                className="h-9 text-sm"
                             />
                             {form.errors.code && (
                                 <p className="text-xs text-destructive">
@@ -330,8 +316,13 @@ export function ClassificationDetailPanel({
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="detail-name">Nama</Label>
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="detail-name"
+                                className="text-xs text-muted-foreground"
+                            >
+                                Nama
+                            </Label>
                             <Input
                                 id="detail-name"
                                 value={form.data.name}
@@ -340,6 +331,7 @@ export function ClassificationDetailPanel({
                                 }
                                 placeholder="Nama klasifikasi"
                                 required
+                                className="h-9 text-sm"
                             />
                             {form.errors.name && (
                                 <p className="text-xs text-destructive">
@@ -348,8 +340,11 @@ export function ClassificationDetailPanel({
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="detail-description">
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="detail-description"
+                                className="text-xs text-muted-foreground"
+                            >
                                 Deskripsi
                             </Label>
                             <Textarea
@@ -362,6 +357,7 @@ export function ClassificationDetailPanel({
                                     )
                                 }
                                 placeholder="Deskripsi singkat (opsional)"
+                                className="min-h-[80px] text-sm"
                             />
                             {form.errors.description && (
                                 <p className="text-xs text-destructive">
@@ -371,8 +367,13 @@ export function ClassificationDetailPanel({
                         </div>
 
                         {level === 'sub-cluster' && (
-                            <div className="grid gap-2">
-                                <Label htmlFor="detail-notes">Keterangan</Label>
+                            <div className="grid gap-1.5">
+                                <Label
+                                    htmlFor="detail-notes"
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    Keterangan
+                                </Label>
                                 <Textarea
                                     id="detail-notes"
                                     value={form.data.notes}
@@ -383,28 +384,31 @@ export function ClassificationDetailPanel({
                                         )
                                     }
                                     placeholder="Keterangan tambahan (opsional)"
+                                    className="min-h-[80px] text-sm"
                                 />
                             </div>
                         )}
 
-                        <div className="flex items-center justify-end gap-2 pt-2">
+                        <div className="flex items-center justify-end gap-2 pt-1">
                             <Button
                                 type="button"
                                 variant="outline"
+                                size="sm"
                                 onClick={onClose}
-                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                className="rounded-lg"
                             >
                                 Batal
                             </Button>
                             <Button
                                 type="submit"
+                                size="sm"
                                 disabled={form.processing || !form.isDirty}
-                                className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                className="gap-1.5 rounded-lg"
                             >
                                 {form.processing ? (
-                                    <Loader2 className="size-4 animate-spin" />
+                                    <Loader2 className="size-3.5 animate-spin" />
                                 ) : (
-                                    <Save className="size-4" />
+                                    <Save className="size-3.5" />
                                 )}
                                 Simpan
                             </Button>

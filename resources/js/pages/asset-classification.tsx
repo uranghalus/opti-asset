@@ -871,37 +871,38 @@ export default function AssetClassification() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex shrink-0 items-center gap-2">
                                 <Button
                                     variant={
                                         multiSelect ? 'secondary' : 'outline'
                                     }
-                                    size="sm"
+                                    size="icon"
+                                    className="h-10 w-10 shrink-0 rounded-xl border-border/70 bg-card/70 shadow-sm backdrop-blur-xl"
                                     onClick={() => {
                                         setMultiSelect((value) => !value);
                                         setSelectedIds(new Set());
                                     }}
-                                    className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
+                                    title={
+                                        multiSelect
+                                            ? 'Keluar multi-select'
+                                            : 'Pilih beberapa item'
+                                    }
                                 >
-                                    <ListChecks
-                                        className="size-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    Multi-select
+                                    {multiSelect ? (
+                                        <ListX className="size-4" />
+                                    ) : (
+                                        <ListChecks className="size-4" />
+                                    )}
                                 </Button>
 
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            size="sm"
-                                            className="ease-premium rounded-lg border transition-all duration-200 active:scale-[0.98]"
+                                            size="icon"
+                                            className="h-10 w-10 shrink-0 rounded-xl border-border/70 bg-card/70 shadow-sm backdrop-blur-xl"
                                         >
-                                            <MoreHorizontal
-                                                className="size-4"
-                                                strokeWidth={1.75}
-                                            />
-                                            Lainnya
+                                            <MoreHorizontal className="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
@@ -928,9 +929,9 @@ export default function AssetClassification() {
                                 <Button
                                     size="sm"
                                     onClick={() => openCreate('group', null)}
-                                    className="group ease-premium h-auto gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                                    className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
                                 >
-                                    <span className="ease-premium flex size-5 items-center justify-center rounded-md bg-white/20 transition-transform duration-200 group-hover:scale-110">
+                                    <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
                                         <Plus
                                             className="size-3.5"
                                             strokeWidth={2.25}
@@ -965,18 +966,18 @@ export default function AssetClassification() {
                                     return (
                                         <div
                                             key={level}
-                                            className="glass-card group ease-premium relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
+                                            className="group ease-premium glass-card relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]"
                                         >
                                             <div
-                                                className="absolute top-0 left-0 h-full w-0.5 rounded-l"
+                                                className="absolute top-0 left-0 h-full w-1 rounded-l-xl transition-all duration-300 group-hover:w-1.5"
                                                 style={{
                                                     background: tint.solid,
                                                 }}
                                             />
-                                            <div className="flex items-center gap-3 p-4 pl-5">
+                                            <div className="flex items-center gap-3 py-4 pr-4 pl-5">
                                                 <div
                                                     className={cn(
-                                                        'flex size-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
+                                                        'flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
                                                         tint.bg,
                                                     )}
                                                 >
@@ -1000,20 +1001,20 @@ export default function AssetClassification() {
                             )}
                         </div>
 
-                        <div className="mt-6 grid gap-4 lg:grid-cols-[400px_1fr]">
-                            <section className="glass-panel card-enter flex flex-col delay-150">
-                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem]">
-                                    <div className="glass-header relative overflow-hidden px-4 py-3">
+                        <div className="mt-6 grid gap-4 lg:grid-cols-[400px_1fr] lg:[&>*]:min-h-0">
+                            <section className="glass-panel card-enter flex min-h-[400px] flex-col delay-150 lg:h-full">
+                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:h-full">
+                                    <div className="relative overflow-hidden border-b border-border/60 px-4 py-3">
                                         <div
                                             aria-hidden
-                                            className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(0,128,255,0.2),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.25),transparent_60%)]"
+                                            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/[0.1]"
                                         />
                                         <div className="relative flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2.5">
-                                                <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                                                <h2 className="text-sm font-semibold text-foreground">
                                                     Struktur Klasifikasi
                                                 </h2>
-                                                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
                                                     {groups.length} golongan
                                                 </span>
                                             </div>
@@ -1021,7 +1022,7 @@ export default function AssetClassification() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
+                                                    className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
                                                     onClick={expandAll}
                                                     aria-label="Perluas semua"
                                                 >
@@ -1033,7 +1034,7 @@ export default function AssetClassification() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="ease-premium size-7 text-muted-foreground transition-colors duration-200 hover:bg-white/15 hover:text-foreground"
+                                                    className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
                                                     onClick={collapseAll}
                                                     aria-label="Ciutkan semua"
                                                 >
@@ -1046,7 +1047,7 @@ export default function AssetClassification() {
                                         </div>
                                     </div>
 
-                                    <div className="border-b border-border px-3 py-2">
+                                    <div className="border-b border-border/60 px-3 py-2.5">
                                         <div className="relative">
                                             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                                             <Input
@@ -1054,8 +1055,8 @@ export default function AssetClassification() {
                                                 onChange={(event) =>
                                                     setQuery(event.target.value)
                                                 }
-                                                placeholder="Filter kode / nama..."
-                                                className="h-8 rounded-lg border-border bg-background/50 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
+                                                placeholder="Cari kode atau nama..."
+                                                className="h-8 rounded-lg border-border/60 bg-background/80 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
                                             />
                                             {queryActive && (
                                                 <button
@@ -1071,7 +1072,7 @@ export default function AssetClassification() {
                                     </div>
 
                                     {multiSelect && selectedIds.size > 0 && (
-                                        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                                        <div className="flex items-center gap-2 border-b border-border/60 bg-muted/30 px-3 py-2">
                                             <span className="text-xs font-medium text-foreground">
                                                 {selectedIds.size} dipilih
                                             </span>
@@ -1079,7 +1080,7 @@ export default function AssetClassification() {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    className="h-7 text-xs"
+                                                    className="h-7 gap-1 text-xs"
                                                     onClick={bulkDelete}
                                                 >
                                                     <Trash2 className="size-3.5" />
@@ -1088,7 +1089,7 @@ export default function AssetClassification() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-7 text-xs"
+                                                    className="h-7 gap-1 text-xs"
                                                     onClick={() => {
                                                         setSelectedIds(
                                                             new Set(),
@@ -1105,15 +1106,12 @@ export default function AssetClassification() {
 
                                     <div
                                         className="flex-1 overflow-y-auto p-2"
-                                        style={{
-                                            maxHeight: 'calc(100dvh - 430px)',
-                                        }}
                                         role="tree"
                                         aria-label="Klasifikasi Asset"
                                     >
                                         {groups.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-                                                <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+                                                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                                     <Inbox
                                                         className="size-7"
                                                         strokeWidth={1.25}
@@ -1138,15 +1136,15 @@ export default function AssetClassification() {
                                                             null,
                                                         )
                                                     }
-                                                    className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                                    className="mt-1 gap-1.5 rounded-lg"
                                                 >
-                                                    <Plus className="size-4" />
+                                                    <Plus className="size-3.5" />
                                                     Tambah Golongan
                                                 </Button>
                                             </div>
                                         ) : visibleTree.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-                                                <div className="glass-card flex size-14 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+                                                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                                                     <Search
                                                         className="size-7"
                                                         strokeWidth={1.25}
@@ -1167,9 +1165,9 @@ export default function AssetClassification() {
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => setQuery('')}
-                                                    className="ease-premium rounded-lg transition-all duration-200 active:scale-[0.98]"
+                                                    className="mt-1 gap-1.5 rounded-lg"
                                                 >
-                                                    <X className="size-4" />
+                                                    <X className="size-3.5" />
                                                     Hapus filter
                                                 </Button>
                                             </div>
@@ -1307,8 +1305,8 @@ export default function AssetClassification() {
                                 </div>
                             </section>
 
-                            <section className="glass-panel card-enter flex flex-col delay-200">
-                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:min-h-[600px]">
+                            <section className="glass-panel card-enter flex min-h-[400px] flex-col delay-200 lg:h-full">
+                                <div className="flex min-h-[400px] flex-col overflow-hidden rounded-[0.75rem] lg:h-full">
                                     {selectedInfo ? (
                                         <ClassificationDetailPanel
                                             level={selectedInfo.level}
@@ -1343,23 +1341,22 @@ export default function AssetClassification() {
                                             onClose={() => setSelectedId(null)}
                                         />
                                     ) : (
-                                        <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
-                                            <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-sm">
+                                        <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
+                                            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                                 <FolderOpen
-                                                    className="size-8"
+                                                    className="size-7"
                                                     strokeWidth={1.25}
                                                 />
                                             </div>
                                             <div>
-                                                <h2 className="text-base font-semibold text-foreground">
+                                                <h2 className="text-sm font-semibold text-foreground">
                                                     Pilih node dari pohon
                                                     klasifikasi
                                                 </h2>
-                                                <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                                                <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
                                                     Klik golongan, kategori,
                                                     cluster, atau sub cluster
-                                                    untuk melihat dan mengedit
-                                                    detailnya.
+                                                    untuk melihat detailnya.
                                                 </p>
                                             </div>
                                         </div>
@@ -1635,24 +1632,24 @@ function TreeNodeRow({
             )}
         >
             {isOver && over?.pos === 'before' && (
-                <div className="absolute top-0 right-1 left-1 z-10 h-0.5 rounded-full bg-primary" />
+                <div className="absolute top-0 right-1.5 left-1.5 z-10 h-0.5 rounded-full bg-primary" />
             )}
             {isOver && over?.pos === 'after' && (
-                <div className="absolute right-1 bottom-0 left-1 z-10 h-0.5 rounded-full bg-primary" />
+                <div className="absolute right-1.5 bottom-0 left-1.5 z-10 h-0.5 rounded-full bg-primary" />
             )}
 
             <div
                 className={cn(
-                    'group ease-premium flex h-[2.625rem] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-sm transition-all duration-200 active:scale-[0.995]',
+                    'group flex h-11 cursor-pointer items-center gap-2 rounded-lg px-2.5 text-sm transition-all duration-150',
                     isSelected
                         ? 'bg-primary/10 font-medium text-primary shadow-[inset_0_0_0_1px_rgba(0,111,207,0.15)]'
-                        : 'text-foreground hover:bg-muted/60',
+                        : 'text-foreground hover:bg-muted/70',
                     isMultiSelected &&
                         !isSelected &&
                         'bg-primary/5 shadow-[inset_0_0_0_1px_rgba(0,111,207,0.12)]',
                     matches && 'shadow-[inset_0_0_0_1px_rgba(0,111,207,0.3)]',
                 )}
-                style={{ paddingLeft: `${depth * 18 + 8}px` }}
+                style={{ paddingLeft: `${depth * 16 + 8}px` }}
                 role="treeitem"
                 aria-selected={isSelected}
                 draggable={!multiSelect}
@@ -1694,7 +1691,7 @@ function TreeNodeRow({
                             onToggleExpand(node.id);
                         }}
                         className={cn(
-                            'ease-premium flex size-6 shrink-0 items-center justify-center rounded-md transition-all duration-200 hover:bg-accent',
+                            'flex size-6 shrink-0 items-center justify-center rounded-md transition-all duration-150 hover:bg-accent',
                             isExpanded && 'rotate-90',
                         )}
                         aria-expanded={isExpanded}
@@ -1710,7 +1707,7 @@ function TreeNodeRow({
 
                 <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                        <span className="ease-premium truncate font-medium transition-transform duration-300 group-hover:translate-x-0.5">
+                        <span className="truncate font-medium transition-transform duration-200 group-hover:translate-x-0.5">
                             {node.name}
                         </span>
                         {node.code && (

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetDisposalController;
 use App\Http\Controllers\AssetTransferController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -14,10 +15,12 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TenantSwitchController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (Auth::check()) {
         return redirect()->route('dashboard');
     }
 
@@ -135,5 +138,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('auth/redirect', [OIDCController::class, 'redirect'])->name('authsso');
 Route::get('auth/oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
 Route::get('auth/logout', [OIDCController::class, 'logout'])->name('auth.logout');
+
+Route::get('disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
+Route::get('disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
+Route::post('disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
+Route::get('disposals/{disposal}', [AssetDisposalController::class, 'show'])->name('disposals.show');
+Route::get('disposals/{disposal}/edit', [AssetDisposalController::class, 'edit'])->name('disposals.edit');
+Route::patch('disposals/{disposal}', [AssetDisposalController::class, 'update'])->name('disposals.update');
+Route::delete('disposals/{disposal}', [AssetDisposalController::class, 'destroy'])->name('disposals.destroy');
+Route::post('disposals/bulk', [AssetDisposalController::class, 'bulk'])->name('disposals.bulk');
 
 require __DIR__.'/settings.php';

@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateAssetDisposalRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'asset_id' => ['required', 'exists:assets,id'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'disposal_date' => ['nullable', 'date'],
+            'status' => ['sometimes', 'string', 'in:pending,approved,rejected'],
+        ];
+    }
+
+    public function prepareForValidation(): void
+    {
+        $this->merge([
+            'status' => $this->input('status', 'pending'),
+        ]);
+    }
+}

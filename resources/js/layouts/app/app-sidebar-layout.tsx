@@ -21,8 +21,8 @@ export default function AppSidebarLayout({
             setIsMobile(mobile);
 
             if (!mobile) {
-setSidebarOpen(false);
-}
+                setSidebarOpen(false);
+            }
         };
 
         checkMobile();
@@ -33,12 +33,16 @@ setSidebarOpen(false);
 
     return (
         <AppShell variant="sidebar">
-            <AppSidebar isMobile={isMobile} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            {!isMobile && (
+                <AppSidebar isMobile={isMobile} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            )}
             <AppContent
                 variant="sidebar"
-                className="overflow-x-hidden bg-transparent"
+                className="overflow-x-hidden bg-transparent pb-[56px] lg:pb-0"
             >
-                {!isMobile && <AppSidebarHeader onMenuClick={() => setSidebarOpen(true)} />}
+<AppSidebarHeader 
+                    onMenuClick={() => setSidebarOpen(true)}
+                />
                 {children}
             </AppContent>
             {isMobile && (

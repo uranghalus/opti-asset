@@ -40,6 +40,7 @@ return [
         'client_secret' => env('OIDC_CLIENT_SECRET'),
         'redirect' => env('OIDC_REDIRECT_URI'),
         'user_info_url' => env('OIDC_USER_INFO_URL'),
+        'logout_url' => env('OIDC_LOGOUT_URL'),
         'guzzle' => [
             'http_errors' => false,
             'verify' => env('OIDC_VERIFY_SSL', true),

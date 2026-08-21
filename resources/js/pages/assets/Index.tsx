@@ -1138,32 +1138,36 @@ export default function AssetsIndex() {
             </Dialog>
 
             <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Filter Aset</DialogTitle>
-                        <DialogDescription>
+                <DialogContent className="sm:max-w-lg glass-panel backdrop-blur-xl bg-background/85 border-border/30 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ease-out-[cubic-bezier(0.16,1,0.3,1)]">
+                    <DialogHeader className="pb-3 border-b border-border/20">
+                        <DialogTitle className="text-lg font-semibold tracking-tight text-foreground flex items-center gap-2">
+                            <Filter className="size-5 text-primary" strokeWidth={2} />
+                            Filter Aset
+                        </DialogTitle>
+                        <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
                             Persempit daftar aset berdasarkan kriteria berikut.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <Label>Golongan</Label>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 mt-4">
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">Golongan</Label>
                             <Select
                                 value={groupFilter}
                                 onValueChange={setGroupFilter}
                             >
-                                <SelectTrigger className="mt-1.5">
+                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                                     <SelectValue placeholder="Semua Golongan" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">
+                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
+                                    <SelectItem value="" className="px-3 py-2 text-sm">
                                         Semua Golongan
                                     </SelectItem>
                                     {groups.map((group) => (
                                         <SelectItem
                                             key={group.id}
                                             value={group.id}
+                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
                                         >
                                             {group.code
                                                 ? `${group.code} — `
@@ -1175,23 +1179,24 @@ export default function AssetsIndex() {
                             </Select>
                         </div>
 
-                        <div>
-                            <Label>Department</Label>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">Department</Label>
                             <Select
                                 value={departmentFilter}
                                 onValueChange={setDepartmentFilter}
                             >
-                                <SelectTrigger className="mt-1.5">
+                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                                     <SelectValue placeholder="Semua Department" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">
+                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
+                                    <SelectItem value="" className="px-3 py-2 text-sm">
                                         Semua Department
                                     </SelectItem>
                                     {departments.map((department) => (
                                         <SelectItem
                                             key={department.id_department}
                                             value={department.id_department}
+                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
                                         >
                                             {department.nama_department}
                                         </SelectItem>
@@ -1200,20 +1205,21 @@ export default function AssetsIndex() {
                             </Select>
                         </div>
 
-                        <div>
-                            <Label>Status Aset</Label>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">Status Aset</Label>
                             <Select
                                 value={statusFilter}
                                 onValueChange={setStatusFilter}
                             >
-                                <SelectTrigger className="mt-1.5">
+                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                                     <SelectValue placeholder="Semua Status" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
                                     {STATUS_OPTIONS.map((option) => (
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
+                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
                                         >
                                             {option.label}
                                         </SelectItem>
@@ -1222,20 +1228,21 @@ export default function AssetsIndex() {
                             </Select>
                         </div>
 
-                        <div>
-                            <Label>Kondisi Aset</Label>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">Kondisi Aset</Label>
                             <Select
                                 value={conditionFilter}
                                 onValueChange={setConditionFilter}
                             >
-                                <SelectTrigger className="mt-1.5">
+                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                                     <SelectValue placeholder="Semua Kondisi" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
                                     {CONDITION_OPTIONS.map((option) => (
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
+                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
                                         >
                                             {option.label}
                                         </SelectItem>
@@ -1245,18 +1252,22 @@ export default function AssetsIndex() {
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-2 sm:justify-between">
+                    <DialogFooter className="mt-6 gap-3 sm:justify-between pt-4 border-t border-border/20">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={clearFilters}
-                            className="text-muted-foreground"
+                            className="h-10 px-4 gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                         >
-                            <X className="size-4" />
+                            <X className="size-4" strokeWidth={2} />
                             Reset
                         </Button>
-                        <Button type="button" onClick={applyFilters}>
-                            <Filter className="size-4" />
+                        <Button
+                            type="button"
+                            onClick={applyFilters}
+                            className="h-10 px-5 gap-2 text-sm font-semibold rounded-xl bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 ease-out"
+                        >
+                            <Filter className="size-4" strokeWidth={2} />
                             Terapkan Filter
                         </Button>
                     </DialogFooter>

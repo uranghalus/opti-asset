@@ -43,6 +43,12 @@
       "skillPath": ".agents/skills/impeccable/SKILL.md",
       "computedHash": "92704fd0894a2dcb6b524bd5ef458299bf416e81d6240627cea7c956b9099b6f"
     },
+    "spatie-laravel-php": {
+      "source": "spatie/guidelines-skills",
+      "sourceType": "github",
+      "skillPath": "resources/boost/skills/spatie-laravel-php/SKILL.md",
+      "computedHash": "77e46372797fd67ee7c84d534bed2bcef104e1178c368ca2991be408badfed55"
+    },
     "stitch-design-taste": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",

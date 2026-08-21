@@ -21,7 +21,7 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return inertia('welcome');
+    return redirect()->route('authsso');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -116,9 +116,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
     Route::patch('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
+    // Debug route
+    Route::get('debug-roles', function (Request $request) {
+        $user = $request->user();
+        if (! $user) {
+            return response('Not authenticated', 401);
+        }
+
+        return response()->json([
+            'user' => $user->toArray(),
+            'roles' => $user->getRoleNames()->toArray(),
+            'has_super_admin' => $user->hasRole('super-admin'),
+        ]);
+    })->name('debug.roles');
 });
 
 Route::get('auth/redirect', [OIDCController::class, 'redirect'])->name('authsso');
 Route::get('auth/oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+Route::get('auth/logout', [OIDCController::class, 'logout'])->name('auth.logout');
 
 require __DIR__.'/settings.php';

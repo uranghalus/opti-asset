@@ -9,10 +9,11 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_welcome_page_returns_ok()
+    public function test_home_redirects_guests_to_sso_login()
     {
-        $response = $this->get(route('home'));
+        $response = $this->get('/');
 
-        $response->assertOk();
+        $response->assertRedirect();
+        $this->assertStringContainsString('/auth/redirect', $response->headers->get('Location'));
     }
 }

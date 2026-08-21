@@ -13,14 +13,27 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { sidebarData } from '@/data/sidebar';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 
-export function AppSidebar() {
+type Props = {
+    isMobile?: boolean;
+    open?: boolean;
+    onClose?: () => void;
+};
+
+export function AppSidebar({ isMobile = false, open = false, onClose }: Props) {
+    const sidebarClassName = cn(
+        'sidebar-glass border-r-0 transition-all duration-300 ease-out-[cubic-bezier(0.16,1,0.3,1)]',
+        isMobile && 'fixed left-0 top-0 z-50 h-full w-[300px] max-w-[85vw] shadow-2xl',
+        !open && isMobile && '-translate-x-full'
+    );
+
     return (
         <Sidebar
             collapsible="icon"
             variant="sidebar"
-            className="sidebar-glass border-r-0"
+            className={sidebarClassName}
         >
             <SidebarHeader className="h-16 shrink-0 justify-center border-b border-sidebar-border px-2">
                 <SidebarMenu>
@@ -55,9 +68,11 @@ export function AppSidebar() {
                 <NavMain groups={sidebarData.navGroups} />
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-sidebar-border px-2 py-1.5">
-                <NavUser />
-            </SidebarFooter>
+            {!isMobile && (
+                <SidebarFooter className="border-t border-sidebar-border px-2 py-1.5">
+                    <NavUser />
+                </SidebarFooter>
+            )}
         </Sidebar>
     );
 }

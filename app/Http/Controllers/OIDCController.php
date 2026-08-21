@@ -31,8 +31,8 @@ class OIDCController extends Controller
             $ssoUser = $driver->stateless()->user();
 
             $rawData = $ssoUser->user ?? [];
+            $ssoCompanyId = $rawData['company'] ?? null;
             Log::info('OIDC Raw Data:', $rawData);
-
             $ssoDepartmentName = is_array($rawData['department'] ?? null)
                 ? ($rawData['department']['name'] ?? $rawData['department']['id'] ?? null)
                 : ($rawData['department'] ?? null);
@@ -73,7 +73,15 @@ class OIDCController extends Controller
                 throw new \RuntimeException('Gagal membuat atau menemukan user.');
             }
 
-            if (! $user->tenant_id) {
+            if (! $user->tenant_id && $ssoCompanyId) {
+                $tenant = Tenant::find($ssoCompanyId);
+                if ($tenant) {
+                    $user->update(['tenant_id' => $tenant->id]);
+                    $user->tenants()->syncWithoutDetaching([$tenant->id]);
+                } else {
+                    $this->createTenant->execute($user);
+                }
+            } elseif (! $user->tenant_id) {
                 $this->createTenant->execute($user);
             }
 
@@ -81,6 +89,9 @@ class OIDCController extends Controller
 
             Auth::login($user);
             $request->session()->regenerate();
+
+            // ponytail: store raw id_token for RP-initiated logout. Add column if IdP rotates tokens frequently.
+            $request->session()->put('oidc_id_token', $tokenResponse['id_token'] ?? null);
 
             return redirect()->route('dashboard');
         } catch (\Exception $e) {
@@ -92,11 +103,26 @@ class OIDCController extends Controller
 
     public function logout(Request $request)
     {
+        // ponytail: grab id_token BEFORE session clear for RP-initiated logout
+        $idToken = $request->session()->get('oidc_id_token');
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        if (!$idToken) {
+            return redirect('/');
+        }
+
+        $oidcLogoutUrl = config('services.oidc.logout_url', '/');
+        $postLogoutRedirectUri = url('/');
+
+        $query = http_build_query([
+            'id_token_hint' => $idToken,
+            'post_logout_redirect_uri' => $postLogoutRedirectUri,
+        ]);
+
+        return redirect($oidcLogoutUrl . '?' . $query);
     }
 
     private function findDepartmentId(string $ssoDepartmentName): ?string

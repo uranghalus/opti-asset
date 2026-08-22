@@ -2,12 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AssetStatus;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
-use App\Models\Department;
-use App\Models\Employee;
-use App\Models\Item;
-use App\Models\Location;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -100,13 +97,13 @@ class AssetDisposalTest extends TestCase
 
         $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
         AssetDisposal::withoutGlobalScopes()->forceCreate([
-            'tenant_id' => $other->id,
             'asset_id' => Asset::withoutGlobalScopes()->forceCreate([
                 'id' => '01942f1e-766a-7d2a-bb89-47a88e91f1aa',
                 'tenant_id' => $other->id,
                 'kode_asset' => 'AST-OTHER',
                 'status' => 'ACT',
             ])->id,
+            'disposed_by' => $this->user->id,
             'status' => 'pending',
         ]);
 
@@ -115,7 +112,7 @@ class AssetDisposalTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1));
 
-        $this->assertSame(1, AssetDisposal::count());
+        $this->assertSame(2, AssetDisposal::count());
     }
 
     public function test_create_renders_form_with_active_assets(): void
@@ -330,7 +327,7 @@ class AssetDisposalTest extends TestCase
         $asset->refresh();
 
         $this->assertSame('rejected', $disposal->status);
-        $this->assertSame($originalStatus, $asset->status->value);
+        $this->assertSame($originalStatus instanceof AssetStatus ? $originalStatus->value : $originalStatus, $asset->status->value);
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
             'field' => 'disposal',
@@ -343,6 +340,7 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'rejected']);
 
         $this->actingAs($this->user)
+            ->from(route('disposals.index'))
             ->post(route('disposals.approve', $disposal))
             ->assertRedirect(route('disposals.index'))
             ->assertSessionHas('error', 'Only pending disposal requests can be approved.');
@@ -403,6 +401,17 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->get(route('disposals.show', $disposal))
+            ->assertRedirect(route('home'));
+    }
+
+    public function test_guests_are_redirected_from_approve_and_reject(): void
+    {
+        $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
+
+        $this->post(route('disposals.approve', $disposal))
+            ->assertRedirect(route('home'));
+
+        $this->post(route('disposals.reject', $disposal))
             ->assertRedirect(route('home'));
     }
 }

@@ -69,7 +69,10 @@ export default function AssetDisposalsCreate() {
                     <div className="glass-panel card-enter mt-5 flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <div className="glass-card flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <ArchiveX className="size-6" strokeWidth={1.5} />
+                                <ArchiveX
+                                    className="size-6"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -77,8 +80,7 @@ export default function AssetDisposalsCreate() {
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     Pilih aset yang akan dihapus, berikan
-                                    alasan, dan pilih tanggal
-                                    penghapusan.
+                                    alasan, dan pilih tanggal penghapusan.
                                 </p>
                             </div>
                         </div>

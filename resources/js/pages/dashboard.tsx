@@ -113,8 +113,7 @@ function GreetingHeader() {
 }
 
 export default function Dashboard() {
-    const { stats, warranty_alerts } = usePage()
-        .props as unknown as PageProps;
+    const { stats, warranty_alerts } = usePage().props as unknown as PageProps;
 
     return (
         <>

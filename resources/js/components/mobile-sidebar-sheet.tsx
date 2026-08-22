@@ -136,24 +136,40 @@ export function MobileSidebarSheet({ isOpen, onClose }: Props) {
                         </SidebarContent>
                     </div>
                 </div>
-<div className="pb-safe mt-auto flex flex-col gap-3 border-t border-border/60 bg-card p-4">
-        <div className="grid grid-cols-2 gap-3">
-            <Link href="/settings/profile" onClick={onClose} className="block">
-                <Button variant="outline" className="h-10 w-full justify-center gap-2 text-sm font-medium">
-                    <UserCircle className="size-4" strokeWidth={2} />
-                    Profil
-                </Button>
-            </Link>
-            <Button
-                variant="outline"
-                className="h-10 w-full justify-center gap-2 border-destructive/20 text-sm font-medium text-destructive"
-                onClick={() => { router.post(logout()); onClose(); }}
-            >
-                <LayoutDashboard className="size-4" strokeWidth={2} />
-                Keluar
-            </Button>
-        </div>
-    </div>
+                <div className="pb-safe mt-auto flex flex-col gap-3 border-t border-border/60 bg-card p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <Link
+                            href="/settings/profile"
+                            onClick={onClose}
+                            className="block"
+                        >
+                            <Button
+                                variant="outline"
+                                className="h-10 w-full justify-center gap-2 text-sm font-medium"
+                            >
+                                <UserCircle
+                                    className="size-4"
+                                    strokeWidth={2}
+                                />
+                                Profil
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="outline"
+                            className="h-10 w-full justify-center gap-2 border-destructive/20 text-sm font-medium text-destructive"
+                            onClick={() => {
+                                router.post(logout());
+                                onClose();
+                            }}
+                        >
+                            <LayoutDashboard
+                                className="size-4"
+                                strokeWidth={2}
+                            />
+                            Keluar
+                        </Button>
+                    </div>
+                </div>
             </SheetContent>
         </Sheet>
     );

@@ -20,14 +20,13 @@ class StoreAssetDisposalRequest extends FormRequest
             'asset_id' => ['required', 'exists:assets,id'],
             'reason' => ['nullable', 'string', 'max:1000'],
             'disposal_date' => ['nullable', 'date'],
-            'status' => ['sometimes', 'string', 'in:pending,approved,rejected'],
         ];
     }
 
     public function prepareForValidation(): void
     {
         $this->merge([
-            'status' => $this->input('status', 'pending'),
+            'status' => 'pending',
         ]);
     }
 }

@@ -25,7 +25,11 @@ type AssetOption = {
 
 type Disposal = {
     id: number;
-    asset: { id: string; kode_asset: string | null; nama_asset: string | null } | null;
+    asset: {
+        id: string;
+        kode_asset: string | null;
+        nama_asset: string | null;
+    } | null;
     reason: string | null;
     disposal_date: string | null;
     status: 'pending' | 'approved' | 'rejected';
@@ -49,7 +53,9 @@ export default function AssetDisposalsEdit() {
         e.preventDefault();
         patch(updateRoute(disposal.id).url, {
             onSuccess: () => {
-                toast.success('Pengajuan penghapusan aset berhasil diperbarui.');
+                toast.success(
+                    'Pengajuan penghapusan aset berhasil diperbarui.',
+                );
             },
             onError: () => {
                 toast.error('Gagal memperbarui pengajuan penghapusan aset.');
@@ -78,7 +84,10 @@ export default function AssetDisposalsEdit() {
                     <div className="glass-panel card-enter mt-5 flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <div className="glass-card flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <ArchiveX className="size-6" strokeWidth={1.5} />
+                                <ArchiveX
+                                    className="size-6"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -90,8 +99,8 @@ export default function AssetDisposalsEdit() {
                             </div>
                         </div>
                         <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary">
-                            <ArchiveX className="size-3.5" strokeWidth={2} />
-                            #{disposal.id}
+                            <ArchiveX className="size-3.5" strokeWidth={2} />#
+                            {disposal.id}
                         </span>
                     </div>
 

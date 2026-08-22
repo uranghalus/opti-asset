@@ -24,9 +24,10 @@ type Props = {
 
 export function AppSidebar({ isMobile = false, open = false, onClose }: Props) {
     const sidebarClassName = cn(
-        'sidebar-glass border-r-0 transition-all duration-300 ease-out-[cubic-bezier(0.16,1,0.3,1)]',
-        isMobile && 'fixed left-0 top-0 z-50 h-full w-[300px] max-w-[85vw] shadow-2xl',
-        !open && isMobile && '-translate-x-full'
+        'sidebar-glass ease-out-[cubic-bezier(0.16,1,0.3,1)] border-r-0 transition-all duration-300',
+        isMobile &&
+            'fixed top-0 left-0 z-50 h-full w-[300px] max-w-[85vw] shadow-2xl',
+        !open && isMobile && '-translate-x-full',
     );
 
     return (

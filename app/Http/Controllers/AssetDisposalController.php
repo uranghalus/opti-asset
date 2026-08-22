@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordAssetHistoryAction;
+use App\Enums\AssetStatus;
 use App\Http\Requests\StoreAssetDisposalRequest;
 use App\Http\Requests\UpdateAssetDisposalRequest;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,10 +29,12 @@ class AssetDisposalController extends Controller
         $status = $request->string('status')->trim()->toString();
 
         $disposals = AssetDisposal::query()
+            ->whereHas('asset', fn ($query) => $query->where('tenant_id', Tenant::current()?->id))
             ->with(['asset:id,kode_asset', 'disposedBy:id,name'])
             ->when($search !== '', fn ($query) => $query->whereHas('asset', fn ($q) => $q
                 ->where('kode_asset', 'like', "%{$search}%")
-                ->orWhere('nama_asset', 'like', "%{$search}%")))
+                ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%")))
+                ->orWhere('reason', 'like', "%{$search}%"))
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)
@@ -51,15 +54,15 @@ class AssetDisposalController extends Controller
      */
     public function create(): Response
     {
-        // Only show assets that are active and not already disposed
+        // Only active assets without a pending or approved disposal request.
         $assets = Asset::query()
             ->where('status', 'ACT') // Aktif
-            ->whereDoesntHave('disposal', function ($query) {
-                $query->where('status', '!=', 'pending'); // Not already approved/rejected disposal
-            })
+            ->whereNotIn('id', AssetDisposal::query()
+                ->whereIn('status', ['pending', 'approved'])
+                ->select('asset_id'))
             ->with('item:id,name,code')
-            ->orderBy('nama_asset')
-            ->get(['id', 'kode_asset', 'nama_asset', 'item_id']);
+            ->orderBy('kode_asset')
+            ->get(['id', 'kode_asset', 'item_id']);
 
         return Inertia::render('asset-disposals/Create', [
             'assets' => $assets,
@@ -92,7 +95,7 @@ class AssetDisposalController extends Controller
      */
     public function show(AssetDisposal $disposal): Response
     {
-        $disposal->load(['asset:id,kode_asset,nama_asset,serial_number', 'disposedBy:id,name']);
+        $disposal->load(['asset:id,kode_asset,serial_number,item_id', 'asset.item:id,name,code', 'disposedBy:id,name']);
 
         return Inertia::render('asset-disposals/Show', [
             'disposal' => $disposal,
@@ -110,18 +113,18 @@ class AssetDisposalController extends Controller
                 ->with('error', 'Only pending disposal requests can be edited.');
         }
 
-        $disposal->load(['asset:id,kode_asset,nama_asset']);
+        $disposal->load(['asset:id,kode_asset,item_id', 'asset.item:id,name,code']);
 
         // Get assets for the dropdown (same as create)
         $assets = Asset::query()
             ->where('status', 'ACT')
-            ->whereDoesntHave('disposal', function ($query) use ($disposal) {
-                $query->where('asset_id', '!=', $disposal->asset_id)
-                    ->where('status', '!=', 'pending');
-            })
+            ->whereNotIn('id', AssetDisposal::query()
+                ->where('asset_id', '!=', $disposal->asset_id)
+                ->whereIn('status', ['pending', 'approved'])
+                ->select('asset_id'))
             ->with('item:id,name,code')
-            ->orderBy('nama_asset')
-            ->get(['id', 'kode_asset', 'nama_asset', 'item_id']);
+            ->orderBy('kode_asset')
+            ->get(['id', 'kode_asset', 'item_id']);
 
         return Inertia::render('asset-disposals/Edit', [
             'disposal' => $disposal,
@@ -204,11 +207,16 @@ class AssetDisposalController extends Controller
      */
     public function approve(AssetDisposal $disposal): RedirectResponse
     {
-        Gate::authorize('approve', AssetDisposal::class);
-
         if ($disposal->status !== 'pending') {
             return Redirect::back()
                 ->with('error', 'Only pending disposal requests can be approved.');
+        }
+
+        $assetStatus = $disposal->asset->status;
+
+        if (($assetStatus instanceof AssetStatus ? $assetStatus->value : $assetStatus) !== AssetStatus::ACTIVE->value) {
+            return Redirect::back()
+                ->with('error', 'Only active assets can be disposed.');
         }
 
         $disposal->update(['status' => 'approved']);
@@ -232,8 +240,6 @@ class AssetDisposalController extends Controller
      */
     public function reject(AssetDisposal $disposal): RedirectResponse
     {
-        Gate::authorize('reject', AssetDisposal::class);
-
         if ($disposal->status !== 'pending') {
             return Redirect::back()
                 ->with('error', 'Only pending disposal requests can be rejected.');

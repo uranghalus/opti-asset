@@ -1,10 +1,17 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
-import { ArrowLeft, ArchiveX, Calendar, Eye, FileText, Package, Pencil, Trash2 } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    ArchiveX,
+    Calendar,
+    Check,
+    Package,
+    Pencil,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useIsProcessing } from '@/hooks/use-is-processing';
 import {
     Dialog,
     DialogContent,
@@ -15,11 +22,22 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { index as indexRoute, edit as editRoute, show as showRoute, destroy } from '@/routes/disposals';
+import {
+    approve as approveRoute,
+    destroy,
+    edit as editRoute,
+    index as indexRoute,
+    reject as rejectRoute,
+} from '@/routes/disposals';
 
 type Disposal = {
     id: number;
-    asset: { id: string; kode_asset: string | null; nama_asset: string | null; serial_number: string | null } | null;
+    asset: {
+        id: string;
+        kode_asset: string | null;
+        nama_asset: string | null;
+        serial_number: string | null;
+    } | null;
     disposedBy: { id: number; name: string } | null;
     reason: string | null;
     disposal_date: string | null;
@@ -36,7 +54,8 @@ const STATUS_STYLES: Record<string, string> = {
         'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
     approved:
         'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    rejected: 'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+    rejected:
+        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,7 +80,24 @@ export default function DisposalShow() {
     const { disposal } = usePage().props as unknown as PageProps;
     const [deleting, setDeleting] = useState<Disposal | null>(null);
     const [deletingState, setDeletingState] = useState(false);
-    const isProcessing = useIsProcessing();
+    const updateStatus = (action: 'approve' | 'reject') => {
+        router.post(
+            (action === 'approve' ? approveRoute : rejectRoute)(disposal.id)
+                .url,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        action === 'approve'
+                            ? 'Pengajuan disetujui.'
+                            : 'Pengajuan ditolak.',
+                    ),
+                onError: () =>
+                    toast.error('Status pengajuan gagal diperbarui.'),
+            },
+        );
+    };
 
     const handleDelete = () => {
         if (!deleting) {
@@ -106,14 +142,18 @@ export default function DisposalShow() {
                                 Kembali
                             </Link>
                             <div className="glass-card flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <ArchiveX className="size-6" strokeWidth={1.5} />
+                                <ArchiveX
+                                    className="size-6"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                     Detail Penghapusan
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    #{disposal.id} &middot; {disposal.asset?.kode_asset}
+                                    #{disposal.id} &middot;{' '}
+                                    {disposal.asset?.kode_asset}
                                 </p>
                             </div>
                         </div>
@@ -121,6 +161,22 @@ export default function DisposalShow() {
                         <div className="flex shrink-0 items-center gap-2">
                             {disposal.status === 'pending' && (
                                 <>
+                                    <Button
+                                        variant="outline"
+                                        className="h-10 gap-2 rounded-xl border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
+                                        onClick={() => updateStatus('approve')}
+                                    >
+                                        <Check className="size-4" />
+                                        Setujui
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="h-10 gap-2 rounded-xl border-rose-500/30 text-rose-700 hover:bg-rose-500/10"
+                                        onClick={() => updateStatus('reject')}
+                                    >
+                                        <X className="size-4" />
+                                        Tolak
+                                    </Button>
                                     <Link href={editRoute(disposal.id).url}>
                                         <Button
                                             variant="outline"
@@ -148,7 +204,10 @@ export default function DisposalShow() {
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="glass-card flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                    <Package className="size-7" strokeWidth={1.5} />
+                                    <Package
+                                        className="size-7"
+                                        strokeWidth={1.5}
+                                    />
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-semibold text-foreground">
@@ -159,7 +218,8 @@ export default function DisposalShow() {
                                     </p>
                                     {disposal.asset?.serial_number && (
                                         <p className="mt-0.5 text-xs text-muted-foreground">
-                                            Serial: {disposal.asset.serial_number}
+                                            Serial:{' '}
+                                            {disposal.asset.serial_number}
                                         </p>
                                     )}
                                 </div>
@@ -171,22 +231,23 @@ export default function DisposalShow() {
                                         'bg-slate-500/10 text-slate-600 ring-slate-500/20',
                                 )}
                             >
-                                {STATUS_LABELS[disposal.status] ?? disposal.status}
+                                {STATUS_LABELS[disposal.status] ??
+                                    disposal.status}
                             </span>
                         </div>
 
                         <div className="mt-6 grid gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5 rounded-xl border border-border/70 bg-card/50 p-4 backdrop-blur-xl">
-                                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Alasan
                                 </p>
-                                <p className="text-sm text-foreground whitespace-pre-wrap">
+                                <p className="text-sm whitespace-pre-wrap text-foreground">
                                     {disposal.reason ?? 'Tidak ada alasan.'}
                                 </p>
                             </div>
 
                             <div className="space-y-1.5 rounded-xl border border-border/70 bg-card/50 p-4 backdrop-blur-xl">
-                                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Tanggal Penghapusan
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-foreground">
@@ -196,7 +257,7 @@ export default function DisposalShow() {
                             </div>
 
                             <div className="space-y-1.5 rounded-xl border border-border/70 bg-card/50 p-4 backdrop-blur-xl">
-                                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Diajukan Oleh
                                 </p>
                                 <p className="text-sm text-foreground">
@@ -205,7 +266,7 @@ export default function DisposalShow() {
                             </div>
 
                             <div className="space-y-1.5 rounded-xl border border-border/70 bg-card/50 p-4 backdrop-blur-xl">
-                                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Tanggal Pengajuan
                                 </p>
                                 <p className="text-sm text-foreground">
@@ -236,7 +297,10 @@ export default function DisposalShow() {
                 </div>
             </div>
 
-            <Dialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+            <Dialog
+                open={!!deleting}
+                onOpenChange={(open) => !open && setDeleting(null)}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Hapus Penghapusan Aset</DialogTitle>

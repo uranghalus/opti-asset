@@ -32,7 +32,8 @@
 9. [Asumsi dan Batasan](#9-asumsi-dan-batasan)
 10. [Risiko dan Mitigasi](#10-risiko-dan-mitigasi)
 11. [Glosarium](#11-glosarium)
-12. [Catatan Living Document](#12-catatan-living-document)
+12. [Tracking Implementasi (TO‑DO)](#12-tracking-implementasi-to-do)
+13. [Catatan Living Document](#13-catatan-living-document)
 
 ---
 
@@ -461,6 +462,46 @@ Sistem mendukung siklus status aset berikut, yang diperbarui secara otomatis mau
 
 ---
 
-## 12. Catatan Living Document
+## 12. Tracking Implementasi (TO‑DO)
+
+Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset` (Laravel + Inertia + React). Diperbarui saat sesi review.
+
+### 12.1 Functional Requirements
+
+| Kode   | Fitur                                              | Status      | Keterangan                                                                 |
+| ------ | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| FR-01  | Manajemen Data Aset (CRUD + scan + label + import) | ✅ Selesai  | Controller, route, migrasi, dan halaman sudah ada.                          |
+| FR-02  | Manajemen Klasifikasi Aset                         | ✅ Selesai  | Group/Category/Cluster/Sub‑cluster CRUD tersedia.                           |
+| FR-03  | Manajemen Item Aset                                | ✅ Selesai  | Index, store, update, destroy, batch‑category ada.                         |
+| FR-04  | Pencarian & Filter                                 | 🟡 Sebagian | Pencarian dasar ada; filter lanjut perlu audit UI.                         |
+| FR-05  | Scan Barcode                                       | ✅ Selesai  | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                       |
+| FR-06  | Mutasi Aset                                        | ✅ Selesai  | Index, create, store, show, approve, reject ada.                           |
+| FR-07  | Asset Disposal                                     | ✅ Selesai  | Migrasi, model, controller, route selesai. UI halaman pending.             |
+| FR-08  | Riwayat Aset (History)                             | 🟡 Sebagian | Model `AssetHistory` ada, tapi belum ada controller/route/halaman.        |
+| FR-09  | Manajemen Status Aset                              | ✅ Selesai  | Migrasi `update_asset_status_values` + enum status ada.                   |
+| FR-10  | Dashboard & Pelaporan                              | 🟡 Sebagian | Dashboard ada; laporan + ekspor (FR-10.6) belum.                           |
+| FR-11  | Manajemen Pengguna & Hak Akses                     | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada.             |
+| FR-12  | Audit Trail                                        | ❌ Belum    | Tidak ada middleware/UI audit log.                                         |
+
+### 12.2 Non‑Functional & Lainnya
+
+| Item                   | Status      | Keterangan                                                 |
+| ---------------------- | ----------- | ---------------------------------------------------------- |
+| Multi‑tenant           | ✅ Selesai  | Model `Tenant` + `tenant/switch`.                          |
+| Ekspor PDF/Excel       | ❌ Belum    | FR-10.6 belum diimplementasikan.                            |
+| Sync eksternal         | 🟡 Sebagian | Route `sync` ada, tapi integrasi backend belum lengkap.    |
+| UI mengikuti DESIGN.md | 🟡 Sebagian | Glassmorphism diterapkan di sebagian komponen.             |
+
+### 12.3 Rencana Selanjutnya (Prioritas)
+
+1. **Asset Disposal (FR-07)** — buat migrasi, model, controller, route, dan halaman.
+2. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
+3. **Audit Trail (FR-12)** — middleware pencatatan aktivitas + halaman log.
+4. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController`.
+5. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill *impeccable*.
+
+---
+
+## 13. Catatan Living Document
 
 Dokumen ini bersifat living document. Setiap perubahan, penambahan, atau penyesuaian requirement wajib dicatat pada tabel **Riwayat Perubahan** di bagian awal dokumen ini, lengkap dengan versi, tanggal, penanggung jawab, dan deskripsi perubahan.

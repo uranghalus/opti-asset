@@ -12,6 +12,11 @@ class TenantSwitchController extends Controller
             'tenant_id' => 'required|string|exists:tenants,id',
         ]);
 
+        $user = $request->user();
+        if (! $user->hasRole('super-admin') && ! $user->tenants()->where('tenants.id', $validated['tenant_id'])->exists()) {
+            return redirect()->back()->withErrors(['tenant_id' => 'Anda tidak memiliki akses ke tenant ini.']);
+        }
+
         $request->session()->put('current_tenant_id', $validated['tenant_id']);
 
         return redirect()->back();

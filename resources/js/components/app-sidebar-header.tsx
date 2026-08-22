@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import { SearchModal } from '@/components/search-modal';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -10,18 +10,15 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 
-export function AppSidebarHeader() {
+type Props = {
+    onMenuClick?: () => void;
+};
+
+export function AppSidebarHeader({ onMenuClick }: Props) {
     const { auth } = usePage().props as {
         auth?: { user?: { name?: string; avatar?: string } };
     };
@@ -34,41 +31,23 @@ export function AppSidebarHeader() {
         <header className="glass-topbar flex h-16 shrink-0 items-center border-b border-border/50 px-4 transition-[width,height] ease-linear">
             {/* Mobile menu */}
             <div className="lg:hidden">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                            <Menu className="h-5 w-5" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent
-                        side="left"
-                        className="flex w-72 flex-col border-r border-border/60 bg-card/80 p-0 backdrop-blur-xl"
-                    >
-                        <SheetTitle className="sr-only">
-                            Navigation menu
-                        </SheetTitle>
-                        <SheetHeader className="flex items-center justify-end border-b border-border/60 px-4 py-3">
-                            <SheetTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </SheetTrigger>
-                        </SheetHeader>
-                    </SheetContent>
-                </Sheet>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={onMenuClick}
+                    aria-label="Buka menu navigasi"
+                >
+                    <Menu className="h-5 w-5" strokeWidth={2} />
+                </Button>
             </div>
 
             {/* Desktop Sidebar Trigger */}
             <div className="hidden lg:block">
-                <SidebarTrigger className="-ml-1 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground" />
+                <SidebarTrigger 
+                    className="-ml-1 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={onMenuClick}
+                />
             </div>
 
             {/* Search bar */}

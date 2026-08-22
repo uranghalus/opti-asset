@@ -23,11 +23,13 @@ class HandleInertiaRequests extends Middleware
 
             if ($activeTenant) {
                 $currentTenant = $activeTenant->only(['id', 'name']);
-                $availableTenants = $user
-                    ? $user->tenants()->get()->map(fn (Tenant $t) => $this->mapTenant($t))
-                    : [];
+                // For super-admin, get ALL tenants, otherwise only user's assigned tenants
+                $query = $user ? $user->hasRole('super-admin') ? Tenant::latest()->get() : $user->tenants() : [];
+                $availableTenants = $query->map(fn (Tenant $t) => $this->mapTenant($t));
             } elseif ($user) {
-                $availableTenants = Tenant::latest()->get()->map(fn (Tenant $t) => $this->mapTenant($t));
+                // For super-admin, get ALL tenants even without active tenant
+                $query = $user->hasRole('super-admin') ? Tenant::latest()->get() : collect();
+                $availableTenants = $query->map(fn (Tenant $t) => $this->mapTenant($t));
             }
         } catch (\Throwable $e) {
             Log::warning('HandleInertiaRequests: '.$e->getMessage());
@@ -37,7 +39,11 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $user,
+                'user' => $user
+                    ? array_merge($user->toArray(), [
+                        'roles' => $user->getRoleNames()->toArray(),
+                    ])
+                    : null,
             ],
             'tenant' => $currentTenant,
             'availableTenants' => $availableTenants,

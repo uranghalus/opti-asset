@@ -79,7 +79,7 @@ class DashboardController extends Controller
                 'brand' => $asset->brand,
                 'model' => $asset->model,
                 'warranty_expire' => $asset->warranty_expire->toIso8601String(),
-                'days_until' => (int) $asset->warranty_expire->diffInDays($now, absolute: false),
+                'days_until' => (int) round($now->diffInDays($asset->warranty_expire)),
             ])
             ->toArray();
 

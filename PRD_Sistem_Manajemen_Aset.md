@@ -14,8 +14,8 @@
 
 | Versi | Tanggal     | Diubah oleh | Deskripsi Perubahan                                                                     |
 | ----- | ----------- | ----------- | --------------------------------------------------------------------------------------- |
-| 1.0   | 23 Jul 2026 | Tim Produk  | Draft awal PRD disusun dari problem statement, goals, user story, dan requirement awal. |
-|       |             |             | _(catat perubahan berikutnya di sini — dokumen ini bersifat living document)_           |
+| 1.0 | 23 Jul 2026 | Tim Produk | Draft awal PRD disusun dari problem statement, goals, user story, dan requirement awal. |
+| 1.1 | 25 Agu 2026 | Tim Dev    | Update tracking §12: FR-04/07/12 ditandai Selesai (filter kategori cascade, Disposal UI+enum+toast Indonesia, Audit Trail `ActivityLog`+observer+UI). Tambah fitur bulk delete aset, import spreadsheet format kantor, remember-last-list, toast glass premium. |
 
 ---
 
@@ -470,18 +470,27 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 
 | Kode   | Fitur                                              | Status      | Keterangan                                                                 |
 | ------ | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------- |
-| FR-01  | Manajemen Data Aset (CRUD + scan + label + import) | ✅ Selesai  | Controller, route, migrasi, dan halaman sudah ada.                          |
-| FR-02  | Manajemen Klasifikasi Aset                         | ✅ Selesai  | Group/Category/Cluster/Sub‑cluster CRUD tersedia.                           |
-| FR-03  | Manajemen Item Aset                                | ✅ Selesai  | Index, store, update, destroy, batch‑category ada.                         |
-| FR-04  | Pencarian & Filter                                 | 🟡 Sebagian | Pencarian dasar ada; filter lanjut perlu audit UI.                         |
-| FR-05  | Scan Barcode                                       | ✅ Selesai  | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                       |
-| FR-06  | Mutasi Aset                                        | ✅ Selesai  | Index, create, store, show, approve, reject ada.                           |
-| FR-07  | Asset Disposal                                     | ✅ Selesai  | Migrasi, model, controller, route selesai. UI halaman pending.             |
-| FR-08  | Riwayat Aset (History)                             | 🟡 Sebagian | Model `AssetHistory` ada, tapi belum ada controller/route/halaman.        |
-| FR-09  | Manajemen Status Aset                              | ✅ Selesai  | Migrasi `update_asset_status_values` + enum status ada.                   |
-| FR-10  | Dashboard & Pelaporan                              | 🟡 Sebagian | Dashboard ada; laporan + ekspor (FR-10.6) belum.                           |
-| FR-11  | Manajemen Pengguna & Hak Akses                     | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada.             |
-| FR-12  | Audit Trail                                        | ❌ Belum    | Tidak ada middleware/UI audit log.                                         |
+| FR-01  | Manajemen Data Aset (CRUD + scan + label + import + bulk delete) | ✅ Selesai | CRUD, scan, label (single/batch), import spreadsheet kantor, bulk delete, remember-last-list. |
+| FR-02  | Manajemen Klasifikasi Aset                         | ✅ Selesai | Group/Category/Cluster/Sub‑cluster CRUD tersedia.                           |
+| FR-03  | Manajemen Item Aset                                | ✅ Selesai | Index, store, update, destroy, batch‑category ada.                         |
+| FR-04  | Pencarian & Filter                                 | ✅ Selesai | Pencarian + filter (golongan, kategori cascade, department, status, kondisi). |
+| FR-05  | Scan Barcode                                       | ✅ Selesai | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                       |
+| FR-06  | Mutasi Aset                                        | ✅ Selesai | Index, create, store, show, approve, reject ada.                           |
+| FR-07  | Asset Disposal                                     | ✅ Selesai | Migrasi, model, controller, route, UI selesai. Enum, toast Indonesia, bulk delete. |
+| FR-08  | Riwayat Aset (History)                             | 🟡 Sebagian | Model `AssetHistory` ada, tapi belum ada controller/route/halaman detail.  |
+| FR-09  | Manajemen Status Aset                              | ✅ Selesai | Migrasi `update_asset_status_values` + enum status ada.                   |
+| FR-10  | Dashboard & Pelaporan                              | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.           |
+| FR-11  | Manajemen Pengguna & Hak Akses                     | ✅ Selesai | Roles, permissions, employees, departments, organizations ada.             |
+| FR-12  | Audit Trail                                        | ✅ Selesai | `ActivityLog` model + observer + controller + UI halaman `/audit-logs` + tests. |
+
+| Kode | Fitur Tambahan (diluar FR awal)              | Status     | Keterangan                                                                 |
+| ---- | -------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| —    | Label & Barcode Aset                         | ✅ Selesai | Create, Edit, Labels (per aset), LabelsBatch (massal), Scan barcode.      |
+| —    | Mutasi Aset (Transfer)                       | ✅ Selesai | CRUD, approve/reject, update lokasi otomatis.                             |
+| —    | Bulk Delete Aset                             | ✅ Selesai | Hapus massal dengan validasi tenant.                                      |
+| —    | Remember-Last-List (Return-to-List)          | ✅ Selesai | Kembali ke halaman daftar terakhir (page+filter) setelah edit/detail.     |
+| —    | Import Spreadsheet Format Kantor             | ✅ Selesai | Parser fleksibel header multi-baris, auto-create item, kode aset dari file. |
+| —    | Toast Premium Glass                          | ✅ Selesai | Glassmorphism, ikon ber-tint, mobile di atas tabbar, dark mode.           |
 
 ### 12.2 Non‑Functional & Lainnya
 
@@ -490,15 +499,13 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 | Multi‑tenant           | ✅ Selesai  | Model `Tenant` + `tenant/switch`.                          |
 | Ekspor PDF/Excel       | ❌ Belum    | FR-10.6 belum diimplementasikan.                            |
 | Sync eksternal         | 🟡 Sebagian | Route `sync` ada, tapi integrasi backend belum lengkap.    |
-| UI mengikuti DESIGN.md | 🟡 Sebagian | Glassmorphism diterapkan di sebagian komponen.             |
+| UI mengikuti DESIGN.md | 🟡 Sebagian | Glassmorphism diterapkan di sebagian komponen (Toast premium glass, kartu aset, tabel). |
 
 ### 12.3 Rencana Selanjutnya (Prioritas)
 
-1. **Asset Disposal (FR-07)** — buat migrasi, model, controller, route, dan halaman.
-2. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
-3. **Audit Trail (FR-12)** — middleware pencatatan aktivitas + halaman log.
-4. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController`.
-5. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill *impeccable*.
+1. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
+2. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController` + laporan mutasi/disposal.
+3. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill *impeccable*.
 
 ---
 

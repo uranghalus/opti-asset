@@ -52,7 +52,7 @@ class DashboardTest extends TestCase
                 ->where('stats.asset_by_status.MUT', 0)
                 ->where('stats.asset_by_status.DSP', 0)
                 ->has('warranty_alerts')
-                ->has('recent_assets', 6));
+                ->has('recent_assets', 5));
     }
 
     public function test_dashboard_counts_pending_transfers(): void

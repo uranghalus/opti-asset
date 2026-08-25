@@ -3,7 +3,9 @@
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AssetDisposalController;
+use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\AssetTransferController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
@@ -29,6 +31,8 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
     Route::post('tenant/switch', [TenantSwitchController::class, 'switch'])->name('tenant.switch');
 
@@ -86,8 +90,10 @@ Route::middleware('auth')->group(function () {
     Route::get('assets/import/template', [AssetController::class, 'importTemplate'])->name('assets.import-template');
     Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
     Route::post('assets/upload', [AssetController::class, 'upload'])->name('assets.upload');
+    Route::delete('assets/bulk', [AssetController::class, 'destroyBulk'])->name('assets.destroy-bulk');
     Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
     Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
+    Route::get('assets/{asset}/history', [AssetHistoryController::class, 'index'])->name('assets.history');
     Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
     Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
     Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');

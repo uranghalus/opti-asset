@@ -90,7 +90,11 @@ Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflect
 
 ## Shapes
 
-Base corner radius: 4px. See rounded tokens in front matter for the full scale.
+- Base corner radius: 4px (small controls, chips, badges).
+- Glass panels (`glass-panel`): `rounded-2xl` (1rem) — the signature soft edge.
+- Overlays (Dialog, Select, Sheet): `rounded-xl` (0.75rem).
+- Buttons: `rounded-lg` (0.5rem).
+- Use only these Tailwind radius steps; do not introduce raw px radii.
 
 ## Components
 
@@ -101,6 +105,16 @@ Base corner radius: 4px. See rounded tokens in front matter for the full scale.
 - **Navigation:** Primary surface background. Active item: accent color indicator. Font weight 500 when active.
 - **Skeletons:** Shimmer animation matching component dimensions. No circular spinners.
 - **Empty States:** Icon-based composition with descriptive text and action button.
+
+## Module Accents
+The vibrant background gradient is themed per module via `<VibrantBackground variant="..." />`
+(`resources/js/components/vibrant-background.tsx`). Do not hardcode the gradient inline.
+
+| Variant  | Gradient colors                        | Modules                                                                 |
+| -------- | -------------------------------------- | ----------------------------------------------------------------------- |
+| `default`| Electric Blue #0080FF → Purple #8B5CF6 | assets, asset-history, asset-disposals, items, locations, roles, permissions, audit-logs |
+| `amber`  | Amber #F59E0B → Emerald #10B981        | asset-transfers, Employees, Departments, categories                      |
+| `indigo` | Electric Blue #0080FF → Indigo #6971EC | organizations                                                            |
 
 ## Do's and Don'ts
 

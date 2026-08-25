@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AssetDisposalStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class AssetDisposal extends Model
 
     protected $casts = [
         'disposal_date' => 'date',
+        'status' => AssetDisposalStatus::class,
     ];
 
     public function asset(): BelongsTo

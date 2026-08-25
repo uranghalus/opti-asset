@@ -12,13 +12,22 @@ function Toaster({ ...props }: ToasterProps) {
             theme={appearance}
             className="toaster group"
             position="bottom-right"
-            style={
-                {
-                    '--normal-bg': 'var(--popover)',
-                    '--normal-text': 'var(--popover-foreground)',
-                    '--normal-border': 'var(--border)',
-                } as React.CSSProperties
-            }
+            gap={10}
+            visibleToasts={3}
+            duration={4500}
+            toastOptions={{
+                classNames: {
+                    toast: 'premium-toast',
+                    title: 'premium-toast-title',
+                    description: 'premium-toast-description',
+                    actionButton: 'premium-toast-action',
+                    cancelButton: 'premium-toast-cancel',
+                    closeButton: 'premium-toast-close',
+                },
+                style: {
+                    '--normal-text': 'var(--foreground)',
+                } as React.CSSProperties,
+            }}
             {...props}
         />
     );

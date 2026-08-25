@@ -35,6 +35,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { VibrantBackground } from '@/components/vibrant-background';
+import { assetListUrl } from '@/lib/asset-return';
 import {
     assetStatusChip,
     assetStatusLabel,
@@ -362,13 +364,10 @@ export default function AssetShow() {
 
     return (
         <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
-            <div
-                aria-hidden
-                className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(0,128,255,0.14),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.1),transparent_60%)] dark:bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(90,169,236,0.16),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.12),transparent_60%)]"
-            />
+            <VibrantBackground variant="default" />
             <div className="mx-auto w-full max-w-5xl">
                 <Link
-                    href={indexRoute().url}
+                    href={assetListUrl()}
                     className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />

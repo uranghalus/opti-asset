@@ -11,6 +11,7 @@ use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
 use App\Http\Requests\UploadAssetMediaRequest;
 use App\Models\Asset;
+use App\Models\AssetCategory;
 use App\Models\AssetGroup;
 use App\Models\Department;
 use App\Models\Employee;
@@ -23,6 +24,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -72,6 +74,7 @@ class AssetController extends Controller
         return Inertia::render('assets/Index', [
             'assets' => $assets,
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
+            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
             'items' => Item::query()
                 ->with('category:id,code')
                 ->orderBy('name')
@@ -197,7 +200,7 @@ class AssetController extends Controller
     {
         $validated = $request->validated();
 
-        $item = Item::with('category')->findOrFail($validated['item_id']);
+        $item = Item::query()->with('category')->whereKey($validated['item_id'])->firstOrFail();
 
         $chain = $item->category !== null
             ? $this->generateAssetCode->fromCategory($item->category)
@@ -213,7 +216,7 @@ class AssetController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil ditambahkan.']);
 
-        return redirect()->route('assets.index');
+        return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
     }
 
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
@@ -226,7 +229,7 @@ class AssetController extends Controller
         $data = $validated;
 
         if ($itemChanged) {
-            $item = Item::with('category')->findOrFail($itemId);
+            $item = Item::query()->with('category')->whereKey($itemId)->firstOrFail();
 
             $chain = $item->category !== null
                 ? $this->generateAssetCode->fromCategory($item->category, $asset->id)
@@ -245,7 +248,27 @@ class AssetController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
-        return redirect()->route('assets.index');
+        return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
+    }
+
+    /**
+     * Local-path redirect target from ?return_to=..., or null when absent
+     * or unsafe (external / protocol-relative URLs are rejected).
+     */
+    private function safeReturnTo(Request $request): ?string
+    {
+        $returnTo = $request->query('return_to');
+
+        if (
+            ! is_string($returnTo) ||
+            ! str_starts_with($returnTo, '/') ||
+            str_starts_with($returnTo, '//') ||
+            str_starts_with($returnTo, '/\\')
+        ) {
+            return null;
+        }
+
+        return $returnTo;
     }
 
     /**
@@ -268,7 +291,35 @@ class AssetController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil dihapus.']);
 
-        return redirect()->route('assets.index');
+        return back(302, [], route('assets.index'));
+    }
+
+    public function destroyBulk(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => [
+                'required',
+                'uuid',
+                Rule::exists('assets', 'id')->where(
+                    'tenant_id',
+                    Tenant::current()?->id,
+                ),
+            ],
+        ]);
+
+        $assets = Asset::query()->whereKey($validated['ids'])->get();
+
+        foreach ($assets as $asset) {
+            $asset->delete();
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "{$assets->count()} aset berhasil dihapus.",
+        ]);
+
+        return back(302, [], route('assets.index'));
     }
 
     public function upload(UploadAssetMediaRequest $request): JsonResponse
@@ -317,11 +368,18 @@ class AssetController extends Controller
 
         Storage::disk('local')->delete($tempPath);
 
+        $message = $result['skipped'] > 0
+            ? "{$result['imported']} aset diimpor, {$result['skipped']} baris dilewati."
+            : "{$result['imported']} aset berhasil diimpor.";
+
+        $details = collect($result['errors'])
+            ->take(3)
+            ->pluck('message')
+            ->implode(' | ');
+
         Inertia::flash('toast', [
-            'type' => $result['skipped'] > 0 ? 'warning' : 'success',
-            'message' => $result['skipped'] > 0
-                ? "{$result['imported']} aset diimpor, {$result['skipped']} baris dilewati."
-                : "{$result['imported']} aset berhasil diimpor.",
+            'type' => $details === '' && $result['skipped'] === 0 ? 'success' : 'warning',
+            'message' => $details === '' ? $message : "{$message} {$details}",
         ]);
 
         return redirect()->route('assets.index');

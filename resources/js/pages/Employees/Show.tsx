@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -13,8 +14,8 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { index as indexRoute } from '@/routes/employees';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -23,10 +24,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
-import { useForm } from '@inertiajs/react';
+import { VibrantBackground } from '@/components/vibrant-background';
+import { cn } from '@/lib/utils';
+import { index as indexRoute } from '@/routes/employees';
 
 type RoleOption = {
     id: number;
@@ -78,7 +79,8 @@ function formatDate(value: string): string {
 }
 
 export default function EmployeeShow() {
-    const { employee, roles: allRoles } = usePage().props as unknown as PageProps;
+    const { employee, roles: allRoles } = usePage()
+        .props as unknown as PageProps;
     const [assignOpen, setAssignOpen] = useState(false);
     const [assigning, setAssigning] = useState(false);
 
@@ -115,20 +117,17 @@ export default function EmployeeShow() {
 
     const handleAssign = () => {
         setAssigning(true);
-        assignPost(
-            `/employees/${employee.id_employee}/roles`,
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('Role karyawan berhasil diperbarui.');
-                    closeAssign();
-                },
-                onError: () => {
-                    toast.error('Gagal memperbarui role karyawan.');
-                },
-                onFinish: () => setAssigning(false),
+        assignPost(`/employees/${employee.id_employee}/roles`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Role karyawan berhasil diperbarui.');
+                closeAssign();
             },
-        );
+            onError: () => {
+                toast.error('Gagal memperbarui role karyawan.');
+            },
+            onFinish: () => setAssigning(false),
+        });
     };
 
     const stats = [
@@ -142,8 +141,8 @@ export default function EmployeeShow() {
             label: 'Department',
             value:
                 employee.department?.nama_department ??
-                    employee.department?.kode_department ??
-                    '—',
+                employee.department?.kode_department ??
+                '—',
             icon: Building2,
             accent: 'text-emerald-600 dark:text-emerald-400',
         },
@@ -163,10 +162,7 @@ export default function EmployeeShow() {
 
     return (
         <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
-            <div
-                aria-hidden
-                className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(245,158,11,0.14),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(16,185,129,0.1),transparent_60%)] dark:bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(245,158,11,0.16),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(16,185,129,0.12),transparent_60%)]"
-            />
+            <VibrantBackground variant="amber" />
             <div className="mx-auto w-full max-w-5xl">
                 <Link
                     href={indexRoute().url}
@@ -266,10 +262,15 @@ export default function EmployeeShow() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                             <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-emerald-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <ShieldCheck className="size-5" strokeWidth={1.5} />
+                                <ShieldCheck
+                                    className="size-5"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
-                                <h2 className="text-lg font-semibold text-foreground">Role & Hak Akses</h2>
+                                <h2 className="text-lg font-semibold text-foreground">
+                                    Role & Hak Akses
+                                </h2>
                                 <p className="mt-0.5 text-sm text-muted-foreground">
                                     {employee.roles.length > 0
                                         ? `${employee.roles.length} role ditetapkan`
@@ -299,7 +300,10 @@ export default function EmployeeShow() {
                                         roleAccent(index),
                                     )}
                                 >
-                                    <ShieldCheck className="size-3 shrink-0" strokeWidth={2} />
+                                    <ShieldCheck
+                                        className="size-3 shrink-0"
+                                        strokeWidth={2}
+                                    />
                                     {role.name}
                                 </span>
                             ))}
@@ -309,12 +313,18 @@ export default function EmployeeShow() {
                     {employee.roles.length === 0 && (
                         <div className="mt-4 flex items-center justify-center gap-4 py-8 text-center">
                             <div className="glass-card flex size-12 items-center justify-center rounded-xl text-primary shadow-md">
-                                <ShieldCheck className="size-5" strokeWidth={1.5} />
+                                <ShieldCheck
+                                    className="size-5"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
-                                <p className="text-base font-semibold text-foreground">Belum ada role</p>
+                                <p className="text-base font-semibold text-foreground">
+                                    Belum ada role
+                                </p>
                                 <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                    Tetapkan role ke karyawan ini untuk memberikan hak akses ke modul aplikasi.
+                                    Tetapkan role ke karyawan ini untuk
+                                    memberikan hak akses ke modul aplikasi.
                                 </p>
                             </div>
                         </div>
@@ -322,12 +332,20 @@ export default function EmployeeShow() {
                 </div>
             </div>
 
-            <Dialog open={assignOpen} onOpenChange={(open) => !open && closeAssign()}>
+            <Dialog
+                open={assignOpen}
+                onOpenChange={(open) => !open && closeAssign()}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Kelola Role</DialogTitle>
                         <DialogDescription>
-                            Tetapkan role untuk <span className="font-semibold text-foreground">{employee.nama_employee}</span>. Role menentukan hak akses ke modul dan fitur aplikasi.
+                            Tetapkan role untuk{' '}
+                            <span className="font-semibold text-foreground">
+                                {employee.nama_employee}
+                            </span>
+                            . Role menentukan hak akses ke modul dan fitur
+                            aplikasi.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -354,12 +372,18 @@ export default function EmployeeShow() {
                                     <Checkbox
                                         checked={checked}
                                         onCheckedChange={(value) =>
-                                            toggleRole(role.name, value === true)
+                                            toggleRole(
+                                                role.name,
+                                                value === true,
+                                            )
                                         }
                                     />
                                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
                                         <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                            <ShieldCheck className="size-4" strokeWidth={2} />
+                                            <ShieldCheck
+                                                className="size-4"
+                                                strokeWidth={2}
+                                            />
                                         </span>
                                         <span className="truncate text-sm font-medium text-foreground">
                                             {role.name}
@@ -370,13 +394,18 @@ export default function EmployeeShow() {
                         })}
                         {allRoles.length === 0 && (
                             <p className="py-8 text-center text-sm text-muted-foreground">
-                                Belum ada role. Buat role terlebih dahulu di menu Role.
+                                Belum ada role. Buat role terlebih dahulu di
+                                menu Role.
                             </p>
                         )}
                     </div>
 
                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button type="button" variant="outline" onClick={closeAssign}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={closeAssign}
+                        >
                             Batal
                         </Button>
                         <Button

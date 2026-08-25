@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { currentReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
 import { store, update } from '@/routes/assets';
 
@@ -214,9 +215,23 @@ export function AssetForm({
         };
 
         if (mode === 'edit' && asset) {
-            form.patch(update(asset.id).url, options);
+            const returnTo = currentReturnTo();
+
+            form.patch(
+                update(
+                    asset.id,
+                    returnTo ? { query: { return_to: returnTo } } : undefined,
+                ).url,
+                options,
+            );
         } else {
-            form.post(store().url, options);
+            const returnTo = currentReturnTo();
+
+            form.post(
+                store(returnTo ? { query: { return_to: returnTo } } : undefined)
+                    .url,
+                options,
+            );
         }
     };
 

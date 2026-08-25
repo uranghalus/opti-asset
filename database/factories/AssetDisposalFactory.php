@@ -21,7 +21,7 @@ class AssetDisposalFactory extends Factory
         return [
             'asset_id' => Asset::factory(),
             'reason' => $this->faker->optional()->sentence(),
-            'disposal_date' => $this->faker->optional()->dateBetween('-1 year', '+1 year'),
+            'disposal_date' => $this->faker->optional()->dateTimeBetween('-1 year', '+1 year')?->format('Y-m-d'),
             'disposed_by' => User::factory(),
             'status' => 'pending',
         ];

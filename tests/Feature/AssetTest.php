@@ -19,6 +19,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
 
 class AssetTest extends TestCase
@@ -828,6 +830,260 @@ class AssetTest extends TestCase
                 'item_id' => $item->id,
             ])
             ->assertSessionHasErrors(['file']);
+    }
+
+    public function test_import_reads_office_export_format(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+        $location = Location::factory()->create(['name' => 'OFFICE BM']);
+        $department = Department::factory()->create(['nama_department' => 'ACC & FIN']);
+
+        $file = $this->xlsxFile([
+            ['', 'AKTIVA TETAP - DUMMY SAMPLE'],
+            ['', 'Lantai', 'No.', 'Unit', 'Model/ Type', 'PIC', 'Dept', 'Kode Asset', 'Kondisi ', '', 'Keterangan', '', '', ''],
+            ['', '', '', '', '', '', '', '', 'Baik', 'Rusak', 'NO. SERI', 'AREA', 'ARAH', 'Tgl/Bln/Thn Pengadaan'],
+            ['', 'OFFICE BM', '1', 'NVR', 'NVR Hikvision DS-7616NI-Q1', 'Kasir', 'ACC & FIN', '03.08.01.07.001', '', '', 'SN-NVR-1', '', '', '2026-07-13'],
+            ['', 'OFFICE BM', '2', 'Printer Epson', 'Epson L-3210', 'Kasir', 'ACC & FIN', '03.08.03.05.001', 'X', '', '', '', '', '2026-04-20'],
+            ['', 'PERALATAN - DUMMY SAMPLE'],
+            ['', 'Lantai', 'No.', 'Unit', 'Model/ Type', 'PIC', 'Dept', 'Kode Asset', 'Kondisi ', '', 'Keterangan', '', '', ''],
+            ['', '', '', '', '', '', '', '', 'Baik', 'Rusak', 'NO. SERI', 'AREA', 'ARAH', 'Tgl/Bln/Thn Pengadaan'],
+            ['', 'Ruang Genset', '3', 'Obeng Plus', '', 'ENG', 'ENG', 'A1.01.01.01.A001', '', 'X', '', '', '', ''],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertSame(3, Asset::count());
+        $this->assertSame(4, Item::count());
+
+        $first = Asset::query()->where('kode_asset', '03.08.01.07.001')->first();
+        $this->assertNotNull($first);
+        $this->assertSame($location->id, $first->location_id);
+        $this->assertSame($department->id_department, $first->department_id);
+        $this->assertSame('Baik', $first->condition);
+        $this->assertSame('SN-NVR-1', $first->serial_number);
+        $this->assertSame('2026-07-13', $first->purchase_date?->format('Y-m-d'));
+        $this->assertNotSame($item->id, $first->item_id);
+        $this->assertSame('NVR', Item::query()->find($first->item_id)?->name);
+
+        $second = Asset::query()->where('kode_asset', '03.08.03.05.001')->first();
+        $this->assertNotNull($second);
+        $this->assertSame('Baik', $second->condition);
+        $this->assertSame('Printer Epson', Item::query()->find($second->item_id)?->name);
+
+        $third = Asset::query()->where('kode_asset', 'A1.01.01.01.A001')->first();
+        $this->assertNotNull($third);
+        $this->assertSame('Rusak', $third->condition);
+        $this->assertNull($third->purchase_date);
+        $this->assertSame('Obeng Plus', Item::query()->find($third->item_id)?->name);
+    }
+
+    public function test_import_skips_rows_with_duplicate_kode_asset(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $file = $this->xlsxFile([
+            ['Lantai', 'Unit', 'Kode Asset', 'NO. SERI'],
+            ['BM', 'NVR', '03.01.001', 'SN-KODE-A'],
+            ['BM', 'Printer', '03.01.001', 'SN-KODE-B'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertSame(1, Asset::count());
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-KODE-A']);
+        $this->assertDatabaseMissing('assets', ['serial_number' => 'SN-KODE-B']);
+    }
+
+    public function test_import_skips_rows_matching_existing_kode_or_serial(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        Asset::factory()->create(['kode_asset' => '03.01.001', 'serial_number' => 'SN-DB-1']);
+
+        $file = $this->xlsxFile([
+            ['Lantai', 'Unit', 'Kode Asset', 'NO. SERI'],
+            ['BM', 'NVR', '03.01.001', 'SN-BARU-A'],
+            ['BM', 'Printer', '03.01.002', 'SN-DB-1'],
+            ['BM', 'Meja', '03.01.003', 'SN-BARU-B'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertSame(2, Asset::count());
+        $this->assertDatabaseMissing('assets', ['serial_number' => 'SN-BARU-A']);
+        $this->assertDatabaseHas('assets', ['serial_number' => 'SN-BARU-B']);
+        $this->assertDatabaseMissing('assets', ['kode_asset' => '03.01.002']);
+    }
+
+    public function test_bulk_destroy_deletes_selected_assets(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $keep = Asset::factory()->create(['item_id' => $item->id]);
+        $targets = Asset::factory()->count(3)->create(['item_id' => $item->id]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->delete(route('assets.destroy-bulk'), [
+                'ids' => $targets->pluck('id')->all(),
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertSame(1, Asset::count());
+        $this->assertTrue($keep->refresh()->exists);
+        foreach ($targets as $target) {
+            $this->assertDatabaseMissing('assets', ['id' => $target->id]);
+        }
+    }
+
+    public function test_bulk_destroy_requires_ids(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->delete(route('assets.destroy-bulk'), [])
+            ->assertSessionHasErrors(['ids']);
+    }
+
+    public function test_bulk_destroy_rejects_ids_from_other_tenant(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $otherTenant = Tenant::create(['id' => 'other-tenant', 'name' => 'Other Corp']);
+        $otherAsset = Asset::withoutGlobalScopes()->forceCreate([
+            'tenant_id' => $otherTenant->id,
+            'item_id' => Item::factory()->create()->id,
+            'kode_asset' => 'OTHER-1',
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->delete(route('assets.destroy-bulk'), [
+                'ids' => [$otherAsset->id],
+            ])
+            ->assertSessionHasErrors(['ids.*']);
+
+        $this->assertSame(1, Asset::withoutGlobalScopes()->where('tenant_id', $otherTenant->id)->count());
+    }
+
+    public function test_update_redirects_to_return_to_target(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $asset = Asset::factory()->create(['item_id' => $item->id]);
+
+        $url = route('assets.update', $asset).'?return_to='.urlencode('/assets?page=2&search=abc');
+
+        $this->actingAs($this->user)
+            ->patch($url, ['notes' => 'Diperbarui'])
+            ->assertRedirect('/assets?page=2&search=abc');
+    }
+
+    public function test_update_falls_back_for_unsafe_return_to(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $asset = Asset::factory()->create(['item_id' => $item->id]);
+
+        foreach (['https://evil.com', '//evil.com', '/\\evil.com'] as $returnTo) {
+            $url = route('assets.update', $asset).'?return_to='.urlencode($returnTo);
+
+            $this->actingAs($this->user)
+                ->patch($url, ['notes' => 'Coba'])
+                ->assertRedirect(route('assets.index'));
+        }
+    }
+
+    public function test_store_redirects_to_return_to_target(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $url = route('assets.store').'?return_to='.urlencode('/assets?page=3&status=ACT');
+
+        $this->actingAs($this->user)
+            ->post($url, ['item_id' => $item->id])
+            ->assertRedirect('/assets?page=3&status=ACT');
+    }
+
+    public function test_destroy_redirects_back_with_index_fallback(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $asset = Asset::factory()->create(['item_id' => $item->id]);
+
+        $this->actingAs($this->user)
+            ->delete(route('assets.destroy', $asset))
+            ->assertRedirect(route('assets.index'));
+
+        $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
+    }
+
+    public function test_import_creates_missing_location_and_warns_missing_department(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $file = $this->xlsxFile([
+            ['Lantai', 'Unit', 'Dept', 'Kode Asset'],
+            ['RUANG X', 'Meja Kerja', 'DEPT GAK ADA', 'X.001'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', 'X.001')->first();
+        $this->assertNotNull($asset);
+        $this->assertNotNull($asset->location_id);
+        $this->assertSame('RUANG X', Location::query()->find($asset->location_id)?->name);
+        $this->assertNull($asset->department_id);
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString('DEPT GAK ADA', (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    /**
+     * @param  array<int, array<int, string>>  $rows
+     */
+    private function xlsxFile(array $rows): UploadedFile
+    {
+        $path = storage_path('app/import-test-'.uniqid().'.xlsx');
+
+        $writer = new Writer;
+        $writer->openToFile($path);
+
+        foreach ($rows as $row) {
+            $writer->addRow(Row::fromValues($row));
+        }
+
+        $writer->close();
+
+        $file = UploadedFile::fake()->createWithContent('aktiva.xlsx', (string) file_get_contents($path));
+
+        @unlink($path);
+
+        return $file;
     }
 
     /** @param array<int, string> $values */

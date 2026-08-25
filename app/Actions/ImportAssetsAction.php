@@ -3,9 +3,14 @@
 namespace App\Actions;
 
 use App\Models\Asset;
+use App\Models\AssetCategory;
+use App\Models\AssetCluster;
+use App\Models\AssetGroup;
+use App\Models\AssetSubCluster;
 use App\Models\Department;
 use App\Models\Item;
 use App\Models\Location;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,103 +25,251 @@ use Spatie\SimpleExcel\SimpleExcelReader;
  */
 class ImportAssetsAction
 {
+    /**
+     * Header aliases mapped to logical fields, compared after stripping every
+     * non-alphanumeric character and lowercasing. Covers both the generated
+     * template ("Serial Number", "Harga Pembelian", ...) and typical office
+     * exports ("Unit", "Model/ Type", "Dept", "Kode Asset",
+     * "Tgl/Bln/Thn Pengadaan", "Kondisi Baik/Rusak", ...).
+     *
+     * @var array<string, string>
+     */
+    private const ALIASES = [
+        'lantai' => 'location',
+        'lokasi' => 'location',
+        'location' => 'location',
+        'dept' => 'department',
+        'departemen' => 'department',
+        'department' => 'department',
+        'unit' => 'item',
+        'barang' => 'item',
+        'namabarang' => 'item',
+        'model' => 'model',
+        'modeltype' => 'model',
+        'tipe' => 'model',
+        'brand' => 'brand',
+        'merek' => 'brand',
+        'pic' => 'pic',
+        'kodeasset' => 'kode',
+        'kode' => 'kode',
+        'baik' => 'cond_good',
+        'rusak' => 'cond_bad',
+        'kondisi' => 'condition',
+        'noseri' => 'serial',
+        'noserial' => 'serial',
+        'serialnumber' => 'serial',
+        'serial' => 'serial',
+        'partnumber' => 'part_number',
+        'nospb' => 'no_spb',
+        'nomordokumen' => 'document_number',
+        'nodokumen' => 'document_number',
+        'status' => 'status',
+        'vendor' => 'vendor',
+        'pengadaan' => 'purchase_date',
+        'tanggalpengadaan' => 'purchase_date',
+        'tglblnthnpengadaan' => 'purchase_date',
+        'tanggalpembelian' => 'purchase_date',
+        'hargapembelian' => 'purchase_price',
+        'harga' => 'purchase_price',
+        'catatan' => 'notes',
+        'keterangan' => 'notes',
+        'notes' => 'notes',
+    ];
+
+    /**
+     * A spreadsheet row only counts as an asset row when at least one of these
+     * fields is filled; everything else (titles, blank separators) is skipped.
+     *
+     * @var array<int, string>
+     */
+    private const IDENTITY_FIELDS = ['item', 'kode', 'serial', 'model', 'brand'];
+
     public function __construct(
         private readonly GenerateAssetCodeAction $generateCode,
     ) {}
 
     /**
-     * Import spreadsheet rows as assets belonging to the given item. The
-     * asset code is derived from the item's category.
+     * Import spreadsheet rows as assets. Rows may carry their own item name
+     * ("Unit") and asset code ("Kode Asset"); both fall back to the selected
+     * item and its category-generated code.
+     *
+     * @return ImportResult
      */
-    public function __invoke(string $filePath, Item $item): array
+    public function __invoke(string $filePath, Item $fallbackItem): array
     {
         $rows = SimpleExcelReader::create($filePath)
-            ->headersToSnakeCase()
+            ->noHeaderRow()
+            ->preserveEmptyRows()
             ->getRows();
 
-        $category = $item->category;
-        $chain = $category ? $this->generateCode->fromCategory($category) : null;
+        $locations = Location::query()->pluck('id', 'name');
+        $departments = Department::query()->pluck('id_department', 'nama_department');
 
-        $locations = Location::pluck('id', 'name');
-        $departments = Department::pluck('id_department', 'nama_department');
-        $existingSerials = Asset::query()
-            ->whereNotNull('serial_number')
-            ->pluck('serial_number')
-            ->map(fn ($value) => Str::upper(trim((string) $value)))
-            ->all();
+        // ponytail: in-memory dedupe sets; stream to a store if imports hit six figures.
+        $serials = [];
+        $kodes = [];
+
+        foreach (Asset::query()->whereNotNull('serial_number')->pluck('serial_number') as $value) {
+            $serials[Str::upper(trim((string) $value))] = true;
+        }
+
+        foreach (Asset::query()->whereNotNull('kode_asset')->pluck('kode_asset') as $value) {
+            $kodes[Str::upper(trim((string) $value))] = true;
+        }
 
         $imported = 0;
         $skipped = 0;
         $errors = [];
-        $serials = $existingSerials;
-        $lastAssetId = null;
+        $items = [];
+        $missingDepartments = [];
 
         DB::transaction(function () use (
             $rows,
-            $item,
-            $category,
-            $chain,
+            $fallbackItem,
+            $locations,
+            $departments,
             &$imported,
             &$skipped,
             &$errors,
             &$serials,
-            &$lastAssetId,
-            $locations,
-            $departments,
+            &$kodes,
+            &$items,
+            &$missingDepartments,
         ): void {
-            foreach ($rows as $index => $row) {
-                if ($this->isEmptyRow($row)) {
+            /** @var array<int, string> $map spreadsheet column index => logical field */
+            $map = [];
+
+            foreach ($rows as $index => $cells) {
+                $line = is_int($index) ? $index + 1 : 0;
+
+                $headerFields = $this->matchHeaderRow($cells);
+
+                if ($headerFields !== null) {
+                    // Last header wins: files stack a generic label ("Keterangan")
+                    // above specific ones ("NO. SERI") on the same column.
+                    foreach ($headerFields as $column => $field) {
+                        $map[$column] = $field;
+                    }
+
                     continue;
                 }
 
-                $line = $index + 2;
-                $serial = $row['serial_number'] ?? null;
+                if ($map === []) {
+                    continue;
+                }
 
-                if ($serial !== null && $serial !== '') {
-                    $normalized = Str::upper(trim((string) $serial));
+                $row = $this->mapRow($map, $cells);
 
-                    if (isset($serials[$normalized])) {
+                if (! $this->isAssetRow($row)) {
+                    continue;
+                }
+
+                $serial = $this->valueOrNull($row['serial'] ?? null);
+
+                if ($serial !== null) {
+                    $normalizedSerial = Str::upper($serial);
+
+                    if (isset($serials[$normalizedSerial])) {
                         $skipped++;
-                        $errors[] = ['row' => $line, 'message' => "Nomor seri {$serial} duplikat dalam satu file."];
+                        $errors[] = ['row' => $line, 'message' => "Nomor seri {$serial} duplikat (sudah terdaftar atau ganda dalam file)."];
 
                         continue;
                     }
 
-                    $serials[$normalized] = true;
+                    $serials[$normalizedSerial] = true;
                 }
 
-                if ($category && $chain) {
-                    $chain = $this->generateCode->fromCategory($category, $lastAssetId);
+                $fileKode = $this->valueOrNull($row['kode'] ?? null);
+
+                if ($fileKode !== null) {
+                    $normalizedKode = Str::upper($fileKode);
+
+                    if (isset($kodes[$normalizedKode])) {
+                        $skipped++;
+                        $errors[] = ['row' => $line, 'message' => "Kode aset {$fileKode} duplikat (sudah terdaftar atau ganda dalam file)."];
+
+                        continue;
+                    }
+
+                    $kodes[$normalizedKode] = true;
+                }
+
+                $itemName = $this->valueOrNull($row['item'] ?? null);
+                $item = $itemName !== null
+                    ? $this->resolveItem($itemName, $items)
+                    : $fallbackItem->loadMissing('category');
+
+                $locationName = $this->valueOrNull($row['location'] ?? null);
+                $locationId = $locationName !== null
+                    ? $this->findOrCreateLocation($locations, $locationName)
+                    : null;
+
+                $departmentName = $this->valueOrNull($row['department'] ?? null);
+                $departmentId = $departmentName !== null
+                    ? $this->findId($departments, $departmentName)
+                    : null;
+
+                if ($departmentName !== null && $departmentId === null) {
+                    $missingDepartments[mb_strtolower($departmentName)] = $departmentName;
                 }
 
                 $data = [
                     'item_id' => $item->id,
-                    'condition' => $this->valueOrNull($row['kondisi'] ?? null),
-                    'purchase_date' => $this->parseDate($row['tanggal_pembelian'] ?? null),
-                    'purchase_price' => $this->parsePrice($row['harga_pembelian'] ?? null),
-                    'location_id' => $this->findId($locations, $row['lokasi'] ?? null),
-                    'department_id' => $this->findId($departments, $row['department'] ?? null),
+                    'condition' => $this->resolveCondition($row),
+                    'purchase_date' => $this->parseDate($row['purchase_date'] ?? null),
+                    'purchase_price' => $this->parsePrice($row['purchase_price'] ?? null),
+                    'location_id' => $locationId,
+                    'department_id' => $departmentId,
                     'brand' => $this->valueOrNull($row['brand'] ?? null),
                     'model' => $this->valueOrNull($row['model'] ?? null),
                     'part_number' => $this->valueOrNull($row['part_number'] ?? null),
-                    'serial_number' => $this->valueOrNull($serial),
+                    'serial_number' => $serial,
                     'no_spb' => $this->valueOrNull($row['no_spb'] ?? null),
-                    'document_number' => $this->valueOrNull($row['nomor_dokumen'] ?? null),
+                    'document_number' => $this->valueOrNull($row['document_number'] ?? null),
                     'pic' => $this->arrayOrNull($row['pic'] ?? null),
-                    'notes' => $this->valueOrNull($row['catatan'] ?? null),
+                    'notes' => $this->buildNotes($row),
                     'status' => $this->normalizeStatus($row['status'] ?? null),
                     'vendor_name' => $this->valueOrNull($row['vendor'] ?? null),
-                    'kode_asset' => $chain['kode_asset'] ?? null,
-                    'asset_group_id' => $chain['asset_group_id'] ?? null,
-                    'asset_category_id' => $chain['asset_category_id'] ?? null,
-                    'asset_cluster_id' => $chain['asset_cluster_id'] ?? null,
-                    'asset_sub_cluster_id' => $chain['asset_sub_cluster_id'] ?? null,
                 ];
 
-                $asset = Asset::query()->create($data);
-                $lastAssetId = $asset->id;
+                if ($fileKode !== null) {
+                    $classification = $this->resolveClassificationFromKode($fileKode);
+
+                    if ($classification !== null) {
+                        $data['asset_group_id'] = $classification['group_id'];
+                        $data['asset_category_id'] = $classification['category_id'];
+                        $data['asset_cluster_id'] = $classification['cluster_id'];
+                        $data['asset_sub_cluster_id'] = $classification['subcluster_id'];
+                    } else {
+                        // Kode aset dari file tidak cocok dengan klasifikasi yang tersedia;
+                        // simpan kode aset apa adanya, biarkan ID klasifikasi kosong.
+                        $data['asset_group_id'] = null;
+                        $data['asset_category_id'] = null;
+                        $data['asset_cluster_id'] = null;
+                        $data['asset_sub_cluster_id'] = null;
+                    }
+                } else {
+                    $chain = null;
+
+                    if (($category = $item->category) !== null) {
+                        $chain = $this->generateCode->fromCategory($category);
+                    }
+
+                    $data['asset_group_id'] = $chain['asset_group_id'] ?? null;
+                    $data['asset_category_id'] = $chain['asset_category_id'] ?? null;
+                    $data['asset_cluster_id'] = $chain['asset_cluster_id'] ?? null;
+                    $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'] ?? null;
+                }
+
+                $data['kode_asset'] = $fileKode ?? $chain['kode_asset'] ?? null;
+
+                Asset::query()->create($data);
 
                 $imported++;
+            }
+
+            foreach ($missingDepartments as $name) {
+                $errors[] = ['row' => 0, 'message' => "Department '{$name}' tidak ditemukan di master data; kolom department dikosongkan."];
             }
         });
 
@@ -128,16 +281,225 @@ class ImportAssetsAction
     }
 
     /**
+     * Detect a header row anywhere in the sheet (files often start with title
+     * rows and repeat headers per section). Returns column index => field.
+     *
+     * @param  array<int|string, mixed>  $cells
+     * @return array<int, string>|null
+     */
+    private function matchHeaderRow(array $cells): ?array
+    {
+        $fields = [];
+
+        foreach ($cells as $column => $value) {
+            $field = self::ALIASES[$this->normalizeHeader($value)] ?? null;
+
+            if ($field !== null && is_int($column)) {
+                $fields[$column] = $field;
+            }
+        }
+
+        return count($fields) >= 2 ? $fields : null;
+    }
+
+    private function normalizeHeader(mixed $value): string
+    {
+        /** @var string $stripped */
+        $stripped = preg_replace('/[^a-zA-Z0-9]+/', '', $this->stringify($value)) ?? '';
+
+        return mb_strtolower($stripped);
+    }
+
+    private function stringify(mixed $value): string
+    {
+        return $value instanceof DateTimeInterface ? $value->format('Y-m-d') : (string) $value;
+    }
+
+    /**
+     * @param  array<int, string>  $map
+     * @param  array<int|string, mixed>  $cells
+     * @return array<string, mixed>
+     */
+    private function mapRow(array $map, array $cells): array
+    {
+        $row = [];
+
+        foreach ($map as $column => $field) {
+            if (! array_key_exists($field, $row)) {
+                $row[$field] = $cells[$column] ?? '';
+            }
+        }
+
+        return $row;
+    }
+
+    /**
      * @param  array<string, mixed>  $row
      */
-    private function isEmptyRow(array $row): bool
+    private function isAssetRow(array $row): bool
     {
-        return count(array_filter($row, fn ($value) => $value !== null && $value !== '')) === 0;
+        foreach (self::IDENTITY_FIELDS as $field) {
+            if ($this->valueOrNull($row[$field] ?? null) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Find an existing item by name or create it so office exports that mix
+     * several units in one file import without pre-registering every item.
+     *
+     * @param  array<string, Item>  $cache
+     */
+    private function resolveItem(string $name, array &$cache): Item
+    {
+        $key = mb_strtolower(trim($name));
+
+        if (isset($cache[$key])) {
+            return $cache[$key];
+        }
+
+        // ponytail: md5 code keeps re-imports deterministic; swap for a sequence if codes must be readable.
+        $item = Item::query()->whereRaw('lower(name) = ?', [$key])->first()
+            ?? Item::query()->create([
+                'code' => 'ITM-'.Str::upper(substr(md5($key), 0, 8)),
+                'name' => trim($name),
+            ]);
+
+        $item->loadMissing('category');
+
+        return $cache[$key] = $item;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function resolveCondition(array $row): string
+    {
+        if ($this->valueOrNull($row['cond_bad'] ?? null) !== null) {
+            return 'Rusak';
+        }
+
+        if ($this->valueOrNull($row['cond_good'] ?? null) !== null) {
+            return 'Baik';
+        }
+
+        return $this->valueOrNull($row['condition'] ?? null) ?? 'Baik';
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function buildNotes(array $row): ?string
+    {
+        $area = $this->valueOrNull($row['area'] ?? null);
+        $arah = $this->valueOrNull($row['arah'] ?? null);
+
+        $parts = array_filter([
+            $this->valueOrNull($row['notes'] ?? null),
+            $area !== null ? "Area: {$area}" : null,
+            $arah !== null ? "Arah: {$arah}" : null,
+        ]);
+
+        $merged = implode('; ', $parts);
+
+        return $merged === '' ? null : $merged;
+    }
+
+    /**
+     * @param  Collection<string, string>  $lookup
+     */
+    private function findId(Collection $lookup, ?string $key): ?string
+    {
+        if ($key === null) {
+            return null;
+        }
+
+        $id = $lookup->get($key)
+            ?? $lookup->first(fn ($value, $lookupKey): bool => mb_strtolower((string) $lookupKey) === mb_strtolower($key));
+
+        return is_string($id) && $id !== '' ? $id : null;
+    }
+
+    /**
+     * Find existing location by name or create new one.
+     *
+     * @param  Collection<string, string>  $locations
+     */
+    private function findOrCreateLocation(Collection $locations, ?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        $id = $this->findId($locations, $name);
+
+        if ($id === null) {
+            $location = Location::query()->create(['name' => $name]);
+            $id = $location->id;
+            // Add to lookup for future rows in this import
+            $locations->put($name, $id);
+        }
+
+        return $id;
+    }
+
+    /**
+     * Resolve the classification IDs from a dotted asset code.
+     * Format: golongan.category.cluster.subcluster[.no_urut].
+     *
+     * @return array{group_id: string, category_id: string, cluster_id: string, subcluster_id: string}|null
+     */
+    private function resolveClassificationFromKode(string $kode): ?array
+    {
+        $parts = explode('.', $kode);
+
+        if (count($parts) < 4) {
+            return null;
+        }
+
+        $group = AssetGroup::query()->where('code', $parts[0])->first(['id']);
+        if ($group === null) {
+            return null;
+        }
+
+        $category = AssetCategory::query()
+            ->where('asset_group_id', $group->id)
+            ->where('code', $parts[1])
+            ->first(['id']);
+        if ($category === null) {
+            return null;
+        }
+
+        $cluster = AssetCluster::query()
+            ->where('asset_category_id', $category->id)
+            ->where('code', $parts[2])
+            ->first(['id']);
+        if ($cluster === null) {
+            return null;
+        }
+
+        $subcluster = AssetSubCluster::query()
+            ->where('asset_cluster_id', $cluster->id)
+            ->where('code', $parts[3])
+            ->first(['id']);
+        if ($subcluster === null) {
+            return null;
+        }
+
+        return [
+            'group_id' => $group->id,
+            'category_id' => $category->id,
+            'cluster_id' => $cluster->id,
+            'subcluster_id' => $subcluster->id,
+        ];
     }
 
     private function valueOrNull(mixed $value): ?string
     {
-        $value = trim((string) $value);
+        $value = trim($this->stringify($value));
 
         return $value === '' ? null : $value;
     }
@@ -150,24 +512,12 @@ class ImportAssetsAction
         return $value === null ? null : [$value];
     }
 
-    /**
-     * @param  Collection<string, string>  $lookup
-     */
-    private function findId(Collection $lookup, mixed $key): ?string
-    {
-        $key = $this->valueOrNull($key);
-
-        if ($key === null) {
-            return null;
-        }
-
-        $id = $lookup->get($key) ?? $lookup->first(fn ($value, $lookupKey) => mb_strtolower((string) $lookupKey) === mb_strtolower($key));
-
-        return is_string($id) && $id !== '' ? $id : null;
-    }
-
     private function parseDate(mixed $value): ?string
     {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
         $value = $this->valueOrNull($value);
 
         if ($value === null) {

@@ -21,6 +21,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import { VibrantBackground } from '@/components/vibrant-background';
 import { cn } from '@/lib/utils';
 import {
     approve as approveRoute,
@@ -127,10 +128,7 @@ export default function DisposalShow() {
             <Head title="Detail Penghapusan Aset" />
 
             <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
-                <div
-                    aria-hidden
-                    className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(0,128,255,0.14),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.1),transparent_60%)] dark:bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(90,169,236,0.16),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.12),transparent_60%)]"
-                />
+                <VibrantBackground variant="default" />
                 <div className="mx-auto w-full max-w-3xl">
                     <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-4">

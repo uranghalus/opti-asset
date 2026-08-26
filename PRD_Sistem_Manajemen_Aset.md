@@ -477,7 +477,7 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 | FR-05  | Scan Barcode                                       | ✅ Selesai | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                       |
 | FR-06  | Mutasi Aset                                        | ✅ Selesai | Index, create, store, show, approve, reject ada.                           |
 | FR-07  | Asset Disposal                                     | ✅ Selesai | Migrasi, model, controller, route, UI selesai. Enum, toast Indonesia, bulk delete. |
-| FR-08  | Riwayat Aset (History)                             | 🟡 Sebagian | Model `AssetHistory` ada, tapi belum ada controller/route/halaman detail.  |
+| FR-08  | Riwayat Aset (History)                             | ✅ Selesai  | Model, controller (`AssetHistoryController`), route (`assets/{asset}/history`), halaman React `asset-history/Index.tsx`, dan test sudah lengkap. |
 | FR-09  | Manajemen Status Aset                              | ✅ Selesai | Migrasi `update_asset_status_values` + enum status ada.                   |
 | FR-10  | Dashboard & Pelaporan                              | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.           |
 | FR-11  | Manajemen Pengguna & Hak Akses                     | ✅ Selesai | Roles, permissions, employees, departments, organizations ada.             |

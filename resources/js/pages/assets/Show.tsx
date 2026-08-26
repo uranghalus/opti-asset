@@ -73,7 +73,7 @@ type AssetDetail = {
     garansi_exp: string | null;
     no_spb: string | null;
     document_number: string | null;
-    pic: string[];
+    pic: string[] | null;
     notes: string | null;
     vendor_name: string | null;
     photo_url: string[];
@@ -343,8 +343,8 @@ export default function AssetShow() {
         asset.asset_sub_cluster,
     ].filter(Boolean) as Classification[];
 
-    const hasDocuments = asset.document_url.length > 0;
-    const hasPhotos = asset.photo_url.length > 0;
+    const hasDocuments = (asset.document_url?.length ?? 0) > 0;
+    const hasPhotos = (asset.photo_url?.length ?? 0) > 0;
 
     const handleDelete = () => {
         setDeleting(true);
@@ -816,9 +816,9 @@ export default function AssetShow() {
                                 </div>
                             </div>
                             <div className="mt-5">
-                                {asset.pic.length > 0 ? (
+                                {(asset.pic?.length ?? 0) > 0 ? (
                                     <div className="flex flex-wrap gap-1.5">
-                                        {asset.pic.map((person) => (
+                                        {asset.pic?.map((person) => (
                                             <span
                                                 key={person}
                                                 className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"

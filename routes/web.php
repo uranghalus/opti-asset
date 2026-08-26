@@ -159,6 +159,8 @@ Route::middleware('auth')->group(function () {
     Route::post('asset-disposals/bulk', [AssetDisposalController::class, 'bulk'])->name('disposals.bulk');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export/transfers', [ReportController::class, 'exportTransfers'])->name('reports.export.transfers');
+    Route::get('reports/export/disposals', [ReportController::class, 'exportDisposals'])->name('reports.export.disposals');
 });
 
 require __DIR__.'/settings.php';

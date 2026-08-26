@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordAssetHistoryAction;
+use App\Enums\AssetDisposalStatus;
+use App\Enums\AssetStatus;
 use App\Http\Requests\StoreAssetDisposalRequest;
 use App\Http\Requests\UpdateAssetDisposalRequest;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,10 +29,12 @@ class AssetDisposalController extends Controller
         $status = $request->string('status')->trim()->toString();
 
         $disposals = AssetDisposal::query()
+            ->whereHas('asset', fn ($query) => $query->where('tenant_id', Tenant::current()?->id))
             ->with(['asset:id,kode_asset', 'disposedBy:id,name'])
             ->when($search !== '', fn ($query) => $query->whereHas('asset', fn ($q) => $q
                 ->where('kode_asset', 'like', "%{$search}%")
-                ->orWhere('nama_asset', 'like', "%{$search}%")))
+                ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%")))
+                ->orWhere('reason', 'like', "%{$search}%"))
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)
@@ -51,15 +54,15 @@ class AssetDisposalController extends Controller
      */
     public function create(): Response
     {
-        // Only show assets that are active and not already disposed
+        // Hanya aset aktif tanpa pengajuan pending/approved.
         $assets = Asset::query()
-            ->where('status', 'ACT') // Aktif
-            ->whereDoesntHave('disposal', function ($query) {
-                $query->where('status', '!=', 'pending'); // Not already approved/rejected disposal
-            })
+            ->where('status', AssetStatus::ACTIVE->value)
+            ->whereNotIn('id', AssetDisposal::query()
+                ->whereIn('status', [AssetDisposalStatus::Pending->value, AssetDisposalStatus::Approved->value])
+                ->select('asset_id'))
             ->with('item:id,name,code')
-            ->orderBy('nama_asset')
-            ->get(['id', 'kode_asset', 'nama_asset', 'item_id']);
+            ->orderBy('kode_asset')
+            ->get(['id', 'kode_asset', 'item_id']);
 
         return Inertia::render('asset-disposals/Create', [
             'assets' => $assets,
@@ -76,15 +79,15 @@ class AssetDisposalController extends Controller
 
         $disposal = AssetDisposal::create($validated);
 
-        // Record history for the asset
         app(RecordAssetHistoryAction::class)->record(
             $disposal->asset,
-            [['disposal', null, 'Asset marked for disposal: '.$validated['reason']]],
+            [['disposal', null, 'Aset ditandai untuk penghapusan: '.$validated['reason']]],
             Auth::user()
         );
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Asset disposal request submitted successfully.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dibuat.']);
+
+        return redirect()->route('disposals.index');
     }
 
     /**
@@ -92,7 +95,7 @@ class AssetDisposalController extends Controller
      */
     public function show(AssetDisposal $disposal): Response
     {
-        $disposal->load(['asset:id,kode_asset,nama_asset,serial_number', 'disposedBy:id,name']);
+        $disposal->load(['asset:id,kode_asset,serial_number,item_id', 'asset.item:id,name,code', 'disposedBy:id,name']);
 
         return Inertia::render('asset-disposals/Show', [
             'disposal' => $disposal,
@@ -104,24 +107,23 @@ class AssetDisposalController extends Controller
      */
     public function edit(AssetDisposal $disposal): Response|RedirectResponse
     {
-        // Only allow editing if still pending
-        if ($disposal->status !== 'pending') {
-            return Redirect::route('disposals.index')
-                ->with('error', 'Only pending disposal requests can be edited.');
+        if ($disposal->status !== AssetDisposalStatus::Pending) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diedit.']);
+
+            return redirect()->route('disposals.index');
         }
 
-        $disposal->load(['asset:id,kode_asset,nama_asset']);
+        $disposal->load(['asset:id,kode_asset,item_id', 'asset.item:id,name,code']);
 
-        // Get assets for the dropdown (same as create)
         $assets = Asset::query()
-            ->where('status', 'ACT')
-            ->whereDoesntHave('disposal', function ($query) use ($disposal) {
-                $query->where('asset_id', '!=', $disposal->asset_id)
-                    ->where('status', '!=', 'pending');
-            })
+            ->where('status', AssetStatus::ACTIVE->value)
+            ->whereNotIn('id', AssetDisposal::query()
+                ->where('asset_id', '!=', $disposal->asset_id)
+                ->whereIn('status', [AssetDisposalStatus::Pending->value, AssetDisposalStatus::Approved->value])
+                ->select('asset_id'))
             ->with('item:id,name,code')
-            ->orderBy('nama_asset')
-            ->get(['id', 'kode_asset', 'nama_asset', 'item_id']);
+            ->orderBy('kode_asset')
+            ->get(['id', 'kode_asset', 'item_id']);
 
         return Inertia::render('asset-disposals/Edit', [
             'disposal' => $disposal,
@@ -134,44 +136,42 @@ class AssetDisposalController extends Controller
      */
     public function update(UpdateAssetDisposalRequest $request, AssetDisposal $disposal): RedirectResponse
     {
-        // Only allow updating if still pending
-        if ($disposal->status !== 'pending') {
-            return Redirect::route('disposals.index')
-                ->with('error', 'Only pending disposal requests can be updated.');
+        if ($disposal->status !== AssetDisposalStatus::Pending) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diperbarui.']);
+
+            return redirect()->route('disposals.index');
         }
 
         $validated = $request->validated();
 
-        // If asset changed, we need to handle history for both old and new
         $oldAssetId = $disposal->asset_id;
         $newAssetId = $validated['asset_id'];
 
         $disposal->update($validated);
 
-        // Record history for asset change if needed
         if ($oldAssetId !== $newAssetId) {
             app(RecordAssetHistoryAction::class)->record(
                 Asset::find($oldAssetId),
-                [['disposal', 'Asset removed from disposal request', null]],
+                [['disposal', 'Dihapus dari pengajuan penghapusan', null]],
                 Auth::user()
             );
 
             app(RecordAssetHistoryAction::class)->record(
                 Asset::find($newAssetId),
-                [['disposal', null, 'Asset added to disposal request: '.$validated['reason']]],
+                [['disposal', null, 'Ditambahkan ke pengajuan penghapusan: '.$validated['reason']]],
                 Auth::user()
             );
         } else {
-            // Just reason changed
             app(RecordAssetHistoryAction::class)->record(
                 $disposal->asset,
-                [['disposal', 'Disposal reason updated: '.$validated['reason'], 'Disposal reason updated: '.$validated['reason']]],
+                [['disposal', null, 'Alasan penghapusan diperbarui: '.$validated['reason']]],
                 Auth::user()
             );
         }
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Disposal request updated successfully.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil diperbarui.']);
+
+        return redirect()->route('disposals.index');
     }
 
     /**
@@ -179,24 +179,24 @@ class AssetDisposalController extends Controller
      */
     public function destroy(AssetDisposal $disposal): RedirectResponse
     {
-        // Only allow deletion if still pending
-        if ($disposal->status !== 'pending') {
-            return Redirect::route('disposals.index')
-                ->with('error', 'Only pending disposal requests can be deleted.');
+        if ($disposal->status !== AssetDisposalStatus::Pending) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat dihapus.']);
+
+            return redirect()->route('disposals.index');
         }
 
         $assetId = $disposal->asset_id;
         $disposal->delete();
 
-        // Record history
         app(RecordAssetHistoryAction::class)->record(
             Asset::find($assetId),
-            [['disposal', 'Asset disposal request cancelled', null]],
+            [['disposal', 'Pengajuan penghapusan dibatalkan', null]],
             Auth::user()
         );
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Disposal request deleted successfully.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dihapus.']);
+
+        return redirect()->route('disposals.index');
     }
 
     /**
@@ -204,27 +204,31 @@ class AssetDisposalController extends Controller
      */
     public function approve(AssetDisposal $disposal): RedirectResponse
     {
-        Gate::authorize('approve', AssetDisposal::class);
+        if ($disposal->status !== AssetDisposalStatus::Pending) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat disetujui.']);
 
-        if ($disposal->status !== 'pending') {
-            return Redirect::back()
-                ->with('error', 'Only pending disposal requests can be approved.');
+            return back();
         }
 
-        $disposal->update(['status' => 'approved']);
+        if ($disposal->asset->status !== AssetStatus::ACTIVE) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya aset berstatus aktif yang dapat dihapus.']);
 
-        // Update asset status to disposed
-        $disposal->asset->update(['status' => 'DSP']); // Disposed
+            return back();
+        }
 
-        // Record history
+        $disposal->update(['status' => AssetDisposalStatus::Approved]);
+
+        $disposal->asset->update(['status' => AssetStatus::DISPOSED]);
+
         app(RecordAssetHistoryAction::class)->record(
             $disposal->asset,
-            [['disposal', null, 'Asset disposed: '.$disposal->reason]],
+            [['disposal', null, 'Aset dihapus (disposal): '.$disposal->reason]],
             Auth::user()
         );
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Asset disposal approved and asset marked as disposed.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan disetujui; aset ditandai dihapus.']);
+
+        return redirect()->route('disposals.index');
     }
 
     /**
@@ -232,24 +236,23 @@ class AssetDisposalController extends Controller
      */
     public function reject(AssetDisposal $disposal): RedirectResponse
     {
-        Gate::authorize('reject', AssetDisposal::class);
+        if ($disposal->status !== AssetDisposalStatus::Pending) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat ditolak.']);
 
-        if ($disposal->status !== 'pending') {
-            return Redirect::back()
-                ->with('error', 'Only pending disposal requests can be rejected.');
+            return back();
         }
 
-        $disposal->update(['status' => 'rejected']);
+        $disposal->update(['status' => AssetDisposalStatus::Rejected]);
 
-        // Record history
         app(RecordAssetHistoryAction::class)->record(
             $disposal->asset,
-            [['disposal', null, 'Asset disposal request rejected']],
+            [['disposal', null, 'Pengajuan penghapusan ditolak']],
             Auth::user()
         );
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Disposal request rejected.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan ditolak.']);
+
+        return redirect()->route('disposals.index');
     }
 
     /**
@@ -262,36 +265,35 @@ class AssetDisposalController extends Controller
             'ids.*' => ['exists:asset_disposals,id'],
         ]);
 
-        $ids = $validated['ids'];
+        $pendingIds = AssetDisposal::whereIn('id', $validated['ids'])
+            ->where('status', AssetDisposalStatus::Pending)
+            ->pluck('id');
 
-        // Only allow bulk deletion of pending requests
-        $pendingIds = AssetDisposal::whereIn('id', $ids)
-            ->where('status', 'pending')
-            ->pluck('id')
-            ->toArray();
+        if ($pendingIds->isEmpty()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Tidak ada pengajuan berstatus menunggu yang dipilih.']);
 
-        if (count($pendingIds) === 0) {
-            return Redirect::back()
-                ->with('error', 'No pending disposal requests selected for deletion.');
+            return back();
         }
 
-        // Get asset IDs for history
         $assetIds = AssetDisposal::whereIn('id', $pendingIds)
             ->pluck('asset_id')
-            ->toArray();
+            ->all();
 
-        AssetDisposal::destroy($pendingIds);
+        AssetDisposal::destroy($pendingIds->all());
 
-        // Record history for each asset
         foreach ($assetIds as $assetId) {
             app(RecordAssetHistoryAction::class)->record(
                 Asset::find($assetId),
-                [['disposal', 'Asset disposal request cancelled (bulk)', null]],
+                [['disposal', 'Pengajuan penghapusan dibatalkan (massal)', null]],
                 Auth::user()
             );
         }
 
-        return Redirect::route('disposals.index')
-            ->with('success', 'Selected disposal requests deleted successfully.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $pendingIds->count().' pengajuan penghapusan berhasil dihapus.',
+        ]);
+
+        return redirect()->route('disposals.index');
     }
 }

@@ -1,6 +1,16 @@
 import { usePage } from '@inertiajs/react';
 import { Link, router } from '@inertiajs/react';
-import { LayoutDashboard, Boxes, Building2, Settings, Menu, X, ChevronLeft, Bell, Search } from 'lucide-react';
+import {
+    LayoutDashboard,
+    Boxes,
+    Building2,
+    Settings,
+    Menu,
+    X,
+    ChevronLeft,
+    Bell,
+    Search,
+} from 'lucide-react';
 import { useState } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { NotificationBell } from '@/components/notification-bell';
@@ -35,7 +45,7 @@ export function MobileBottomNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-50 glass-panel backdrop-blur-xl bg-background/90 border-t border-border/30 shadow-2xl lg:hidden"
+            className="glass-panel fixed right-0 bottom-0 left-0 z-50 border-t border-border/30 bg-background/90 shadow-2xl backdrop-blur-xl lg:hidden"
             role="navigation"
             aria-label="Navigasi utama mobile"
         >
@@ -48,7 +58,10 @@ export function MobileBottomNav() {
                         className="flex flex-col items-center gap-1 px-2 py-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground active:text-primary"
                         onClick={() => router.reload()}
                     >
-                        <item.icon className="size-5 stroke-2" strokeWidth={2} />
+                        <item.icon
+                            className="size-5 stroke-2"
+                            strokeWidth={2}
+                        />
                         <span>{item.label}</span>
                     </Link>
                 ))}

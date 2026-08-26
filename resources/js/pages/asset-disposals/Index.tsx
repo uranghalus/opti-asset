@@ -1,8 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArchiveX,
+    Check,
+    CheckSquare,
     ChevronRight,
-    Eye,
     Inbox,
     Package,
     Pencil,
@@ -31,10 +32,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
 import {
     destroy,
+    approve as approveRoute,
+    reject as rejectRoute,
+    bulk as bulkRoute,
+    create as createRoute,
     edit as editRoute,
     index as indexRoute,
     show as showRoute,
@@ -42,7 +48,11 @@ import {
 
 type Disposal = {
     id: number;
-    asset: { id: string; kode_asset: string | null; nama_asset: string | null } | null;
+    asset: {
+        id: string;
+        kode_asset: string | null;
+        nama_asset: string | null;
+    } | null;
     disposedBy: { id: number; name: string } | null;
     reason: string | null;
     disposal_date: string | null;
@@ -74,7 +84,8 @@ const STATUS_STYLES: Record<string, string> = {
         'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
     approved:
         'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    rejected: 'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+    rejected:
+        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -102,6 +113,9 @@ export default function DisposalsIndex() {
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [deleting, setDeleting] = useState<Disposal | null>(null);
     const [deletingState, setDeletingState] = useState(false);
+    const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
 
@@ -124,11 +138,15 @@ export default function DisposalsIndex() {
             params.status = statusFilter;
         }
 
-        router.get(indexRoute().url, { ...params, ...overrides }, {
-            preserveState: true,
-            replace: true,
-            only: ['disposals', 'filters'],
-        });
+        router.get(
+            indexRoute().url,
+            { ...params, ...overrides },
+            {
+                preserveState: true,
+                replace: true,
+                only: ['disposals', 'filters'],
+            },
+        );
     };
 
     const clearFilters = () => {
@@ -159,6 +177,65 @@ export default function DisposalsIndex() {
         });
     };
 
+    const pendingDisposals = disposals.data.filter(
+        (disposal) => disposal.status === 'pending',
+    );
+    const allPendingSelected =
+        pendingDisposals.length > 0 &&
+        pendingDisposals.every((disposal) => selected.has(disposal.id));
+
+    const toggleSelected = (id: number) => {
+        setSelected((current) => {
+            const next = new Set(current);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    const updateStatus = (disposal: Disposal, action: 'approve' | 'reject') => {
+        router.post(
+            (action === 'approve' ? approveRoute : rejectRoute)(disposal.id)
+                .url,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        action === 'approve'
+                            ? 'Pengajuan disetujui.'
+                            : 'Pengajuan ditolak.',
+                    ),
+                onError: () =>
+                    toast.error('Status pengajuan gagal diperbarui.'),
+            },
+        );
+    };
+
+    const handleBulkDelete = () => {
+        setBulkDeleting(true);
+        router.post(
+            bulkRoute().url,
+            { ids: Array.from(selected) },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelected(new Set());
+                    setBulkDeleteOpen(false);
+                    toast.success('Pengajuan terpilih berhasil dihapus.');
+                },
+                onError: () =>
+                    toast.error('Gagal menghapus pengajuan terpilih.'),
+                onFinish: () => setBulkDeleting(false),
+            },
+        );
+    };
+
     const goToPage = (url: string | null) => {
         if (url) {
             router.get(url, {}, { preserveState: true, replace: true });
@@ -169,10 +246,7 @@ export default function DisposalsIndex() {
 
     return (
         <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
-            <div
-                aria-hidden
-                className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(0,128,255,0.14),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.1),transparent_60%)] dark:bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(90,169,236,0.16),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.12),transparent_60%)]"
-            />
+            <VibrantBackground variant="default" />
             <div className="mx-auto w-full max-w-6xl">
                 <div
                     className={cn(
@@ -192,7 +266,10 @@ export default function DisposalsIndex() {
                     <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3.5">
                             <div className="glass-card flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <ArchiveX className="size-6" strokeWidth={1.5} />
+                                <ArchiveX
+                                    className="size-6"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -205,13 +282,16 @@ export default function DisposalsIndex() {
                             </div>
                         </div>
 
-                        <Link href="/disposals/create">
+                        <Link href={createRoute().url}>
                             <Button
                                 size="sm"
                                 className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
                             >
                                 <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
-                                    <Plus className="size-3.5" strokeWidth={2.25} />
+                                    <Plus
+                                        className="size-3.5"
+                                        strokeWidth={2.25}
+                                    />
                                 </span>
                                 Ajukan Penghapusan
                             </Button>
@@ -260,8 +340,12 @@ export default function DisposalsIndex() {
                             <Select
                                 value={statusFilter || 'all'}
                                 onValueChange={(value) => {
-                                    setStatusFilter(value === 'all' ? '' : value);
-                                    reload({ status: value === 'all' ? '' : value });
+                                    setStatusFilter(
+                                        value === 'all' ? '' : value,
+                                    );
+                                    reload({
+                                        status: value === 'all' ? '' : value,
+                                    });
                                 }}
                             >
                                 <SelectTrigger className="h-11! w-44 rounded-xl border-border/70 bg-card/70 text-sm shadow-sm backdrop-blur-xl">
@@ -325,7 +409,7 @@ export default function DisposalsIndex() {
                                         : 'Ajukan penghapusan aset pertama Anda untuk mulai mencatat disposisi.'}
                                 </p>
                             </div>
-                            <Link href="/disposals/create">
+                            <Link href={createRoute().url}>
                                 <Button size="sm" className="rounded-xl">
                                     <Plus className="mr-2 size-4" />
                                     Ajukan Penghapusan
@@ -341,6 +425,21 @@ export default function DisposalsIndex() {
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex min-w-0 items-center gap-3">
+                                            {disposal.status === 'pending' && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selected.has(
+                                                        disposal.id,
+                                                    )}
+                                                    onChange={() =>
+                                                        toggleSelected(
+                                                            disposal.id,
+                                                        )
+                                                    }
+                                                    aria-label={`Pilih pengajuan ${disposal.id}`}
+                                                    className="size-4 accent-primary"
+                                                />
+                                            )}
                                             <div className="relative size-11 shrink-0">
                                                 <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
                                                     <Package
@@ -351,49 +450,90 @@ export default function DisposalsIndex() {
                                             </div>
                                             <div className="min-w-0">
                                                 <Link
-                                                    href={showRoute(disposal.id).url}
+                                                    href={
+                                                        showRoute(disposal.id)
+                                                            .url
+                                                    }
                                                     className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary"
                                                 >
-                                                    {disposal.asset?.nama_asset ??
-                                                        'Aset'}
+                                                    {disposal.asset
+                                                        ?.nama_asset ?? 'Aset'}
                                                 </Link>
                                                 <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                                                    {disposal.asset?.kode_asset ??
-                                                        '—'}
+                                                    {disposal.asset
+                                                        ?.kode_asset ?? '—'}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex shrink-0 gap-1">
-                                            <Link
-                                                href={editRoute(disposal.id).url}
-                                            >
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8"
-                                                    aria-label="Edit penghapusan"
-                                                >
-                                                    <Pencil className="size-3.5" />
-                                                </Button>
-                                            </Link>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-8"
-                                                onClick={() =>
-                                                    setDeleting(disposal)
-                                                }
-                                                aria-label="Hapus penghapusan"
-                                            >
-                                                <Trash2 className="size-3.5 text-destructive" />
-                                            </Button>
+                                            {disposal.status === 'pending' && (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 text-emerald-600 hover:bg-emerald-500/10"
+                                                        onClick={() =>
+                                                            updateStatus(
+                                                                disposal,
+                                                                'approve',
+                                                            )
+                                                        }
+                                                        aria-label="Setujui pengajuan"
+                                                    >
+                                                        <Check className="size-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 text-rose-600 hover:bg-rose-500/10"
+                                                        onClick={() =>
+                                                            updateStatus(
+                                                                disposal,
+                                                                'reject',
+                                                            )
+                                                        }
+                                                        aria-label="Tolak pengajuan"
+                                                    >
+                                                        <X className="size-3.5" />
+                                                    </Button>
+                                                    <Link
+                                                        href={
+                                                            editRoute(
+                                                                disposal.id,
+                                                            ).url
+                                                        }
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8"
+                                                            aria-label="Edit penghapusan"
+                                                        >
+                                                            <Pencil className="size-3.5" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8"
+                                                        onClick={() =>
+                                                            setDeleting(
+                                                                disposal,
+                                                            )
+                                                        }
+                                                        aria-label="Hapus penghapusan"
+                                                    >
+                                                        <Trash2 className="size-3.5 text-destructive" />
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
                                         <span
                                             className={cn(
-                                                'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                                'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-bold uppercase ring-1',
                                                 STATUS_STYLES[
                                                     disposal.status
                                                 ] ??
@@ -415,13 +555,15 @@ export default function DisposalsIndex() {
                                         </p>
 
                                         <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
-                                            <span className="truncate text-[10px] text-muted-foreground">
+                                            <span className="truncate text-xs text-muted-foreground">
                                                 {disposal.disposedBy?.name ??
                                                     '—'}
                                             </span>
                                             <Link
-                                                href={showRoute(disposal.id).url}
-                                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary transition-colors hover:text-primary/80"
+                                                href={
+                                                    showRoute(disposal.id).url
+                                                }
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
                                             >
                                                 Detail
                                                 <ChevronRight className="size-3" />
@@ -430,6 +572,42 @@ export default function DisposalsIndex() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {pendingDisposals.length > 0 && (
+                        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setSelected(
+                                        allPendingSelected
+                                            ? new Set()
+                                            : new Set(
+                                                  pendingDisposals.map(
+                                                      (disposal) => disposal.id,
+                                                  ),
+                                              ),
+                                    )
+                                }
+                                className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+                            >
+                                <CheckSquare className="size-4" />
+                                {allPendingSelected
+                                    ? 'Batal pilih'
+                                    : 'Pilih semua pending'}
+                            </button>
+                            {selected.size > 0 && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="gap-2 rounded-xl"
+                                    onClick={() => setBulkDeleteOpen(true)}
+                                >
+                                    <Trash2 className="size-4" />
+                                    Hapus {selected.size}
+                                </Button>
+                            )}
                         </div>
                     )}
 
@@ -490,7 +668,10 @@ export default function DisposalsIndex() {
                 </div>
             </div>
 
-            <Dialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+            <Dialog
+                open={!!deleting}
+                onOpenChange={(open) => !open && setDeleting(null)}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Hapus Penghapusan Aset</DialogTitle>
@@ -518,6 +699,38 @@ export default function DisposalsIndex() {
                         >
                             {deletingState && <Spinner className="size-4" />}
                             Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog
+                open={bulkDeleteOpen}
+                onOpenChange={(open) => !open && setBulkDeleteOpen(false)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus pengajuan terpilih?</DialogTitle>
+                        <DialogDescription>
+                            Tindakan ini menghapus {selected.size} pengajuan
+                            pending dan tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setBulkDeleteOpen(false)}
+                            disabled={bulkDeleting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleBulkDelete}
+                            disabled={bulkDeleting}
+                            className="gap-2"
+                        >
+                            {bulkDeleting && <Spinner className="size-4" />}
+                            Hapus {selected.size}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

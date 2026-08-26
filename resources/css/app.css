@@ -362,6 +362,157 @@
             0 4px 24px rgba(0, 0, 0, 0.3);
     }
 
+    /* ── Sonner toast — glass material ───────────────────────────────
+       Same frosted recipe as .glass-panel so notifications feel native
+       to the world instead of a floating white card from another one.
+       Sonner exposes [data-type] on each toast for per-tone accents. */
+    .premium-toast {
+        --toast-accent: var(--primary);
+
+        display: flex;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem !important;
+        border-radius: 0.875rem !important;
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.78) 0%,
+            rgba(255, 255, 255, 0.58) 100%
+        ) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.55) !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 12px 40px -12px rgba(0, 23, 90, 0.28) !important;
+        transition: box-shadow 200ms ease-out;
+    }
+
+    .premium-toast:hover {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 18px 52px -14px rgba(0, 23, 90, 0.36) !important;
+    }
+
+    .dark .premium-toast {
+        background: linear-gradient(
+            135deg,
+            rgba(22, 30, 51, 0.82) 0%,
+            rgba(13, 19, 36, 0.66) 100%
+        ) !important;
+        border-color: rgba(255, 255, 255, 0.09) !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 12px 40px -12px rgba(0, 0, 0, 0.55) !important;
+    }
+
+    .dark .premium-toast:hover {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 18px 52px -14px rgba(0, 0, 0, 0.65) !important;
+    }
+
+    .premium-toast[data-type='success'] {
+        --toast-accent: rgb(5 150 105);
+    }
+    .premium-toast[data-type='error'] {
+        --toast-accent: rgb(225 29 72);
+    }
+    .premium-toast[data-type='warning'] {
+        --toast-accent: rgb(217 119 6);
+    }
+    .premium-toast[data-type='info'],
+    .premium-toast[data-type='default'] {
+        --toast-accent: #0080ff;
+    }
+    .dark .premium-toast[data-type='success'] {
+        --toast-accent: rgb(52 211 153);
+    }
+    .dark .premium-toast[data-type='error'] {
+        --toast-accent: rgb(251 113 133);
+    }
+    .dark .premium-toast[data-type='warning'] {
+        --toast-accent: rgb(251 191 36);
+    }
+    .dark .premium-toast[data-type='info'],
+    .dark .premium-toast[data-type='default'] {
+        --toast-accent: rgb(90 169 236);
+    }
+
+    /* Icon chip — the single tinted element; text stays neutral for contrast. */
+    .premium-toast [data-icon] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-top: 1px;
+        border-radius: 0.625rem;
+        color: var(--toast-accent);
+        background: color-mix(in oklab, var(--toast-accent) 14%, transparent);
+        box-shadow: inset 0 0 0 1px
+            color-mix(in oklab, var(--toast-accent) 22%, transparent);
+    }
+
+    .premium-toast [data-icon] svg {
+        width: 1rem;
+        height: 1rem;
+        stroke-width: 2.25;
+    }
+
+    .premium-toast-title {
+        font-size: 0.875rem;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+    }
+
+    .premium-toast-description {
+        margin-top: 0.125rem;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: var(--muted-foreground) !important;
+    }
+
+    .premium-toast-action {
+        border-radius: 0.5rem;
+        font-weight: 600;
+        background: transparent !important;
+        color: var(--toast-accent) !important;
+        border: none !important;
+    }
+
+    .premium-toast-action:hover {
+        background: color-mix(
+            in oklab,
+            var(--toast-accent) 12%,
+            transparent
+        ) !important;
+    }
+
+    .premium-toast-cancel {
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    .premium-toast-close {
+        top: 0.625rem !important;
+        right: 0.625rem !important;
+        border-radius: 0.5rem;
+        opacity: 0.55;
+    }
+
+    /* Clear the mobile tab bar (hidden at lg+) and honor safe areas. */
+    @media (max-width: 1023px) {
+        [data-sonner-toaster] {
+            bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
+        }
+        .premium-toast {
+            width: min(22.25rem, calc(100vw - 1.5rem));
+        }
+    }
+
     /* Glass Header — frosted bar for section headers */
     .glass-header {
         background: linear-gradient(

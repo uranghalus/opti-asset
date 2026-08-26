@@ -62,11 +62,7 @@ function DaysBadge({ days }: { days: number }) {
     );
 }
 
-export function WarrantyAlerts({
-    alerts,
-}: {
-    alerts: WarrantyAlerts;
-}) {
+export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
     if (alerts.expired === 0 && alerts.expiring_soon === 0) {
         return (
             <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
@@ -88,8 +84,8 @@ export function WarrantyAlerts({
                         Semua garansi aktif
                     </p>
                     <p className="text-xs text-[#86888C]">
-                        Tidak ada aset dengan garansi kedaluwarsa atau
-                        mendekati batas waktu.
+                        Tidak ada aset dengan garansi kedaluwarsa atau mendekati
+                        batas waktu.
                     </p>
                 </div>
             </div>

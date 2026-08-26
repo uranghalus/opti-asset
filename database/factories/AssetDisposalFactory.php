@@ -20,10 +20,30 @@ class AssetDisposalFactory extends Factory
     {
         return [
             'asset_id' => Asset::factory(),
-            'reason' => $this->faker->sentence(),
-            'disposal_date' => $this->faker->dateTimeBetween('-1 year', '+1 year'),
+            'reason' => $this->faker->optional()->sentence(),
+            'disposal_date' => $this->faker->optional()->dateTimeBetween('-1 year', '+1 year')?->format('Y-m-d'),
             'disposed_by' => User::factory(),
-            'status' => $this->faker->randomElement(['pending', 'approved', 'rejected']),
+            'status' => 'pending',
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn () => ['status' => 'pending']);
+    }
+
+    public function approved(): static
+    {
+        return $this->state(fn () => ['status' => 'approved']);
+    }
+
+    public function rejected(): static
+    {
+        return $this->state(fn () => ['status' => 'rejected']);
+    }
+
+    public function withReason(string $reason): static
+    {
+        return $this->state(fn () => ['reason' => $reason]);
     }
 }

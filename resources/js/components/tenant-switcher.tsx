@@ -47,7 +47,7 @@ export function TenantSwitcher() {
                     variant="outline"
                     size="sm"
                     disabled={!isSuperAdmin}
-                    className="h-9 w-full justify-start gap-2.5 rounded-lg border-sidebar-border bg-sidebar-accent/40 px-2 text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-9 w-full justify-start gap-2.5 rounded-lg border-sidebar-border bg-sidebar-accent/40 px-2 text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent"
                 >
                     <Building2 className="size-3.5 shrink-0 text-sidebar-foreground/50" />
                     <span className="truncate">
@@ -63,41 +63,39 @@ export function TenantSwitcher() {
             >
                 <Command>
                     <CommandInput placeholder="Cari tenant..." />
-<CommandList>
-                    <CommandEmpty>Tidak ada tenant.</CommandEmpty>
-                    <CommandGroup heading="Ganti Tenant">
-                        {isSuperAdmin
-                            ? availableTenants.map((t) => (
-                                <CommandItem
-                                    key={t.id}
-                                    value={t.id}
-                                    onSelect={() => handleSwitch(t.id)}
-                                >
-                                    <Check
-                                        className={cn(
-                                            'mr-2 size-4',
-                                            currentTenant?.id === t.id
-                                                ? 'opacity-100'
-                                                : 'opacity-0',
-                                        )}
-                                    />
-                                    {t.name}
-                                </CommandItem>
-                            ))
-                            : currentTenant
-                                ? (
+                    <CommandList>
+                        <CommandEmpty>Tidak ada tenant.</CommandEmpty>
+                        <CommandGroup heading="Ganti Tenant">
+                            {isSuperAdmin ? (
+                                availableTenants.map((t) => (
                                     <CommandItem
-                                        key={currentTenant.id}
-                                        value={currentTenant.id}
-                                        disabled
+                                        key={t.id}
+                                        value={t.id}
+                                        onSelect={() => handleSwitch(t.id)}
                                     >
-                                        <Check className="mr-2 size-4 opacity-100" />
-                                        {currentTenant.name}
+                                        <Check
+                                            className={cn(
+                                                'mr-2 size-4',
+                                                currentTenant?.id === t.id
+                                                    ? 'opacity-100'
+                                                    : 'opacity-0',
+                                            )}
+                                        />
+                                        {t.name}
                                     </CommandItem>
-                                )
-                                : null}
-                    </CommandGroup>
-                </CommandList>
+                                ))
+                            ) : currentTenant ? (
+                                <CommandItem
+                                    key={currentTenant.id}
+                                    value={currentTenant.id}
+                                    disabled
+                                >
+                                    <Check className="mr-2 size-4 opacity-100" />
+                                    {currentTenant.name}
+                                </CommandItem>
+                            ) : null}
+                        </CommandGroup>
+                    </CommandList>
                 </Command>
             </PopoverContent>
         </Popover>

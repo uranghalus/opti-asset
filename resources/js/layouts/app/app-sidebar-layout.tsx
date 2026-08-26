@@ -34,15 +34,17 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             {!isMobile && (
-                <AppSidebar isMobile={isMobile} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <AppSidebar
+                    isMobile={isMobile}
+                    open={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                />
             )}
             <AppContent
                 variant="sidebar"
                 className="overflow-x-hidden bg-transparent pb-[56px] lg:pb-0"
             >
-<AppSidebarHeader 
-                    onMenuClick={() => setSidebarOpen(true)}
-                />
+                <AppSidebarHeader onMenuClick={() => setSidebarOpen(true)} />
                 {children}
             </AppContent>
             {isMobile && (

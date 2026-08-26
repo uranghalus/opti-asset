@@ -44,7 +44,7 @@ export function AppSidebarHeader({ onMenuClick }: Props) {
 
             {/* Desktop Sidebar Trigger */}
             <div className="hidden lg:block">
-                <SidebarTrigger 
+                <SidebarTrigger
                     className="-ml-1 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground"
                     onClick={onMenuClick}
                 />

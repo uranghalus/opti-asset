@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/empty-state';
+import { ResourcePagination } from '@/components/resource-pagination';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -52,7 +54,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
+import { rememberAssetListUrl, withReturnTo } from '@/lib/asset-return';
 import {
     ASSET_STATUSES,
     assetStatusChip,
@@ -63,6 +67,7 @@ import { cn } from '@/lib/utils';
 import {
     create as createRoute,
     destroy,
+    destroyBulk as destroyBulkRoute,
     edit as editRoute,
     importMethod,
     importTemplate,
@@ -123,6 +128,7 @@ type PaginatedData<T> = {
 type PageProps = {
     assets: PaginatedData<Asset>;
     groups: Classification[];
+    categories: Classification[];
     items: {
         id: string;
         code: string;
@@ -147,6 +153,8 @@ const STATUS_OPTIONS = [
         label: status.label,
     })),
 ];
+
+const MAX_BULK = 100;
 
 const CONDITION_OPTIONS = [
     { value: '', label: 'Semua Kondisi' },
@@ -187,11 +195,29 @@ function formatDate(value: string | null): string {
 }
 
 export default function AssetsIndex() {
-    const { assets, groups, items, departments, filters } = usePage()
-        .props as unknown as PageProps;
+    const { assets, groups, categories, items, departments, filters } =
+        usePage().props as unknown as PageProps;
 
     const [search, setSearch] = useState(filters.search);
     const [groupFilter, setGroupFilter] = useState(filters.group);
+    const [categoryFilter, setCategoryFilter] = useState(filters.category);
+
+    // Cascade: jika grup berubah dan kategori yang dipilih bukan milik grup baru,
+    // bersihkan kategori agar tidak ada kombinasi tidak valid.
+    const handleGroupChange = (value: string) => {
+        setGroupFilter(value);
+
+        if (categoryFilter) {
+            const stillValid = categories.some(
+                (cat) =>
+                    cat.id === categoryFilter && cat.asset_group_id === value,
+            );
+
+            if (!stillValid) {
+                setCategoryFilter('');
+            }
+        }
+    };
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [departmentFilter, setDepartmentFilter] = useState(
         filters.department,
@@ -200,6 +226,8 @@ export default function AssetsIndex() {
     const [filterOpen, setFilterOpen] = useState(false);
     const [deleting, setDeleting] = useState<Asset | null>(null);
     const [deletingState, setDeletingState] = useState(false);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
@@ -214,8 +242,12 @@ export default function AssetsIndex() {
 
             if (next.has(id)) {
                 next.delete(id);
-            } else {
+            } else if (next.size < MAX_BULK) {
                 next.add(id);
+            } else {
+                toast.warning(`Maksimal ${MAX_BULK} aset dapat dipilih.`);
+
+                return prev;
             }
 
             return next;
@@ -223,7 +255,31 @@ export default function AssetsIndex() {
     };
 
     const toggleSelectAll = () => {
-        setSelected(allSelected ? new Set() : new Set(pageIds));
+        const pageIdsToAdd = allSelected ? [] : pageIds;
+        const availableSlots = MAX_BULK - selected.size;
+        const toAdd = pageIdsToAdd.slice(0, Math.max(0, availableSlots));
+
+        if (toAdd.length < pageIdsToAdd.length) {
+            toast.warning(
+                `Maksimal ${MAX_BULK} aset dapat dipilih; menampilkan ${availableSlots}.`,
+            );
+        }
+
+        setSelected((prev) => {
+            const next = new Set(prev);
+
+            if (allSelected) {
+                for (const id of pageIds) {
+                    next.delete(id);
+                }
+            } else {
+                for (const id of toAdd) {
+                    next.add(id);
+                }
+            }
+
+            return next;
+        });
     };
 
     const openLabels = () => {
@@ -244,6 +300,12 @@ export default function AssetsIndex() {
         };
     }, []);
 
+    // Simpan posisi daftar (halaman + filter) agar navigasi
+    // Edit/Show/Create bisa kembali ke kondisi yang sama.
+    useEffect(() => {
+        rememberAssetListUrl();
+    });
+
     const reload = (overrides: Record<string, string>) => {
         const params: Record<string, string> = {};
 
@@ -253,6 +315,10 @@ export default function AssetsIndex() {
 
         if (groupFilter) {
             params.group = groupFilter;
+        }
+
+        if (categoryFilter) {
+            params.category = categoryFilter;
         }
 
         if (statusFilter) {
@@ -282,6 +348,7 @@ export default function AssetsIndex() {
     const clearFilters = () => {
         setSearch('');
         setGroupFilter('');
+        setCategoryFilter('');
         setStatusFilter('');
         setDepartmentFilter('');
         setConditionFilter('');
@@ -289,6 +356,7 @@ export default function AssetsIndex() {
         reload({
             search: '',
             group: '',
+            category: '',
             status: '',
             department: '',
             condition: '',
@@ -317,6 +385,32 @@ export default function AssetsIndex() {
         });
     };
 
+    const confirmBulkDelete = () => {
+        if (selected.size === 0) {
+            return;
+        }
+
+        setBulkDeleting(true);
+        const ids = Array.from(selected);
+
+        router.delete(destroyBulkRoute().url, {
+            data: { ids },
+            only: ['assets'],
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setBulkDeleting(false);
+                setBulkDeleteOpen(false);
+                setSelected(new Set());
+                toast.success(`${ids.length} aset berhasil dihapus.`);
+            },
+            onError: () => {
+                setBulkDeleting(false);
+                toast.error('Gagal menghapus aset terpilih.');
+            },
+        });
+    };
+
     const goToPage = (url: string | null) => {
         if (url) {
             router.get(url, {}, { preserveState: true, replace: true });
@@ -325,6 +419,7 @@ export default function AssetsIndex() {
 
     const activeFilterCount = [
         groupFilter,
+        categoryFilter,
         statusFilter,
         departmentFilter,
         conditionFilter,
@@ -371,11 +466,14 @@ export default function AssetsIndex() {
     };
 
     return (
-        <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
-            <div
-                aria-hidden
-                className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(0,128,255,0.14),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.1),transparent_60%)] dark:bg-[radial-gradient(60%_50%_at_10%_-10%,rgba(90,169,236,0.16),transparent_60%),radial-gradient(50%_45%_at_100%_100%,rgba(139,92,246,0.12),transparent_60%)]"
-            />
+        <div
+            className={cn(
+                'relative flex min-h-[100dvh] flex-col p-4 sm:p-6 lg:p-8',
+                // Beri ruang untuk bulk toolbar yang mengambang di atas tabbar
+                selected.size > 0 && 'pb-32 lg:pb-8',
+            )}
+        >
+            <VibrantBackground variant="default" />
             <div className="mx-auto w-full max-w-6xl">
                 <div
                     className={cn(
@@ -392,18 +490,20 @@ export default function AssetsIndex() {
                         </div>
                     )}
 
-                    <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex items-center gap-3.5">
-                            <div className="glass-card flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <Boxes className="size-6" strokeWidth={1.5} />
+                    <div className="card-enter flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10 sm:size-12">
+                                <Boxes
+                                    className="size-5 sm:size-6"
+                                    strokeWidth={1.5}
+                                />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                            <div className="min-w-0">
+                                <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                                     Daftar Aset
                                 </h1>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    Kelola aset organisasi Anda. Kode aset
-                                    dibuat otomatis dari klasifikasi.
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1 sm:text-sm">
+                                    Kelola aset organisasi Anda.
                                 </p>
                             </div>
                         </div>
@@ -461,7 +561,7 @@ export default function AssetsIndex() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            <Link href={createRoute().url}>
+                            <Link href={withReturnTo(createRoute().url)}>
                                 <Button
                                     size="sm"
                                     className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
@@ -478,7 +578,7 @@ export default function AssetsIndex() {
                         </div>
                     </div>
 
-                    <div className="glass-panel card-enter mt-7 flex flex-col gap-3 rounded-2xl p-3 delay-100 lg:flex-row lg:items-center lg:gap-4">
+                    <div className="glass-panel card-enter mt-5 flex flex-col gap-2.5 rounded-2xl p-3 delay-100 sm:mt-7 sm:flex-row sm:items-center sm:gap-4">
                         <div className="group relative min-w-0 flex-1">
                             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                             <Input
@@ -498,13 +598,13 @@ export default function AssetsIndex() {
                                         350,
                                     );
                                 }}
-                                placeholder="Cari kode aset, serial, brand, atau model..."
-                                className="h-11! rounded-xl border-border/70 bg-card/70 pr-10 pl-10 text-sm shadow-sm backdrop-blur-xl"
+                                placeholder="Cari kode, serial, brand, model..."
+                                className="h-12! rounded-xl border-border/70 bg-card/70 pr-10 pl-10 text-base shadow-sm backdrop-blur-xl sm:h-11! sm:text-sm"
                             />
                             {search ? (
                                 <button
                                     type="button"
-                                    className="absolute top-1/2 right-2.5 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-all hover:scale-110 hover:bg-card hover:text-foreground"
+                                    className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-all hover:scale-110 hover:bg-card hover:text-foreground"
                                     onClick={() => {
                                         setSearch('');
                                         reload({ search: '' });
@@ -521,7 +621,7 @@ export default function AssetsIndex() {
                                 type="button"
                                 variant="outline"
                                 onClick={() => setFilterOpen(true)}
-                                className="h-11! shrink-0 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl"
+                                className="h-12! flex-1 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl sm:h-11! sm:flex-none"
                             >
                                 <SlidersHorizontal className="size-4" />
                                 Filter
@@ -538,7 +638,7 @@ export default function AssetsIndex() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={clearFilters}
-                                    className="h-11! w-11 shrink-0 rounded-xl"
+                                    className="size-12! shrink-0 rounded-xl sm:size-11!"
                                     aria-label="Hapus semua filter"
                                     title="Hapus semua filter"
                                 >
@@ -582,30 +682,28 @@ export default function AssetsIndex() {
                     </div>
 
                     {assets.data.length === 0 ? (
-                        <div className="glass-panel card-enter mt-4 flex flex-col items-center justify-center gap-4 py-20 text-center delay-200">
-                            <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-md">
-                                <Inbox className="size-7" strokeWidth={1.25} />
-                            </div>
-                            <div>
-                                <p className="text-base font-semibold text-foreground">
-                                    {activeFilterCount > 0 || search
-                                        ? 'Tidak ada hasil pencarian'
-                                        : 'Belum ada aset'}
-                                </p>
-                                <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                    {activeFilterCount > 0 || search
-                                        ? 'Tidak ditemukan aset dengan filter tersebut. Coba kata kunci lain.'
-                                        : 'Tambahkan aset pertama Anda untuk mulai mencatat inventaris.'}
-                                </p>
-                            </div>
-                            <Link href={createRoute().url}>
-                                <Button size="sm" className="rounded-xl">
-                                    <Plus className="mr-2 size-4" />
-                                    Tambah Aset
-                                </Button>
-                            </Link>
-                        </div>
-                    ) : (
+                        <EmptyState
+                            icon={Inbox}
+                            title={
+                                activeFilterCount > 0 || search
+                                    ? 'Tidak ada hasil pencarian'
+                                    : 'Belum ada aset'
+                            }
+                            description={
+                                activeFilterCount > 0 || search
+                                    ? 'Tidak ditemukan aset dengan filter tersebut. Coba kata kunci lain.'
+                                    : 'Tambahkan aset pertama Anda untuk mulai mencatat inventaris.'
+                            }
+                            action={
+                                <Link href={withReturnTo(createRoute().url)}>
+                                    <Button size="sm" className="rounded-xl">
+                                        <Plus className="mr-2 size-4" />
+                                        Tambah Aset
+                                    </Button>
+                                </Link>
+                            }
+                        />
+                        ) : (
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {assets.data.map((asset) => {
                                 const chain = [
@@ -694,9 +792,9 @@ export default function AssetsIndex() {
                                             </div>
                                             <div className="flex shrink-0 gap-1">
                                                 <Link
-                                                    href={
-                                                        editRoute(asset.id).url
-                                                    }
+                                                    href={withReturnTo(
+                                                        editRoute(asset.id).url,
+                                                    )}
                                                 >
                                                     <Button
                                                         variant="ghost"
@@ -871,88 +969,76 @@ export default function AssetsIndex() {
                     )}
 
                     {selected.size > 0 && (
-                        <div className="card-enter sticky bottom-4 z-20 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-background/85 px-4 py-3 shadow-xl backdrop-blur-xl delay-150">
-                            <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                        <div
+                            role="toolbar"
+                            aria-label="Aksi massal aset"
+                            className={cn(
+                                'card-enter fixed inset-x-3 z-40 flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-background/90 p-2 shadow-2xl backdrop-blur-xl',
+                                // Mobile/tablet: mengambang tepat di atas tabbar (tabbar tinggi ±64px)
+                                'bottom-[calc(4rem+env(safe-area-inset-bottom))]',
+                                // Desktop: sticky dalam kontainer, di tengah tanpa translate
+                                'sm:p-2.5 lg:sticky lg:inset-x-auto lg:bottom-6 lg:mx-auto lg:w-fit',
+                            )}
+                        >
+                            <p className="flex min-w-0 items-center gap-2 pl-1.5 text-sm font-semibold text-foreground">
                                 <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
                                     {selected.size}
                                 </span>
-                                <span className="truncate">aset dipilih</span>
+                                <span className="truncate">
+                                    dipilih
+                                    <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
+                                        {' '}
+                                        · maks {MAX_BULK}
+                                    </span>
+                                </span>
                             </p>
-                            <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="sm"
-                                    className="h-9 rounded-xl"
+                                    size="icon"
+                                    className="size-10 rounded-xl sm:size-9"
                                     onClick={() => setSelected(new Set())}
+                                    aria-label="Batalkan pilihan"
                                 >
-                                    Batal
+                                    <X className="size-4" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-10 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive sm:size-9"
+                                    onClick={() => setBulkDeleteOpen(true)}
+                                    aria-label="Hapus aset terpilih"
+                                >
+                                    <Trash2 className="size-4" />
                                 </Button>
                                 <Button
                                     type="button"
                                     size="sm"
-                                    className="h-9 gap-2 rounded-xl"
+                                    className="h-10 gap-2 rounded-xl px-3 sm:h-9 sm:px-4"
                                     onClick={openLabels}
                                 >
                                     <Barcode className="size-4" />
-                                    Cetak Barcode
+                                    <span className="hidden sm:inline">
+                                        Cetak Barcode
+                                    </span>
+                                    <span className="sm:hidden">Barcode</span>
                                 </Button>
                             </div>
                         </div>
                     )}
 
                     {assets.last_page > 1 && (
-                        <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
-                            <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {assets.from}–{assets.to} dari{' '}
-                                {assets.total}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 rounded-xl"
-                                    disabled={!assets.links[0]?.url}
-                                    onClick={() =>
-                                        goToPage(assets.links[0]?.url)
-                                    }
-                                >
-                                    Sebelumnya
-                                </Button>
-                                {assets.links.slice(1, -1).map((link, i) => (
-                                    <Button
-                                        key={i}
-                                        variant={
-                                            link.active ? 'default' : 'outline'
-                                        }
-                                        size="icon"
-                                        className="h-9 w-9 rounded-xl"
-                                        disabled={!link.url}
-                                        onClick={() => goToPage(link.url)}
-                                    >
-                                        {link.label}
-                                    </Button>
-                                ))}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 rounded-xl"
-                                    disabled={
-                                        !assets.links[assets.links.length - 1]
-                                            ?.url
-                                    }
-                                    onClick={() =>
-                                        goToPage(
-                                            assets.links[
-                                                assets.links.length - 1
-                                            ]?.url,
-                                        )
-                                    }
-                                >
-                                    Selanjutnya
-                                </Button>
-                            </div>
-                        </div>
+                        <ResourcePagination
+                            links={assets.links}
+                            currentPage={assets.current_page}
+                            lastPage={assets.last_page}
+                            from={assets.from}
+                            to={assets.to}
+                            total={assets.total}
+                            onPageChange={goToPage}
+                        />
                     )}
                 </div>
             </div>
@@ -1138,10 +1224,13 @@ export default function AssetsIndex() {
             </Dialog>
 
             <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-                <DialogContent className="sm:max-w-lg glass-panel backdrop-blur-xl bg-background/85 border-border/30 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ease-out-[cubic-bezier(0.16,1,0.3,1)]">
-                    <DialogHeader className="pb-3 border-b border-border/20">
-                        <DialogTitle className="text-lg font-semibold tracking-tight text-foreground flex items-center gap-2">
-                            <Filter className="size-5 text-primary" strokeWidth={2} />
+                <DialogContent className="glass-panel ease-out-[cubic-bezier(0.16,1,0.3,1)] animate-in border-border/30 bg-background/85 shadow-2xl backdrop-blur-xl duration-200 zoom-in-95 fade-in sm:max-w-lg">
+                    <DialogHeader className="border-b border-border/20 pb-3">
+                        <DialogTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+                            <Filter
+                                className="size-5 text-primary"
+                                strokeWidth={2}
+                            />
                             Filter Aset
                         </DialogTitle>
                         <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
@@ -1149,25 +1238,30 @@ export default function AssetsIndex() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 mt-4">
+                    <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-foreground">Golongan</Label>
+                            <Label className="text-sm font-medium text-foreground">
+                                Golongan
+                            </Label>
                             <Select
                                 value={groupFilter}
-                                onValueChange={setGroupFilter}
+                                onValueChange={handleGroupChange}
                             >
-                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
                                     <SelectValue placeholder="Semua Golongan" />
                                 </SelectTrigger>
-                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
-                                    <SelectItem value="" className="px-3 py-2 text-sm">
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
+                                    <SelectItem
+                                        value=""
+                                        className="px-3 py-2 text-sm"
+                                    >
                                         Semua Golongan
                                     </SelectItem>
                                     {groups.map((group) => (
                                         <SelectItem
                                             key={group.id}
                                             value={group.id}
-                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {group.code
                                                 ? `${group.code} — `
@@ -1180,23 +1274,62 @@ export default function AssetsIndex() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-foreground">Department</Label>
+                            <Label className="text-sm font-medium text-foreground">
+                                Kategori
+                            </Label>
+                            <Select
+                                value={categoryFilter}
+                                onValueChange={setCategoryFilter}
+                            >
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <SelectValue placeholder="Semua Kategori" />
+                                </SelectTrigger>
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
+                                    <SelectItem
+                                        value=""
+                                        className="px-3 py-2 text-sm"
+                                    >
+                                        Semua Kategori
+                                    </SelectItem>
+                                    {categories.map((category) => (
+                                        <SelectItem
+                                            key={category.id}
+                                            value={category.id}
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
+                                        >
+                                            {category.code
+                                                ? `${category.code} — `
+                                                : ''}
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">
+                                Department
+                            </Label>
                             <Select
                                 value={departmentFilter}
                                 onValueChange={setDepartmentFilter}
                             >
-                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
                                     <SelectValue placeholder="Semua Department" />
                                 </SelectTrigger>
-                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
-                                    <SelectItem value="" className="px-3 py-2 text-sm">
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
+                                    <SelectItem
+                                        value=""
+                                        className="px-3 py-2 text-sm"
+                                    >
                                         Semua Department
                                     </SelectItem>
                                     {departments.map((department) => (
                                         <SelectItem
                                             key={department.id_department}
                                             value={department.id_department}
-                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {department.nama_department}
                                         </SelectItem>
@@ -1206,20 +1339,22 @@ export default function AssetsIndex() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-foreground">Status Aset</Label>
+                            <Label className="text-sm font-medium text-foreground">
+                                Status Aset
+                            </Label>
                             <Select
                                 value={statusFilter}
                                 onValueChange={setStatusFilter}
                             >
-                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
                                     <SelectValue placeholder="Semua Status" />
                                 </SelectTrigger>
-                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
                                     {STATUS_OPTIONS.map((option) => (
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
-                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {option.label}
                                         </SelectItem>
@@ -1229,20 +1364,22 @@ export default function AssetsIndex() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-foreground">Kondisi Aset</Label>
+                            <Label className="text-sm font-medium text-foreground">
+                                Kondisi Aset
+                            </Label>
                             <Select
                                 value={conditionFilter}
                                 onValueChange={setConditionFilter}
                             >
-                                <SelectTrigger className="h-10 bg-background/70 border-border/40 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
                                     <SelectValue placeholder="Semua Kondisi" />
                                 </SelectTrigger>
-                                <SelectContent className="glass-panel backdrop-blur-xl bg-background/90 border-border/30 shadow-2xl overflow-hidden rounded-xl p-1">
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
                                     {CONDITION_OPTIONS.map((option) => (
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
-                                            className="px-3 py-2 text-sm hover:bg-primary/5 focus:bg-primary/5 transition-colors rounded-md"
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {option.label}
                                         </SelectItem>
@@ -1252,12 +1389,12 @@ export default function AssetsIndex() {
                         </div>
                     </div>
 
-                    <DialogFooter className="mt-6 gap-3 sm:justify-between pt-4 border-t border-border/20">
+                    <DialogFooter className="mt-6 gap-3 border-t border-border/20 pt-4 sm:justify-between">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={clearFilters}
-                            className="h-10 px-4 gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                            className="h-10 gap-2 px-4 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground"
                         >
                             <X className="size-4" strokeWidth={2} />
                             Reset
@@ -1265,10 +1402,54 @@ export default function AssetsIndex() {
                         <Button
                             type="button"
                             onClick={applyFilters}
-                            className="h-10 px-5 gap-2 text-sm font-semibold rounded-xl bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 ease-out"
+                            className="h-10 gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-xl active:scale-[0.98]"
                         >
                             <Filter className="size-4" strokeWidth={2} />
                             Terapkan Filter
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={bulkDeleteOpen}
+                onOpenChange={(open) => {
+                    if (!bulkDeleting) {
+                        setBulkDeleteOpen(open);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Aset Terpilih</DialogTitle>
+                        <DialogDescription>
+                            Hapus{' '}
+                            <span className="font-semibold text-foreground">
+                                {selected.size}
+                            </span>{' '}
+                            aset yang dipilih? Tindakan ini tidak dapat
+                            dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                            disabled={bulkDeleting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={confirmBulkDelete}
+                            disabled={bulkDeleting}
+                        >
+                            {bulkDeleting && (
+                                <Spinner className="mr-2 size-4" />
+                            )}
+                            Hapus {selected.size} Aset
                         </Button>
                     </DialogFooter>
                 </DialogContent>

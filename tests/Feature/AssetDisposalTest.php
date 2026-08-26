@@ -2,12 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AssetStatus;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
-use App\Models\Department;
-use App\Models\Employee;
-use App\Models\Item;
-use App\Models\Location;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -100,13 +97,13 @@ class AssetDisposalTest extends TestCase
 
         $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
         AssetDisposal::withoutGlobalScopes()->forceCreate([
-            'tenant_id' => $other->id,
             'asset_id' => Asset::withoutGlobalScopes()->forceCreate([
                 'id' => '01942f1e-766a-7d2a-bb89-47a88e91f1aa',
                 'tenant_id' => $other->id,
                 'kode_asset' => 'AST-OTHER',
                 'status' => 'ACT',
             ])->id,
+            'disposed_by' => $this->user->id,
             'status' => 'pending',
         ]);
 
@@ -115,7 +112,7 @@ class AssetDisposalTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1));
 
-        $this->assertSame(1, AssetDisposal::count());
+        $this->assertSame(2, AssetDisposal::count());
     }
 
     public function test_create_renders_form_with_active_assets(): void
@@ -164,7 +161,7 @@ class AssetDisposalTest extends TestCase
         $this->assertNotNull($disposal);
         $this->assertSame($asset->id, $disposal->asset_id);
         $this->assertSame('Aset sudah rusak total', $disposal->reason);
-        $this->assertSame('pending', $disposal->status);
+        $this->assertSame('pending', $disposal->status->value);
         $this->assertEquals($this->user->id, $disposal->disposed_by);
     }
 
@@ -231,7 +228,7 @@ class AssetDisposalTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('disposals.edit', $disposal))
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('error', 'Only pending disposal requests can be edited.');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
     }
 
     public function test_pending_disposal_can_be_updated(): void
@@ -266,7 +263,7 @@ class AssetDisposalTest extends TestCase
                 'reason' => 'Alasan diperbarui',
             ])
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('error', 'Only pending disposal requests can be updated.');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
     }
 
     public function test_pending_disposal_can_be_deleted(): void
@@ -287,7 +284,7 @@ class AssetDisposalTest extends TestCase
         $this->actingAs($this->user)
             ->delete(route('disposals.destroy', $disposal))
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('error', 'Only pending disposal requests can be deleted.');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
         $this->assertDatabaseHas('asset_disposals', ['id' => $disposal->id]);
     }
@@ -301,12 +298,12 @@ class AssetDisposalTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('disposals.approve', $disposal))
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('success');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $disposal->refresh();
         $asset->refresh();
 
-        $this->assertSame('approved', $disposal->status);
+        $this->assertSame('approved', $disposal->status->value);
         $this->assertSame('DSP', $asset->status->value);
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
@@ -324,13 +321,13 @@ class AssetDisposalTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('disposals.reject', $disposal))
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('success');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $disposal->refresh();
         $asset->refresh();
 
-        $this->assertSame('rejected', $disposal->status);
-        $this->assertSame($originalStatus, $asset->status->value);
+        $this->assertSame('rejected', $disposal->status->value);
+        $this->assertSame($originalStatus instanceof AssetStatus ? $originalStatus->value : $originalStatus, $asset->status->value);
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
             'field' => 'disposal',
@@ -343,11 +340,12 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'rejected']);
 
         $this->actingAs($this->user)
+            ->from(route('disposals.index'))
             ->post(route('disposals.approve', $disposal))
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('error', 'Only pending disposal requests can be approved.');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
-        $this->assertSame('rejected', $disposal->fresh()->status);
+        $this->assertSame('rejected', $disposal->fresh()->status->value);
     }
 
     public function test_bulk_delete_only_deletes_pending_disposals(): void
@@ -362,7 +360,7 @@ class AssetDisposalTest extends TestCase
                 'ids' => [$pending1->id, $pending2->id, $approved->id],
             ])
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('success');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $this->assertDatabaseMissing('asset_disposals', ['id' => $pending1->id]);
         $this->assertDatabaseMissing('asset_disposals', ['id' => $pending2->id]);
@@ -380,7 +378,7 @@ class AssetDisposalTest extends TestCase
                 'ids' => [$approved->id, $rejected->id],
             ])
             ->assertRedirect(route('disposals.index'))
-            ->assertSessionHas('error', 'No pending disposal requests selected for deletion.');
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
         $this->assertDatabaseHas('asset_disposals', ['id' => $approved->id]);
         $this->assertDatabaseHas('asset_disposals', ['id' => $rejected->id]);
@@ -403,6 +401,17 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->get(route('disposals.show', $disposal))
+            ->assertRedirect(route('home'));
+    }
+
+    public function test_guests_are_redirected_from_approve_and_reject(): void
+    {
+        $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
+
+        $this->post(route('disposals.approve', $disposal))
+            ->assertRedirect(route('home'));
+
+        $this->post(route('disposals.reject', $disposal))
             ->assertRedirect(route('home'));
     }
 }

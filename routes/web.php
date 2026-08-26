@@ -3,7 +3,9 @@
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AssetDisposalController;
+use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\AssetTransferController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
@@ -27,8 +29,10 @@ Route::get('/', function () {
     return redirect()->route('authsso');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
     Route::post('tenant/switch', [TenantSwitchController::class, 'switch'])->name('tenant.switch');
 
@@ -86,8 +90,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('assets/import/template', [AssetController::class, 'importTemplate'])->name('assets.import-template');
     Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
     Route::post('assets/upload', [AssetController::class, 'upload'])->name('assets.upload');
+    Route::delete('assets/bulk', [AssetController::class, 'destroyBulk'])->name('assets.destroy-bulk');
     Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
     Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
+    Route::get('assets/{asset}/history', [AssetHistoryController::class, 'index'])->name('assets.history');
     Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
     Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
     Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
@@ -139,13 +145,17 @@ Route::get('auth/redirect', [OIDCController::class, 'redirect'])->name('authsso'
 Route::get('auth/oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
 Route::get('auth/logout', [OIDCController::class, 'logout'])->name('auth.logout');
 
-Route::get('disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
-Route::get('disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
-Route::post('disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
-Route::get('disposals/{disposal}', [AssetDisposalController::class, 'show'])->name('disposals.show');
-Route::get('disposals/{disposal}/edit', [AssetDisposalController::class, 'edit'])->name('disposals.edit');
-Route::patch('disposals/{disposal}', [AssetDisposalController::class, 'update'])->name('disposals.update');
-Route::delete('disposals/{disposal}', [AssetDisposalController::class, 'destroy'])->name('disposals.destroy');
-Route::post('disposals/bulk', [AssetDisposalController::class, 'bulk'])->name('disposals.bulk');
+Route::middleware('auth')->group(function () {
+    Route::get('asset-disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
+    Route::get('asset-disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
+    Route::post('asset-disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
+    Route::get('asset-disposals/{disposal}', [AssetDisposalController::class, 'show'])->name('disposals.show');
+    Route::post('asset-disposals/{disposal}/approve', [AssetDisposalController::class, 'approve'])->name('disposals.approve');
+    Route::post('asset-disposals/{disposal}/reject', [AssetDisposalController::class, 'reject'])->name('disposals.reject');
+    Route::get('asset-disposals/{disposal}/edit', [AssetDisposalController::class, 'edit'])->name('disposals.edit');
+    Route::patch('asset-disposals/{disposal}', [AssetDisposalController::class, 'update'])->name('disposals.update');
+    Route::delete('asset-disposals/{disposal}', [AssetDisposalController::class, 'destroy'])->name('disposals.destroy');
+    Route::post('asset-disposals/bulk', [AssetDisposalController::class, 'bulk'])->name('disposals.bulk');
+});
 
 require __DIR__.'/settings.php';

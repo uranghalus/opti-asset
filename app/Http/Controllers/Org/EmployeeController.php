@@ -59,6 +59,10 @@ class EmployeeController extends Controller
     {
         return Inertia::render('Employees/Show', [
             'employee' => $employee->load('department', 'roles'),
+            'roles' => Role::query()
+                ->where('guard_name', 'web')
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 

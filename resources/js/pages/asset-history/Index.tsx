@@ -63,7 +63,7 @@ function getFieldLabel(field: string): string {
 }
 
 export default function AssetHistoryIndex() {
-    const { asset, histories } = usePage().props as {
+    const { asset, histories } = usePage().props as unknown as {
         asset: { id: string; kode_asset: string | null; item: { id: string; name: string; code: string } | null; location: { id: string; name: string } | null; department: { id_department: string; nama_department: string } | null };
         histories: {
             data: Array<{
@@ -265,26 +265,6 @@ router.get(url, {}, { preserveState: true, replace: true });
             </div>
         </div>
     );
-}
-
-function formatValue(value: string | null): string {
-    if (!value) {
-return '—';
-}
-
-    if (value === 'true') {
-return 'Ya';
-}
-
-    if (value === 'false') {
-return 'Tidak';
-}
-
-    return value;
-}
-
-function getFieldLabel(field: string): string {
-    return FIELD_LABELS[field] ?? field;
 }
 
 AssetHistoryIndex.layout = {

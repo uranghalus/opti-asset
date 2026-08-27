@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('assets/browse', [AssetController::class, 'browse'])->name('assets.browse');
     Route::get('assets/scan', [AssetController::class, 'scan'])->name('assets.scan');
     Route::get('assets/scan/lookup', [AssetController::class, 'scanLookup'])->name('assets.scan-lookup');
     Route::get('assets/labels', [AssetController::class, 'labels'])->name('assets.labels');

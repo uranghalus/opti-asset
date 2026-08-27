@@ -8,6 +8,7 @@ export type ClassificationNode = {
     description: string | null;
     notes?: string | null;
     child_count: number;
+    asset_count?: number;
     item_count?: number;
     children?: ClassificationNode[];
 };

@@ -20,7 +20,15 @@ export default defineConfig({
         inertia(),
         react({
             babel: {
-                plugins: ['babel-plugin-react-compiler'],
+                plugins: [
+                    [
+                        'babel-plugin-react-compiler',
+                        {
+                            sources: (filename: string) =>
+                                !filename.includes('lucide-react'),
+                        },
+                    ],
+                ],
             },
         }),
         tailwindcss(),

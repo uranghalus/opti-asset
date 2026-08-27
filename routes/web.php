@@ -15,6 +15,7 @@ use App\Http\Controllers\Org\DepartmentController;
 use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TenantSwitchController;
 use Illuminate\Http\Request;
@@ -83,6 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+    Route::get('assets/browse', [AssetController::class, 'browse'])->name('assets.browse');
     Route::get('assets/scan', [AssetController::class, 'scan'])->name('assets.scan');
     Route::get('assets/scan/lookup', [AssetController::class, 'scanLookup'])->name('assets.scan-lookup');
     Route::get('assets/labels', [AssetController::class, 'labels'])->name('assets.labels');
@@ -156,6 +158,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('asset-disposals/{disposal}', [AssetDisposalController::class, 'update'])->name('disposals.update');
     Route::delete('asset-disposals/{disposal}', [AssetDisposalController::class, 'destroy'])->name('disposals.destroy');
     Route::post('asset-disposals/bulk', [AssetDisposalController::class, 'bulk'])->name('disposals.bulk');
+
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export/transfers', [ReportController::class, 'exportTransfers'])->name('reports.export.transfers');
+    Route::get('reports/export/disposals', [ReportController::class, 'exportDisposals'])->name('reports.export.disposals');
 });
 
 require __DIR__.'/settings.php';

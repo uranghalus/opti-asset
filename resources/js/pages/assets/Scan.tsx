@@ -1,4 +1,4 @@
-﻿import { router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
     ArrowLeft,
@@ -336,7 +336,7 @@ export default function AssetScan() {
                                         {result.kode_asset ?? '—'}
                                     </p>
                                     {chain ? (
-                                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                             {chain}
                                         </p>
                                     ) : null}
@@ -345,12 +345,12 @@ export default function AssetScan() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3">
-                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Status
                                     </p>
                                     <span
                                         className={cn(
-                                            'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                            'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ring-1',
                                             assetStatusChip(result.status),
                                         )}
                                     >
@@ -358,7 +358,7 @@ export default function AssetScan() {
                                     </span>
                                 </div>
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3">
-                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Kondisi
                                     </p>
                                     <p className="mt-2 text-sm font-semibold text-foreground">
@@ -368,7 +368,7 @@ export default function AssetScan() {
                                 <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card/60 p-3">
                                     <MapPin className="size-4 shrink-0 text-muted-foreground" />
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                             Lokasi
                                         </p>
                                         <p className="truncate text-sm font-semibold text-foreground">
@@ -379,7 +379,7 @@ export default function AssetScan() {
                                 <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card/60 p-3">
                                     <ShieldCheck className="size-4 shrink-0 text-muted-foreground" />
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                             Serial
                                         </p>
                                         <p className="truncate font-mono text-sm font-semibold text-foreground">

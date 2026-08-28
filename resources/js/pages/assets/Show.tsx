@@ -253,7 +253,7 @@ function DetailItem({
                 <Icon className="size-4" strokeWidth={1.75} />
             </div>
             <div className="min-w-0">
-                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     {label}
                 </p>
                 <p
@@ -399,7 +399,7 @@ export default function AssetShow() {
                                 </h1>
                                 <span
                                     className={cn(
-                                        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ring-1',
                                         assetStatusChip(asset.status),
                                     )}
                                 >
@@ -708,12 +708,12 @@ export default function AssetShow() {
                             </div>
                             <div className="mt-5 grid grid-cols-2 gap-3">
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3.5">
-                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Status
                                     </p>
                                     <span
                                         className={cn(
-                                            'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                            'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ring-1',
                                             assetStatusChip(asset.status),
                                         )}
                                     >
@@ -721,7 +721,7 @@ export default function AssetShow() {
                                     </span>
                                 </div>
                                 <div className="rounded-xl border border-border/70 bg-card/60 p-3.5">
-                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Kondisi
                                     </p>
                                     <span
@@ -767,7 +767,7 @@ export default function AssetShow() {
                                     mono
                                 />
                                 <div>
-                                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Dokumen Pendukung
                                     </p>
                                     {hasDocuments ? (
@@ -981,7 +981,7 @@ export default function AssetShow() {
                                                                         entry.field,
                                                                     )}
                                                                 </p>
-                                                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                                                <span className="text-xs text-muted-foreground tabular-nums">
                                                                     {formatHistoryTime(
                                                                         entry.created_at,
                                                                     )}
@@ -1032,7 +1032,7 @@ export default function AssetShow() {
                                                             </div>
 
                                                             {entry.changed_by_name && (
-                                                                <p className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
                                                                     <UserRound
                                                                         className="size-3"
                                                                         strokeWidth={

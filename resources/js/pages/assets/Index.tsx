@@ -626,7 +626,7 @@ export default function AssetsIndex() {
                                 <SlidersHorizontal className="size-4" />
                                 Filter
                                 {activeFilterCount > 0 && (
-                                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground tabular-nums">
                                         {activeFilterCount}
                                     </span>
                                 )}
@@ -703,7 +703,7 @@ export default function AssetsIndex() {
                                 </Link>
                             }
                         />
-                        ) : (
+                    ) : (
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {assets.data.map((asset) => {
                                 const chain = [
@@ -746,7 +746,7 @@ export default function AssetsIndex() {
                                                                 {asset.photo_url
                                                                     .length >
                                                                     1 && (
-                                                                    <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-[9px] font-bold text-muted-foreground tabular-nums shadow-sm">
+                                                                    <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-xs font-bold text-muted-foreground tabular-nums shadow-sm">
                                                                         +
                                                                         {asset
                                                                             .photo_url
@@ -825,7 +825,7 @@ export default function AssetsIndex() {
                                             </span>
                                             <span
                                                 className={cn(
-                                                    'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
+                                                    'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-bold uppercase ring-1',
                                                     assetStatusChip(
                                                         asset.status,
                                                     ),
@@ -855,7 +855,7 @@ export default function AssetsIndex() {
                                                                 {index > 0 && (
                                                                     <ChevronRight className="size-3 shrink-0 text-muted-foreground/50" />
                                                                 )}
-                                                                <span className="inline-flex max-w-40 items-center gap-1 truncate rounded-md px-2 py-0.5 text-[10px] font-semibold text-muted-foreground ring-1 ring-border/70">
+                                                                <span className="inline-flex max-w-40 items-center gap-1 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-muted-foreground ring-1 ring-border/70">
                                                                     <span className="truncate">
                                                                         {
                                                                             level.name
@@ -866,7 +866,7 @@ export default function AssetsIndex() {
                                                         ),
                                                     )
                                                 ) : (
-                                                    <span className="text-[10px] text-muted-foreground">
+                                                    <span className="text-xs text-muted-foreground">
                                                         Belum ada klasifikasi
                                                     </span>
                                                 )}
@@ -947,7 +947,7 @@ export default function AssetsIndex() {
                                             <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
                                                 <span
                                                     className={cn(
-                                                        'inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ring-1',
+                                                        'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ring-1',
                                                         conditionAccent(
                                                             asset.condition,
                                                         ),
@@ -955,7 +955,7 @@ export default function AssetsIndex() {
                                                 >
                                                     {asset.condition ?? '—'}
                                                 </span>
-                                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                                <span className="text-xs text-muted-foreground tabular-nums">
                                                     {formatDate(
                                                         asset.created_at,
                                                     )}
@@ -981,7 +981,7 @@ export default function AssetsIndex() {
                             )}
                         >
                             <p className="flex min-w-0 items-center gap-2 pl-1.5 text-sm font-semibold text-foreground">
-                                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground tabular-nums">
                                     {selected.size}
                                 </span>
                                 <span className="truncate">

@@ -1,10 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import {
-    ChevronLeft,
-    History,
-    MapPin,
-    Building2,
-} from 'lucide-react';
+import { ChevronLeft, History, MapPin, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -44,16 +39,16 @@ const FIELD_LABELS: Record<string, string> = {
 
 function formatValue(value: string | null): string {
     if (!value) {
-return '—';
-}
+        return '—';
+    }
 
     if (value === 'true') {
-return 'Ya';
-}
+        return 'Ya';
+    }
 
     if (value === 'false') {
-return 'Tidak';
-}
+        return 'Tidak';
+    }
 
     return value;
 }
@@ -64,7 +59,16 @@ function getFieldLabel(field: string): string {
 
 export default function AssetHistoryIndex() {
     const { asset, histories } = usePage().props as unknown as {
-        asset: { id: string; kode_asset: string | null; item: { id: string; name: string; code: string } | null; location: { id: string; name: string } | null; department: { id_department: string; nama_department: string } | null };
+        asset: {
+            id: string;
+            kode_asset: string | null;
+            item: { id: string; name: string; code: string } | null;
+            location: { id: string; name: string } | null;
+            department: {
+                id_department: string;
+                nama_department: string;
+            } | null;
+        };
         histories: {
             data: Array<{
                 id: string;
@@ -90,8 +94,8 @@ export default function AssetHistoryIndex() {
 
     const goToPage = (url: string | null) => {
         if (url) {
-router.get(url, {}, { preserveState: true, replace: true });
-}
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
     };
 
     return (
@@ -117,7 +121,10 @@ router.get(url, {}, { preserveState: true, replace: true });
                                 Riwayat Aset
                             </h1>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                {asset.item?.name ?? 'Aset'} {asset.kode_asset ? `(${asset.kode_asset})` : ''}
+                                {asset.item?.name ?? 'Aset'}{' '}
+                                {asset.kode_asset
+                                    ? `(${asset.kode_asset})`
+                                    : ''}
                             </p>
                         </div>
                     </div>
@@ -133,7 +140,9 @@ router.get(url, {}, { preserveState: true, replace: true });
                             {asset.department && (
                                 <>
                                     <Building2 className="size-4" />
-                                    <span>{asset.department.nama_department}</span>
+                                    <span>
+                                        {asset.department.nama_department}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -164,7 +173,8 @@ router.get(url, {}, { preserveState: true, replace: true });
                                 Belum ada riwayat
                             </p>
                             <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                Riwayat perubahan akan muncul di sini setelah aset mengalami perubahan.
+                                Riwayat perubahan akan muncul di sini setelah
+                                aset mengalami perubahan.
                             </p>
                         </div>
                     </div>
@@ -174,11 +184,21 @@ router.get(url, {}, { preserveState: true, replace: true });
                             <Table className="w-full">
                                 <TableHeader>
                                     <tr className="border-b border-border/40 text-xs tracking-wide text-muted-foreground uppercase">
-                                        <th className="px-4 py-3 font-semibold">Waktu</th>
-                                        <th className="px-4 py-3 font-semibold">Field</th>
-                                        <th className="px-4 py-3 font-semibold">Nilai Lama</th>
-                                        <th className="px-4 py-3 font-semibold">Nilai Baru</th>
-                                        <th className="px-4 py-3 font-semibold">Diubah Oleh</th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Waktu
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Field
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Nilai Lama
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Nilai Baru
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Diubah Oleh
+                                        </th>
                                     </tr>
                                 </TableHeader>
                                 <TableBody>
@@ -187,8 +207,10 @@ router.get(url, {}, { preserveState: true, replace: true });
                                             key={history.id}
                                             className="border-b border-border/30 transition-colors last:border-0 hover:bg-accent/30"
                                         >
-                                            <TableCell className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-                                                {new Date(history.created_at).toLocaleString('id-ID', {
+                                            <TableCell className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                                                {new Date(
+                                                    history.created_at,
+                                                ).toLocaleString('id-ID', {
                                                     day: 'numeric',
                                                     month: 'short',
                                                     year: 'numeric',
@@ -206,7 +228,8 @@ router.get(url, {}, { preserveState: true, replace: true });
                                                 {formatValue(history.new_value)}
                                             </TableCell>
                                             <TableCell className="px-4 py-3 text-xs text-muted-foreground">
-                                                {history.changed_by_name ?? 'Sistem'}
+                                                {history.changed_by_name ??
+                                                    'Sistem'}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -217,8 +240,8 @@ router.get(url, {}, { preserveState: true, replace: true });
                         {histories.last_page > 1 && (
                             <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                                 <p className="text-xs text-muted-foreground tabular-nums">
-                                    Menampilkan {histories.from}–{histories.to} dari{' '}
-                                    {histories.total}
+                                    Menampilkan {histories.from}–{histories.to}{' '}
+                                    dari {histories.total}
                                 </p>
                                 <div className="flex items-center gap-1">
                                     <Button
@@ -226,32 +249,46 @@ router.get(url, {}, { preserveState: true, replace: true });
                                         size="sm"
                                         className="h-9 rounded-xl"
                                         disabled={!histories.links[0]?.url}
-                                        onClick={() => goToPage(histories.links[0]?.url)}
+                                        onClick={() =>
+                                            goToPage(histories.links[0]?.url)
+                                        }
                                     >
                                         Sebelumnya
                                     </Button>
-                                    {histories.links.slice(1, -1).map((link, i) => (
-                                        <Button
-                                            key={i}
-                                            variant={link.active ? 'default' : 'outline'}
-                                            size="icon"
-                                            className="h-9 w-9 rounded-xl"
-                                            disabled={!link.url}
-                                            onClick={() => goToPage(link.url)}
-                                        >
-                                            {link.label}
-                                        </Button>
-                                    ))}
+                                    {histories.links
+                                        .slice(1, -1)
+                                        .map((link, i) => (
+                                            <Button
+                                                key={i}
+                                                variant={
+                                                    link.active
+                                                        ? 'default'
+                                                        : 'outline'
+                                                }
+                                                size="icon"
+                                                className="h-9 w-9 rounded-xl"
+                                                disabled={!link.url}
+                                                onClick={() =>
+                                                    goToPage(link.url)
+                                                }
+                                            >
+                                                {link.label}
+                                            </Button>
+                                        ))}
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         className="h-9 rounded-xl"
                                         disabled={
-                                            !histories.links[histories.links.length - 1]?.url
+                                            !histories.links[
+                                                histories.links.length - 1
+                                            ]?.url
                                         }
                                         onClick={() =>
                                             goToPage(
-                                                histories.links[histories.links.length - 1]?.url,
+                                                histories.links[
+                                                    histories.links.length - 1
+                                                ]?.url,
                                             )
                                         }
                                     >

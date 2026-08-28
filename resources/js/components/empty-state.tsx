@@ -1,5 +1,5 @@
-import type {LucideIcon} from 'lucide-react';
-import type {ReactNode} from 'react';
+import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
     icon?: LucideIcon;
@@ -8,7 +8,12 @@ interface EmptyStateProps {
     action?: ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({
+    icon: Icon,
+    title,
+    description,
+    action,
+}: EmptyStateProps) {
     return (
         <div className="glass-panel card-enter mt-4 flex flex-col items-center justify-center gap-4 py-20 text-center delay-200">
             {Icon && (
@@ -17,7 +22,9 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
                 </div>
             )}
             <div>
-                <p className="text-base font-semibold text-foreground">{title}</p>
+                <p className="text-base font-semibold text-foreground">
+                    {title}
+                </p>
                 {description && (
                     <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
                         {description}

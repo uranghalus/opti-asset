@@ -96,59 +96,6 @@ class AssetController extends Controller
 
     public function browse(Request $request): Response
     {
-<<<<<<< HEAD
-        $level = $request->string('level')->trim()->toString();
-        $nodeId = $request->string('node')->trim()->toString();
-
-        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
-        $validLevel = in_array($level, $allowedLevels, true);
-
-        $tree = $this->buildBrowseTree();
-
-        $selected = null;
-        $breadcrumb = [];
-        $assets = null;
-
-        if ($validLevel && $nodeId !== '') {
-            $field = match ($level) {
-                'group' => 'asset_group_id',
-                'category' => 'asset_category_id',
-                'cluster' => 'asset_cluster_id',
-                default => 'asset_sub_cluster_id',
-            };
-
-            $perPage = min((int) $request->integer('per_page', 15), 100);
-            $status = $request->string('status')->trim()->toString();
-
-            $assets = Asset::query()
-                ->with([
-                    'item:id,name,code',
-                    'location:id,name',
-                    'department:id_department,nama_department',
-                    'assetGroup:id,code,name',
-                    'assetCategory:id,code,name',
-                    'assetCluster:id,code,name',
-                    'assetSubCluster:id,code,name',
-                ])
-                ->where($field, $nodeId)
-                ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage)
-                ->withQueryString();
-
-            $selected = ['level' => $level, 'id' => $nodeId];
-            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
-        }
-
-        return Inertia::render('assets/Browse', [
-            'tree' => $tree,
-            'selected' => $selected,
-            'breadcrumb' => $breadcrumb,
-            'assets' => $assets,
-            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
-            'categories' => AssetCategory::query()->get(['id', 'code', 'name', 'asset_group_id']),
-            'status' => $status,
-=======
         $node = $request->string('node')->trim()->toString();
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
@@ -212,28 +159,11 @@ class AssetController extends Controller
                 'department' => $department,
             ],
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
         ]);
     }
 
     /**
-<<<<<<< HEAD
-     * Build the classification tree with rolled-up asset counts.
-     *
-     * @return array<int, array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, children: array
-     * }>
-     */
-    private function buildBrowseTree(): array
-    {
-        return AssetGroup::query()
-            ->withCount('assets')
-            ->with([
-                'categories' => fn ($query) => $query
-                    ->withCount('assets')
-=======
-     * Build the classification tree (Group → Category → Cluster → Sub-cluster)
+     * Build the classification tree (Group ÔåÆ Category ÔåÆ Cluster ÔåÆ Sub-cluster)
      * with a rolled-up asset count per node. Each asset is counted exactly
      * once, at the deepest classification level it occupies.
      *
@@ -274,24 +204,15 @@ class AssetController extends Controller
             ->with([
                 'categories' => fn ($query) => $query
                     ->withCount('clusters')
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
                     ->orderBy('sort_order')
                     ->orderBy('code')
                     ->with([
                         'clusters' => fn ($query) => $query
-<<<<<<< HEAD
-                            ->withCount('assets')
-=======
                             ->withCount('subClusters')
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
                             ->orderBy('sort_order')
                             ->orderBy('code')
                             ->with([
                                 'subClusters' => fn ($query) => $query
-<<<<<<< HEAD
-                                    ->withCount('assets')
-=======
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
                                     ->orderBy('sort_order')
                                     ->orderBy('code'),
                             ]),
@@ -299,10 +220,6 @@ class AssetController extends Controller
             ])
             ->orderBy('sort_order')
             ->orderBy('code')
-<<<<<<< HEAD
-            ->get()
-            ->map(fn (AssetGroup $group) => $this->serializeBrowseGroup($group))
-=======
             ->get();
 
         $mapCluster = function (AssetCluster $cluster) use (&$direct): array {
@@ -363,139 +280,10 @@ class AssetController extends Controller
                     'children' => $categoryChildren,
                 ];
             })
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
             ->values()
             ->all();
     }
 
-<<<<<<< HEAD
-    /** @param AssetGroup $group */
-    private function serializeBrowseGroup($group): array
-    {
-        return [
-            'id' => $group->id,
-            'code' => $group->code,
-            'name' => $group->name,
-            'description' => $group->description,
-            'child_count' => $group->categories_count,
-            'asset_count' => $group->assets_count,
-            'children' => $group->categories->map(
-                fn (AssetCategory $category) => $this->serializeBrowseCategory($category),
-            )->all(),
-        ];
-    }
-
-    /** @param AssetCategory $category */
-    private function serializeBrowseCategory($category): array
-    {
-        return [
-            'id' => $category->id,
-            'code' => $category->code,
-            'name' => $category->name,
-            'description' => $category->description,
-            'child_count' => $category->clusters_count,
-            'asset_count' => $category->assets_count,
-            'children' => $category->clusters->map(
-                fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster),
-            )->all(),
-        ];
-    }
-
-    /** @param AssetCluster $cluster */
-    private function serializeBrowseCluster($cluster): array
-    {
-        return [
-            'id' => $cluster->id,
-            'code' => $cluster->code,
-            'name' => $cluster->name,
-            'description' => $cluster->description,
-            'child_count' => $cluster->subClusters_count,
-            'asset_count' => $cluster->assets_count,
-            'children' => $cluster->subClusters->map(
-                fn (AssetSubCluster $subCluster) => $this->serializeBrowseSubCluster($subCluster),
-            )->all(),
-        ];
-    }
-
-    /** @param AssetSubCluster $subCluster */
-    private function serializeBrowseSubCluster($subCluster): array
-    {
-        return [
-            'id' => $subCluster->id,
-            'code' => $subCluster->code,
-            'name' => $subCluster->name,
-            'description' => $subCluster->description,
-            'notes' => $subCluster->notes,
-            'child_count' => 0,
-            'asset_count' => $subCluster->assets_count,
-            'children' => [],
-        ];
-    }
-
-    /**
-     * Build breadcrumb crumbs for the given level + node.
-     *
-     * @return array<int, array{id: string, level: string, code: string|null, name: string}>
-     */
-    private function buildBreadcrumb(string $level, string $nodeId): array
-    {
-        $levelModels = [
-            'group' => AssetGroup::class,
-            'category' => AssetCategory::class,
-            'cluster' => AssetCluster::class,
-            'sub-cluster' => AssetSubCluster::class,
-        ];
-
-        $parentFields = [
-            'category' => 'asset_group_id',
-            'cluster' => 'asset_category_id',
-            'sub-cluster' => 'asset_cluster_id',
-        ];
-
-        $parentLevels = [
-            'category' => 'group',
-            'cluster' => 'category',
-            'sub-cluster' => 'cluster',
-        ];
-
-        $crumbs = [];
-        $currentLevel = $level;
-        $currentId = $nodeId;
-
-        // Build path from leaf to root
-        while ($currentLevel !== null) {
-            $model = $levelModels[$currentLevel];
-            $node = $model::where('id', $currentId)->first();
-
-            if ($node === null) {
-                break;
-            }
-
-            $crumbs[] = [
-                'id' => $node->id,
-                'level' => $currentLevel,
-                'code' => $node->code,
-                'name' => $node->name,
-            ];
-
-            $parentField = $parentFields[$currentLevel] ?? null;
-            $nextLevel = $parentLevels[$currentLevel] ?? null;
-
-            if ($parentField === null || $nextLevel === null) {
-                break;
-            }
-
-            $parentId = $node->{$parentField};
-            if ($parentId === null) {
-                break;
-            }
-
-            $currentLevel = $nextLevel;
-            $currentId = $parentId;
-        }
-
-        return array_reverse($crumbs);
-=======
     /**
      * @param  array<int, array<string, mixed>>  $nodes
      * @return array<int, array{id: string, name: string, level: string}>
@@ -526,7 +314,6 @@ class AssetController extends Controller
         };
 
         return $walk($nodes, 0) ?? [];
->>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
     }
 
     public function labels(Request $request): Response

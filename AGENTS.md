@@ -1,5 +1,21 @@
 # AGENTS.md — Opti-Asset (Laravel + Inertia + React)
 
+# Memory Protocol — Vault: Opti-Asset
+
+OpenCode punya akses ke vault Obsidian bernama "Opti-Asset" lewat MCP tool `obsidian`.
+
+## Struktur memori
+
+- `Memory/opencode-memory.md` — ringkasan konteks proyek, keputusan arsitektur, dan preferensi yang berlaku terus-menerus.
+- `Memory/logs/YYYY-MM-DD.md` — catatan progres per sesi (opsional, buat kalau relevan).
+
+## Aturan
+
+1. Di awal sesi, sebelum mulai kerja, baca isi "Memory/opencode-memory.md" via tool obsidian (get_file_contents) untuk memahami konteks sebelumnya.
+2. Setiap kali ada keputusan penting, konvensi baru, perubahan arsitektur, atau progres signifikan — tambahkan ringkasannya ke "Memory/opencode-memory.md" via append_content atau patch_content.
+3. Jangan pernah menyimpan kredensial, API key, token, atau data sensitif lain ke catatan ini.
+4. Tulis ringkas dan terstruktur (poin-poin), bukan transkrip percakapan mentah.
+
 ## Stack
 
 - **PHP 8.4** / Laravel 13 / Fortify 1 / Inertia v3 / React 19 / Tailwind 4 / Vite 8
@@ -192,7 +208,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 

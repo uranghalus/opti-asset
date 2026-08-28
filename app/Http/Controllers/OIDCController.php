@@ -46,16 +46,12 @@ class OIDCController extends Controller
                 try {
                     if ($user?->tenant_id) {
                         $departmentId = Tenant::find($user->tenant_id)
-                            ?->execute(fn() => $this->findDepartmentId($ssoDepartmentName));
+                            ?->execute(fn () => $this->findDepartmentId($ssoDepartmentName));
                     }
                 } catch (\Exception $e) {
-                    Log::warning('SSO Callback: Gagal query Department — ' . $e->getMessage());
+                    Log::warning('SSO Callback: Gagal query Department — '.$e->getMessage());
                 }
             }
-
-            $position = is_array($rawData['position'] ?? null)
-                ? ($rawData['position']['name'] ?? $rawData['position']['id'] ?? json_encode($rawData['position']))
-                : ($rawData['position'] ?? null);
 
             $user = User::updateOrCreate(
                 ['email' => $ssoUser->getEmail()],
@@ -63,11 +59,10 @@ class OIDCController extends Controller
                     'name' => $ssoUser->getName(),
                     'email' => $ssoUser->getEmail(),
                     'password' => null,
-                    'phone' => null,
                     'department' => $departmentId,
-                    'position' => $position,
-                    'last_login_at' => $rawData['last_login_at'] ?? now(),
-                    'last_login_ip' => $rawData['last_login_ip'] ?? request()->ip(),
+                    'oidc_id' => $ssoUser->getId(),
+                    'last_login_at' => now(),
+                    'last_login_ip' => request()->ip(),
                 ]
             );
 
@@ -93,13 +88,14 @@ class OIDCController extends Controller
             $request->session()->regenerate();
 
             // ponytail: store raw id_token for RP-initiated logout. Add column if IdP rotates tokens frequently.
-            $request->session()->put('oidc_id_token', $tokenResponse['id_token'] ?? null);
+            $idToken = $ssoUser->accessTokenResponseBody['id_token'] ?? null;
+            $request->session()->put('oidc_id_token', $idToken);
 
             return redirect()->route('dashboard');
         } catch (\Exception $e) {
-            Log::error('OIDC SSO Callback Error: ' . $e->getMessage());
+            Log::error('OIDC SSO Callback Error: '.$e->getMessage());
 
-            return redirect('/')->with('error', 'Terjadi kesalahan saat login SSO: ' . $e->getMessage());
+            return redirect('/')->with('error', 'Terjadi kesalahan saat login SSO: '.$e->getMessage());
         }
     }
 
@@ -109,8 +105,9 @@ class OIDCController extends Controller
         Log::info('Received logout request. Session ID: ', $request->all());
         $idToken = $request->input('logout_token');
 
-        if (!$idToken) {
+        if (! $idToken) {
             Log::error('Missing logout_token in SLO request');
+
             return response()->json(['error' => 'Missing logout_token'], 400);
         }
 
@@ -121,7 +118,7 @@ class OIDCController extends Controller
             }
             $payload = json_decode(base64_decode(strtr($tokenParts[1], '-_', '+/')));
 
-            if (!$payload || !isset($payload->sub)) {
+            if (! $payload || ! isset($payload->sub)) {
                 return response()->json(['error' => 'Invalid token payload'], 400);
             }
             $oidcId = $payload->sub;
@@ -148,9 +145,11 @@ class OIDCController extends Controller
                 }
                 DB::table('sessions')->where('user_id', $user->id)->delete();
             }
+
             return response()->json(['message' => 'Successfully logged out']);
         } catch (\Throwable $th) {
-            Log::error('OIDC Backchannel Logout Error: ' . $th->getMessage());
+            Log::error('OIDC Backchannel Logout Error: '.$th->getMessage());
+
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }

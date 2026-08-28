@@ -10,6 +10,7 @@ export type ClassificationNode = {
     child_count: number;
     item_count?: number;
     asset_count?: number;
+    level: ClassificationLevel;
     children?: ClassificationNode[];
 };
 

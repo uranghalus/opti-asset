@@ -107,6 +107,7 @@ class AssetController extends Controller
         $selected = null;
         $breadcrumb = [];
         $assets = null;
+        $status = $request->string('status')->trim()->toString();
 
         if ($validLevel && $nodeId !== '') {
             $field = match ($level) {
@@ -117,7 +118,6 @@ class AssetController extends Controller
             };
 
             $perPage = min((int) $request->integer('per_page', 15), 100);
-            $status = $request->string('status')->trim()->toString();
 
             $assets = Asset::query()
                 ->with([
@@ -198,6 +198,7 @@ class AssetController extends Controller
             'description' => $group->description,
             'child_count' => $group->categories_count,
             'asset_count' => $group->assets_count,
+            'level' => 'group',
             'children' => $group->categories->map(
                 fn (AssetCategory $category) => $this->serializeBrowseCategory($category),
             )->all(),
@@ -214,6 +215,7 @@ class AssetController extends Controller
             'description' => $category->description,
             'child_count' => $category->clusters_count,
             'asset_count' => $category->assets_count,
+            'level' => 'category',
             'children' => $category->clusters->map(
                 fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster),
             )->all(),
@@ -230,6 +232,7 @@ class AssetController extends Controller
             'description' => $cluster->description,
             'child_count' => $cluster->subClusters_count,
             'asset_count' => $cluster->assets_count,
+            'level' => 'cluster',
             'children' => $cluster->subClusters->map(
                 fn (AssetSubCluster $subCluster) => $this->serializeBrowseSubCluster($subCluster),
             )->all(),
@@ -247,6 +250,7 @@ class AssetController extends Controller
             'notes' => $subCluster->notes,
             'child_count' => 0,
             'asset_count' => $subCluster->assets_count,
+            'level' => 'sub-cluster',
             'children' => [],
         ];
     }

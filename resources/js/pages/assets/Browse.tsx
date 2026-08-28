@@ -4,19 +4,18 @@ import {
     ChevronRight,
     Filter,
     Layers,
-    MapPin,
     Package,
     Plus,
     Search,
     Trash2,
-    Building2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { AssetCard } from '@/components/asset-card';
+import type { Asset } from '@/components/asset-card';
 import { EmptyState } from '@/components/empty-state';
 import { ResourcePagination } from '@/components/resource-pagination';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -38,14 +37,10 @@ import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { withReturnTo } from '@/lib/asset-return';
-import {
-    ASSET_STATUSES,
-    assetStatusChip,
-    assetStatusDot,
-    assetStatusLabel,
-} from '@/lib/asset-status';
+import { ASSET_STATUSES } from '@/lib/asset-status';
 import { LevelIcon, LEVEL_TINTS } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
+import { browse, create, destroy, destroyBulk } from '@/routes/assets';
 import type {
     ClassificationNode,
     ClassificationLevel,
@@ -53,7 +48,6 @@ import type {
 import { CHILD_LABELS } from '@/types/classification';
 
 const STATUS_OPTIONS = [
-    { value: '', label: 'Semua Status' },
     ...ASSET_STATUSES.map((status) => ({
         value: status.value,
         label: status.label,
@@ -61,27 +55,6 @@ const STATUS_OPTIONS = [
 ];
 
 type BrowseTreeNode = ClassificationNode & { children?: BrowseTreeNode[] };
-
-type Asset = {
-    id: string;
-    kode_asset: string | null;
-    serial_number: string | null;
-    brand: string | null;
-    model: string | null;
-    status: string;
-    condition: string | null;
-    purchase_date: string | null;
-    created_at: string;
-    photo_url: string[];
-    document_url: string[];
-    item: { id: string; name: string; code: string } | null;
-    location: { id: string; name: string } | null;
-    department: { id_department: string; nama_department: string } | null;
-    asset_group: { id: string; code: string | null; name: string } | null;
-    asset_category: { id: string; code: string | null; name: string } | null;
-    asset_cluster: { id: string; code: string | null; name: string } | null;
-    asset_sub_cluster: { id: string; code: string | null; name: string } | null;
-};
 
 type PaginationLink = {
     url: string | null;
@@ -120,57 +93,64 @@ type PageProps = {
     status: string;
 };
 
-const CONDITION_ACCENTS: Record<string, string> = {
-    Baik: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-    'Rusak Ringan':
-        'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
-    'Rusak Berat':
-        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+const MAX_BULK = 100;
+
+const LEVEL_DEPTH: Record<ClassificationLevel, number> = {
+    group: 0,
+    category: 1,
+    cluster: 2,
+    'sub-cluster': 3,
 };
 
-function conditionAccent(condition: string | null): string {
-    if (!condition) {
-        return 'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300';
+function filterTree(nodes: BrowseTreeNode[], search: string): BrowseTreeNode[] {
+    if (!search.trim()) {
+        return nodes;
     }
 
-    return (
-        CONDITION_ACCENTS[condition] ??
-        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300'
-    );
+    const term = search.toLowerCase().trim();
+
+    return nodes
+        .filter((node) => {
+            const matches =
+                node.name.toLowerCase().includes(term) ||
+                (node.code?.toLowerCase().includes(term) ?? false);
+
+            if (matches) {
+                return true;
+            }
+
+            return filterTree(node.children ?? [], search).length > 0;
+        })
+        .map((node) => ({
+            ...node,
+            children: node.children
+                ? filterTree(node.children, search)
+                : undefined,
+        }));
 }
 
-function formatDate(value: string | null): string {
-    if (!value) {
-return '—';
+function collectExpandableIds(nodes: BrowseTreeNode[]): string[] {
+    return nodes.flatMap((node) => [
+        ...(node.children?.length ? [node.id] : []),
+        ...collectExpandableIds(node.children ?? []),
+    ]);
 }
-
-    return new Date(value).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-}
-
-const MAX_BULK = 100;
 
 function BrowseTreeNodeRow({
     node,
-    depth,
     selectedId,
     expandedIds,
     onSelect,
     onToggleExpand,
 }: {
     node: BrowseTreeNode;
-    depth: number;
     selectedId: string | null;
     expandedIds: Set<string>;
-    onSelect: (id: string) => void;
+    onSelect: (node: BrowseTreeNode) => void;
     onToggleExpand: (id: string) => void;
 }) {
-    const level: ClassificationLevel = (
-        ['group', 'category', 'cluster', 'sub-cluster'] as ClassificationLevel[]
-    )[depth];
+    const level = node.level;
+    const depth = LEVEL_DEPTH[level];
     const children = node.children ?? [];
     const hasChildren = children.length > 0;
     const isSelected = selectedId === node.id;
@@ -194,7 +174,7 @@ function BrowseTreeNodeRow({
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
                 role="treeitem"
                 aria-selected={isSelected}
-                onClick={() => onSelect(node.id)}
+                onClick={() => onSelect(node)}
             >
                 {hasChildren ? (
                     <button
@@ -258,7 +238,6 @@ function BrowseTreeNodeRow({
                         <BrowseTreeNodeRow
                             key={child.id}
                             node={child}
-                            depth={depth + 1}
                             selectedId={selectedId}
                             expandedIds={expandedIds}
                             onSelect={onSelect}
@@ -284,6 +263,7 @@ export default function AssetsBrowse() {
         serverSelected?.id ?? null,
     );
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [treeSearch, setTreeSearch] = useState('');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(initialStatus);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -303,6 +283,12 @@ export default function AssetsBrowse() {
             setSelectedId(serverSelected?.id ?? null);
         }
     }, [serverSelected, selectedId]);
+
+    const visibleTree = treeSearch.trim() ? filterTree(tree, treeSearch) : tree;
+
+    const treeExpandedIds = treeSearch.trim()
+        ? new Set(collectExpandableIds(visibleTree))
+        : expandedIds;
 
     const toggleSelect = (id: string) => {
         setSelectedAssets((prev) => {
@@ -324,11 +310,11 @@ export default function AssetsBrowse() {
 
     const handleDelete = () => {
         if (!deleting) {
-return;
-}
+            return;
+        }
 
         setDeletingState(true);
-        router.delete(`/assets/${deleting.id}`, {
+        router.delete(destroy.url({ asset: deleting.id }), {
             only: ['assets'],
             preserveState: true,
             preserveScroll: true,
@@ -346,12 +332,12 @@ return;
 
     const confirmBulkDelete = () => {
         if (selectedAssets.size === 0) {
-return;
-}
+            return;
+        }
 
         setBulkDeleting(true);
         const ids = Array.from(selectedAssets);
-        router.delete('/assets/bulk', {
+        router.delete(destroyBulk.url(), {
             data: { ids },
             only: ['assets'],
             preserveState: true,
@@ -371,8 +357,8 @@ return;
 
     const goToPage = (url: string | null) => {
         if (url) {
-router.get(url, {}, { preserveState: true, replace: true });
-}
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
     };
 
     const reload = (overrides: Record<string, string> = {}) => {
@@ -388,16 +374,16 @@ router.get(url, {}, { preserveState: true, replace: true });
         }
 
         if (search.trim()) {
-params.search = search.trim();
-}
+            params.search = search.trim();
+        }
 
         if (statusFilter) {
-params.status = statusFilter;
-}
+            params.status = statusFilter;
+        }
 
         router.get(
-            '/assets/browse',
-            { ...params, ...overrides },
+            browse.url({ query: { ...params, ...overrides } }),
+            {},
             {
                 preserveState: true,
                 replace: true,
@@ -420,24 +406,17 @@ params.status = statusFilter;
 
     const activeFilterCount = [search, statusFilter].filter(Boolean).length;
 
-    const handleNodeSelect = (id: string) => {
-        setSelectedId(id);
-        const node = findNode(tree, id);
-
-        if (node) {
-            const level = ['group', 'category', 'cluster', 'sub-cluster'][
-                getNodeDepth(tree, id)
-            ] as ClassificationLevel;
-            router.get(
-                '/assets/browse',
-                { level, node: id },
-                {
-                    preserveState: true,
-                    replace: true,
-                    only: ['assets', 'selected', 'breadcrumb'],
-                },
-            );
-        }
+    const handleNodeSelect = (node: BrowseTreeNode) => {
+        setSelectedId(node.id);
+        router.get(
+            browse.url({ query: { level: node.level, node: node.id } }),
+            {},
+            {
+                preserveState: true,
+                replace: true,
+                only: ['assets', 'selected', 'breadcrumb'],
+            },
+        );
     };
 
     const toggleExpand = (id: string) => {
@@ -445,10 +424,10 @@ params.status = statusFilter;
             const next = new Set(prev);
 
             if (next.has(id)) {
-next.delete(id);
-} else {
-next.add(id);
-}
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
 
             return next;
         });
@@ -498,7 +477,7 @@ next.add(id);
                         </div>
 
                         <div className="flex shrink-0 items-center gap-2">
-                            <Link href={withReturnTo('/assets/create')}>
+                            <Link href={withReturnTo(create.url())}>
                                 <Button
                                     size="sm"
                                     className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
@@ -529,7 +508,7 @@ next.add(id);
                                             Struktur Klasifikasi
                                         </h2>
                                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                                            {tree.length} golongan
+                                            {visibleTree.length} golongan
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-0.5">
@@ -601,8 +580,10 @@ next.add(id);
                                     <Input
                                         placeholder="Cari kode atau nama..."
                                         className="h-8 rounded-lg border-border/60 bg-background/80 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
-                                        value={''}
-                                        onChange={() => {}}
+                                        value={treeSearch}
+                                        onChange={(e) =>
+                                            setTreeSearch(e.target.value)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -612,7 +593,7 @@ next.add(id);
                                 role="tree"
                                 aria-label="Klasifikasi Asset"
                             >
-                                {tree.length === 0 ? (
+                                {visibleTree.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                                         <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                             <Boxes
@@ -631,13 +612,12 @@ next.add(id);
                                         </div>
                                     </div>
                                 ) : (
-                                    tree.map((node) => (
+                                    visibleTree.map((node) => (
                                         <BrowseTreeNodeRow
                                             key={node.id}
                                             node={node}
-                                            depth={0}
                                             selectedId={selectedId}
-                                            expandedIds={expandedIds}
+                                            expandedIds={treeExpandedIds}
                                             onSelect={handleNodeSelect}
                                             onToggleExpand={toggleExpand}
                                         />
@@ -680,7 +660,14 @@ next.add(id);
                                                         (crumb, index) => (
                                                             <Link
                                                                 key={crumb.id}
-                                                                href={`/assets/browse?level=${crumb.level}&node=${crumb.id}`}
+                                                                href={browse.url(
+                                                                    {
+                                                                        query: {
+                                                                            level: crumb.level,
+                                                                            node: crumb.id,
+                                                                        },
+                                                                    },
+                                                                )}
                                                                 className={cn(
                                                                     'inline-flex items-center rounded px-1.5 py-0.5 transition-colors',
                                                                     LEVEL_TINTS[
@@ -1028,255 +1015,6 @@ next.add(id);
     );
 }
 
-// Helper functions
-function findNode(nodes: BrowseTreeNode[], id: string): BrowseTreeNode | null {
-    for (const node of nodes) {
-        if (node.id === id) {
-return node;
-}
-
-        const found = findNode(node.children ?? [], id);
-
-        if (found) {
-return found;
-}
-    }
-
-    return null;
-}
-
-function getNodeDepth(nodes: BrowseTreeNode[], id: string, depth = 0): number {
-    for (const node of nodes) {
-        if (node.id === id) {
-return depth;
-}
-
-        const found = getNodeDepth(node.children ?? [], id, depth + 1);
-
-        if (found !== -1) {
-return found;
-}
-    }
-
-    return -1;
-}
-
-function AssetCard({
-    asset,
-    selected,
-    onSelect,
-    onDelete,
-}: {
-    asset: Asset;
-    selected: boolean;
-    onSelect: () => void;
-    onDelete: () => void;
-}) {
-    const chain = [
-        asset.asset_group,
-        asset.asset_category,
-        asset.asset_cluster,
-        asset.asset_sub_cluster,
-    ].filter(Boolean) as Array<{
-        id: string;
-        code: string | null;
-        name: string;
-    }>;
-
-    return (
-        <div
-            className={cn(
-                'glass-card ease-premium group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]',
-                selected && 'bg-primary/5 ring-2 ring-primary/50',
-            )}
-        >
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                    <Checkbox
-                        aria-label={`Pilih ${asset.kode_asset ?? asset.id}`}
-                        checked={selected}
-                        onCheckedChange={() => onSelect()}
-                        className="mt-1 shrink-0"
-                    />
-                    <div className="flex min-w-0 items-center gap-3">
-                        <div className="relative size-11 shrink-0">
-                            {asset.photo_url?.[0] ? (
-                                <>
-                                    <img
-                                        src={asset.photo_url[0]}
-                                        alt="Foto aset"
-                                        className="size-11 rounded-xl border border-border/70 object-cover shadow-md ring-1 ring-primary/10"
-                                    />
-                                    {asset.photo_url.length > 1 && (
-                                        <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-[9px] font-bold text-muted-foreground tabular-nums shadow-sm">
-                                            +{asset.photo_url.length - 1}
-                                        </span>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                    <Package
-                                        className="size-5"
-                                        strokeWidth={1.75}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                        <div className="min-w-0">
-                            <Link
-                                href={`/assets/${asset.id}`}
-                                className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary"
-                            >
-                                {asset.item?.name ?? 'Aset'}
-                            </Link>
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                {[asset.brand, asset.model]
-                                    .filter(Boolean)
-                                    .join(' · ') || '—'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex shrink-0 gap-1">
-                    <Link href={withReturnTo(`/assets/${asset.id}/edit`)}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            aria-label="Edit aset"
-                        >
-                            <Package className="size-3.5" strokeWidth={2} />
-                        </Button>
-                    </Link>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        onClick={onDelete}
-                        aria-label="Hapus aset"
-                    >
-                        <Trash2 className="size-3.5 text-destructive" />
-                    </Button>
-                </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
-                <span className="truncate font-mono text-xs font-bold text-primary tabular-nums">
-                    {asset.kode_asset ?? '—'}
-                </span>
-                <span
-                    className={cn(
-                        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
-                        assetStatusChip(asset.status),
-                    )}
-                >
-                    <span
-                        className={cn(
-                            'size-1.5 rounded-full',
-                            assetStatusDot(asset.status),
-                        )}
-                    />
-                    {assetStatusLabel(asset.status)}
-                </span>
-            </div>
-
-            <div className="relative mt-3.5 flex flex-1 flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-1">
-                    {chain.length > 0 ? (
-                        chain.map((level, index) => (
-                            <span
-                                key={`${level.id}-${index}`}
-                                className="inline-flex items-center"
-                            >
-                                {index > 0 && (
-                                    <ChevronRight className="size-3 shrink-0 text-muted-foreground/50" />
-                                )}
-                                <span className="inline-flex max-w-40 items-center gap-1 truncate rounded-md px-2 py-0.5 text-[10px] font-semibold text-muted-foreground ring-1 ring-border/70">
-                                    <span className="truncate">
-                                        {level.name}
-                                    </span>
-                                </span>
-                            </span>
-                        ))
-                    ) : (
-                        <span className="text-[10px] text-muted-foreground">
-                            Belum ada klasifikasi
-                        </span>
-                    )}
-                </div>
-
-                <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                    {asset.item && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <Package
-                                className="size-3.5 shrink-0"
-                                strokeWidth={2}
-                            />
-                            <span className="truncate">{asset.item.name}</span>
-                        </p>
-                    )}
-                    {asset.serial_number && (
-                        <p className="flex items-center gap-1.5 truncate font-mono text-muted-foreground">
-                            <Package
-                                className="size-3.5 shrink-0"
-                                strokeWidth={2}
-                            />
-                            <span className="truncate">
-                                {asset.serial_number}
-                            </span>
-                        </p>
-                    )}
-                    {asset.document_url?.length > 0 && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <Package
-                                className="size-3.5 shrink-0"
-                                strokeWidth={2}
-                            />
-                            <span>{asset.document_url.length} dokumen</span>
-                        </p>
-                    )}
-                    {asset.location && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <MapPin
-                                className="size-3.5 shrink-0"
-                                strokeWidth={2}
-                            />
-                            <span className="truncate">
-                                {asset.location.name}
-                            </span>
-                        </p>
-                    )}
-                    {asset.department && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <Building2
-                                className="size-3.5 shrink-0"
-                                strokeWidth={2}
-                            />
-                            <span className="truncate">
-                                {asset.department.nama_department}
-                            </span>
-                        </p>
-                    )}
-                </div>
-
-                <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
-                    <span
-                        className={cn(
-                            'inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ring-1',
-                            conditionAccent(asset.condition),
-                        )}
-                    >
-                        {asset.condition ?? '—'}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                        {formatDate(asset.created_at)}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 AssetsBrowse.layout = {
-    breadcrumbs: [{ title: 'Telusuri Aset', href: '/assets/browse' }],
+    breadcrumbs: [{ title: 'Telusuri Aset', href: browse.url() }],
 };

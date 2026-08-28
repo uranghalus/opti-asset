@@ -14,7 +14,11 @@ import {
     Network,
     ShieldCheck,
     KeyRound,
+<<<<<<< HEAD
     Layers,
+=======
+    FolderTree,
+>>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -57,11 +61,16 @@ export const sidebarData: SidebarData = {
                 {
                     title: 'Telusuri Aset',
                     url: '/assets/browse',
+<<<<<<< HEAD
                     icon: Layers,
                     permission: {
                         resource: 'asset',
                         actions: ['view'],
                     },
+=======
+                    icon: FolderTree,
+                    permission: { resource: 'asset', actions: ['view'] },
+>>>>>>> 322bdc3a8971380a58c362af16a562c94b0ed0f8
                 },
                 {
                     title: 'Klasifikasi Aset',

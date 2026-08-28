@@ -9,6 +9,7 @@ export type ClassificationNode = {
     notes?: string | null;
     child_count: number;
     item_count?: number;
+    asset_count?: number;
     children?: ClassificationNode[];
 };
 

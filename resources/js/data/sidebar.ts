@@ -14,6 +14,7 @@ import {
     Network,
     ShieldCheck,
     KeyRound,
+    Layers,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -48,6 +49,15 @@ export const sidebarData: SidebarData = {
                     title: 'Daftar Aset',
                     url: '/assets',
                     icon: Boxes,
+                    permission: {
+                        resource: 'asset',
+                        actions: ['view'],
+                    },
+                },
+                {
+                    title: 'Telusuri Aset',
+                    url: '/assets/browse',
+                    icon: Layers,
                     permission: {
                         resource: 'asset',
                         actions: ['view'],

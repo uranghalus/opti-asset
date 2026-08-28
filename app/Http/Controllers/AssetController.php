@@ -155,7 +155,7 @@ class AssetController extends Controller
      *
      * @return array<int, array{
      *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, children: array
+     *     child_count: int, asset_count: int, level: string, children: array<int, mixed><int, mixed>
      * }>
      */
     private function buildBrowseTree(): array
@@ -188,7 +188,13 @@ class AssetController extends Controller
             ->all();
     }
 
-    /** @param AssetGroup $group */
+    /**
+     * @param  AssetGroup  $group
+     * @return array{
+     *     id: string, code: string|null, name: string, description: string|null,
+     *     child_count: int, asset_count: int, level: string, children: array<int, mixed><int, mixed>
+     * }
+     */
     private function serializeBrowseGroup($group): array
     {
         return [
@@ -205,7 +211,13 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetCategory $category */
+    /**
+     * @param  AssetCategory  $category
+     * @return array{
+     *     id: string, code: string|null, name: string, description: string|null,
+     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
+     * }
+     */
     private function serializeBrowseCategory($category): array
     {
         return [
@@ -222,7 +234,13 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetCluster $cluster */
+    /**
+     * @param  AssetCluster  $cluster
+     * @return array{
+     *     id: string, code: string|null, name: string, description: string|null,
+     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
+     * }
+     */
     private function serializeBrowseCluster($cluster): array
     {
         return [
@@ -239,7 +257,13 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetSubCluster $subCluster */
+    /**
+     * @param  AssetSubCluster  $subCluster
+     * @return array{
+     *     id: string, code: string|null, name: string, description: string|null,
+     *     notes: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>
+     * }
+     */
     private function serializeBrowseSubCluster($subCluster): array
     {
         return [

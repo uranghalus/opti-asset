@@ -1,23 +1,19 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Building2,
     Boxes,
-    ChevronDown,
     ChevronRight,
-    FileText,
+    ChevronDown,
     Filter,
-    FolderTree,
-    Inbox,
-    MapPin,
+    Layers,
     Package,
-    Pencil,
+    Plus,
     Search,
-    SlidersHorizontal,
     Trash2,
-    X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { AssetCard } from '@/components/asset-card';
+import type { Asset } from '@/components/asset-card';
 import { EmptyState } from '@/components/empty-state';
 import { ResourcePagination } from '@/components/resource-pagination';
 import { Button } from '@/components/ui/button';
@@ -30,6 +26,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -37,62 +34,33 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { rememberAssetListUrl, withReturnTo } from '@/lib/asset-return';
-import {
-    ASSET_STATUSES,
-    assetStatusChip,
-    assetStatusDot,
-    assetStatusLabel,
-} from '@/lib/asset-status';
-import { LevelIcon, LEVEL_SHORT } from '@/lib/classification-levels';
+import { ASSET_STATUSES } from '@/lib/asset-status';
+import { LevelIcon, LEVEL_TINTS } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
-import { browse, destroy, edit, show } from '@/routes/assets';
+import { browse, create, destroy, destroyBulk } from '@/routes/assets';
 import type {
     ClassificationLevel,
     ClassificationNode,
 } from '@/types/classification';
-import { LEVEL_LABELS } from '@/types/classification';
+import { CHILD_LABELS } from '@/types/classification';
 
-type Classification = {
-    id: string;
-    code: string | null;
-    name: string;
-    asset_group_id?: string;
-    asset_category_id?: string;
-    asset_cluster_id?: string;
+const STATUS_OPTIONS = [
+    { value: '', label: 'Semua Status' },
+    ...ASSET_STATUSES.map(({ value, label }) => ({ value, label })),
+];
+
+type BrowseTreeNode = ClassificationNode & { children?: BrowseTreeNode[] };
+
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
 };
 
-type Asset = {
-    id: string;
-    kode_asset: string | null;
-    serial_number: string | null;
-    brand: string | null;
-    model: string | null;
-    status: string;
-    condition: string | null;
-    purchase_date: string | null;
-    created_at: string;
-    photo_url: string[];
-    document_url: string[];
-    item: { id: string; name: string; code: string } | null;
-    location: { id: string; name: string } | null;
-    department: { id_department: string; nama_department: string } | null;
-    asset_group: Classification | null;
-    asset_category: Classification | null;
-    asset_cluster: Classification | null;
-    asset_sub_cluster: Classification | null;
-};
-
-type PaginationLink = { url: string | null; label: string; active: boolean };
 type PaginatedData<T> = {
     data: T[];
     current_page: number;
@@ -103,147 +71,256 @@ type PaginatedData<T> = {
     to: number;
     links: PaginationLink[];
 };
+
 type PageProps = {
-    tree: ClassificationNode[];
-    assets: PaginatedData<Asset>;
-    selectedNode: string | null;
-    selectedLevel: ClassificationLevel | null;
-    breadcrumb: { id: string; name: string; level: ClassificationLevel }[];
+    tree: BrowseTreeNode[];
+    selected: { level: ClassificationLevel; id: string } | null;
+    breadcrumb: Array<{
+        id: string;
+        level: ClassificationLevel;
+        code: string | null;
+        name: string;
+    }>;
+    assets: PaginatedData<Asset> | null;
+    groups: Array<{ id: string; code: string | null; name: string }>;
+    categories: Array<{
+        id: string;
+        code: string | null;
+        name: string;
+        asset_group_id: string;
+    }>;
+    departments: Array<{ id_department: string; nama_department: string }>;
     filters: { search: string; status: string; department: string };
-    departments: { id_department: string; nama_department: string }[];
 };
 
-const STATUS_OPTIONS = [
-    { value: '', label: 'Semua Status' },
-    ...ASSET_STATUSES.map(({ value, label }) => ({ value, label })),
-];
+const MAX_BULK = 100;
 
-function formatDate(value: string | null): string {
-    return value
-        ? new Date(value).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-          })
-        : 'ÔÇö';
-}
+const LEVEL_DEPTH: Record<ClassificationLevel, number> = {
+    group: 0,
+    category: 1,
+    cluster: 2,
+    'sub-cluster': 3,
+};
 
-function conditionAccent(condition: string | null): string {
-    return condition === 'Baik'
-        ? 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300'
-        : condition === 'Rusak Ringan'
-          ? 'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300'
-          : condition === 'Rusak Berat'
-            ? 'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300'
-            : 'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300';
-}
+function filterTree(nodes: BrowseTreeNode[], search: string): BrowseTreeNode[] {
+    if (!search.trim()) {
+        return nodes;
+    }
 
-function filterNodes(
-    nodes: ClassificationNode[],
-    query: string,
-): ClassificationNode[] {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return nodes;
+    const term = search.toLowerCase().trim();
 
-    return nodes.reduce<ClassificationNode[]>((result, node) => {
-        const children = filterNodes(node.children ?? [], normalized);
-        if (
-            node.name.toLowerCase().includes(normalized) ||
-            node.code?.toLowerCase().includes(normalized) ||
-            children.length
-        ) {
-            result.push(children.length ? { ...node, children } : node);
-        }
-        return result;
-    }, []);
-}
+    return nodes
+        .filter((node) => {
+            const matches =
+                node.name.toLowerCase().includes(term) ||
+                (node.code?.toLowerCase().includes(term) ?? false);
 
-function ancestorIds(nodes: ClassificationNode[], ids: string[]): Set<string> {
-    const expanded = new Set<string>();
-    const walk = (items: ClassificationNode[], trail: string[]) => {
-        items.forEach((node) => {
-            if (ids.includes(node.id)) {
-                trail.forEach((id) => expanded.add(id));
-                if (node.children?.length) expanded.add(node.id);
+            if (matches) {
+                return true;
             }
-            walk(node.children ?? [], [...trail, node.id]);
-        });
-    };
-    walk(nodes, []);
-    return expanded;
+
+            return filterTree(node.children ?? [], search).length > 0;
+        })
+        .map((node) => ({
+            ...node,
+            children: node.children
+                ? filterTree(node.children, search)
+                : undefined,
+        }));
 }
 
-export default function Browse() {
-    const { tree, assets, selectedNode, breadcrumb, filters, departments } =
-        usePage().props as unknown as PageProps;
-    const [query, setQuery] = useState('');
-    const [expanded, setExpanded] = useState<Set<string>>(() =>
-        ancestorIds(
-            tree,
-            breadcrumb.map((crumb) => crumb.id),
-        ),
+function collectExpandableIds(nodes: BrowseTreeNode[]): string[] {
+    return nodes.flatMap((node) => [
+        ...(node.children?.length ? [node.id] : []),
+        ...collectExpandableIds(node.children ?? []),
+    ]);
+}
+
+function BrowseTreeNodeRow({
+    node,
+    selectedId,
+    expandedIds,
+    onSelect,
+    onToggleExpand,
+}: {
+    node: BrowseTreeNode;
+    selectedId: string | null;
+    expandedIds: Set<string>;
+    onSelect: (node: BrowseTreeNode) => void;
+    onToggleExpand: (id: string) => void;
+}) {
+    const level = node.level;
+    const depth = LEVEL_DEPTH[level];
+    const children = node.children ?? [];
+    const hasChildren = children.length > 0;
+    const isSelected = selectedId === node.id;
+    const isExpanded = expandedIds.has(node.id);
+    const tint = LEVEL_TINTS[level];
+
+    const countLabel =
+        level === 'sub-cluster'
+            ? `${node.asset_count ?? 0} aset`
+            : `${node.child_count} ${CHILD_LABELS[level]}`;
+
+    return (
+        <div className="relative">
+            <div
+                className={cn(
+                    'group flex h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 text-sm transition-all duration-150',
+                    isSelected
+                        ? 'bg-primary/10 font-medium text-primary shadow-[inset_0_0_0_1px_rgba(0,111,207,0.15)]'
+                        : 'text-foreground hover:bg-muted/70',
+                )}
+                style={{ paddingLeft: `${depth * 16 + 8}px` }}
+                role="treeitem"
+                aria-selected={isSelected}
+                onClick={() => onSelect(node)}
+            >
+                {hasChildren ? (
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onToggleExpand(node.id);
+                        }}
+                        className={cn(
+                            'flex size-6 shrink-0 items-center justify-center rounded-md transition-all duration-150 hover:bg-accent',
+                            isExpanded && 'rotate-90',
+                        )}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? 'Ciutkan' : 'Perluas'}
+                    >
+                        <ChevronRight className="size-3.5 text-muted-foreground" />
+                    </button>
+                ) : (
+                    <span className="size-6 shrink-0" />
+                )}
+
+                <LevelIcon level={level} open={isExpanded} size="sm" />
+
+                <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                        <span className="truncate font-medium transition-transform duration-200 group-hover:translate-x-0.5">
+                            {node.name}
+                        </span>
+                        {node.code && (
+                            <span
+                                className={cn(
+                                    'shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px]',
+                                    tint.bg,
+                                    tint.fg,
+                                )}
+                            >
+                                {node.code}
+                            </span>
+                        )}
+                    </span>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                        {countLabel}
+                        {node.description ? ` • ${node.description}` : ''}
+                    </span>
+                </span>
+
+                <span
+                    className={cn(
+                        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
+                        tint.bg,
+                        tint.fg,
+                    )}
+                >
+                    {node.asset_count ?? 0}
+                </span>
+            </div>
+
+            {hasChildren && isExpanded && (
+                <div role="group">
+                    {children.map((child) => (
+                        <BrowseTreeNodeRow
+                            key={child.id}
+                            node={child}
+                            selectedId={selectedId}
+                            expandedIds={expandedIds}
+                            onSelect={onSelect}
+                            onToggleExpand={onToggleExpand}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
     );
-    const [search, setSearch] = useState(filters.search);
-    const [status, setStatus] = useState(filters.status);
-    const [department, setDepartment] = useState(filters.department);
+}
+
+export default function AssetsBrowse() {
+    const {
+        tree,
+        selected: serverSelected,
+        breadcrumb,
+        assets,
+        groups,
+        categories,
+        departments,
+        filters,
+    } = usePage().props as unknown as PageProps;
+
+    const [selectedId, setSelectedId] = useState<string | null>(
+        serverSelected?.id ?? null,
+    );
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [treeSearch, setTreeSearch] = useState('');
+    const [search, setSearch] = useState(filters?.search ?? '');
+    const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
+    const [departmentFilter, setDepartmentFilter] = useState(
+        filters?.department ?? '',
+    );
+    const [filterOpen, setFilterOpen] = useState(false);
     const [deleting, setDeleting] = useState<Asset | null>(null);
     const [deletingState, setDeletingState] = useState(false);
-    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [selectedAssets, setSelectedAssets] = useState<Set<string>>(
+        new Set(),
+    );
     const isProcessing = useIsProcessing();
-    const visibleTree = useMemo(() => filterNodes(tree, query), [tree, query]);
 
-    useEffect(() => rememberAssetListUrl(), []);
+    // Sync selectedId from server-side selected prop
     useEffect(() => {
-        return () => {
-            if (timer.current) clearTimeout(timer.current);
-        };
-    }, []);
+        if (serverSelected?.id !== selectedId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedId(serverSelected?.id ?? null);
+        }
+    }, [serverSelected, selectedId]);
 
-    const load = (values: {
-        search?: string;
-        status?: string;
-        department?: string;
-        node?: string | null;
-    }) => {
-        router.get(
-            browse().url,
-            {
-                node: values.node === undefined ? selectedNode : values.node,
-                search: values.search ?? search,
-                status: values.status ?? status,
-                department: values.department ?? department,
-            },
-            {
-                preserveState: true,
-                replace: true,
-                only: [
-                    'assets',
-                    'filters',
-                    'breadcrumb',
-                    'selectedNode',
-                    'selectedLevel',
-                ],
-            },
-        );
-    };
-    const navigateNode = (id: string, hasChildren: boolean) => {
-        setExpanded((previous) => {
-            const next = new Set(previous);
-            if (hasChildren) next.has(id) ? next.delete(id) : next.add(id);
+    const visibleTree = treeSearch.trim() ? filterTree(tree, treeSearch) : tree;
+
+    const treeExpandedIds = treeSearch.trim()
+        ? new Set(collectExpandableIds(visibleTree))
+        : expandedIds;
+
+    const toggleSelect = (id: string) => {
+        setSelectedAssets((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else if (next.size < MAX_BULK) {
+                next.add(id);
+            } else {
+                toast.warning(`Maksimal ${MAX_BULK} aset dapat dipilih.`);
+
+                return prev;
+            }
+
             return next;
         });
-        load({ node: id });
     };
-    const clear = () => {
-        setSearch('');
-        setStatus('');
-        setDepartment('');
-        load({ node: null, search: '', status: '', department: '' });
-    };
+
     const handleDelete = () => {
-        if (!deleting) return;
+        if (!deleting) {
+            return;
+        }
+
         setDeletingState(true);
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy.url({ asset: deleting.id }), {
             only: ['assets'],
             preserveState: true,
             preserveScroll: true,
@@ -258,229 +335,699 @@ export default function Browse() {
             },
         });
     };
-    const goToPage = (url: string | null) =>
-        url && router.get(url, {}, { preserveState: true, replace: true });
-    const active = Boolean(selectedNode || search || status || department);
 
-    const treePanel = (
-        <div className="glass-panel rounded-2xl p-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
-            <div className="flex items-center justify-between gap-3">
-                <div>
-                    <h2 className="font-semibold text-foreground">
-                        Klasifikasi Aset
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                        {tree.length} golongan
-                    </p>
-                </div>
-                <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg"
-                        onClick={() => {
-                            const ids = new Set<string>();
-                            const walk = (nodes: ClassificationNode[]) =>
-                                nodes.forEach((node) => {
-                                    if (node.children?.length) {
-                                        ids.add(node.id);
-                                        walk(node.children);
-                                    }
-                                });
-                            walk(tree);
-                            setExpanded(ids);
-                        }}
-                        aria-label="Buka semua"
-                    >
-                        <ChevronDown className="size-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg"
-                        onClick={() => setExpanded(new Set())}
-                        aria-label="Tutup semua"
-                    >
-                        <X className="size-4" />
-                    </Button>
-                </div>
-            </div>
-            <div className="group relative mt-4">
-                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Cari klasifikasi..."
-                    className="h-10 rounded-xl bg-card/60 pl-9"
-                />
-            </div>
-            <div className="mt-4 space-y-1">
-                {visibleTree.map((node) => (
-                    <TreeRow
-                        key={node.id}
-                        node={node}
-                        depth={0}
-                        expanded={expanded}
-                        selectedNode={selectedNode}
-                        query={query}
-                        onNavigate={navigateNode}
-                        onToggle={(id) =>
-                            setExpanded((previous) => {
-                                const next = new Set(previous);
-                                next.has(id) ? next.delete(id) : next.add(id);
-                                return next;
-                            })
-                        }
-                    />
-                ))}
-            </div>
-        </div>
-    );
+    const confirmBulkDelete = () => {
+        if (selectedAssets.size === 0) {
+            return;
+        }
+
+        setBulkDeleting(true);
+        const ids = Array.from(selectedAssets);
+        router.delete(destroyBulk.url(), {
+            data: { ids },
+            only: ['assets'],
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setBulkDeleting(false);
+                setBulkDeleteOpen(false);
+                setSelectedAssets(new Set());
+                toast.success(`${ids.length} aset berhasil dihapus.`);
+            },
+            onError: () => {
+                setBulkDeleting(false);
+                toast.error('Gagal menghapus aset terpilih.');
+            },
+        });
+    };
+
+    const goToPage = (url: string | null) => {
+        if (url) {
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
+    };
+
+    const reload = (overrides: Record<string, string> = {}) => {
+        const params: Record<string, string> = {};
+
+        if (selectedId && serverSelected) {
+            params.level = serverSelected.level;
+            params.node = serverSelected.id;
+        }
+
+        if (search.trim()) {
+            params.search = search.trim();
+        }
+
+        if (statusFilter) {
+            params.status = statusFilter;
+        }
+
+        if (departmentFilter) {
+            params.department = departmentFilter;
+        }
+
+        router.get(
+            browse.url({ query: { ...params, ...overrides } }),
+            {},
+            {
+                preserveState: true,
+                replace: true,
+                only: ['assets', 'selected', 'breadcrumb'],
+            },
+        );
+    };
+
+    const applyFilters = () => {
+        setFilterOpen(false);
+        reload({});
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatusFilter('');
+        setDepartmentFilter('');
+        setFilterOpen(false);
+        reload({ search: '', status: '', department: '' });
+    };
+
+    const activeFilterCount = [search, statusFilter, departmentFilter].filter(
+        Boolean,
+    ).length;
+
+    const handleNodeSelect = (node: BrowseTreeNode) => {
+        setSelectedId(node.id);
+        router.get(
+            browse.url({ query: { level: node.level, node: node.id } }),
+            {},
+            {
+                preserveState: true,
+                replace: true,
+                only: ['assets', 'selected', 'breadcrumb'],
+            },
+        );
+    };
+
+    const toggleExpand = (id: string) => {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    // Sync tree search filter when query changes
+    const visibleTreeWithSearch = treeSearch.trim()
+        ? filterTree(tree, treeSearch)
+        : tree;
+
+    const treeExpandedIdsWithSearch = treeSearch.trim()
+        ? new Set(collectExpandableIds(visibleTreeWithSearch))
+        : expandedIds;
 
     return (
-        <div className="relative min-h-[100dvh] p-4 sm:p-6 lg:p-8">
+        <div
+            className={cn(
+                'relative flex min-h-[100dvh] flex-col p-4 sm:p-6 lg:p-8',
+                selectedAssets.size > 0 && 'pb-32 lg:pb-8',
+            )}
+        >
             <VibrantBackground variant="default" />
-            <div className="relative mx-auto w-full max-w-7xl">
-                <header className="card-enter flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="glass-card flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary">
-                            <FolderTree className="size-6" strokeWidth={1.5} />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                                Telusuri Aset
-                            </h1>
-                            <p className="text-xs text-muted-foreground sm:text-sm">
-                                Jelajahi aset melalui hierarki klasifikasi.
-                            </p>
-                        </div>
-                    </div>
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="rounded-xl lg:hidden"
-                            >
-                                <SlidersHorizontal className="size-4" />
-                                Telusuri
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent
-                            side="left"
-                            className="w-[min(90vw,380px)] bg-background/90 p-4 backdrop-blur-xl"
-                        >
-                            <SheetHeader className="p-0">
-                                <SheetTitle>Telusuri klasifikasi</SheetTitle>
-                            </SheetHeader>
-                            {treePanel}
-                        </SheetContent>
-                    </Sheet>
-                </header>
+            <div className="mx-auto w-full max-w-7xl">
                 <div
                     className={cn(
-                        'mt-6 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]',
+                        'ease-premium relative transition-all duration-200',
                         isProcessing && 'pointer-events-none opacity-60',
                     )}
                 >
-                    <aside className="hidden lg:block">{treePanel}</aside>
-                    <main className="min-w-0">
-                        <nav className="glass-panel flex flex-wrap items-center gap-1.5 rounded-2xl px-4 py-3 text-sm">
-                            <button
-                                type="button"
-                                className="font-semibold text-primary hover:underline"
-                                onClick={() => load({ node: null })}
-                            >
-                                Semua Aset
-                            </button>
-                            {breadcrumb.map((crumb) => (
-                                <span
-                                    key={crumb.id}
-                                    className="inline-flex items-center gap-1.5"
-                                >
-                                    <ChevronRight className="size-3.5 text-muted-foreground/60" />
-                                    <button
-                                        type="button"
-                                        className={cn(
-                                            'max-w-40 truncate hover:text-primary hover:underline',
-                                            crumb.id === selectedNode &&
-                                                'font-semibold text-primary',
-                                        )}
-                                        onClick={() => load({ node: crumb.id })}
-                                    >
-                                        {crumb.name}
-                                    </button>
-                                </span>
-                            ))}
-                            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
-                                <Boxes className="size-3.5" />
-                                {assets.total}
-                            </span>
-                        </nav>
-                        <section className="glass-panel mt-4 flex flex-col gap-2.5 rounded-2xl p-3 sm:flex-row sm:items-center">
-                            <div className="relative min-w-0 flex-1">
-                                <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) => {
-                                        const value = event.target.value;
-                                        setSearch(value);
-                                        if (timer.current)
-                                            clearTimeout(timer.current);
-                                        timer.current = setTimeout(
-                                            () => load({ search: value }),
-                                            350,
-                                        );
-                                    }}
-                                    placeholder="Cari kode, serial, brand, model..."
-                                    className="h-11 rounded-xl bg-card/70 pr-10 pl-10"
+                    {isProcessing && (
+                        <div className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+                            <div className="flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg">
+                                <Spinner className="size-4" />
+                                Memproses...
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card-enter flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10 sm:size-12">
+                                <Boxes
+                                    className="size-5 sm:size-6"
+                                    strokeWidth={1.5}
                                 />
-                                {search && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSearch('');
-                                            load({ search: '' });
-                                        }}
-                                        className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-card"
-                                        aria-label="Bersihkan pencarian"
-                                    >
-                                        <X className="size-4" />
-                                    </button>
+                            </div>
+                            <div className="min-w-0">
+                                <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                                    Telusuri Aset
+                                </h1>
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1 sm:text-sm">
+                                    Jelajahi hierarki klasifikasi untuk
+                                    menemukan aset.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                            {serverSelected && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="hidden h-10 rounded-xl border-border/40 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl md:flex"
+                                    onClick={() =>
+                                        handleNodeSelect(
+                                            serverSelected as BrowseTreeNode,
+                                        )
+                                    }
+                                >
+                                    <ChevronDown className="mr-2 size-4" />
+                                    Lihat node ini
+                                </Button>
+                            )}
+                            <Link href={withReturnTo(create.url())}>
+                                <Button
+                                    size="sm"
+                                    className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                                >
+                                    <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
+                                        <Plus
+                                            className="size-3.5"
+                                            strokeWidth={2.25}
+                                        />
+                                    </span>
+                                    Tambah Aset
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="card-enter mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr] lg:[&>*]:min-h-0">
+                        {/* Left Pane: Classification Tree */}
+                        <section className="glass-panel card-enter flex min-h-[500px] flex-col delay-100 lg:h-[calc(100dvh-14rem)]">
+                            <div className="relative overflow-hidden border-b border-border/60 px-4 py-3">
+                                <div
+                                    aria-hidden
+                                    className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/[0.1]"
+                                />
+                                <div className="relative flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-sm font-semibold text-foreground">
+                                            Struktur Klasifikasi
+                                        </h2>
+                                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                                            {visibleTree.length} golongan
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
+                                            onClick={() =>
+                                                setExpandedIds(
+                                                    new Set(
+                                                        (() => {
+                                                            const all =
+                                                                new Set<string>();
+                                                            const walk = (
+                                                                nodes: BrowseTreeNode[],
+                                                            ) => {
+                                                                for (const node of nodes) {
+                                                                    if (
+                                                                        node.children &&
+                                                                        node
+                                                                            .children
+                                                                            .length >
+                                                                            0
+                                                                    ) {
+                                                                        all.add(
+                                                                            node.id,
+                                                                        );
+                                                                        walk(
+                                                                            node.children,
+                                                                        );
+                                                                    }
+                                                                }
+                                                            };
+                                                            walk(tree);
+
+                                                            return all;
+                                                        })(),
+                                                    ),
+                                                )
+                                            }
+                                            aria-label="Perluas semua"
+                                        >
+                                            <ChevronRight
+                                                className="size-4 rotate-90"
+                                                strokeWidth={1.75}
+                                            />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
+                                            onClick={() =>
+                                                setExpandedIds(new Set())
+                                            }
+                                            aria-label="Ciutkan semua"
+                                        >
+                                            <ChevronRight
+                                                className="size-4"
+                                                strokeWidth={1.75}
+                                            />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-b border-border/60 px-3 py-2.5">
+                                <div className="relative">
+                                    <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Cari kode atau nama..."
+                                        className="h-8 rounded-lg border-border/60 bg-background/80 pl-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-primary/20"
+                                        value={treeSearch}
+                                        onChange={(e) =>
+                                            setTreeSearch(e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div
+                                className="flex-1 overflow-y-auto p-2"
+                                role="tree"
+                                aria-label="Klasifikasi Asset"
+                            >
+                                {visibleTree.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+                                        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                            <Boxes
+                                                className="size-7"
+                                                strokeWidth={1.25}
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-foreground">
+                                                Belum ada golongan asset
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Buat yang pertama untuk memulai
+                                                hierarki klasifikasi.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    visibleTree.map((node) => (
+                                        <BrowseTreeNodeRow
+                                            key={node.id}
+                                            node={node}
+                                            selectedId={selectedId}
+                                            expandedIds={
+                                                treeExpandedIdsWithSearch
+                                            }
+                                            onSelect={handleNodeSelect}
+                                            onToggleExpand={toggleExpand}
+                                        />
+                                    ))
                                 )}
                             </div>
+                        </section>
+
+                        {/* Right Pane: Asset Grid */}
+                        <section className="glass-panel card-enter flex min-h-[500px] flex-col delay-150 lg:h-[calc(100dvh-14rem)]">
+                            <div className="flex min-h-[500px] flex-col overflow-hidden rounded-[0.75rem] lg:h-full">
+                                {!selectedId ? (
+                                    <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
+                                        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                            <Layers
+                                                className="size-7"
+                                                strokeWidth={1.25}
+                                            />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-semibold text-foreground">
+                                                Pilih node dari pohon
+                                            </h2>
+                                            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
+                                                Klik golongan, kategori,
+                                                cluster, atau sub cluster untuk
+                                                melihat aset di dalamnya.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {breadcrumb.length > 0 && (
+                                            <div className="border-b border-border/60 px-4 py-3">
+                                                <nav
+                                                    className="flex flex-wrap items-center gap-1.5 text-xs"
+                                                    aria-label="Jalur klasifikasi"
+                                                >
+                                                    {breadcrumb.map(
+                                                        (crumb, index) => (
+                                                            <Link
+                                                                key={crumb.id}
+                                                                href={browse.url(
+                                                                    {
+                                                                        query: {
+                                                                            level: crumb.level,
+                                                                            node: crumb.id,
+                                                                        },
+                                                                    },
+                                                                )}
+                                                                className={cn(
+                                                                    'inline-flex items-center rounded px-1.5 py-0.5 transition-colors',
+                                                                    LEVEL_TINTS[
+                                                                        crumb
+                                                                            .level
+                                                                    ].bg,
+                                                                    LEVEL_TINTS[
+                                                                        crumb
+                                                                            .level
+                                                                    ].fg,
+                                                                    index ===
+                                                                        breadcrumb.length -
+                                                                            1 &&
+                                                                        'font-semibold',
+                                                                )}
+                                                            >
+                                                                {crumb.name}
+                                                                {crumb.code && (
+                                                                    <span className="ml-1 font-mono text-[10px] opacity-70">
+                                                                        {
+                                                                            crumb.code
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </Link>
+                                                        ),
+                                                    )}
+                                                </nav>
+                                            </div>
+                                        )}
+
+                                        <div className="border-b border-border/60 px-4 py-3">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-sm font-semibold text-foreground">
+                                                        Aset di{' '}
+                                                        {breadcrumb[
+                                                            breadcrumb.length -
+                                                                1
+                                                        ]?.name ?? 'Node'}
+                                                    </h3>
+                                                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                                                        {assets?.total ?? 0}{' '}
+                                                        aset
+                                                    </span>
+                                                </div>
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setFilterOpen(true)
+                                                        }
+                                                        className="h-10! flex-1 rounded-xl border-border/70 bg-card/70 px-4 text-sm font-medium shadow-sm backdrop-blur-xl sm:h-11! sm:flex-none"
+                                                    >
+                                                        <Filter className="size-4" />
+                                                        Filter
+                                                        {activeFilterCount >
+                                                            0 && (
+                                                            <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                                                                {
+                                                                    activeFilterCount
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </Button>
+
+                                                    {activeFilterCount > 0 && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={
+                                                                clearFilters
+                                                            }
+                                                            className="size-10! shrink-0 rounded-xl sm:size-9!"
+                                                            aria-label="Hapus semua filter"
+                                                            title="Hapus semua filter"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {assets?.data.length === 0 ? (
+                                            <EmptyState
+                                                icon={Package}
+                                                title={
+                                                    activeFilterCount > 0
+                                                        ? 'Tidak ada hasil filter'
+                                                        : 'Tidak ada aset di node ini'
+                                                }
+                                                description={
+                                                    activeFilterCount > 0
+                                                        ? 'Tidak ditemukan aset dengan filter tersebut. Coba kata kunci lain.'
+                                                        : 'Node ini belum memiliki aset. Tambahkan aset dari halaman Daftar Aset.'
+                                                }
+                                            />
+                                        ) : (
+                                            <div className="flex-1 overflow-y-auto p-4">
+                                                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                                    {assets?.data.map(
+                                                        (asset) => (
+                                                            <AssetCard
+                                                                key={asset.id}
+                                                                asset={asset}
+                                                                selected={selectedAssets.has(
+                                                                    asset.id,
+                                                                )}
+                                                                onSelect={() =>
+                                                                    toggleSelect(
+                                                                        asset.id,
+                                                                    )
+                                                                }
+                                                                onDelete={() =>
+                                                                    setDeleting(
+                                                                        asset,
+                                                                    )
+                                                                }
+                                                            />
+                                                        ),
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {assets && assets.last_page > 1 && (
+                                    <div className="border-t border-border/60 px-4 py-3">
+                                        <ResourcePagination
+                                            links={assets.links}
+                                            currentPage={assets.current_page}
+                                            lastPage={assets.last_page}
+                                            from={assets.from}
+                                            to={assets.to}
+                                            total={assets.total}
+                                            onPageChange={goToPage}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            {selectedAssets.size > 0 && (
+                <div
+                    role="toolbar"
+                    aria-label="Aksi massal aset"
+                    className={cn(
+                        'card-enter fixed inset-x-3 z-40 flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-background/90 p-2 shadow-2xl backdrop-blur-xl',
+                        'bottom-[calc(4rem+env(safe-area-inset-bottom))]',
+                        'sm:p-2.5 lg:sticky lg:inset-x-auto lg:bottom-6 lg:mx-auto lg:w-fit',
+                    )}
+                >
+                    <p className="flex min-w-0 items-center gap-2 pl-1.5 text-sm font-semibold text-foreground">
+                        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground tabular-nums">
+                            {selectedAssets.size}
+                            <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
+                                {' '}
+                                · maks {MAX_BULK}
+                            </span>
+                        </span>
+                    </p>
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-10 rounded-xl sm:size-9"
+                            onClick={() => setSelectedAssets(new Set())}
+                            aria-label="Batalkan pilihan"
+                        >
+                            <Trash2 className="size-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-10 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive sm:size-9"
+                            onClick={() => setBulkDeleteOpen(true)}
+                            aria-label="Hapus aset terpilih"
+                        >
+                            <Trash2 className="size-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            <Dialog
+                open={bulkDeleteOpen}
+                onOpenChange={(open) =>
+                    !bulkDeleting && setBulkDeleteOpen(open)
+                }
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Aset Terpilih</DialogTitle>
+                        <DialogDescription>
+                            Hapus{' '}
+                            <span className="font-semibold text-foreground">
+                                {selectedAssets.size}
+                            </span>{' '}
+                            aset yang dipilih? Tindakan ini tidak dapat
+                            dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                            disabled={bulkDeleting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={confirmBulkDelete}
+                            disabled={bulkDeleting}
+                        >
+                            {bulkDeleting && (
+                                <Spinner className="mr-2 size-4" />
+                            )}
+                            Hapus {selectedAssets.size} Aset
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={!!deleting}
+                onOpenChange={(open) => !open && setDeleting(null)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Aset</DialogTitle>
+                        <DialogDescription>
+                            Yakin ingin menghapus aset{' '}
+                            <span className="font-semibold text-foreground">
+                                {deleting?.kode_asset ?? ''}
+                            </span>
+                            ? Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDeleting(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={deletingState}
+                        >
+                            {deletingState && (
+                                <Spinner className="mr-2 size-4" />
+                            )}
+                            Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+                <DialogContent className="glass-panel ease-out-[cubic-bezier(0.16,1,0.3,1)] animate-in border-border/30 bg-background/85 shadow-2xl backdrop-blur-xl duration-200 zoom-in-95 fade-in sm:max-w-lg">
+                    <DialogHeader className="border-b border-border/20 pb-3">
+                        <DialogTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+                            <Filter
+                                className="size-5 text-primary"
+                                strokeWidth={2}
+                            />
+                            Filter Aset
+                        </DialogTitle>
+                        <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
+                            Persempit daftar aset berdasarkan kriteria berikut.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">
+                                Status Aset
+                            </Label>
                             <Select
-                                value={status}
-                                onValueChange={(value) => {
-                                    setStatus(value);
-                                    load({ status: value });
-                                }}
+                                value={statusFilter}
+                                onValueChange={setStatusFilter}
                             >
-                                <SelectTrigger className="h-11 w-full rounded-xl bg-card/70 sm:w-40">
-                                    <Filter className="size-4" />
-                                    <SelectValue placeholder="Status" />
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <SelectValue placeholder="Semua Status" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
                                     {STATUS_OPTIONS.map((option) => (
                                         <SelectItem
-                                            key={option.value || 'all'}
+                                            key={option.value}
                                             value={option.value}
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {option.label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-foreground">
+                                Department
+                            </Label>
                             <Select
-                                value={department}
-                                onValueChange={(value) => {
-                                    setDepartment(value);
-                                    load({ department: value });
-                                }}
+                                value={departmentFilter}
+                                onValueChange={setDepartmentFilter}
                             >
-                                <SelectTrigger className="h-11 w-full rounded-xl bg-card/70 sm:w-48">
-                                    <SelectValue placeholder="Department" />
+                                <SelectTrigger className="h-10 border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <SelectValue placeholder="Semua Department" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass-panel overflow-hidden rounded-xl border-border/30 bg-background/90 p-1 shadow-2xl backdrop-blur-xl">
                                     <SelectItem value="">
                                         Semua Department
                                     </SelectItem>
@@ -488,81 +1035,42 @@ export default function Browse() {
                                         <SelectItem
                                             key={item.id_department}
                                             value={item.id_department}
+                                            className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-primary/5 focus:bg-primary/5"
                                         >
                                             {item.nama_department}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {active && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={clear}
-                                    className="size-11 shrink-0 rounded-xl"
-                                    aria-label="Hapus filter"
-                                >
-                                    <X className="size-4" />
-                                </Button>
-                            )}
-                        </section>
-                        {assets.data.length === 0 ? (
-                            <EmptyState
-                                icon={Inbox}
-                                title="Tidak ada aset"
-                                description="Tidak ditemukan aset pada klasifikasi atau filter tersebut."
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                            <Label className="text-sm font-medium text-foreground">
+                                Pencarian
+                            </Label>
+                            <Input
+                                placeholder="Cari kode, serial, brand, model..."
+                                className="h-10! rounded-xl border-border/40 bg-background/70 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
                             />
-                        ) : (
-                            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                {assets.data.map((asset) => (
-                                    <AssetCard
-                                        key={asset.id}
-                                        asset={asset}
-                                        onDelete={setDeleting}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        {assets.last_page > 1 && (
-                            <ResourcePagination
-                                links={assets.links}
-                                currentPage={assets.current_page}
-                                lastPage={assets.last_page}
-                                from={assets.from}
-                                to={assets.to}
-                                total={assets.total}
-                                onPageChange={goToPage}
-                            />
-                        )}
-                    </main>
-                </div>
-            </div>
-            <Dialog
-                open={Boolean(deleting)}
-                onOpenChange={(open) => !open && setDeleting(null)}
-            >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Hapus aset?</DialogTitle>
-                        <DialogDescription>
-                            Aset{' '}
-                            {deleting?.kode_asset ?? deleting?.item?.name ?? ''}{' '}
-                            akan dihapus permanen.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
+                        </div>
+                    </div>
+                    <DialogFooter className="mt-6 gap-3 border-t border-border/20 pt-4 sm:justify-between">
                         <Button
-                            variant="outline"
-                            onClick={() => setDeleting(null)}
+                            type="button"
+                            variant="ghost"
+                            onClick={clearFilters}
+                            className="h-10 gap-2 px-4 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground"
                         >
-                            Batal
+                            <Trash2 className="size-4" strokeWidth={2} /> Reset
                         </Button>
                         <Button
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={deletingState}
+                            type="button"
+                            onClick={applyFilters}
+                            className="h-10 gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-xl active:scale-[0.98]"
                         >
-                            {deletingState ? 'Menghapus...' : 'Hapus aset'}
+                            <Filter className="size-4" strokeWidth={2} />{' '}
+                            Terapkan Filter
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -571,263 +1079,6 @@ export default function Browse() {
     );
 }
 
-function TreeRow({
-    node,
-    depth,
-    expanded,
-    selectedNode,
-    query,
-    onNavigate,
-    onToggle,
-}: {
-    node: ClassificationNode;
-    depth: number;
-    expanded: Set<string>;
-    selectedNode: string | null;
-    query: string;
-    onNavigate: (id: string, hasChildren: boolean) => void;
-    onToggle: (id: string) => void;
-}) {
-    const level = (
-        ['group', 'category', 'cluster', 'sub-cluster'] as ClassificationLevel[]
-    )[Math.min(depth, 3)];
-    const children = node.children ?? [];
-    const hasChildren = node.child_count > 0 || children.length > 0;
-    const match =
-        query &&
-        (node.name.toLowerCase().includes(query.toLowerCase()) ||
-            node.code?.toLowerCase().includes(query.toLowerCase()));
-    return (
-        <div>
-            <div
-                className={cn(
-                    'group flex min-h-10 cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 transition-all hover:bg-primary/5',
-                    selectedNode === node.id &&
-                        'bg-primary/10 ring-1 ring-primary/25',
-                )}
-                style={{ paddingLeft: `${8 + depth * 20}px` }}
-                onClick={() => onNavigate(node.id, hasChildren)}
-            >
-                <button
-                    type="button"
-                    className="flex size-5 shrink-0 items-center justify-center text-muted-foreground"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        hasChildren && onToggle(node.id);
-                    }}
-                    aria-label={expanded.has(node.id) ? 'Tutup' : 'Buka'}
-                >
-                    {hasChildren ? (
-                        expanded.has(node.id) ? (
-                            <ChevronDown className="size-3.5" />
-                        ) : (
-                            <ChevronRight className="size-3.5" />
-                        )
-                    ) : null}
-                </button>
-                <LevelIcon
-                    level={level}
-                    open={expanded.has(node.id)}
-                    size="sm"
-                />
-                <span
-                    className={cn(
-                        'min-w-0 flex-1 truncate text-sm',
-                        match && 'font-semibold text-primary',
-                    )}
-                    title={LEVEL_LABELS[level]}
-                >
-                    {node.name}
-                    <span className="ml-1.5 text-xs text-muted-foreground">
-                        {LEVEL_SHORT[level]}
-                    </span>
-                    {node.code && (
-                        <span className="ml-1 font-mono text-xs text-muted-foreground">
-                            ┬À {node.code}
-                        </span>
-                    )}
-                </span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary tabular-nums">
-                    {node.asset_count ?? 0}
-                </span>
-            </div>
-            {expanded.has(node.id) &&
-                children.map((child) => (
-                    <TreeRow
-                        key={child.id}
-                        node={child}
-                        depth={depth + 1}
-                        expanded={expanded}
-                        selectedNode={selectedNode}
-                        query={query}
-                        onNavigate={onNavigate}
-                        onToggle={onToggle}
-                    />
-                ))}
-        </div>
-    );
-}
-
-function AssetCard({
-    asset,
-    onDelete,
-}: {
-    asset: Asset;
-    onDelete: (asset: Asset) => void;
-}) {
-    const chain = [
-        asset.asset_group,
-        asset.asset_category,
-        asset.asset_cluster,
-        asset.asset_sub_cluster,
-    ].filter(Boolean) as Classification[];
-    return (
-        <div className="glass-card ease-premium group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="relative size-11 shrink-0">
-                        {asset.photo_url?.[0] ? (
-                            <>
-                                <img
-                                    src={asset.photo_url[0]}
-                                    alt="Foto aset"
-                                    className="size-11 rounded-xl border border-border/70 object-cover shadow-md ring-1 ring-primary/10"
-                                />
-                                {asset.photo_url.length > 1 && (
-                                    <span className="absolute -right-1.5 -bottom-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-background px-1 text-xs font-bold text-muted-foreground shadow-sm">
-                                        +{asset.photo_url.length - 1}
-                                    </span>
-                                )}
-                            </>
-                        ) : (
-                            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
-                                <Package className="size-5" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="min-w-0">
-                        <Link
-                            href={show(asset.id).url}
-                            className="block truncate text-sm font-semibold hover:text-primary"
-                        >
-                            {asset.item?.name ?? 'Aset'}
-                        </Link>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {[asset.brand, asset.model]
-                                .filter(Boolean)
-                                .join(' ┬À ') || 'ÔÇö'}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex shrink-0 gap-1">
-                    <Link href={withReturnTo(edit(asset.id).url)}>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            aria-label="Edit aset"
-                        >
-                            <Pencil className="size-3.5" />
-                        </Button>
-                    </Link>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        onClick={() => onDelete(asset)}
-                        aria-label="Hapus aset"
-                    >
-                        <Trash2 className="size-3.5 text-destructive" />
-                    </Button>
-                </div>
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
-                <span className="truncate font-mono text-xs font-bold text-primary">
-                    {asset.kode_asset ?? 'ÔÇö'}
-                </span>
-                <span
-                    className={cn(
-                        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-bold uppercase ring-1',
-                        assetStatusChip(asset.status),
-                    )}
-                >
-                    <span
-                        className={cn(
-                            'size-1.5 rounded-full',
-                            assetStatusDot(asset.status),
-                        )}
-                    />
-                    {assetStatusLabel(asset.status)}
-                </span>
-            </div>
-            <div className="relative mt-3.5 flex flex-1 flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-1">
-                    {chain.length ? (
-                        chain.map((level, index) => (
-                            <span
-                                key={`${level.id}-${index}`}
-                                className="inline-flex items-center"
-                            >
-                                {index > 0 && (
-                                    <ChevronRight className="size-3 text-muted-foreground/50" />
-                                )}
-                                <span className="max-w-40 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-muted-foreground ring-1 ring-border/70">
-                                    {level.name}
-                                </span>
-                            </span>
-                        ))
-                    ) : (
-                        <span className="text-xs text-muted-foreground">
-                            Belum ada klasifikasi
-                        </span>
-                    )}
-                </div>
-                <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                    {asset.item && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <Package className="size-3.5 shrink-0" />
-                            {asset.item.name}
-                        </p>
-                    )}
-                    {asset.serial_number && (
-                        <p className="flex items-center gap-1.5 truncate font-mono text-muted-foreground">
-                            <FileText className="size-3.5 shrink-0" />
-                            {asset.serial_number}
-                        </p>
-                    )}
-                    {asset.document_url?.length > 0 && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <FileText className="size-3.5 shrink-0" />
-                            {asset.document_url.length} dokumen
-                        </p>
-                    )}
-                    {asset.location && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <MapPin className="size-3.5 shrink-0" />
-                            {asset.location.name}
-                        </p>
-                    )}
-                    {asset.department && (
-                        <p className="flex items-center gap-1.5 truncate text-muted-foreground">
-                            <Building2 className="size-3.5 shrink-0" />
-                            {asset.department.nama_department}
-                        </p>
-                    )}
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
-                    <span
-                        className={cn(
-                            'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ring-1',
-                            conditionAccent(asset.condition),
-                        )}
-                    >
-                        {asset.condition ?? 'ÔÇö'}
-                    </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatDate(asset.created_at)}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-}
+AssetsBrowse.layout = {
+    breadcrumbs: [{ title: 'Telusuri Aset', href: browse.url() }],
+};

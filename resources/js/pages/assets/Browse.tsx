@@ -129,11 +129,26 @@ function filterTree(nodes: BrowseTreeNode[], search: string): BrowseTreeNode[] {
         }));
 }
 
-function collectExpandableIds(nodes: BrowseTreeNode[]): string[] {
-    return nodes.flatMap((node) => [
-        ...(node.children?.length ? [node.id] : []),
-        ...collectExpandableIds(node.children ?? []),
-    ]);
+function findTreeNode(
+    nodes: BrowseTreeNode[],
+    id: string | null,
+): BrowseTreeNode | null {
+    if (!id) {
+        return null;
+    }
+
+    for (const node of nodes) {
+        if (node.id === id) {
+            return node;
+        }
+
+        const match = findTreeNode(node.children ?? [], id);
+        if (match) {
+            return match;
+        }
+    }
+
+    return null;
 }
 
 function BrowseTreeNodeRow({
@@ -142,17 +157,19 @@ function BrowseTreeNodeRow({
     expandedIds,
     onSelect,
     onToggleExpand,
+    showChildren = true,
 }: {
     node: BrowseTreeNode;
     selectedId: string | null;
     expandedIds: Set<string>;
     onSelect: (node: BrowseTreeNode) => void;
     onToggleExpand: (id: string) => void;
+    showChildren?: boolean;
 }) {
     const level = node.level;
     const depth = LEVEL_DEPTH[level];
     const children = node.children ?? [];
-    const hasChildren = children.length > 0;
+    const hasChildren = showChildren && children.length > 0;
     const isSelected = selectedId === node.id;
     const isExpanded = expandedIds.has(node.id);
     const tint = LEVEL_TINTS[level];
@@ -232,7 +249,7 @@ function BrowseTreeNodeRow({
                 </span>
             </div>
 
-            {hasChildren && isExpanded && (
+            {showChildren && hasChildren && isExpanded && (
                 <div role="group">
                     {children.map((child) => (
                         <BrowseTreeNodeRow
@@ -265,7 +282,6 @@ export default function AssetsBrowse() {
     const [selectedId, setSelectedId] = useState<string | null>(
         serverSelected?.id ?? null,
     );
-    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const [treeSearch, setTreeSearch] = useState('');
     const [search, setSearch] = useState(filters?.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
@@ -289,12 +305,6 @@ export default function AssetsBrowse() {
             setSelectedId(serverSelected?.id ?? null);
         }
     }, [serverSelected, selectedId]);
-
-    const visibleTree = treeSearch.trim() ? filterTree(tree, treeSearch) : tree;
-
-    const treeExpandedIds = treeSearch.trim()
-        ? new Set(collectExpandableIds(visibleTree))
-        : expandedIds;
 
     const toggleSelect = (id: string) => {
         setSelectedAssets((prev) => {
@@ -428,28 +438,11 @@ export default function AssetsBrowse() {
         );
     };
 
-    const toggleExpand = (id: string) => {
-        setExpandedIds((prev) => {
-            const next = new Set(prev);
-
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-
-            return next;
-        });
-    };
-
-    // Sync tree search filter when query changes
-    const visibleTreeWithSearch = treeSearch.trim()
-        ? filterTree(tree, treeSearch)
-        : tree;
-
-    const treeExpandedIdsWithSearch = treeSearch.trim()
-        ? new Set(collectExpandableIds(visibleTreeWithSearch))
-        : expandedIds;
+    const selectedNode = findTreeNode(tree, selectedId);
+    const currentFolders = selectedNode?.children ?? tree;
+    const visibleFolders = treeSearch.trim()
+        ? filterTree(currentFolders, treeSearch)
+        : currentFolders;
 
     return (
         <div
@@ -528,9 +521,49 @@ export default function AssetsBrowse() {
                         </div>
                     </div>
 
-                    <div className="card-enter mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr] lg:[&>*]:min-h-0">
-                        {/* Left Pane: Classification Tree */}
-                        <section className="glass-panel card-enter flex min-h-[500px] flex-col delay-100 lg:h-[calc(100dvh-14rem)]">
+                    <div className="card-enter mt-5 flex flex-col gap-4">
+                        {breadcrumb.length > 0 && (
+                            <nav
+                                className="glass-panel flex flex-wrap items-center gap-1.5 px-4 py-3 text-xs"
+                                aria-label="Jalur klasifikasi"
+                            >
+                                {breadcrumb.map((crumb, index) => (
+                                    <span
+                                        key={crumb.id}
+                                        className="inline-flex items-center gap-1.5"
+                                    >
+                                        {index > 0 && (
+                                            <ChevronRight className="size-3 text-muted-foreground" />
+                                        )}
+                                        <Link
+                                            href={browse.url({
+                                                query: {
+                                                    level: crumb.level,
+                                                    node: crumb.id,
+                                                },
+                                            })}
+                                            className={cn(
+                                                'inline-flex items-center rounded px-1.5 py-0.5 transition-colors',
+                                                LEVEL_TINTS[crumb.level].bg,
+                                                LEVEL_TINTS[crumb.level].fg,
+                                                index ===
+                                                    breadcrumb.length - 1 &&
+                                                    'font-semibold',
+                                            )}
+                                        >
+                                            {crumb.name}
+                                            {crumb.code && (
+                                                <span className="ml-1 font-mono text-[10px] opacity-70">
+                                                    {crumb.code}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    </span>
+                                ))}
+                            </nav>
+                        )}
+                        {/* Folder navigation */}
+                        <section className="glass-panel card-enter flex flex-col delay-100">
                             <div className="relative overflow-hidden border-b border-border/60 px-4 py-3">
                                 <div
                                     aria-hidden
@@ -542,68 +575,23 @@ export default function AssetsBrowse() {
                                             Struktur Klasifikasi
                                         </h2>
                                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                                            {visibleTree.length} golongan
+                                            {visibleFolders.length}{' '}
+                                            {selectedNode
+                                                ? selectedNode.level ===
+                                                  'sub-cluster'
+                                                    ? 'aset'
+                                                    : CHILD_LABELS[
+                                                          selectedNode.level
+                                                      ]
+                                                : 'golongan'}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-0.5">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
-                                            onClick={() =>
-                                                setExpandedIds(
-                                                    new Set(
-                                                        (() => {
-                                                            const all =
-                                                                new Set<string>();
-                                                            const walk = (
-                                                                nodes: BrowseTreeNode[],
-                                                            ) => {
-                                                                for (const node of nodes) {
-                                                                    if (
-                                                                        node.children &&
-                                                                        node
-                                                                            .children
-                                                                            .length >
-                                                                            0
-                                                                    ) {
-                                                                        all.add(
-                                                                            node.id,
-                                                                        );
-                                                                        walk(
-                                                                            node.children,
-                                                                        );
-                                                                    }
-                                                                }
-                                                            };
-                                                            walk(tree);
-
-                                                            return all;
-                                                        })(),
-                                                    ),
-                                                )
-                                            }
-                                            aria-label="Perluas semua"
-                                        >
-                                            <ChevronRight
-                                                className="size-4 rotate-90"
-                                                strokeWidth={1.75}
-                                            />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="size-7 text-muted-foreground transition-colors duration-200 hover:bg-muted/80 hover:text-foreground"
-                                            onClick={() =>
-                                                setExpandedIds(new Set())
-                                            }
-                                            aria-label="Ciutkan semua"
-                                        >
-                                            <ChevronRight
-                                                className="size-4"
-                                                strokeWidth={1.75}
-                                            />
-                                        </Button>
+                                        {selectedNode && (
+                                            <span className="text-xs text-muted-foreground">
+                                                {selectedNode.name}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -627,7 +615,7 @@ export default function AssetsBrowse() {
                                 role="tree"
                                 aria-label="Klasifikasi Asset"
                             >
-                                {visibleTree.length === 0 ? (
+                                {visibleFolders.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                                         <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                             <Boxes
@@ -646,25 +634,24 @@ export default function AssetsBrowse() {
                                         </div>
                                     </div>
                                 ) : (
-                                    visibleTree.map((node) => (
+                                    visibleFolders.map((node) => (
                                         <BrowseTreeNodeRow
                                             key={node.id}
                                             node={node}
                                             selectedId={selectedId}
-                                            expandedIds={
-                                                treeExpandedIdsWithSearch
-                                            }
+                                            expandedIds={new Set()}
                                             onSelect={handleNodeSelect}
-                                            onToggleExpand={toggleExpand}
+                                            onToggleExpand={() => {}}
+                                            showChildren={false}
                                         />
                                     ))
                                 )}
                             </div>
                         </section>
 
-                        {/* Right Pane: Asset Grid */}
-                        <section className="glass-panel card-enter flex min-h-[500px] flex-col delay-150 lg:h-[calc(100dvh-14rem)]">
-                            <div className="flex min-h-[500px] flex-col overflow-hidden rounded-[0.75rem] lg:h-full">
+                        {/* Assets in selected folder */}
+                        <section className="glass-panel card-enter flex min-h-[500px] flex-col delay-150">
+                            <div className="flex min-h-[500px] flex-col overflow-hidden rounded-[0.75rem]">
                                 {!selectedId ? (
                                     <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
                                         <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -686,55 +673,6 @@ export default function AssetsBrowse() {
                                     </div>
                                 ) : (
                                     <>
-                                        {breadcrumb.length > 0 && (
-                                            <div className="border-b border-border/60 px-4 py-3">
-                                                <nav
-                                                    className="flex flex-wrap items-center gap-1.5 text-xs"
-                                                    aria-label="Jalur klasifikasi"
-                                                >
-                                                    {breadcrumb.map(
-                                                        (crumb, index) => (
-                                                            <Link
-                                                                key={crumb.id}
-                                                                href={browse.url(
-                                                                    {
-                                                                        query: {
-                                                                            level: crumb.level,
-                                                                            node: crumb.id,
-                                                                        },
-                                                                    },
-                                                                )}
-                                                                className={cn(
-                                                                    'inline-flex items-center rounded px-1.5 py-0.5 transition-colors',
-                                                                    LEVEL_TINTS[
-                                                                        crumb
-                                                                            .level
-                                                                    ].bg,
-                                                                    LEVEL_TINTS[
-                                                                        crumb
-                                                                            .level
-                                                                    ].fg,
-                                                                    index ===
-                                                                        breadcrumb.length -
-                                                                            1 &&
-                                                                        'font-semibold',
-                                                                )}
-                                                            >
-                                                                {crumb.name}
-                                                                {crumb.code && (
-                                                                    <span className="ml-1 font-mono text-[10px] opacity-70">
-                                                                        {
-                                                                            crumb.code
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </Link>
-                                                        ),
-                                                    )}
-                                                </nav>
-                                            </div>
-                                        )}
-
                                         <div className="border-b border-border/60 px-4 py-3">
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                 <div className="flex items-center gap-2">

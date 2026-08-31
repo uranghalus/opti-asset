@@ -7,6 +7,7 @@ use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
+use App\Models\Category;
 use App\Models\Department;
 use App\Models\Item;
 use App\Models\Location;
@@ -233,16 +234,18 @@ class ImportAssetsAction
                 ];
 
                 if ($fileKode !== null) {
-                    $classification = $this->resolveClassificationFromKode($fileKode);
+                    $result = $this->resolveClassificationFromKode($fileKode);
 
-                    if ($classification !== null) {
-                        $data['asset_group_id'] = $classification['group_id'];
-                        $data['asset_category_id'] = $classification['category_id'];
-                        $data['asset_cluster_id'] = $classification['cluster_id'];
-                        $data['asset_sub_cluster_id'] = $classification['subcluster_id'];
+                    if ($result['classification'] !== null) {
+                        $data['asset_group_id'] = $result['classification']['group_id'];
+                        $data['asset_category_id'] = $result['classification']['category_id'];
+                        $data['asset_cluster_id'] = $result['classification']['cluster_id'];
+                        $data['asset_sub_cluster_id'] = $result['classification']['subcluster_id'];
                     } else {
-                        // Kode aset dari file tidak cocok dengan klasifikasi yang tersedia;
-                        // simpan kode aset apa adanya, biarkan ID klasifikasi kosong.
+                        foreach ($result['errors'] as $error) {
+                            $errors[] = ['row' => $line, 'message' => $error];
+                        }
+
                         $data['asset_group_id'] = null;
                         $data['asset_category_id'] = null;
                         $data['asset_cluster_id'] = null;
@@ -450,19 +453,24 @@ class ImportAssetsAction
      * Resolve the classification IDs from a dotted asset code.
      * Format: golongan.category.cluster.subcluster[.no_urut].
      *
-     * @return array{group_id: string, category_id: string, cluster_id: string, subcluster_id: string}|null
+     * @return array{classification: array{group_id: string, category_id: string, cluster_id: string, subcluster_id: string}|null, errors: array<int, string>}
      */
-    private function resolveClassificationFromKode(string $kode): ?array
+    private function resolveClassificationFromKode(string $kode): array
     {
         $parts = explode('.', $kode);
+        $errors = [];
 
         if (count($parts) < 4) {
-            return null;
+            $errors[] = "Kode aset '{$kode}' tidak memiliki minimal 4 segmen (Golongan.Kategori.Cluster.Sub-cluster)";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         $group = AssetGroup::query()->where('code', $parts[0])->first(['id']);
         if ($group === null) {
-            return null;
+            $errors[] = "Golongan '{$parts[0]}' tidak ditemukan di master data";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         $category = AssetCategory::query()
@@ -470,7 +478,9 @@ class ImportAssetsAction
             ->where('code', $parts[1])
             ->first(['id']);
         if ($category === null) {
-            return null;
+            $errors[] = "Kategori '{$parts[1]}' tidak ditemukan di bawah golongan '{$parts[0]}'";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         $cluster = AssetCluster::query()
@@ -478,7 +488,9 @@ class ImportAssetsAction
             ->where('code', $parts[2])
             ->first(['id']);
         if ($cluster === null) {
-            return null;
+            $errors[] = "Cluster '{$parts[2]}' tidak ditemukan di bawah kategori '{$parts[1]}'";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         $subcluster = AssetSubCluster::query()
@@ -486,14 +498,19 @@ class ImportAssetsAction
             ->where('code', $parts[3])
             ->first(['id']);
         if ($subcluster === null) {
-            return null;
+            $errors[] = "Sub Cluster '{$parts[3]}' tidak ditemukan di bawah cluster '{$parts[2]}'";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         return [
-            'group_id' => $group->id,
-            'category_id' => $category->id,
-            'cluster_id' => $cluster->id,
-            'subcluster_id' => $subcluster->id,
+            'classification' => [
+                'group_id' => $group->id,
+                'category_id' => $category->id,
+                'cluster_id' => $cluster->id,
+                'subcluster_id' => $subcluster->id,
+            ],
+            'errors' => [],
         ];
     }
 

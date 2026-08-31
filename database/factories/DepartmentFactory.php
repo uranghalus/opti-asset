@@ -19,7 +19,6 @@ class DepartmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'id_department' => (string) Str::uuid(),
             'kode_department' => fake()->unique()->lexify('??'),
             'nama_department' => fake()->unique()->company(),
         ];

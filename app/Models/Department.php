@@ -22,12 +22,15 @@ class Department extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id_department',
         'tenant_id',
         'kode_department',
         'nama_department',
         'hod_user_id',
         'manager_user_id',
+    ];
+
+    protected $guarded = [
+        'id_department',
     ];
 
     /** @return HasMany<Employee, $this> */

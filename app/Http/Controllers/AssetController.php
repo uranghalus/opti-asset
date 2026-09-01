@@ -90,13 +90,15 @@ class AssetController extends Controller
                 'status' => $status,
                 'department' => $department,
                 'condition' => $condition,
+                'initialLevel' => $this->initialFilterLevel($request),
             ],
         ]);
     }
 
     public function browse(Request $request): Response
     {
-        $level = $request->string('level')->trim()->toString();
+        $defaultLevel = $this->initialFilterLevel($request);
+        $level = $request->string('level')->trim()->toString() ?: $defaultLevel;
         $nodeId = $request->string('node')->trim()->toString();
 
         $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
@@ -160,6 +162,7 @@ class AssetController extends Controller
                 'search' => $search,
                 'status' => $status,
                 'department' => $department,
+                'initialLevel' => $defaultLevel,
             ],
         ]);
     }
@@ -525,6 +528,20 @@ class AssetController extends Controller
      * Local-path redirect target from ?return_to=..., or null when absent
      * or unsafe (external / protocol-relative URLs are rejected).
      */
+    protected function initialFilterLevel(Request $request): string
+    {
+        $roles = $request->user()?->getRoleNames()->toArray() ?? [];
+        $mapping = config('asset_filters.role_levels', []);
+
+        foreach ($roles as $role) {
+            if (isset($mapping[$role])) {
+                return $mapping[$role];
+            }
+        }
+
+        return $mapping['default'] ?? 'cluster';
+    }
+
     private function safeReturnTo(Request $request): ?string
     {
         $returnTo = $request->query('return_to');
@@ -634,7 +651,9 @@ class AssetController extends Controller
             throw new \RuntimeException('Tidak dapat menyimpan file sementara.');
         }
 
-        $result = $action(Storage::disk('local')->path($tempPath), Item::findOrFail($request->string('item_id')->toString()));
+        $result = $action(Storage::disk('local')->path($tempPath), $request->string('item_id')->toString() !== ''
+            ? Item::find($request->string('item_id')->toString())
+            : null);
 
         Storage::disk('local')->delete($tempPath);
 

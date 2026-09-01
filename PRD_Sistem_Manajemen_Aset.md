@@ -2,7 +2,7 @@
 
 ## Sistem Manajemen Aset (Asset Management System)
 
-**Versi:** 1.0
+**Versi:** 1.2
 **Tanggal:** 23 Juli 2026
 **Status:** Living Document — Draft untuk Review
 **Pemilik Dokumen:** Product Owner / Tim Pengembangan Internal
@@ -12,10 +12,11 @@
 
 ## Riwayat Perubahan
 
-| Versi | Tanggal     | Diubah oleh | Deskripsi Perubahan                                                                     |
-| ----- | ----------- | ----------- | --------------------------------------------------------------------------------------- |
-| 1.0 | 23 Jul 2026 | Tim Produk | Draft awal PRD disusun dari problem statement, goals, user story, dan requirement awal. |
-| 1.1 | 25 Agu 2026 | Tim Dev    | Update tracking §12: FR-04/07/12 ditandai Selesai (filter kategori cascade, Disposal UI+enum+toast Indonesia, Audit Trail `ActivityLog`+observer+UI). Tambah fitur bulk delete aset, import spreadsheet format kantor, remember-last-list, toast glass premium. |
+| Versi | Tanggal     | Diubah oleh | Deskripsi Perubahan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----- | ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0   | 23 Jul 2026 | Tim Produk  | Draft awal PRD disusun dari problem statement, goals, user story, dan requirement awal.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 1.1   | 25 Agu 2026 | Tim Dev     | Update tracking §12: FR-04/07/12 ditandai Selesai (filter kategori cascade, Disposal UI+enum+toast Indonesia, Audit Trail `ActivityLog`+observer+UI). Tambah fitur bulk delete aset, import spreadsheet format kantor, remember-last-list, toast glass premium.                                                                                                                                                                                                                                                                       |
+| 1.2   | 1 Sep 2026  | Tim Produk  | Tambah requirement Tipe Aset: aset dipilah menjadi **Aktiva Tetap** dan **Peralatan** (field terpisah, independen dari struktur klasifikasi Group/Category/Cluster/Sub-cluster). Penentuan tipe otomatis berdasarkan ambang batas (threshold) nilai perolehan yang dapat dikonfigurasi. Tambah field akuntansi khusus Aktiva Tetap (nilai perolehan, masa manfaat, metode & akumulasi penyusutan, nilai buku), override manual tipe aset, riwayat nilai buku per periode, dan mekanisme migrasi/backfill data aset lama. Lihat FR-13. |
 
 ---
 
@@ -85,6 +86,7 @@ Keberhasilan pengelolaan data aset yang terpadu diukur dari persentase aset yang
 ### In Scope
 
 - Manajemen Data Aset (CRUD Asset)
+- Manajemen Tipe Aset (Aktiva Tetap & Peralatan) beserta data akuntansi terkait
 - Manajemen Klasifikasi Aset (CRUD Klasifikasi Asset)
 - Manajemen Data Item Aset (CRUD Item)
 - Pembuatan dan pengelolaan barcode untuk aset
@@ -178,6 +180,18 @@ Sistem mendukung siklus status aset berikut, yang diperbarui secara otomatis mau
 | Pengelola Aset | Aku mau mencatat proses penghapusan aset supaya aset yang sudah tidak digunakan dapat terdokumentasi dengan baik.                |
 | Manajemen      | Aku mau menyetujui penghapusan aset supaya proses disposal sesuai dengan kebijakan organisasi.                                   |
 | Auditor        | Aku mau melihat riwayat penghapusan aset supaya dapat memastikan proses disposal dilakukan secara transparan dan terdokumentasi. |
+
+### 6.7a Tipe Aset (Aktiva Tetap & Peralatan)
+
+| Peran          | User Story                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pengelola Aset | Aku mau sistem otomatis menentukan tipe aset (Aktiva Tetap atau Peralatan) berdasarkan nilai perolehan supaya klasifikasi akuntansi konsisten dan tidak perlu dicek manual satu per satu.   |
+| Pengelola Aset | Aku mau mencatat data akuntansi (nilai perolehan, masa manfaat, metode penyusutan) khusus untuk aset bertipe Aktiva Tetap supaya datanya selaras dengan pencatatan akuntansi.               |
+| Manajemen      | Aku mau melihat nilai buku (book value) Aktiva Tetap yang terkini supaya dapat memantau nilai aset organisasi.                                                                              |
+| Auditor        | Aku mau melihat daftar aset berdasarkan tipe (Aktiva Tetap/Peralatan) supaya dapat memverifikasi kesesuaiannya dengan pencatatan akuntansi organisasi.                                      |
+| Staff Asset    | Aku mau bisa mengoverride tipe aset hasil penentuan otomatis secara manual (dengan alasan tercatat) supaya kebijakan internal yang tidak selalu mengikuti threshold tetap bisa diakomodasi. |
+| Auditor        | Aku mau melihat riwayat nilai buku Aktiva Tetap per periode (bukan hanya nilai terkini) supaya dapat menelusuri histori penyusutan untuk kebutuhan audit.                                   |
+| Super User     | Aku mau ada mekanisme migrasi/backfill tipe aset untuk data aset yang sudah ada supaya seluruh data konsisten setelah fitur ini diimplementasikan.                                          |
 
 ### 6.7 User Story Umum Sistem
 
@@ -309,6 +323,22 @@ Sistem mendukung siklus status aset berikut, yang diperbarui secara otomatis mau
 | FR-12.3 | Sistem harus mencatat pengguna yang melakukan aktivitas.            |
 | FR-12.4 | Sistem harus menyediakan fitur pencarian dan penelusuran audit log. |
 
+### FR-13 — Manajemen Tipe Aset dan Data Akuntansi
+
+| No.      | Deskripsi Requirement                                                                                                                                                                                                                    |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-13.1  | Sistem harus menyediakan field **Tipe Aset** pada setiap aset dengan dua nilai: **Aktiva Tetap** atau **Peralatan**, terpisah dan independen dari struktur klasifikasi (Group/Category/Cluster/Sub-cluster).                             |
+| FR-13.2  | Sistem harus menentukan Tipe Aset secara otomatis berdasarkan nilai perolehan aset dibandingkan dengan ambang batas (threshold) kapitalisasi yang berlaku.                                                                               |
+| FR-13.3  | Sistem harus menyediakan pengaturan (setting) untuk mengonfigurasi nilai ambang batas (threshold) kapitalisasi, dapat diubah oleh Super User.                                                                                            |
+| FR-13.4  | Sistem harus menampilkan field akuntansi tambahan pada aset bertipe Aktiva Tetap: nilai perolehan, masa manfaat, metode penyusutan, akumulasi penyusutan, dan nilai buku.                                                                |
+| FR-13.5  | Sistem harus menghitung nilai buku (book value) Aktiva Tetap secara otomatis berdasarkan nilai perolehan, metode penyusutan, dan akumulasi penyusutan.                                                                                   |
+| FR-13.6  | Sistem tidak menampilkan field akuntansi (FR-13.4) pada aset bertipe Peralatan.                                                                                                                                                          |
+| FR-13.7  | Sistem harus menyediakan filter dan pencarian aset berdasarkan Tipe Aset.                                                                                                                                                                |
+| FR-13.8  | Sistem harus menampilkan ringkasan/breakdown jumlah dan nilai aset per Tipe Aset pada dashboard dan laporan.                                                                                                                             |
+| FR-13.9  | Sistem harus mengizinkan Staff Asset melakukan override manual terhadap Tipe Aset hasil penentuan otomatis, dengan mewajibkan pengisian alasan override yang tercatat pada riwayat aset.                                                 |
+| FR-13.10 | Sistem harus mencatat riwayat nilai buku (book value) Aktiva Tetap per periode (bukan hanya nilai terkini) untuk kebutuhan audit dan pelaporan historis.                                                                                 |
+| FR-13.11 | Sistem harus menyediakan mekanisme migrasi/backfill Tipe Aset untuk aset yang sudah ada di sistem sebelum FR-13 diimplementasikan, baik secara otomatis (dihitung ulang berdasarkan threshold) maupun manual per batch oleh Staff Asset. |
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -424,6 +454,8 @@ Sistem mendukung siklus status aset berikut, yang diperbarui secara otomatis mau
 - Data aset eksisting (hardcopy) akan dimigrasikan secara bertahap ke dalam sistem oleh tim pengelola aset.
 - Struktur klasifikasi aset dan daftar lokasi/unit organisasi sudah/akan disepakati sebelum implementasi.
 - Koneksi internet/jaringan internal tersedia secara stabil di seluruh lokasi pengguna.
+- Nilai ambang batas (threshold) kapitalisasi untuk membedakan Aktiva Tetap dan Peralatan akan ditentukan/disepakati oleh tim keuangan/akuntansi sebelum implementasi FR-13, dan bersifat dapat dikonfigurasi (bukan hardcode).
+- Aset yang sudah ada di sistem sebelum FR-13 diimplementasikan perlu dimigrasi/backfill Tipe Asetnya (FR-13.11); strategi migrasi (full-otomatis vs manual per batch) akan ditentukan menjelang implementasi.
 
 ### 9.2 Batasan
 
@@ -447,18 +479,23 @@ Sistem mendukung siklus status aset berikut, yang diperbarui secara otomatis mau
 
 ## 11. Glosarium
 
-| Istilah          | Definisi                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| Aset             | Barang atau sumber daya milik organisasi yang dikelola dan dicatat dalam sistem.           |
-| Klasifikasi Aset | Pengelompokan aset berdasarkan kategori tertentu (misal: elektronik, furnitur, kendaraan). |
-| Item Aset        | Detail spesifikasi/atribut dari suatu aset.                                                |
-| Mutasi Aset      | Proses perpindahan aset antar lokasi, unit, atau pengguna.                                 |
-| Disposal Aset    | Proses penghapusan/pensiun aset yang sudah tidak digunakan.                                |
-| Barcode          | Kode unik dalam bentuk visual yang digunakan untuk identifikasi cepat suatu aset.          |
-| RBAC             | Role-Based Access Control — pembatasan akses fitur sistem berdasarkan peran pengguna.      |
-| Audit Trail      | Catatan aktivitas pengguna (tambah/ubah/hapus) beserta waktu dan pelaku aktivitas.         |
-| Super User       | Pengguna dengan akses penuh (root) atas seluruh modul dan konfigurasi sistem.              |
-| Vibe Coding      | Pendekatan pengembangan aplikasi dengan bantuan AI (AI-assisted development).              |
+| Istilah                 | Definisi                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aset                    | Barang atau sumber daya milik organisasi yang dikelola dan dicatat dalam sistem.                                                                  |
+| Klasifikasi Aset        | Pengelompokan aset berdasarkan kategori tertentu (misal: elektronik, furnitur, kendaraan).                                                        |
+| Item Aset               | Detail spesifikasi/atribut dari suatu aset.                                                                                                       |
+| Mutasi Aset             | Proses perpindahan aset antar lokasi, unit, atau pengguna.                                                                                        |
+| Disposal Aset           | Proses penghapusan/pensiun aset yang sudah tidak digunakan.                                                                                       |
+| Barcode                 | Kode unik dalam bentuk visual yang digunakan untuk identifikasi cepat suatu aset.                                                                 |
+| RBAC                    | Role-Based Access Control — pembatasan akses fitur sistem berdasarkan peran pengguna.                                                             |
+| Audit Trail             | Catatan aktivitas pengguna (tambah/ubah/hapus) beserta waktu dan pelaku aktivitas.                                                                |
+| Super User              | Pengguna dengan akses penuh (root) atas seluruh modul dan konfigurasi sistem.                                                                     |
+| Vibe Coding             | Pendekatan pengembangan aplikasi dengan bantuan AI (AI-assisted development).                                                                     |
+| Tipe Aset               | Pengelompokan aset menjadi Aktiva Tetap atau Peralatan, terpisah dari klasifikasi fisik aset.                                                     |
+| Aktiva Tetap            | Aset bernilai di atas ambang batas kapitalisasi, dicatat dengan data akuntansi (nilai perolehan, penyusutan, nilai buku) sesuai kaidah akuntansi. |
+| Peralatan               | Aset bernilai di bawah ambang batas kapitalisasi, tidak memerlukan pencatatan akuntansi/penyusutan.                                               |
+| Threshold Kapitalisasi  | Nilai ambang batas nominal yang menentukan apakah suatu aset dikategorikan sebagai Aktiva Tetap atau Peralatan.                                   |
+| Nilai Buku (Book Value) | Nilai aset setelah dikurangi akumulasi penyusutan (nilai perolehan − akumulasi penyusutan).                                                       |
 
 ---
 
@@ -468,44 +505,46 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 
 ### 12.1 Functional Requirements
 
-| Kode   | Fitur                                              | Status      | Keterangan                                                                 |
-| ------ | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------- |
-| FR-01  | Manajemen Data Aset (CRUD + scan + label + import + bulk delete) | ✅ Selesai | CRUD, scan, label (single/batch), import spreadsheet kantor, bulk delete, remember-last-list. |
-| FR-02  | Manajemen Klasifikasi Aset                         | ✅ Selesai | Group/Category/Cluster/Sub‑cluster CRUD tersedia.                           |
-| FR-03  | Manajemen Item Aset                                | ✅ Selesai | Index, store, update, destroy, batch‑category ada.                         |
-| FR-04  | Pencarian & Filter                                 | ✅ Selesai | Pencarian + filter (golongan, kategori cascade, department, status, kondisi). |
-| FR-05  | Scan Barcode                                       | ✅ Selesai | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                       |
-| FR-06  | Mutasi Aset                                        | ✅ Selesai | Index, create, store, show, approve, reject ada.                           |
-| FR-07  | Asset Disposal                                     | ✅ Selesai | Migrasi, model, controller, route, UI selesai. Enum, toast Indonesia, bulk delete. |
-| FR-08  | Riwayat Aset (History)                             | ✅ Selesai  | Model, controller (`AssetHistoryController`), route (`assets/{asset}/history`), halaman React `asset-history/Index.tsx`, dan test sudah lengkap. |
-| FR-09  | Manajemen Status Aset                              | ✅ Selesai | Migrasi `update_asset_status_values` + enum status ada.                   |
-| FR-10  | Dashboard & Pelaporan                              | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.           |
-| FR-11  | Manajemen Pengguna & Hak Akses                     | ✅ Selesai | Roles, permissions, employees, departments, organizations ada.             |
-| FR-12  | Audit Trail                                        | ✅ Selesai | `ActivityLog` model + observer + controller + UI halaman `/audit-logs` + tests. |
+| Kode  | Fitur                                                            | Status      | Keterangan                                                                                                                                                               |
+| ----- | ---------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FR-01 | Manajemen Data Aset (CRUD + scan + label + import + bulk delete) | ✅ Selesai  | CRUD, scan, label (single/batch), import spreadsheet kantor, bulk delete, remember-last-list.                                                                            |
+| FR-02 | Manajemen Klasifikasi Aset                                       | ✅ Selesai  | Group/Category/Cluster/Sub‑cluster CRUD tersedia.                                                                                                                        |
+| FR-03 | Manajemen Item Aset                                              | ✅ Selesai  | Index, store, update, destroy, batch‑category ada.                                                                                                                       |
+| FR-04 | Pencarian & Filter                                               | ✅ Selesai  | Pencarian + filter (golongan, kategori cascade, department, status, kondisi).                                                                                            |
+| FR-05 | Scan Barcode                                                     | ✅ Selesai  | `assets/scan`, `scan-lookup`, halaman Scan tersedia.                                                                                                                     |
+| FR-06 | Mutasi Aset                                                      | ✅ Selesai  | Index, create, store, show, approve, reject ada.                                                                                                                         |
+| FR-07 | Asset Disposal                                                   | ✅ Selesai  | Migrasi, model, controller, route, UI selesai. Enum, toast Indonesia, bulk delete.                                                                                       |
+| FR-08 | Riwayat Aset (History)                                           | ✅ Selesai  | Model, controller (`AssetHistoryController`), route (`assets/{asset}/history`), halaman React `asset-history/Index.tsx`, dan test sudah lengkap.                         |
+| FR-09 | Manajemen Status Aset                                            | ✅ Selesai  | Migrasi `update_asset_status_values` + enum status ada.                                                                                                                  |
+| FR-10 | Dashboard & Pelaporan                                            | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.                                                                                                         |
+| FR-11 | Manajemen Pengguna & Hak Akses                                   | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada.                                                                                                           |
+| FR-12 | Audit Trail                                                      | ✅ Selesai  | `ActivityLog` model + observer + controller + UI halaman `/audit-logs` + tests.                                                                                          |
+| FR-13 | Manajemen Tipe Aset (Aktiva Tetap/Peralatan) + data akuntansi    | ❌ Belum    | Requirement baru (v1.2). Perlu: field tipe aset, setting threshold kapitalisasi, field akuntansi khusus Aktiva Tetap, kalkulasi nilai buku, filter & dashboard per tipe. |
 
-| Kode | Fitur Tambahan (diluar FR awal)              | Status     | Keterangan                                                                 |
-| ---- | -------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
-| —    | Label & Barcode Aset                         | ✅ Selesai | Create, Edit, Labels (per aset), LabelsBatch (massal), Scan barcode.      |
-| —    | Mutasi Aset (Transfer)                       | ✅ Selesai | CRUD, approve/reject, update lokasi otomatis.                             |
-| —    | Bulk Delete Aset                             | ✅ Selesai | Hapus massal dengan validasi tenant.                                      |
-| —    | Remember-Last-List (Return-to-List)          | ✅ Selesai | Kembali ke halaman daftar terakhir (page+filter) setelah edit/detail.     |
-| —    | Import Spreadsheet Format Kantor             | ✅ Selesai | Parser fleksibel header multi-baris, auto-create item, kode aset dari file. |
-| —    | Toast Premium Glass                          | ✅ Selesai | Glassmorphism, ikon ber-tint, mobile di atas tabbar, dark mode.           |
+| Kode | Fitur Tambahan (diluar FR awal)     | Status     | Keterangan                                                                  |
+| ---- | ----------------------------------- | ---------- | --------------------------------------------------------------------------- |
+| —    | Label & Barcode Aset                | ✅ Selesai | Create, Edit, Labels (per aset), LabelsBatch (massal), Scan barcode.        |
+| —    | Mutasi Aset (Transfer)              | ✅ Selesai | CRUD, approve/reject, update lokasi otomatis.                               |
+| —    | Bulk Delete Aset                    | ✅ Selesai | Hapus massal dengan validasi tenant.                                        |
+| —    | Remember-Last-List (Return-to-List) | ✅ Selesai | Kembali ke halaman daftar terakhir (page+filter) setelah edit/detail.       |
+| —    | Import Spreadsheet Format Kantor    | ✅ Selesai | Parser fleksibel header multi-baris, auto-create item, kode aset dari file. |
+| —    | Toast Premium Glass                 | ✅ Selesai | Glassmorphism, ikon ber-tint, mobile di atas tabbar, dark mode.             |
 
 ### 12.2 Non‑Functional & Lainnya
 
-| Item                   | Status      | Keterangan                                                 |
-| ---------------------- | ----------- | ---------------------------------------------------------- |
-| Multi‑tenant           | ✅ Selesai  | Model `Tenant` + `tenant/switch`.                          |
-| Ekspor PDF/Excel       | ❌ Belum    | FR-10.6 belum diimplementasikan.                            |
-| Sync eksternal         | 🟡 Sebagian | Route `sync` ada, tapi integrasi backend belum lengkap.    |
+| Item                   | Status      | Keterangan                                                                              |
+| ---------------------- | ----------- | --------------------------------------------------------------------------------------- |
+| Multi‑tenant           | ✅ Selesai  | Model `Tenant` + `tenant/switch`.                                                       |
+| Ekspor PDF/Excel       | ❌ Belum    | FR-10.6 belum diimplementasikan.                                                        |
+| Sync eksternal         | 🟡 Sebagian | Route `sync` ada, tapi integrasi backend belum lengkap.                                 |
 | UI mengikuti DESIGN.md | 🟡 Sebagian | Glassmorphism diterapkan di sebagian komponen (Toast premium glass, kartu aset, tabel). |
 
 ### 12.3 Rencana Selanjutnya (Prioritas)
 
-1. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
-2. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController` + laporan mutasi/disposal.
-3. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill *impeccable*.
+1. **Manajemen Tipe Aset & Data Akuntansi (FR-13)** — tambah field tipe aset, setting threshold kapitalisasi, field akuntansi Aktiva Tetap, kalkulasi nilai buku.
+2. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
+3. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController` + laporan mutasi/disposal.
+4. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill _impeccable_.
 
 ---
 

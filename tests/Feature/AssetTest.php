@@ -806,17 +806,24 @@ class AssetTest extends TestCase
         $this->assertSame(1, Asset::count());
     }
 
-    public function test_import_requires_item(): void
+    public function test_import_without_item_or_item_column_creates_default_item(): void
     {
-        $file = UploadedFile::fake()->createWithContent(
-            'assets.csv',
-            $this->csvContent(['Brand X', '', 'SN-IMPORT-X']),
-        );
+        $file = $this->xlsxFile([
+            ['Brand', 'Model', 'Serial Number'],
+            ['Brand X', 'Model Y', 'SN-DEFAULT-ITEM'],
+        ]);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
-            ->post(route('assets.import'), ['file' => $file])
-            ->assertSessionHasErrors(['item_id']);
+            ->post(route('assets.import'), [
+                'file' => $file,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('serial_number', 'SN-DEFAULT-ITEM')->first();
+        $this->assertNotNull($asset);
+        $this->assertNotNull($asset->item_id);
+        $this->assertNotNull(Item::find($asset->item_id));
     }
 
     public function test_import_requires_valid_file(): void
@@ -1106,5 +1113,143 @@ class AssetTest extends TestCase
         $row = array_pad($values, count($headers), '');
 
         return implode(',', $headers)."\n".implode(',', $row)."\n";
+    }
+
+    public function test_import_resolves_classification_by_exact_kode(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '11']);
+        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '07']);
+
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.11.07'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', '03.08.11.07')->first();
+
+        $this->assertNotNull($asset);
+        $this->assertSame($group->id, $asset->asset_group_id);
+        $this->assertSame($category->id, $asset->asset_category_id);
+        $this->assertSame($cluster->id, $asset->asset_cluster_id);
+        $this->assertSame($subCluster->id, $asset->asset_sub_cluster_id);
+    }
+
+    public function test_import_resolves_classification_by_positional_fallback(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+
+        // Three clusters under category — codes do NOT match '01' so positional kicks in.
+        $firstCluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1A', 'sort_order' => 1]);
+        $secondCluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1B', 'sort_order' => 2]);
+        AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1C', 'sort_order' => 3]);
+
+        // Two subclusters under the 2nd cluster.
+        $firstSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $secondCluster->id, 'code' => '2A', 'sort_order' => 1]);
+        $secondSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $secondCluster->id, 'code' => '2B', 'sort_order' => 2]);
+
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.02.02'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', '03.08.02.02')->first();
+
+        $this->assertNotNull($asset);
+        $this->assertSame($secondCluster->id, $asset->asset_cluster_id, 'Positional fallback picks the 2nd cluster');
+        $this->assertSame($secondSub->id, $asset->asset_sub_cluster_id, 'Positional fallback picks the 2nd subcluster');
+    }
+
+    public function test_import_records_errors_for_unknown_group_segment(): void
+    {
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '99.01.01.01'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Golongan '99' tidak ditemukan", (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    public function test_import_records_errors_for_unknown_category_segment(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.XX.01.01'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Kategori 'XX' tidak ditemukan di bawah golongan '03'", (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    public function test_import_records_errors_for_unknown_subcluster_segment(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '11']);
+        $item = Item::factory()->create();
+
+        // Kode '99' is numeric but exceeds available subclusters (only 0 exist).
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.11.99'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Sub Cluster '99' tidak ditemukan di bawah cluster '11'", (string) ($flash['toast']['message'] ?? ''));
     }
 }

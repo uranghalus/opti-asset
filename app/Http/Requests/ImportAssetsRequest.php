@@ -19,7 +19,7 @@ class ImportAssetsRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'mimes:xlsx,csv,ods', 'max:5120'],
-            'item_id' => ['required', 'uuid', Rule::exists('items', 'id')],
+            'item_id' => ['nullable', 'uuid', Rule::exists('items', 'id')],
         ];
     }
 }

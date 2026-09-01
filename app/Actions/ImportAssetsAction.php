@@ -98,7 +98,7 @@ class ImportAssetsAction
      *
      * @return ImportResult
      */
-    public function __invoke(string $filePath, Item $fallbackItem): array
+    public function __invoke(string $filePath, ?Item $fallbackItem = null): array
     {
         $rows = SimpleExcelReader::create($filePath)
             ->noHeaderRow()
@@ -200,7 +200,7 @@ class ImportAssetsAction
                 $itemName = $this->valueOrNull($row['item'] ?? null);
                 $item = $itemName !== null
                     ? $this->resolveItem($itemName, $items)
-                    : $fallbackItem->loadMissing('category');
+                    : $this->resolveFallbackItem($fallbackItem, $items);
 
                 $locationName = $this->valueOrNull($row['location'] ?? null);
                 $locationId = $locationName !== null
@@ -353,6 +353,22 @@ class ImportAssetsAction
     }
 
     /**
+     * Use a pre-selected item when available; otherwise create a shared
+     * "[Item Name]" item so that rows without explicit item columns still
+     * import. Created once per call, reused across rows.
+     *
+     * @param  array<string, Item>  $cache
+     */
+    private function resolveFallbackItem(?Item $fallbackItem, array &$cache): Item
+    {
+        if ($fallbackItem !== null) {
+            return $fallbackItem->loadMissing('category');
+        }
+
+        return $this->resolveItem('Imported Item', $cache);
+    }
+
+    /**
      * Find an existing item by name or create it so office exports that mix
      * several units in one file import without pre-registering every item.
      *
@@ -477,7 +493,7 @@ class ImportAssetsAction
         }
 
         // Level 1 — Group (by code)
-        $group = AssetGroup::query()->where('code', $parts[0])->first(['id']);
+        $group = AssetGroup::query()->where('code', $parts[0])->first(['id', 'code']);
 
         if ($group === null) {
             $errors[] = "Golongan '{$parts[0]}' tidak ditemukan di master data";
@@ -489,7 +505,7 @@ class ImportAssetsAction
         $category = AssetCategory::query()
             ->where('asset_group_id', $group->id)
             ->where('code', $parts[1])
-            ->first(['id']);
+            ->first(['id', 'code']);
 
         if ($category === null && ctype_digit($parts[1])) {
             $category = $this->findByPosition(
@@ -511,7 +527,7 @@ class ImportAssetsAction
         $cluster = AssetCluster::query()
             ->where('asset_category_id', $category->id)
             ->where('code', $parts[2])
-            ->first(['id']);
+            ->first(['id', 'code']);
 
         if ($cluster === null && ctype_digit($parts[2])) {
             $cluster = $this->findByPosition(
@@ -533,7 +549,7 @@ class ImportAssetsAction
         $subcluster = AssetSubCluster::query()
             ->where('asset_cluster_id', $cluster->id)
             ->where('code', $parts[3])
-            ->first(['id']);
+            ->first(['id', 'code']);
 
         if ($subcluster === null && ctype_digit($parts[3])) {
             $subcluster = $this->findByPosition(
@@ -572,7 +588,7 @@ class ImportAssetsAction
             return null;
         }
 
-        return $query->skip($position - 1)->take(1)->first(['id']);
+        return $query->skip($position - 1)->take(1)->first(['id', 'code']);
     }
 
     private function valueOrNull(mixed $value): ?string

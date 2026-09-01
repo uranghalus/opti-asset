@@ -267,7 +267,13 @@ function BrowseTreeNodeRow({
     );
 }
 
-export default function AssetsBrowse() {
+export default function AssetsBrowse(props: Partial<PageProps> = {}) {
+    const isStandalone = (props?.tree ?? null) !== null;
+    const usePageProps = isStandalone ? null : usePage();
+    const mergedProps: PageProps = isStandalone
+        ? (props as PageProps)
+        : (usePageProps!.props as unknown as PageProps);
+
     const {
         tree,
         selected: serverSelected,
@@ -277,7 +283,7 @@ export default function AssetsBrowse() {
         categories,
         departments,
         filters,
-    } = usePage().props as unknown as PageProps;
+    } = mergedProps;
 
     const [selectedId, setSelectedId] = useState<string | null>(
         serverSelected?.id ?? null,

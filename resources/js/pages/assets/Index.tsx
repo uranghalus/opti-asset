@@ -431,9 +431,28 @@ export default function AssetsIndex() {
     const [importError, setImportError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
     const [importItemId, setImportItemId] = useState('');
+    const [view, setView] = useState<'list' | 'category'>('list');
+    const [browseData, setBrowseData] = useState<PageProps | null>(null);
+    const [browseLoading, setBrowseLoading] = useState(false);
+
+    useEffect(() => {
+      if (view === 'category' && !browseData) {
+        setBrowseLoading(true);
+        router.get(route('assets.browse'), {}, {
+          preserveState: true,
+          onSuccess: (page: { props: PageProps } & Record<string, unknown>) => {
+            setBrowseData(page.props);
+            setBrowseLoading(false);
+          },
+          onError: () => {
+            setBrowseLoading(false);
+          },
+        });
+      }
+    }, [view, browseData]);
 
     const handleImportSubmit = () => {
-        if (!importFile || !importItemId || importing) {
+        if (!importFile || importing) {
             return;
         }
 
@@ -442,7 +461,10 @@ export default function AssetsIndex() {
 
         const data = new FormData();
         data.append('file', importFile);
-        data.append('item_id', importItemId);
+
+        if (importItemId) {
+            data.append('item_id', importItemId);
+        }
 
         router.post(importMethod().url, data, {
             forceFormData: true,
@@ -1060,9 +1082,9 @@ export default function AssetsIndex() {
                                 Item Aset
                             </Label>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                Pilih item (wajib). Semua baris di file akan
-                                diimpor sebagai aset dari item ini, dengan kode
-                                otomatis dari kategori item.
+                                Pilih item secara manual, atau biarkan kosong
+                                jika file berisi kolom "Unit"/"Barang" untuk
+                                item yang otomatis dibuat saat import.
                             </p>
                             <div className="mt-3">
                                 <Label htmlFor="import-item">Item</Label>
@@ -1074,7 +1096,7 @@ export default function AssetsIndex() {
                                         id="import-item"
                                         className="mt-1.5 h-10 bg-background/70"
                                     >
-                                        <SelectValue placeholder="Pilih Item" />
+                                        <SelectValue placeholder="Biarkan kosong untuk auto-create" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {items.map((item) => (
@@ -1115,8 +1137,6 @@ export default function AssetsIndex() {
                         <div
                             className={cn(
                                 'group relative rounded-xl border-2 border-dashed p-6 text-center transition-colors',
-                                !importItemId &&
-                                    'pointer-events-none opacity-60',
                                 dragging
                                     ? 'border-primary bg-primary/5'
                                     : 'border-border hover:border-primary/40 hover:bg-accent/40',
@@ -1165,9 +1185,8 @@ export default function AssetsIndex() {
                                         : 'Klik atau seret file ke sini'}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                    {importItemId
-                                        ? 'Format didukung: .xlsx, .csv, .ods (maks. 5 MB)'
-                                        : 'Pilih item terlebih dahulu'}
+                                    Format didukung: .xlsx, .csv, .ods (maks. 5
+                                    MB)
                                 </span>
                             </label>
                             {importFile && (
@@ -1209,7 +1228,7 @@ export default function AssetsIndex() {
                         <Button
                             type="button"
                             onClick={handleImportSubmit}
-                            disabled={!importFile || !importItemId || importing}
+                            disabled={!importFile || importing}
                             className="gap-2"
                         >
                             {importing ? (

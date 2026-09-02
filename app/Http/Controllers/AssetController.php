@@ -108,7 +108,7 @@ class AssetController extends Controller
             ]);
         }
 
-        return Inertia::render('assets/Manage', [
+        return Inertia::render('assets/Index', [
             'tree' => $tree,
             'selected' => $selected,
             'breadcrumb' => $breadcrumb,
@@ -130,9 +130,58 @@ class AssetController extends Controller
         ]);
     }
 
-    public function browse(Request $request): Response
+    public function grouped(Request $request): Response
     {
-        return $this->index($request);
+        // reuse index logic but render glass‑morphic view
+        $perPage = min((int) $request->integer('per_page', 15), 100);
+        $initialLevel = $this->initialFilterLevel($request);
+        // reuse existing processing (duplicate for clarity)
+        $level = $request->string('level')->trim()->toString();
+        $nodeId = $request->string('node')->trim()->toString();
+        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
+        $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
+        $search = $request->string('search')->trim()->toString();
+        $status = $request->string('status')->trim()->toString();
+        $department = $request->string('department')->trim()->toString();
+        $condition = $request->string('condition')->trim()->toString();
+        $tree = $this->buildBrowseTree();
+        $breadcrumb = [];
+        $selected = null;
+        $assets = null;
+        if ($validLevel) {
+            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
+            $selected = ['level' => $level, 'id' => $nodeId];
+            $field = match ($level) {
+                'group' => 'asset_group_id',
+                'category' => 'asset_category_id',
+                'cluster' => 'asset_cluster_id',
+                'sub-cluster' => 'asset_sub_cluster_id',
+            };
+            $assets = Asset::query()
+                ->with(['item:id,name,code','location:id,name','department:id_department,nama_department','assetGroup:id,code,name','assetCategory:id,code,name','assetCluster:id,code,name','assetSubCluster:id,code,name'])
+                ->where($field, $nodeId)
+                ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q->where('kode_asset','like',"%{$search}%")->orWhere('serial_number','like',"%{$search}%")->orWhere('brand','like',"%{$search}%")->orWhere('model','like',"%{$search}%")))
+                ->when($status !== '', fn ($q)=>$q->where('status',$status))
+                ->when($department !== '', fn ($q)=>$q->where('department_id',$department))
+                ->when($condition !== '', fn ($q)=>$q->where('condition',$condition))
+                ->orderBy('created_at','desc')
+                ->paginate($perPage)
+                ->withQueryString();
+        }
+        return Inertia::render('assets/Index', [
+            'tree' => $tree,
+            'selected' => $selected,
+            'breadcrumb' => $breadcrumb,
+            'assets' => $assets,
+            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id','code','name']),
+            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id','code','name','asset_group_id']),
+            'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id','code','name','category_id']),
+            'locations' => Location::query()->orderBy('name')->get(['id','name']),
+            'departments' => Department::query()->orderBy('nama_department')->get(['id_department','nama_department']),
+            'filters' => [
+                'search'=> $search,'status'=> $status,'department'=> $department,'condition'=> $condition,'level'=> $validLevel ? $level : '','node'=> $validLevel ? $nodeId : '','initialLevel'=> $initialLevel,
+            ],
+        ]);
     }
 
     /**

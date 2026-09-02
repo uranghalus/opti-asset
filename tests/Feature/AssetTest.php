@@ -167,8 +167,21 @@ class AssetTest extends TestCase
             ->get(route('assets.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('assets/Manage')
+                ->component('assets/Index')
                 ->has('tree'));
+    }
+
+    public function test_grouped_route_renders_index_view(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+
+        $this->actingAs($this->user)
+            ->get(route('assets.grouped', ['level' => $group->id, 'node' => $subCluster->id]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('tree')
+                ->has('assets'));
     }
 
     public function test_show_page_renders_with_relations(): void

@@ -1,27 +1,22 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Barcode,
-    Boxes,
-    Building2,
     ChevronRight,
-    Download,
-    FileSpreadsheet,
-    FileText,
-    Filter,
-    FolderOpen,
-    Inbox,
+    X,
     Layers,
-    MapPin,
-    MoreHorizontal,
-    Package,
-    Pencil,
     Plus,
     ScanLine,
+    UploadCloud,
+    Download,
+    MoreHorizontal,
+    FileText,
+    Pencil,
+    Trash2,
+    Barcode,
     Search,
     SlidersHorizontal,
-    Trash2,
-    UploadCloud,
-    X,
+    Boxes,
+    FolderOpen,
+    Inbox,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -45,20 +40,11 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { rememberAssetListUrl, withReturnTo } from '@/lib/asset-return';
 import {
-    ASSET_STATUSES,
     assetStatusChip,
     assetStatusDot,
     assetStatusLabel,
@@ -78,10 +64,7 @@ import {
     scan,
     show,
 } from '@/routes/assets';
-import type {
-    ClassificationLevel,
-    ClassificationNode,
-} from '@/types/classification';
+import type { ClassificationLevel, ClassificationNode } from '@/types/classification';
 import { CHILD_LABELS } from '@/types/classification';
 
 type Asset = {
@@ -103,7 +86,7 @@ type Asset = {
     asset_cluster: { id: string; code: string | null; name: string } | null;
     asset_sub_cluster: { id: string; code: string | null; name: string } | null;
 };
-type PaginationLink = { url: string | null; label: string; active: boolean };
+
 type PaginatedData<T> = {
     data: T[];
     current_page: number;
@@ -112,32 +95,19 @@ type PaginatedData<T> = {
     total: number;
     from: number;
     to: number;
-    links: PaginationLink[];
+    links: { url: string | null; label: string; active: boolean }[];
 };
+
 type BrowseNode = ClassificationNode & { children?: BrowseNode[] };
+
 type PageProps = {
     tree: BrowseNode[];
     selected: { level: ClassificationLevel; id: string } | null;
-    breadcrumb: Array<{
-        id: string;
-        level: ClassificationLevel;
-        code: string | null;
-        name: string;
-    }>;
+    breadcrumb: Array<{ id: string; level: ClassificationLevel; code: string | null; name: string }>;
     assets: PaginatedData<Asset> | null;
     groups: Array<{ id: string; code: string | null; name: string }>;
-    categories: Array<{
-        id: string;
-        code: string | null;
-        name: string;
-        asset_group_id: string;
-    }>;
-    items: Array<{
-        id: string;
-        code: string;
-        name: string;
-        category_code: string | null;
-    }>;
+    categories: Array<{ id: string; code: string | null; name: string; asset_group_id: string }>;
+    items: Array<{ id: string; code: string; name: string; category_code: string | null }>;
     locations: Array<{ id: string; name: string }>;
     departments: Array<{ id_department: string; nama_department: string }>;
     filters: {
@@ -151,16 +121,6 @@ type PageProps = {
     };
 };
 
-const STATUS_OPTIONS = [
-    { value: '', label: 'Semua Status' },
-    ...ASSET_STATUSES.map((s) => ({ value: s.value, label: s.label })),
-];
-const CONDITION_OPTIONS = [
-    { value: '', label: 'Semua Kondisi' },
-    { value: 'Baik', label: 'Baik' },
-    { value: 'Rusak Ringan', label: 'Rusak Ringan' },
-    { value: 'Rusak Berat', label: 'Rusak Berat' },
-];
 const MAX_BULK = 100;
 const LEVEL_DEPTH: Record<ClassificationLevel, number> = {
     group: 0,
@@ -170,28 +130,23 @@ const LEVEL_DEPTH: Record<ClassificationLevel, number> = {
 };
 
 function findNode(nodes: BrowseNode[], id: string | null): BrowseNode | null {
-    if (!id) return null;
-    for (const n of nodes) {
-        if (n.id === id) return n;
-        const c = findNode(n.children ?? [], id);
-        if (c) return c;
+    if (!id) {
+        return null;
     }
+
+    for (const n of nodes) {
+        if (n.id === id) {
+            return n;
+        }
+
+        const child = findNode(n.children ?? [], id);
+
+        if (child) {
+            return child;
+        }
+    }
+
     return null;
-}
-function filterTree(nodes: BrowseNode[], search: string): BrowseNode[] {
-    if (!search.trim()) return nodes;
-    const t = search.toLowerCase().trim();
-    return nodes
-        .filter(
-            (n) =>
-                n.name.toLowerCase().includes(t) ||
-                (n.code?.toLowerCase().includes(t) ?? false) ||
-                filterTree(n.children ?? [], search).length > 0,
-        )
-        .map((n) => ({
-            ...n,
-            children: n.children ? filterTree(n.children, search) : undefined,
-        }));
 }
 
 function TreeRow({
@@ -205,6 +160,7 @@ function TreeRow({
 }) {
     const isSel = selectedId === node.id;
     const tint = LEVEL_TINTS[node.level];
+
     return (
         <button
             type="button"
@@ -260,6 +216,7 @@ function LedgerRow({
         code: string | null;
         name: string;
     }>;
+
     return (
         <div
             className={cn(
@@ -284,13 +241,8 @@ function LedgerRow({
                 </span>
                 <span className="ml-2 hidden items-center gap-1 text-[11px] text-muted-foreground lg:inline-flex">
                     {chain.map((c, i) => (
-                        <span
-                            key={c.id}
-                            className="inline-flex items-center gap-1"
-                        >
-                            {i > 0 && (
-                                <ChevronRight className="size-3 opacity-40" />
-                            )}
+                        <span key={c.id} className="inline-flex items-center gap-1">
+                            {i > 0 && <ChevronRight className="size-3 opacity-40" />}
                             {c.code ?? c.name}
                         </span>
                     ))}
@@ -349,6 +301,7 @@ function FolderChip({
     onSelect: (n: BrowseNode) => void;
 }) {
     const tint = LEVEL_TINTS[node.level];
+
     return (
         <button
             type="button"
@@ -381,22 +334,20 @@ function FolderChip({
     );
 }
 
-export default function Manage() {
+export default function AssetsIndex() {
     const {
         tree,
         selected: serverSelected,
         breadcrumb,
         assets,
-        departments,
+        items,
         filters,
     } = usePage<PageProps>().props;
+
     const [search, setSearch] = useState(filters.search);
     const [statusFilter, setStatusFilter] = useState(filters.status);
-    const [departmentFilter, setDepartmentFilter] = useState(
-        filters.department,
-    );
+    const [departmentFilter, setDepartmentFilter] = useState(filters.department);
     const [conditionFilter, setConditionFilter] = useState(filters.condition);
-    const [filterOpen, setFilterOpen] = useState(false);
     const [treeSearch, setTreeSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(
         serverSelected?.id ?? null,
@@ -409,22 +360,32 @@ export default function Manage() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
-    const [importing, setImporting] = useState(false);
     const [importItemId, setImportItemId] = useState('');
+    const [importing, setImporting] = useState(false);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
+    const prevServerSelectedId = useRef<string | null>(null);
 
     useEffect(() => {
-        if (serverSelected?.id !== selectedId)
-            setSelectedId(serverSelected?.id ?? null);
+        const newId = serverSelected?.id ?? null;
+
+        if (newId !== prevServerSelectedId.current && newId !== selectedId) {
+            prevServerSelectedId.current = newId;
+            setSelectedId(newId);
+        }
     }, [serverSelected, selectedId]);
-    useEffect(() => rememberAssetListUrl(), []);
-    useEffect(
-        () => () => {
-            if (searchTimer.current) clearTimeout(searchTimer.current);
-        },
-        [],
-    );
+
+    useEffect(() => {
+        rememberAssetListUrl();
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (searchTimer.current) {
+                clearTimeout(searchTimer.current);
+            }
+        };
+    }, []);
 
     const safeAssets: PaginatedData<Asset> = assets ?? {
         data: [],
@@ -436,12 +397,17 @@ export default function Manage() {
         to: 0,
         links: [],
     };
+
     const selectedNode = findNode(tree, selectedId);
     const childFolders: BrowseNode[] = selectedNode
         ? (selectedNode.children ?? [])
         : tree;
     const visibleFolders = treeSearch.trim()
-        ? filterTree(childFolders, treeSearch)
+        ? tree.filter(
+              (n) =>
+                  n.name.toLowerCase().includes(treeSearch.toLowerCase()) ||
+                  (n.code?.toLowerCase().includes(treeSearch.toLowerCase()) ?? false),
+          )
         : childFolders;
 
     const navigate = (params: Record<string, string>) => {
@@ -455,8 +421,10 @@ export default function Manage() {
             },
         );
     };
+
     const currentParams = (): Record<string, string> => {
         const p: Record<string, string> = {};
+
         if (selectedId && serverSelected) {
             p.level = serverSelected.level;
             p.node = serverSelected.id;
@@ -464,88 +432,141 @@ export default function Manage() {
             p.level = filters.level;
             p.node = filters.node;
         }
-        if (search.trim()) p.search = search.trim();
-        if (statusFilter) p.status = statusFilter;
-        if (departmentFilter) p.department = departmentFilter;
-        if (conditionFilter) p.condition = conditionFilter;
+
+        if (search.trim()) {
+            p.search = search.trim();
+        }
+
+        if (statusFilter) {
+            p.status = statusFilter;
+        }
+
+        if (departmentFilter) {
+            p.department = departmentFilter;
+        }
+
+        if (conditionFilter) {
+            p.condition = conditionFilter;
+        }
+
         return p;
     };
+
     const handleNodeSelect = (node: BrowseNode) => {
         setSelectedId(node.id);
         setDrawerOpen(false);
         const p: Record<string, string> = { level: node.level, node: node.id };
-        if (search.trim()) p.search = search.trim();
-        if (statusFilter) p.status = statusFilter;
-        if (departmentFilter) p.department = departmentFilter;
-        if (conditionFilter) p.condition = conditionFilter;
+
+        if (search.trim()) {
+            p.search = search.trim();
+        }
+
+        if (statusFilter) {
+            p.status = statusFilter;
+        }
+
+        if (departmentFilter) {
+            p.department = departmentFilter;
+        }
+
+        if (conditionFilter) {
+            p.condition = conditionFilter;
+        }
+
         navigate(p);
     };
+
     const clearNode = () => {
         setSelectedId(null);
         const p: Record<string, string> = {};
-        if (search.trim()) p.search = search.trim();
-        if (statusFilter) p.status = statusFilter;
-        if (departmentFilter) p.department = departmentFilter;
-        if (conditionFilter) p.condition = conditionFilter;
+
+        if (search.trim()) {
+            p.search = search.trim();
+        }
+
+        if (statusFilter) {
+            p.status = statusFilter;
+        }
+
+        if (departmentFilter) {
+            p.department = departmentFilter;
+        }
+
+        if (conditionFilter) {
+            p.condition = conditionFilter;
+        }
+
         navigate(p);
     };
-    const reload = (overrides: Record<string, string>) =>
+
+    const reload = (overrides: Record<string, string>) => {
         navigate({ ...currentParams(), ...overrides });
-    const applyFilters = () => {
-        setFilterOpen(false);
-        reload({});
     };
+
     const clearFilters = () => {
         setSearch('');
         setStatusFilter('');
         setDepartmentFilter('');
         setConditionFilter('');
-        setFilterOpen(false);
         navigate(
             selectedId && serverSelected
                 ? { level: serverSelected.level, node: serverSelected.id }
                 : {},
         );
     };
+
     const activeFilterCount =
-        [statusFilter, departmentFilter, conditionFilter].filter(Boolean)
-            .length +
+        [statusFilter, departmentFilter, conditionFilter].filter(Boolean).length +
         (search ? 1 : 0) +
         (selectedId ? 1 : 0);
-    const toggleSelect = (id: string) =>
+
+    const toggleSelect = (id: string) => {
         setSelected((prev) => {
             const n = new Set(prev);
-            if (n.has(id)) n.delete(id);
-            else if (n.size < MAX_BULK) n.add(id);
-            else toast.warning(`Maksimal ${MAX_BULK} aset.`);
+
+            if (n.has(id)) {
+                n.delete(id);
+            } else if (n.size < MAX_BULK) {
+                n.add(id);
+            } else {
+                toast.warning(`Maksimal ${MAX_BULK} aset.`);
+            }
+
             return n;
         });
+    };
+
     const pageIds = safeAssets.data.map((a) => a.id);
     const allSelected =
         pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
     const toggleSelectAll = () => {
-        if (allSelected)
+        if (allSelected) {
             setSelected((p) => {
                 const n = new Set(p);
                 pageIds.forEach((id) => n.delete(id));
+
                 return n;
             });
-        else {
+        } else {
             const avail = MAX_BULK - selected.size;
             const toAdd = pageIds
                 .filter((id) => !selected.has(id))
                 .slice(0, Math.max(0, avail));
-            if (toAdd.length < pageIds.filter((id) => !selected.has(id)).length)
-                toast.warning(`Maksimal ${MAX_BULK} aset.`);
             setSelected((p) => {
                 const n = new Set(p);
                 toAdd.forEach((id) => n.add(id));
+
                 return n;
             });
         }
     };
+
     const handleDelete = () => {
-        if (!deleting) return;
+        if (!deleting) {
+            return;
+        }
+
         setDeletingState(true);
         router.delete(destroy.url({ asset: deleting.id }), {
             only: ['assets', 'tree', 'selected', 'breadcrumb'],
@@ -562,8 +583,12 @@ export default function Manage() {
             },
         });
     };
+
     const confirmBulkDelete = () => {
-        if (selected.size === 0) return;
+        if (selected.size === 0) {
+            return;
+        }
+
         setBulkDeleting(true);
         const ids = Array.from(selected);
         router.delete(destroyBulk.url(), {
@@ -583,15 +608,26 @@ export default function Manage() {
             },
         });
     };
+
     const goToPage = (url: string | null) => {
-        if (url) router.get(url, {}, { preserveState: true, replace: true });
+        if (url) {
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
     };
+
     const handleImport = () => {
-        if (!importFile || importing) return;
+        if (!importFile || importing) {
+            return;
+        }
+
         setImporting(true);
         const d = new FormData();
         d.append('file', importFile);
-        if (importItemId) d.append('item_id', importItemId);
+
+        if (importItemId) {
+            d.append('item_id', importItemId);
+        }
+
         router.post(importMethod.url(), d, {
             forceFormData: true,
             preserveState: true,
@@ -601,6 +637,7 @@ export default function Manage() {
                 setImportOpen(false);
                 setImportFile(null);
                 setImportItemId('');
+                toast.success('Import berhasil.');
             },
             onError: () => {
                 setImporting(false);
@@ -612,12 +649,13 @@ export default function Manage() {
     return (
         <div
             className={cn(
-                'relative flex min-h-[100dvh] flex-col p-4 sm:p-6 lg:p-8',
+                'relative flex min-h-[100dvh] flex-col',
                 selected.size > 0 && 'pb-32 lg:pb-8',
+                isProcessing && 'pointer-events-none opacity-60',
             )}
         >
             <VibrantBackground variant="default" />
-            <div className="mx-auto w-full max-w-[1600px]">
+            <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
                 <div
                     className={cn(
                         'ease-premium relative transition-all duration-200',
@@ -636,10 +674,7 @@ export default function Manage() {
                     <div className="card-enter flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                             <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10 sm:size-12">
-                                <Boxes
-                                    className="size-5 sm:size-6"
-                                    strokeWidth={1.5}
-                                />
+                                <Boxes className="size-5 sm:size-6" strokeWidth={1.5} />
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
@@ -682,26 +717,18 @@ export default function Manage() {
                                         <MoreHorizontal className="size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="end"
-                                    className="min-w-[200px]"
-                                >
-                                    <DropdownMenuItem
-                                        onClick={() => setImportOpen(true)}
-                                    >
-                                        <UploadCloud className="size-4" />
-                                        Import Spreadsheet
-                                    </DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="min-w-[200px]">
                                     <DropdownMenuItem
                                         onClick={() =>
-                                            window.open(
-                                                importTemplate.url(),
-                                                '_blank',
-                                            )
+                                            window.open(importTemplate.url(), '_blank')
                                         }
                                     >
                                         <Download className="size-4" />
                                         Template Import
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                                        <UploadCloud className="size-4" />
+                                        Import Spreadsheet
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
@@ -709,11 +736,7 @@ export default function Manage() {
                                             selected.size > 0 &&
                                             router.visit(
                                                 labelsRoute.url({
-                                                    query: {
-                                                        ids: Array.from(
-                                                            selected,
-                                                        ),
-                                                    },
+                                                    query: { ids: Array.from(selected) },
                                                 }),
                                             )
                                         }
@@ -759,10 +782,7 @@ export default function Manage() {
                             </button>
                             <ChevronRight className="size-3 text-muted-foreground" />
                             {breadcrumb.map((c, i) => (
-                                <span
-                                    key={c.id}
-                                    className="inline-flex items-center gap-1.5"
-                                >
+                                <span key={c.id} className="inline-flex items-center gap-1.5">
                                     {i > 0 && (
                                         <ChevronRight className="size-3 text-muted-foreground" />
                                     )}
@@ -780,8 +800,7 @@ export default function Manage() {
                                             'rounded px-1.5 py-0.5',
                                             LEVEL_TINTS[c.level].bg,
                                             LEVEL_TINTS[c.level].fg,
-                                            i === breadcrumb.length - 1 &&
-                                                'font-semibold',
+                                            i === breadcrumb.length - 1 && 'font-semibold',
                                         )}
                                     >
                                         {c.name}
@@ -804,9 +823,7 @@ export default function Manage() {
                             )}
                         >
                             <div className="flex items-center justify-between border-b border-border/60 px-3 py-2.5">
-                                <h2 className="text-sm font-semibold">
-                                    Klasifikasi
-                                </h2>
+                                <h2 className="text-sm font-semibold">Klasifikasi</h2>
                                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                                     {tree.length} golongan
                                 </span>
@@ -817,9 +834,7 @@ export default function Manage() {
                                     <Input
                                         placeholder="Cari klasifikasi..."
                                         value={treeSearch}
-                                        onChange={(e) =>
-                                            setTreeSearch(e.target.value)
-                                        }
+                                        onChange={(e) => setTreeSearch(e.target.value)}
                                         className="h-8 pl-8 text-sm"
                                     />
                                 </div>
@@ -849,10 +864,9 @@ export default function Manage() {
                                 ) : (
                                     visibleFolders.map((n) => {
                                         const isParent = selectedNode
-                                            ? (
-                                                  selectedNode.children ?? []
-                                              ).some((c) => c.id === n.id)
+                                            ? (selectedNode.children ?? []).some((c) => c.id === n.id)
                                             : false;
+
                                         return (
                                             <div key={n.id}>
                                                 <TreeRow
@@ -860,26 +874,18 @@ export default function Manage() {
                                                     selectedId={selectedId}
                                                     onSelect={handleNodeSelect}
                                                 />
-                                                {isParent &&
-                                                    (n.children ?? []).length >
-                                                        0 && (
-                                                        <div className="ml-2 border-l border-border/40 pl-2">
-                                                            {(
-                                                                n.children ?? []
-                                                            ).map((ch) => (
-                                                                <TreeRow
-                                                                    key={ch.id}
-                                                                    node={ch}
-                                                                    selectedId={
-                                                                        selectedId
-                                                                    }
-                                                                    onSelect={
-                                                                        handleNodeSelect
-                                                                    }
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                {isParent && (n.children ?? []).length > 0 && (
+                                                    <div className="ml-2 border-l border-border/40 pl-2">
+                                                        {(n.children ?? []).map((ch) => (
+                                                            <TreeRow
+                                                                key={ch.id}
+                                                                node={ch}
+                                                                selectedId={selectedId}
+                                                                onSelect={handleNodeSelect}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })
@@ -895,15 +901,13 @@ export default function Manage() {
                                         value={search}
                                         onChange={(e) => {
                                             setSearch(e.target.value);
-                                            if (searchTimer.current)
-                                                clearTimeout(
-                                                    searchTimer.current,
-                                                );
+
+                                            if (searchTimer.current) {
+                                                clearTimeout(searchTimer.current);
+                                            }
+
                                             searchTimer.current = setTimeout(
-                                                () =>
-                                                    reload({
-                                                        search: e.target.value,
-                                                    }),
+                                                () => reload({ search: e.target.value }),
                                                 350,
                                             );
                                         }}
@@ -927,7 +931,7 @@ export default function Manage() {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => setFilterOpen(true)}
+                                        onClick={() => clearFilters()}
                                         className="rounded-xl"
                                     >
                                         <SlidersHorizontal className="size-4" />
@@ -956,12 +960,16 @@ export default function Manage() {
                             {selectedNode && childFolders.length > 0 && (
                                 <div className="border-b border-border/60 bg-muted/20 px-3 py-3">
                                     <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                        {CHILD_LABELS[
-                                            selectedNode.level as Exclude<
-                                                ClassificationLevel,
-                                                'sub-cluster'
-                                            >
-                                        ] ?? 'Sub'}{' '}
+                                        {['group', 'category', 'cluster'].includes(
+                                            selectedNode.level,
+                                        )
+                                            ? CHILD_LABELS[
+                                                  selectedNode.level as Exclude<
+                                                      ClassificationLevel,
+                                                      'sub-cluster'
+                                                  >
+                                              ] ?? 'Sub'
+                                            : 'Sub'}{' '}
                                         di {selectedNode.name}
                                     </p>
                                     <div className="flex flex-wrap gap-2">
@@ -975,29 +983,6 @@ export default function Manage() {
                                     </div>
                                 </div>
                             )}
-                            {!selectedNode &&
-                                tree.length > 0 &&
-                                safeAssets.total === 0 &&
-                                childFolders.length > 0 && (
-                                    <div className="border-b border-border/60 bg-muted/20 px-3 py-3">
-                                        <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                            Golongan
-                                        </p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {childFolders
-                                                .slice(0, 12)
-                                                .map((f) => (
-                                                    <FolderChip
-                                                        key={f.id}
-                                                        node={f}
-                                                        onSelect={
-                                                            handleNodeSelect
-                                                        }
-                                                    />
-                                                ))}
-                                        </div>
-                                    </div>
-                                )}
 
                             <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3 py-2 text-xs">
                                 <label className="flex items-center gap-2 font-medium">
@@ -1015,24 +1000,18 @@ export default function Manage() {
                                     </span>
                                 </label>
                                 <span className="text-muted-foreground">
-                                    {selected.size > 0
-                                        ? `${selected.size} dipilih`
-                                        : ''}
+                                    {selected.size > 0 ? `${selected.size} dipilih` : ''}
                                 </span>
                             </div>
 
                             <div className="hidden items-center gap-3 border-b border-border/60 bg-muted/40 px-3 py-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase lg:flex">
                                 <span className="w-6" />
                                 <span className="w-[140px]">Kode</span>
-                                <span className="flex-1">
-                                    Item & Klasifikasi
-                                </span>
+                                <span className="flex-1">Item & Klasifikasi</span>
                                 <span className="w-[110px]">Status</span>
                                 <span className="w-[90px]">Lokasi</span>
                                 <span className="w-[90px]">Dept</span>
-                                <span className="w-[96px] text-right">
-                                    Aksi
-                                </span>
+                                <span className="w-[96px] text-right">Aksi</span>
                             </div>
 
                             <div className="flex-1 overflow-auto">
@@ -1050,15 +1029,8 @@ export default function Manage() {
                                                 : 'Pilih klasifikasi atau tambah aset pertama.'
                                         }
                                         action={
-                                            <Link
-                                                href={withReturnTo(
-                                                    create.url(),
-                                                )}
-                                            >
-                                                <Button
-                                                    size="sm"
-                                                    className="rounded-xl"
-                                                >
+                                            <Link href={withReturnTo(create.url())}>
+                                                <Button size="sm" className="rounded-xl">
                                                     <Plus className="mr-2 size-4" />
                                                     Tambah Aset
                                                 </Button>
@@ -1072,9 +1044,7 @@ export default function Manage() {
                                                 key={a.id}
                                                 asset={a}
                                                 selected={selected.has(a.id)}
-                                                onSelect={() =>
-                                                    toggleSelect(a.id)
-                                                }
+                                                onSelect={() => toggleSelect(a.id)}
                                                 onDelete={() => setDeleting(a)}
                                             />
                                         ))}
@@ -1097,6 +1067,96 @@ export default function Manage() {
                             )}
                         </section>
                     </div>
+
+                    <Dialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Hapus Aset?</DialogTitle>
+                                <DialogDescription>
+                                    Aset {deleting?.kode_asset} akan dihapus permanen.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setDeleting(null)}>
+                                    Batalkan
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                    disabled={deletingState}
+                                >
+                                    {deletingState && <Spinner className="mr-2 size-4" />}
+                                    Hapus
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Hapus {selected.size} Aset?</DialogTitle>
+                                <DialogDescription>
+                                    Semua aset yang dipilih akan dihapus permanen.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>
+                                    Batalkan
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={confirmBulkDelete}
+                                    disabled={bulkDeleting}
+                                >
+                                    {bulkDeleting && <Spinner className="mr-2 size-4" />}
+                                    Hapus Semua
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {importOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                            <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
+                                <h3 className="text-lg font-semibold mb-4">Import Spreadsheet</h3>
+                                <div className="space-y-4">
+                                    <Input
+                                        type="file"
+                                        accept=".xlsx,.csv"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+
+                                            if (file) {
+                                                setImportFile(file);
+                                            }
+                                        }}
+                                    />
+                                    <select
+                                        value={importItemId}
+                                        onChange={(e) => setImportItemId(e.target.value)}
+                                        className="w-full rounded-xl border px-3 py-2 text-sm"
+                                    >
+                                        <option value="">Pilih Item (opsional)</option>
+                                        {items.map((i) => (
+                                            <option key={i.id} value={i.id}>
+                                                {i.code} - {i.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="mt-6 flex justify-end gap-2">
+                                    <Button variant="outline" onClick={() => setImportOpen(false)}>
+                                        Batal
+                                    </Button>
+                                    <Button onClick={handleImport} disabled={!importFile || importing}>
+                                        {importing && <Spinner className="mr-2 size-4" />}
+                                        Import
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1113,17 +1173,13 @@ export default function Manage() {
                             {selected.size}
                         </span>{' '}
                         dipilih
-                        <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
-                            {' '}
-                            · maks {MAX_BULK}
-                        </span>
                     </span>
                     <div className="flex items-center gap-1.5">
                         <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-10 rounded-xl sm:size-9"
+                            className="size-10 rounded-xl"
                             onClick={() => setSelected(new Set())}
                             aria-label="Batalkan"
                         >
@@ -1133,256 +1189,15 @@ export default function Manage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-10 rounded-xl text-destructive hover:bg-destructive/10 sm:size-9"
+                            className="size-10 rounded-xl text-destructive hover:bg-destructive/10"
                             onClick={() => setBulkDeleteOpen(true)}
                             aria-label="Hapus"
                         >
                             <Trash2 className="size-4" />
                         </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            className="h-10 rounded-xl px-3 sm:h-9"
-                            onClick={() =>
-                                selected.size > 0 &&
-                                router.visit(
-                                    labelsRoute.url({
-                                        query: { ids: Array.from(selected) },
-                                    }),
-                                )
-                            }
-                        >
-                            <Barcode className="size-4" />
-                            Barcode
-                        </Button>
                     </div>
                 </div>
             )}
-
-            <Dialog
-                open={!!deleting}
-                onOpenChange={(o) => !o && setDeleting(null)}
-            >
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Hapus Aset</DialogTitle>
-                        <DialogDescription>
-                            Yakin hapus{' '}
-                            <span className="font-semibold text-foreground">
-                                {deleting?.kode_asset ?? ''}
-                            </span>
-                            ? Tidak dapat dibatalkan.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setDeleting(null)}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={deletingState}
-                        >
-                            {deletingState && (
-                                <Spinner className="mr-2 size-4" />
-                            )}
-                            Hapus
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog
-                open={bulkDeleteOpen}
-                onOpenChange={(o) => !bulkDeleting && setBulkDeleteOpen(o)}
-            >
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Hapus Terpilih</DialogTitle>
-                        <DialogDescription>
-                            Hapus{' '}
-                            <span className="font-semibold text-foreground">
-                                {selected.size}
-                            </span>{' '}
-                            aset?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setBulkDeleteOpen(false)}
-                            disabled={bulkDeleting}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={confirmBulkDelete}
-                            disabled={bulkDeleting}
-                        >
-                            {bulkDeleting && (
-                                <Spinner className="mr-2 size-4" />
-                            )}
-                            Hapus {selected.size} Aset
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={importOpen} onOpenChange={setImportOpen}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Import Aset</DialogTitle>
-                        <DialogDescription>
-                            Unggah spreadsheet aset.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-4 space-y-3">
-                        <Input
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={(e) =>
-                                setImportFile(e.target.files?.[0] ?? null)
-                            }
-                        />
-                        <Input
-                            placeholder="Item ID (opsional)"
-                            value={importItemId}
-                            onChange={(e) => setImportItemId(e.target.value)}
-                        />
-                    </div>
-                    <DialogFooter className="mt-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setImportOpen(false)}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleImport}
-                            disabled={!importFile || importing}
-                        >
-                            {importing && <Spinner className="mr-2 size-4" />}
-                            Import
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-                <DialogContent className="glass-panel border-border/30 bg-background/85 shadow-2xl backdrop-blur-xl sm:max-w-lg">
-                    <DialogHeader className="border-b border-border/20 pb-3">
-                        <DialogTitle className="flex items-center gap-2">
-                            <Filter className="size-5 text-primary" />
-                            Filter Aset
-                        </DialogTitle>
-                        <DialogDescription>Persempit daftar.</DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select
-                                value={statusFilter}
-                                onValueChange={setStatusFilter}
-                            >
-                                <SelectTrigger className="h-10">
-                                    <SelectValue placeholder="Semua Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {STATUS_OPTIONS.map((o) => (
-                                        <SelectItem
-                                            key={o.value}
-                                            value={o.value}
-                                        >
-                                            {o.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Kondisi</Label>
-                            <Select
-                                value={conditionFilter}
-                                onValueChange={setConditionFilter}
-                            >
-                                <SelectTrigger className="h-10">
-                                    <SelectValue placeholder="Semua Kondisi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CONDITION_OPTIONS.map((o) => (
-                                        <SelectItem
-                                            key={o.value}
-                                            value={o.value}
-                                        >
-                                            {o.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Department</Label>
-                            <Select
-                                value={departmentFilter}
-                                onValueChange={setDepartmentFilter}
-                            >
-                                <SelectTrigger className="h-10">
-                                    <SelectValue placeholder="Semua Department" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">
-                                        Semua Department
-                                    </SelectItem>
-                                    {departments.map((d) => (
-                                        <SelectItem
-                                            key={d.id_department}
-                                            value={d.id_department}
-                                        >
-                                            {d.nama_department}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2 sm:col-span-2">
-                            <Label>Pencarian</Label>
-                            <Input
-                                placeholder="Cari kode, serial, brand, model..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="h-10 rounded-xl"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter className="mt-6 gap-3 border-t border-border/20 pt-4 sm:justify-between">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={clearFilters}
-                        >
-                            <Trash2 className="size-4" />
-                            Reset
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={applyFilters}
-                            className="rounded-xl bg-primary px-5"
-                        >
-                            <Filter className="size-4" />
-                            Terapkan
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
-
-Manage.layout = { breadcrumbs: [{ title: 'Aset', href: index.url() }] };

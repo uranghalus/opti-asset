@@ -32,7 +32,11 @@ export function TenantSwitcher() {
     const page = usePage().props as unknown as PageProps;
     const currentTenant = page.tenant;
     const availableTenants = page.availableTenants;
-    const isSuperAdmin = page.auth.user.roles.includes('super-admin');
+    const roles = page.auth.user.roles ?? [];
+    const isSuperAdmin = roles.some((r) => {
+        const n = r.toLowerCase().replace(/_/g, '-');
+        return n === 'super-admin' || n === 'superadmin';
+    });
     const [open, setOpen] = useState(false);
 
     const handleSwitch = (tenantId: string) => {
@@ -46,8 +50,7 @@ export function TenantSwitcher() {
                 <Button
                     variant="outline"
                     size="sm"
-                    disabled={!isSuperAdmin}
-                    className="h-9 w-full justify-start gap-2.5 rounded-lg border-sidebar-border bg-sidebar-accent/40 px-2 text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent"
+                    className="h-9 w-full justify-start gap-2.5 rounded-lg border-sidebar-border bg-sidebar-accent/40 px-2 text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent"
                 >
                     <Building2 className="size-3.5 shrink-0 text-sidebar-foreground/50" />
                     <span className="truncate">

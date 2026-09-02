@@ -14,7 +14,6 @@ import {
     Network,
     ShieldCheck,
     KeyRound,
-    FolderTree,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -53,12 +52,6 @@ export const sidebarData: SidebarData = {
                         resource: 'asset',
                         actions: ['view'],
                     },
-                },
-                {
-                    title: 'Telusuri Aset',
-                    url: '/assets/browse',
-                    icon: FolderTree,
-                    permission: { resource: 'asset', actions: ['view'] },
                 },
                 {
                     title: 'Klasifikasi Aset',

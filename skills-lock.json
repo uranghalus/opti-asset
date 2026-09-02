@@ -151,6 +151,12 @@
       "skillPath": "skills/planning-and-task-breakdown/SKILL.md",
       "computedHash": "f6c2cc012101225c58e5886e847342d1efaf0336a8e150b833d617fdf092952c"
     },
+    "redesign-existing-projects": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/redesign-skill/SKILL.md",
+      "computedHash": "47eced3e960a2c961d3cbee11fa1216264f589344b586a5cbd03967cd6b9c54b"
+    },
     "security-and-hardening": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",

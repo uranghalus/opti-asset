@@ -70,7 +70,7 @@ class BrowseTest extends TestCase
             ->get(route('assets.browse'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('assets/Browse')
+                ->component('assets/Manage')
                 ->has('tree')
                 ->where('assets', null)
                 ->where('selected', null)
@@ -86,7 +86,7 @@ class BrowseTest extends TestCase
             ->get(route('assets.browse'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('assets/Browse')
+                ->component('assets/Manage')
                 ->has('tree', 1)
                 ->where('tree.0.level', 'group')
                 ->where('tree.0.id', $group->id)
@@ -120,7 +120,7 @@ class BrowseTest extends TestCase
             ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('assets/Browse')
+                ->component('assets/Manage')
                 ->where('selected.level', 'sub-cluster')
                 ->where('selected.id', $subCluster->id)
                 ->has('assets.data', 1)

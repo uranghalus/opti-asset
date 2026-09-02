@@ -57,19 +57,24 @@ The memory documentation (`Memory/opencode-memory.md`) contains all project deci
 6. **Frontend: Role-Based Filter Levels (UI)**
    - **Done**: Added `initialFilterLevel` prop to `Index` page
    - **Done**: Added `view` state (`list` | `category`), `browseData`, `browseLoading` states
-   - **Done**: Added `useEffect` to fetch browse data when switching to category view
-   - **Done**: Fixed TypeScript errors (added `route` global declaration, fixed `router.get` signature, `onSuccess` callback types)
-   - **Remaining**: Add Tab/SegmentedControl UI for switching between List and Category views
-   - **Remaining**: Conditional render `AssetsBrowse` component when `view === 'category'`
-   - **Remaining**: Refactor `Browse.tsx` to be a reusable component accepting `pageProps` prop
+- **Done**: Added `useEffect` to fetch browse data when switching to category view
+    - **Done**: Fixed TypeScript errors (added `route` global declaration, fixed `router.get` signature, `onSuccess` callback types)
+    - **Done**: Added Tab/SegmentedControl UI for switching between List and Category views (glassmorphic)
+    - **Done**: Conditional render `AssetsBrowse` component when `view === 'category'`
+    - **Done**: Added `?json=1` branch in `AssetController::browse()` for lightweight client fetch
+    - **Remaining**: Refactor `Browse.tsx` to be a reusable component accepting `pageProps` prop (Browse.tsx already accepts `Partial<PageProps>`; re-verify prop propagation through embedded fetch)
 
 ### Pending 📋
 
-7. **CI Pipeline** — Run full checks: `npm run lint:check`, `npm run format:check`, `npm run types:check`, `php artisan test --compact`
+7. **CI Pipeline** — Run full checks: `npm run lint:check`, `npm run format:check`, `npm run types:check`, `php artisan test --compact` ✅ done on 2026-09-02 (all green)
 
 8. **Impeccable UI Review** — Apply design system polish to new components
 
 9. **Update Memory & Logs** — Finalize this entry
+
+10. **Create graphify-out directory** — Initialize knowledge graph for project context ✅ done on 2026-09-02
+
+11. **Update graphify with current memory state** — Add completed and pending tasks to graph
 
 ### Files Modified
 

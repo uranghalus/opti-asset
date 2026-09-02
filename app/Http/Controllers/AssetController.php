@@ -41,89 +41,31 @@ class AssetController extends Controller
     public function index(Request $request): Response
     {
         $perPage = min((int) $request->integer('per_page', 15), 100);
+        $initialLevel = $this->initialFilterLevel($request);
+        $level = $request->string('level')->trim()->toString();
+        $nodeId = $request->string('node')->trim()->toString();
+        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
+        $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
 
         $search = $request->string('search')->trim()->toString();
-        $group = $request->string('group')->trim()->toString();
-        $category = $request->string('category')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
         $department = $request->string('department')->trim()->toString();
         $condition = $request->string('condition')->trim()->toString();
 
-        $assets = Asset::query()
-            ->with([
-                'item:id,name,code',
-                'location:id,name',
-                'department:id_department,nama_department',
-                'assetGroup:id,code,name',
-                'assetCategory:id,code,name',
-                'assetCluster:id,code,name',
-                'assetSubCluster:id,code,name',
-            ])
-            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
-                ->where('kode_asset', 'like', "%{$search}%")
-                ->orWhere('serial_number', 'like', "%{$search}%")
-                ->orWhere('brand', 'like', "%{$search}%")
-                ->orWhere('model', 'like', "%{$search}%")))
-            ->when($group !== '', fn ($query) => $query->where('asset_group_id', $group))
-            ->when($category !== '', fn ($query) => $query->where('asset_category_id', $category))
-            ->when($status !== '', fn ($query) => $query->where('status', $status))
-            ->when($department !== '', fn ($query) => $query->where('department_id', $department))
-            ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
-
-        return Inertia::render('assets/Index', [
-            'assets' => $assets,
-            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
-            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
-            'items' => Item::query()
-                ->with('category:id,code')
-                ->orderBy('name')
-                ->get(['id', 'code', 'name', 'category_id']),
-            'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
-            'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
-            'filters' => [
-                'search' => $search,
-                'group' => $group,
-                'category' => $category,
-                'status' => $status,
-                'department' => $department,
-                'condition' => $condition,
-                'initialLevel' => $this->initialFilterLevel($request),
-            ],
-        ]);
-    }
-
-    public function browse(Request $request): Response
-    {
-        $defaultLevel = $this->initialFilterLevel($request);
-        $level = $request->string('level')->trim()->toString() ?: $defaultLevel;
-        $nodeId = $request->string('node')->trim()->toString();
-
-        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
-        $validLevel = in_array($level, $allowedLevels, true);
-
-        $search = $request->string('search')->trim()->toString();
-        $status = $request->string('status')->trim()->toString();
-        $department = $request->string('department')->trim()->toString();
-
         $tree = $this->buildBrowseTree();
-
-        $selected = null;
         $breadcrumb = [];
+        $selected = null;
         $assets = null;
 
-        if ($validLevel && $nodeId !== '') {
+        if ($validLevel) {
+            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
+            $selected = ['level' => $level, 'id' => $nodeId];
             $field = match ($level) {
                 'group' => 'asset_group_id',
                 'category' => 'asset_category_id',
                 'cluster' => 'asset_cluster_id',
                 'sub-cluster' => 'asset_sub_cluster_id',
             };
-
-            $perPage = min((int) $request->integer('per_page', 15), 100);
-
             $assets = Asset::query()
                 ->with([
                     'item:id,name,code',
@@ -142,41 +84,59 @@ class AssetController extends Controller
                     ->orWhere('model', 'like', "%{$search}%")))
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
                 ->when($department !== '', fn ($query) => $query->where('department_id', $department))
+                ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage)
                 ->withQueryString();
-
-            $selected = ['level' => $level, 'id' => $nodeId];
-            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
         }
 
-        return Inertia::render('assets/Browse', [
+        if ($request->boolean('json')) {
+            return response()->json([
+                'tree' => $tree,
+                'selected' => $selected,
+                'breadcrumb' => $breadcrumb,
+                'assets' => $assets,
+                'filters' => [
+                    'search' => $search,
+                    'status' => $status,
+                    'department' => $department,
+                    'condition' => $condition,
+                    'level' => $validLevel ? $level : '',
+                    'node' => $validLevel ? $nodeId : '',
+                    'initialLevel' => $initialLevel,
+                ],
+            ]);
+        }
+
+        return Inertia::render('assets/Manage', [
             'tree' => $tree,
             'selected' => $selected,
             'breadcrumb' => $breadcrumb,
             'assets' => $assets,
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
-            'categories' => AssetCategory::query()->get(['id', 'code', 'name', 'asset_group_id']),
+            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
+            'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id']),
+            'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'filters' => [
                 'search' => $search,
                 'status' => $status,
                 'department' => $department,
-                'initialLevel' => $defaultLevel,
+                'condition' => $condition,
+                'level' => $validLevel ? $level : '',
+                'node' => $validLevel ? $nodeId : '',
+                'initialLevel' => $initialLevel,
             ],
         ]);
     }
 
+    public function browse(Request $request): Response
+    {
+        return $this->index($request);
+    }
+
     /**
-     * Build the classification tree (Group → Category → Cluster → Sub-cluster)
-     * with a rolled-up asset count per node. Each asset is counted exactly
-     * once, at the deepest classification level it occupies. Each node embeds
-     * its `level` for type-safe frontend consumption.
-     *
-     * @return array<int, array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
-     * }>
+     * @return array<int, array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>}>
      */
     private function buildBrowseTree(): array
     {
@@ -208,13 +168,7 @@ class AssetController extends Controller
             ->all();
     }
 
-    /**
-     * @param  AssetGroup  $group
-     * @return array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
-     * }
-     */
+    /** @param AssetGroup $group @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
     private function serializeBrowseGroup($group): array
     {
         return [
@@ -225,19 +179,11 @@ class AssetController extends Controller
             'child_count' => $group->categories_count,
             'asset_count' => $group->assets_count,
             'level' => 'group',
-            'children' => $group->categories->map(
-                fn (AssetCategory $category) => $this->serializeBrowseCategory($category),
-            )->all(),
+            'children' => $group->categories->map(fn (AssetCategory $category) => $this->serializeBrowseCategory($category))->all(),
         ];
     }
 
-    /**
-     * @param  AssetCategory  $category
-     * @return array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
-     * }
-     */
+    /** @param AssetCategory $category @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
     private function serializeBrowseCategory($category): array
     {
         return [
@@ -248,19 +194,11 @@ class AssetController extends Controller
             'child_count' => $category->clusters_count,
             'asset_count' => $category->assets_count,
             'level' => 'category',
-            'children' => $category->clusters->map(
-                fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster),
-            )->all(),
+            'children' => $category->clusters->map(fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster))->all(),
         ];
     }
 
-    /**
-     * @param  AssetCluster  $cluster
-     * @return array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     child_count: int, asset_count: int, level: string, children: array<int, mixed>
-     * }
-     */
+    /** @param AssetCluster $cluster @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
     private function serializeBrowseCluster($cluster): array
     {
         return [
@@ -271,19 +209,11 @@ class AssetController extends Controller
             'child_count' => $cluster->subClusters_count,
             'asset_count' => $cluster->assets_count,
             'level' => 'cluster',
-            'children' => $cluster->subClusters->map(
-                fn (AssetSubCluster $subCluster) => $this->serializeBrowseSubCluster($subCluster),
-            )->all(),
+            'children' => $cluster->subClusters->map(fn (AssetSubCluster $subCluster) => $this->serializeBrowseSubCluster($subCluster))->all(),
         ];
     }
 
-    /**
-     * @param  AssetSubCluster  $subCluster
-     * @return array{
-     *     id: string, code: string|null, name: string, description: string|null,
-     *     notes: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>
-     * }
-     */
+    /** @param AssetSubCluster $subCluster @return array{id: string, code: string|null, name: string, description: string|null, notes: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
     private function serializeBrowseSubCluster($subCluster): array
     {
         return [
@@ -299,12 +229,7 @@ class AssetController extends Controller
         ];
     }
 
-    /**
-     * Build breadcrumb crumbs for the given level + node by walking
-     * from the selected node up to its root ancestor via DB lookups.
-     *
-     * @return array<int, array{id: string, level: string, code: string|null, name: string}>
-     */
+    /** @return array<int, array{id: string, level: string, code: string|null, name: string}> */
     private function buildBreadcrumb(string $level, string $nodeId): array
     {
         $levelModels = [
@@ -313,51 +238,35 @@ class AssetController extends Controller
             'cluster' => AssetCluster::class,
             'sub-cluster' => AssetSubCluster::class,
         ];
-
         $parentFields = [
             'category' => 'asset_group_id',
             'cluster' => 'asset_category_id',
             'sub-cluster' => 'asset_cluster_id',
         ];
-
         $parentLevels = [
             'category' => 'group',
             'cluster' => 'category',
             'sub-cluster' => 'cluster',
         ];
-
         $crumbs = [];
         $currentLevel = $level;
         $currentId = $nodeId;
-
-        // Build path from leaf to root
         while ($currentLevel !== null) {
             $model = $levelModels[$currentLevel];
             $node = $model::where('id', $currentId)->first();
-
             if ($node === null) {
                 break;
             }
-
-            $crumbs[] = [
-                'id' => $node->id,
-                'level' => $currentLevel,
-                'code' => $node->code,
-                'name' => $node->name,
-            ];
-
+            $crumbs[] = ['id' => $node->id, 'level' => $currentLevel, 'code' => $node->code, 'name' => $node->name];
             $parentField = $parentFields[$currentLevel] ?? null;
             $nextLevel = $parentLevels[$currentLevel] ?? null;
-
             if ($parentField === null || $nextLevel === null) {
                 break;
             }
-
             $parentId = $node->{$parentField};
             if ($parentId === null) {
                 break;
             }
-
             $currentLevel = $nextLevel;
             $currentId = $parentId;
         }
@@ -367,32 +276,17 @@ class AssetController extends Controller
 
     public function labels(Request $request): Response
     {
-        $validated = $request->validate([
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['required', 'string'],
-        ]);
+        $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'string']]);
+        $assets = Asset::query()->whereKey($validated['ids'])->with($this->labelRelations())->orderBy('kode_asset')->get();
 
-        $assets = Asset::query()
-            ->whereKey($validated['ids'])
-            ->with($this->labelRelations())
-            ->orderBy('kode_asset')
-            ->get();
-
-        return Inertia::render('assets/Labels', [
-            'assets' => $assets,
-        ]);
+        return Inertia::render('assets/Labels', ['assets' => $assets]);
     }
 
     public function labelsBatch(Request $request): Response
     {
-        $assets = Asset::query()
-            ->with($this->labelRelations())
-            ->orderBy('kode_asset')
-            ->get();
+        $assets = Asset::query()->with($this->labelRelations())->orderBy('kode_asset')->get();
 
-        return Inertia::render('assets/LabelsBatch', [
-            'assets' => $assets,
-        ]);
+        return Inertia::render('assets/LabelsBatch', ['assets' => $assets]);
     }
 
     public function scan(): Response
@@ -402,23 +296,8 @@ class AssetController extends Controller
 
     public function scanLookup(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'code' => ['required', 'string', 'max:100'],
-        ]);
-
-        $asset = Asset::query()
-            ->where('kode_asset', $validated['code'])
-            ->with([
-                'item:id,name,code',
-                'location:id,name',
-                'department:id_department,nama_department',
-                'assetGroup:id,code,name',
-                'assetCategory:id,code,name',
-                'assetCluster:id,code,name',
-                'assetSubCluster:id,code,name',
-            ])
-            ->first();
-
+        $validated = $request->validate(['code' => ['required', 'string', 'max:100']]);
+        $asset = Asset::query()->where('kode_asset', $validated['code'])->with(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name'])->first();
         if ($asset === null) {
             return response()->json(['message' => 'Aset tidak ditemukan.'], 404);
         }
@@ -433,60 +312,25 @@ class AssetController extends Controller
 
     public function show(Asset $asset): Response
     {
-        $asset->load([
-            'item:id,name,code',
-            'location:id,name',
-            'department:id_department,nama_department',
-            'assetGroup:id,code,name',
-            'assetCategory:id,code,name',
-            'assetCluster:id,code,name',
-            'assetSubCluster:id,code,name',
-            'histories' => fn ($query) => $query
-                ->latest()
-                ->limit(50),
-        ]);
+        $asset->load(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name', 'histories' => fn ($query) => $query->latest()->limit(50)]);
 
-        return Inertia::render('assets/Show', [
-            'asset' => $asset,
-        ]);
+        return Inertia::render('assets/Show', ['asset' => $asset]);
     }
 
     public function edit(Asset $asset): Response
     {
-        $asset->load([
-            'item:id,name,code',
-            'location:id,name',
-            'department:id_department,nama_department',
-            'assetGroup:id,code,name',
-            'assetCategory:id,code,name',
-            'assetCluster:id,code,name',
-            'assetSubCluster:id,code,name',
-        ]);
+        $asset->load(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name']);
 
-        return Inertia::render('assets/Edit', [
-            ...$this->formProps($asset->id),
-            'asset' => $asset,
-        ]);
+        return Inertia::render('assets/Edit', [...$this->formProps($asset->id), 'asset' => $asset]);
     }
 
     public function store(StoreAssetRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-
         $item = Item::query()->with('category')->whereKey($validated['item_id'])->firstOrFail();
-
-        $chain = $item->category !== null
-            ? $this->generateAssetCode->fromCategory($item->category)
-            : $this->emptyChain();
-
+        $chain = $item->category !== null ? $this->generateAssetCode->fromCategory($item->category) : $this->emptyChain();
         $asset = Asset::create([...$validated, ...$chain]);
-
-        $this->recordHistory->record(
-            $asset,
-            [['created', null, $asset->kode_asset ?? $asset->item_id ?? $asset->id]],
-            $request->user(),
-        );
-
+        $this->recordHistory->record($asset, [['created', null, $asset->kode_asset ?? $asset->item_id ?? $asset->id]], $request->user());
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil ditambahkan.']);
 
         return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
@@ -495,47 +339,33 @@ class AssetController extends Controller
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
     {
         $validated = $request->validated();
-
         $itemId = $validated['item_id'] ?? $asset->item_id;
         $itemChanged = $itemId !== $asset->item_id;
-
         $data = $validated;
-
         if ($itemChanged) {
             $item = Item::query()->with('category')->whereKey($itemId)->firstOrFail();
-
-            $chain = $item->category !== null
-                ? $this->generateAssetCode->fromCategory($item->category, $asset->id)
-                : $this->emptyChain();
-
+            $chain = $item->category !== null ? $this->generateAssetCode->fromCategory($item->category, $asset->id) : $this->emptyChain();
             $data['kode_asset'] = $chain['kode_asset'] ?? $asset->kode_asset;
             $data['asset_group_id'] = $chain['asset_group_id'];
             $data['asset_category_id'] = $chain['asset_category_id'];
             $data['asset_cluster_id'] = $chain['asset_cluster_id'];
             $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'];
         }
-
         $this->recordHistory->fromUpdate($asset, $validated, $data['kode_asset'] ?? null, $request->user());
-
         $asset->update($data);
-
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
         return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
     }
 
-    /**
-     * Local-path redirect target from ?return_to=..., or null when absent
-     * or unsafe (external / protocol-relative URLs are rejected).
-     */
     protected function initialFilterLevel(Request $request): string
     {
         $roles = $request->user()?->getRoleNames()->toArray() ?? [];
         $mapping = config('asset_filters.role_levels', []);
-
         foreach ($roles as $role) {
-            if (isset($mapping[$role])) {
-                return $mapping[$role];
+            $normalized = strtolower(str_replace('_', '-', (string) $role));
+            if (isset($mapping[$role]) || isset($mapping[$normalized])) {
+                return $mapping[$role] ?? $mapping[$normalized];
             }
         }
 
@@ -545,37 +375,22 @@ class AssetController extends Controller
     private function safeReturnTo(Request $request): ?string
     {
         $returnTo = $request->query('return_to');
-
-        if (
-            ! is_string($returnTo) ||
-            ! str_starts_with($returnTo, '/') ||
-            str_starts_with($returnTo, '//') ||
-            str_starts_with($returnTo, '/\\')
-        ) {
+        if (! is_string($returnTo) || ! str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//') || str_starts_with($returnTo, '/\\')) {
             return null;
         }
 
         return $returnTo;
     }
 
-    /**
-     * @return array{kode_asset: null, asset_group_id: null, asset_category_id: null, asset_cluster_id: null, asset_sub_cluster_id: null}
-     */
+    /** @return array{kode_asset: null, asset_group_id: null, asset_category_id: null, asset_cluster_id: null, asset_sub_cluster_id: null} */
     private function emptyChain(): array
     {
-        return [
-            'kode_asset' => null,
-            'asset_group_id' => null,
-            'asset_category_id' => null,
-            'asset_cluster_id' => null,
-            'asset_sub_cluster_id' => null,
-        ];
+        return ['kode_asset' => null, 'asset_group_id' => null, 'asset_category_id' => null, 'asset_cluster_id' => null, 'asset_sub_cluster_id' => null];
     }
 
     public function destroy(Asset $asset): RedirectResponse
     {
         $asset->delete();
-
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil dihapus.']);
 
         return back(302, [], route('assets.index'));
@@ -583,28 +398,12 @@ class AssetController extends Controller
 
     public function destroyBulk(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => [
-                'required',
-                'uuid',
-                Rule::exists('assets', 'id')->where(
-                    'tenant_id',
-                    Tenant::current()?->id,
-                ),
-            ],
-        ]);
-
+        $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'uuid', Rule::exists('assets', 'id')->where('tenant_id', Tenant::current()?->id)]]);
         $assets = Asset::query()->whereKey($validated['ids'])->get();
-
         foreach ($assets as $asset) {
             $asset->delete();
         }
-
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => "{$assets->count()} aset berhasil dihapus.",
-        ]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "{$assets->count()} aset berhasil dihapus."]);
 
         return back(302, [], route('assets.index'));
     }
@@ -612,11 +411,9 @@ class AssetController extends Controller
     public function upload(UploadAssetMediaRequest $request): JsonResponse
     {
         $tenantId = Tenant::current()->id;
-
         /** @var FilesystemAdapter $disk */
         $disk = Storage::disk('public');
         $path = $disk->putFile("assets/{$tenantId}/media", $request->file('file'));
-
         if (! is_string($path)) {
             return response()->json(['message' => 'Tidak dapat menyimpan file.'], 500);
         }
@@ -627,84 +424,41 @@ class AssetController extends Controller
     public function importTemplate(GenerateAssetImportTemplateAction $action): BinaryFileResponse
     {
         $path = storage_path('app/'.'temp-import-aset-'.uniqid().'.xlsx');
-
         $action($path);
 
-        return response()
-            ->download($path, 'template-import-aset.xlsx')
-            ->deleteFileAfterSend(true);
+        return response()->download($path, 'template-import-aset.xlsx')->deleteFileAfterSend(true);
     }
 
-    public function import(
-        ImportAssetsRequest $request,
-        ImportAssetsAction $action,
-    ): RedirectResponse {
+    public function import(ImportAssetsRequest $request, ImportAssetsAction $action): RedirectResponse
+    {
         $file = $request->file('file');
-
         if (! $file instanceof UploadedFile) {
             throw new \RuntimeException('File upload tidak valid.');
         }
-
         $tempPath = $file->store('assets/imports', ['disk' => 'local']);
-
         if (! is_string($tempPath)) {
             throw new \RuntimeException('Tidak dapat menyimpan file sementara.');
         }
-
-        $result = $action(Storage::disk('local')->path($tempPath), $request->string('item_id')->toString() !== ''
-            ? Item::find($request->string('item_id')->toString())
-            : null);
-
+        $result = $action(Storage::disk('local')->path($tempPath), $request->string('item_id')->toString() !== '' ? Item::find($request->string('item_id')->toString()) : null);
         Storage::disk('local')->delete($tempPath);
-
-        $message = $result['skipped'] > 0
-            ? "{$result['imported']} aset diimpor, {$result['skipped']} baris dilewati."
-            : "{$result['imported']} aset berhasil diimpor.";
-
-        $details = collect($result['errors'])
-            ->take(3)
-            ->pluck('message')
-            ->implode(' | ');
-
-        Inertia::flash('toast', [
-            'type' => $details === '' && $result['skipped'] === 0 ? 'success' : 'warning',
-            'message' => $details === '' ? $message : "{$message} {$details}",
-        ]);
+        $message = $result['skipped'] > 0 ? "{$result['imported']} aset diimpor, {$result['skipped']} baris dilewati." : "{$result['imported']} aset berhasil diimpor.";
+        $details = collect($result['errors'])->take(3)->pluck('message')->implode(' | ');
+        Inertia::flash('toast', ['type' => $details === '' && $result['skipped'] === 0 ? 'success' : 'warning', 'message' => $details === '' ? $message : "{$message} {$details}"]);
 
         return redirect()->route('assets.index');
     }
 
-    /**
-     * @return array<int, string>
-     */
+    /** @return array<int, string> */
     private function labelRelations(): array
     {
-        return [
-            'item:id,name,code',
-            'assetGroup:id,code,name',
-            'assetCategory:id,code,name',
-            'assetCluster:id,code,name',
-            'assetSubCluster:id,code,name',
-        ];
+        return ['item:id,name,code', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name'];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function formProps(?string $exceptAssetId = null): array
     {
         return [
-            'items' => Item::query()
-                ->with('category:id,code')
-                ->orderBy('name')
-                ->get(['id', 'code', 'name', 'category_id'])
-                ->map(fn (Item $item): array => [
-                    'id' => $item->id,
-                    'code' => $item->code,
-                    'name' => $item->name,
-                    'category_code' => $item->category?->code,
-                ])
-                ->values(),
+            'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id'])->map(fn (Item $item): array => ['id' => $item->id, 'code' => $item->code, 'name' => $item->name, 'category_code' => $item->category?->code])->values(),
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'employees' => Employee::query()->orderBy('nama_employee')->get(['id_employee', 'nama_employee']),

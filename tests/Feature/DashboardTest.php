@@ -51,8 +51,14 @@ class DashboardTest extends TestCase
                 ->where('stats.asset_by_status.RPR', 1)
                 ->where('stats.asset_by_status.MUT', 0)
                 ->where('stats.asset_by_status.DSP', 0)
+                ->where('stats.pending_transfers', 0)
+                ->where('stats.pending_disposals', 0)
                 ->has('warranty_alerts')
-                ->has('recent_assets', 5));
+                ->has('asset_by_classification')
+                ->has('asset_by_location')
+                ->has('recent_transfers')
+                ->has('recent_disposals')
+                ->has('integrity_score'));
     }
 
     public function test_dashboard_counts_pending_transfers(): void

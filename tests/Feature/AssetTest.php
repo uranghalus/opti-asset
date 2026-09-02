@@ -161,14 +161,14 @@ class AssetTest extends TestCase
 
     public function test_index_renders_assets(): void
     {
-        Asset::factory()->count(2)->create();
+        $item = Item::factory()->create();
 
         $this->actingAs($this->user)
             ->get(route('assets.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('assets/Index')
-                ->has('assets.data', 2));
+                ->component('assets/Manage')
+                ->has('tree'));
     }
 
     public function test_show_page_renders_with_relations(): void

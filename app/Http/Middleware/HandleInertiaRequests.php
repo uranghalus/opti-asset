@@ -24,7 +24,11 @@ class HandleInertiaRequests extends Middleware
             if ($activeTenant) {
                 $currentTenant = $activeTenant->only(['id', 'name']);
                 // For super-admin, get ALL tenants, otherwise only user's assigned tenants
-                $query = $user ? $user->hasRole('super-admin') ? Tenant::latest()->get() : $user->tenants() : [];
+                $query = $user
+                    ? ($user->hasRole('super-admin')
+                        ? Tenant::latest()->get()
+                        : $user->tenants())
+                    : collect();
                 $availableTenants = $query->map(fn (Tenant $t) => $this->mapTenant($t));
             } elseif ($user) {
                 // For super-admin, get ALL tenants even without active tenant

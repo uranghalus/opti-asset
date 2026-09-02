@@ -57,8 +57,20 @@ class RolePermissionSeeder extends Seeder
             'inventory.stock.view', 'inventory.stock.adjust',
         ]);
 
-        $staff = Role::findOrCreate('staff', 'web');
+        $staff = Role::findOrCreate('staff-asset', 'web');
         $staff->syncPermissions([
+            'dashboard.view', 'audit.view',
+            'asset.view',
+            'asset.classification.view',
+            'asset.category.view',
+            'asset.location.view',
+            'asset.transfer.view',
+            'inventory.view',
+            'inventory.stock.view',
+        ]);
+
+        $accounting = Role::findOrCreate('akunting', 'web');
+        $accounting->syncPermissions([
             'dashboard.view', 'audit.view',
             'asset.view',
             'asset.classification.view',

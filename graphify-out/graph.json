@@ -1431,7 +1431,7 @@
       "file_type": "code",
       "norm_label": "assetbystatus",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L11"
+      "source_location": "L24"
     },
     {
       "id": "resources_js_pages_dashboard_classificationslice",
@@ -1444,7 +1444,7 @@
       "file_type": "code",
       "norm_label": "classificationslice",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L26"
+      "source_location": "L39"
     },
     {
       "id": "resources_js_pages_dashboard_locationslice",
@@ -1457,7 +1457,7 @@
       "file_type": "code",
       "norm_label": "locationslice",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L27"
+      "source_location": "L40"
     },
     {
       "id": "resources_js_pages_dashboard_pageprops",
@@ -1470,7 +1470,7 @@
       "file_type": "code",
       "norm_label": "pageprops",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L33"
+      "source_location": "L71"
     },
     {
       "id": "resources_js_pages_dashboard_recentdisposal",
@@ -1483,7 +1483,7 @@
       "file_type": "code",
       "norm_label": "recentdisposal",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L29"
+      "source_location": "L49"
     },
     {
       "id": "resources_js_pages_dashboard_recenttransfer",
@@ -1496,7 +1496,7 @@
       "file_type": "code",
       "norm_label": "recenttransfer",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L28"
+      "source_location": "L41"
     },
     {
       "id": "resources_js_pages_dashboard_stats",
@@ -1509,7 +1509,7 @@
       "file_type": "code",
       "norm_label": "stats",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L19"
+      "source_location": "L32"
     },
     {
       "id": "resources_js_pages_dashboard_warrantyalerts",
@@ -1522,7 +1522,7 @@
       "file_type": "code",
       "norm_label": "warrantyalerts",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L31"
+      "source_location": "L64"
     },
     {
       "id": "resources_js_pages_dashboard_warrantyasset",
@@ -1535,7 +1535,7 @@
       "file_type": "code",
       "norm_label": "warrantyasset",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L30"
+      "source_location": "L56"
     },
     {
       "id": "app_enums_assetstatus_assetstatus",
@@ -8263,7 +8263,7 @@
       "file_type": "code",
       "norm_label": "classificationbars()",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L74"
+      "source_location": "L137"
     },
     {
       "id": "resources_js_pages_dashboard_dashboard",
@@ -8275,7 +8275,7 @@
       "file_type": "code",
       "norm_label": "dashboard()",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L148"
+      "source_location": "L280"
     },
     {
       "id": "resources_js_pages_dashboard_greetingheader",
@@ -8287,7 +8287,7 @@
       "file_type": "code",
       "norm_label": "greetingheader()",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L43"
+      "source_location": "L81"
     },
     {
       "id": "resources_js_pages_dashboard_locationstack",
@@ -8299,7 +8299,7 @@
       "file_type": "code",
       "norm_label": "locationstack()",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L100"
+      "source_location": "L176"
     },
     {
       "id": "resources_js_pages_dashboard_miniledger",
@@ -8311,7 +8311,7 @@
       "file_type": "code",
       "norm_label": "miniledger()",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L124"
+      "source_location": "L216"
     },
     {
       "id": "agents_skills_impeccable_scripts_live_event_validation_isvalidid",
@@ -305932,7 +305932,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L3",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -305944,7 +305944,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L5",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -305956,7 +305956,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L6",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -305968,7 +305968,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L7",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -305980,7 +305980,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L8",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -305992,7 +305992,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L9",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -319482,7 +319482,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L3",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -319494,7 +319494,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L5",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -319506,7 +319506,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L6",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -319518,7 +319518,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L7",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -319530,7 +319530,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L8",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -319542,7 +319542,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L9",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -436756,24 +436756,24 @@
     },
     {
       "source": "resources_js_pages_dashboard",
+      "target": "resources_js_pages_dashboard_classificationbars",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "resources/js/pages/dashboard.tsx",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "resources_js_pages_dashboard",
       "target": "resources_js_pages_dashboard_locationstack",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L100",
-      "weight": 1.0
-    },
-    {
-      "source": "resources_js_pages_dashboard",
-      "target": "resources_js_pages_dashboard_assetbystatus",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L11",
+      "source_location": "L176",
       "weight": 1.0
     },
     {
@@ -436784,7 +436784,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L124",
+      "source_location": "L216",
+      "weight": 1.0
+    },
+    {
+      "source": "resources_js_pages_dashboard",
+      "target": "resources_js_pages_dashboard_assetbystatus",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "resources/js/pages/dashboard.tsx",
+      "source_location": "L24",
       "weight": 1.0
     },
     {
@@ -436795,7 +436806,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L148",
+      "source_location": "L280",
       "weight": 1.0
     },
     {
@@ -436806,7 +436817,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L19",
+      "source_location": "L32",
       "weight": 1.0
     },
     {
@@ -436817,7 +436828,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L26",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -436828,7 +436839,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L27",
+      "source_location": "L40",
       "weight": 1.0
     },
     {
@@ -436839,7 +436850,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L28",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -436850,7 +436861,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L29",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
@@ -436861,7 +436872,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L30",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -436872,7 +436883,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L31",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -436883,7 +436894,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L33",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -436894,18 +436905,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L43",
-      "weight": 1.0
-    },
-    {
-      "source": "resources_js_pages_dashboard",
-      "target": "resources_js_pages_dashboard_classificationbars",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "resources/js/pages/dashboard.tsx",
-      "source_location": "L74",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -459316,5 +459316,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4118c4c412c4b59b600562998ad0f710ab7553c3"
+  "built_at_commit": "748eafaecad4fb060175350f0e9036ed47635c81"
 }

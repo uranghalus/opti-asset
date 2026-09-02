@@ -1,7 +1,7 @@
 # Graph Report - opti-asset  (2026-09-02)
 
 ## Corpus Check
-- 822 files · ~1,096,834 words
+- 822 files · ~1,096,897 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4118c4c4`
+- Built from commit: `748eafae`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

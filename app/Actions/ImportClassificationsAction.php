@@ -15,9 +15,9 @@ use Spatie\SimpleExcel\SimpleExcelReader;
 class ImportClassificationsAction
 {
     /**
-     * Process rows from an uploaded Excel file.
+     * @return array{created: int, updated: int, skipped: array<int, string>}
      */
-    public function fromFile(string $filePath): void
+    public function fromFile(string $filePath): array
     {
         $rows = SimpleExcelReader::create($filePath)
             ->getRows()
@@ -26,22 +26,25 @@ class ImportClassificationsAction
             ->values()
             ->all();
 
-        $this->fromRows($rows);
+        return $this->fromRows($rows);
     }
 
     /**
      * Process parsed rows array (backward compat for tests).
      *
      * @param  array<int, array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}>  $rows
+     * @return array{created: int, updated: int, skipped: array<int, string>}
      */
-    public function fromRows(array $rows): void
+    public function fromRows(array $rows): array
     {
+        $summary = ['created' => 0, 'updated' => 0, 'skipped' => []];
+
         $collection = collect($rows)
             ->filter(fn (array $row): bool => ($row['name'] ?? '') !== '')
             ->values();
 
         if ($collection->isEmpty()) {
-            return;
+            return $summary;
         }
 
         // Pre-load all existing records into memory (1 query per model).
@@ -56,21 +59,24 @@ class ImportClassificationsAction
         // Group by level and process in hierarchy order.
         $grouped = $collection->groupBy('level');
 
-        DB::transaction(function () use ($grouped, &$allGroups, &$allCategories, &$allClusters, &$allSubClusters): void {
-            $this->processGroups($grouped->get('group', collect()), $allGroups);
-            $this->processCategories($grouped->get('category', collect()), $allGroups, $allCategories);
-            $this->processClusters($grouped->get('cluster', collect()), $allGroups, $allCategories, $allClusters);
-            $this->processSubClusters($grouped->get('sub-cluster', collect()), $allGroups, $allCategories, $allClusters, $allSubClusters);
+        DB::transaction(function () use ($grouped, &$allGroups, &$allCategories, &$allClusters, &$allSubClusters, &$summary): void {
+            $this->processGroups($grouped->get('group', collect()), $allGroups, $summary);
+            $this->processCategories($grouped->get('category', collect()), $allGroups, $allCategories, $summary);
+            $this->processClusters($grouped->get('cluster', collect()), $allGroups, $allCategories, $allClusters, $summary);
+            $this->processSubClusters($grouped->get('sub-cluster', collect()), $allGroups, $allCategories, $allClusters, $allSubClusters, $summary);
         });
 
         Cache::forget('classification.tree.'.Tenant::current()?->id);
+
+        return $summary;
     }
 
     /**
      * @param  Collection<int, array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processGroups(Collection $rows, Collection &$allGroups): void
+    private function processGroups(Collection $rows, Collection &$allGroups, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -83,12 +89,14 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['updated']++;
             } else {
                 $group = AssetGroup::create([
                     'code' => $code,
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['created']++;
 
                 if ($code !== null) {
                     $allGroups->put($code, $group);
@@ -101,8 +109,9 @@ class ImportClassificationsAction
      * @param  Collection<int, array>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processCategories(Collection $rows, Collection $allGroups, Collection &$allCategories): void
+    private function processCategories(Collection $rows, Collection $allGroups, Collection &$allCategories, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -110,12 +119,16 @@ class ImportClassificationsAction
             $categoryCode = $segments[1] ?? null;
 
             if ($groupCode === null) {
+                $summary['skipped'][] = "Kategori '{$row['name']}' (tanpa kode golongan).";
+
                 continue;
             }
 
             $group = $allGroups->get($groupCode);
 
             if ($group === null) {
+                $summary['skipped'][] = "Kategori '{$row['name']}' (golongan '{$groupCode}' tidak ditemukan).";
+
                 continue;
             }
 
@@ -127,6 +140,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['updated']++;
             } else {
                 $category = AssetCategory::create([
                     'asset_group_id' => $group->id,
@@ -134,6 +148,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['created']++;
 
                 $allCategories->put($lookupKey, $category);
             }
@@ -145,14 +160,17 @@ class ImportClassificationsAction
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
      * @param  Collection<string, AssetCluster>  $allClusters  keyed by "category_id.code"
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection &$allClusters): void
+    private function processClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection &$allClusters, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
             $parent = $this->resolveParentFromCache(AssetCategory::class, $segments, $allGroups, $allCategories);
 
             if (! $parent instanceof AssetCategory) {
+                $summary['skipped'][] = "Cluster '{$row['name']}' (induk tidak ditemukan).";
+
                 continue;
             }
 
@@ -165,6 +183,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['updated']++;
             } else {
                 $cluster = AssetCluster::create([
                     'asset_category_id' => $parent->id,
@@ -172,6 +191,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['created']++;
 
                 $allClusters->put($lookupKey, $cluster);
             }
@@ -184,14 +204,17 @@ class ImportClassificationsAction
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
      * @param  Collection<string, AssetCluster>  $allClusters  keyed by "category_id.code"
      * @param  Collection<string, AssetSubCluster>  $allSubClusters  keyed by "cluster_id.code"
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processSubClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection $allClusters, Collection &$allSubClusters): void
+    private function processSubClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection $allClusters, Collection &$allSubClusters, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
             $parent = $this->resolveParentFromCache(AssetCluster::class, $segments, $allGroups, $allCategories, $allClusters);
 
             if (! $parent instanceof AssetCluster) {
+                $summary['skipped'][] = "Sub Cluster '{$row['name']}' (induk tidak ditemukan).";
+
                 continue;
             }
 
@@ -204,6 +227,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['updated']++;
             } else {
                 $subCluster = AssetSubCluster::create([
                     'asset_cluster_id' => $parent->id,
@@ -211,6 +235,7 @@ class ImportClassificationsAction
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
                 ]);
+                $summary['created']++;
 
                 $allSubClusters->put($lookupKey, $subCluster);
             }

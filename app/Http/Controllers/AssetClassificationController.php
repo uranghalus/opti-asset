@@ -12,8 +12,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,7 +27,8 @@ use Inertia\Response;
  *     name: string,
  *     description: string|null,
  *     notes: string|null,
- *     item_count: 0,
+ *     item_count: int<0, max>,
+ *     level: string,
  * }
  * @phpstan-type SerializedCluster array{
  *     id: string,
@@ -32,6 +36,7 @@ use Inertia\Response;
  *     name: string,
  *     description: string|null,
  *     child_count: int<0, max>,
+ *     level: string,
  *     children: array<int, SerializedSubCluster>,
  * }
  * @phpstan-type SerializedCategory array{
@@ -40,6 +45,7 @@ use Inertia\Response;
  *     name: string,
  *     description: string|null,
  *     child_count: int<0, max>,
+ *     level: string,
  *     children: array<int, SerializedCluster>,
  * }
  * @phpstan-type SerializedGroup array{
@@ -48,6 +54,7 @@ use Inertia\Response;
  *     name: string,
  *     description: string|null,
  *     child_count: int<0, max>,
+ *     level: string,
  *     children: array<int, SerializedCategory>,
  * }
  */
@@ -55,6 +62,8 @@ class AssetClassificationController extends Controller
 {
     public function index(): Response
     {
+        Gate::authorize('asset.classification.view');
+
         $tenantId = Tenant::current()?->id;
 
         $groups = Cache::remember(
@@ -85,6 +94,7 @@ class AssetClassificationController extends Controller
                             ->orderBy('code')
                             ->with([
                                 'subClusters' => fn ($query) => $query
+                                    ->withCount('assets')
                                     ->orderBy('sort_order')
                                     ->orderBy('code'),
                             ]),
@@ -107,6 +117,7 @@ class AssetClassificationController extends Controller
             'name' => $group->name,
             'description' => $group->description,
             'child_count' => $group->categories_count,
+            'level' => 'group',
             'children' => $group->categories
                 ->map(fn (AssetCategory $category): array => [
                     'id' => $category->id,
@@ -114,6 +125,7 @@ class AssetClassificationController extends Controller
                     'name' => $category->name,
                     'description' => $category->description,
                     'child_count' => $category->clusters_count,
+                    'level' => 'category',
                     'children' => $category->clusters
                         ->map(fn (AssetCluster $cluster): array => [
                             'id' => $cluster->id,
@@ -121,6 +133,7 @@ class AssetClassificationController extends Controller
                             'name' => $cluster->name,
                             'description' => $cluster->description,
                             'child_count' => $cluster->sub_clusters_count,
+                            'level' => 'cluster',
                             'children' => $cluster->subClusters
                                 ->map(fn (AssetSubCluster $subCluster): array => [
                                     'id' => $subCluster->id,
@@ -128,7 +141,8 @@ class AssetClassificationController extends Controller
                                     'name' => $subCluster->name,
                                     'description' => $subCluster->description,
                                     'notes' => $subCluster->notes,
-                                    'item_count' => 0,
+                                    'item_count' => $subCluster->assets_count,
+                                    'level' => 'sub-cluster',
                                 ])
                                 ->values()
                                 ->all(),
@@ -143,6 +157,8 @@ class AssetClassificationController extends Controller
 
     public function storeGroup(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.classification.create');
+
         $validated = $request->validate([
             'code' => [
                 'nullable',
@@ -161,6 +177,8 @@ class AssetClassificationController extends Controller
 
     public function updateGroup(Request $request, AssetGroup $group): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         $validated = $request->validate([
             'code' => [
                 'nullable',
@@ -179,6 +197,8 @@ class AssetClassificationController extends Controller
 
     public function destroyGroup(AssetGroup $group): RedirectResponse
     {
+        Gate::authorize('asset.classification.delete');
+
         $group->delete();
 
         return back()->with('success', 'Golongan berhasil dihapus.');
@@ -186,6 +206,8 @@ class AssetClassificationController extends Controller
 
     public function storeCategory(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.classification.create');
+
         $validated = $request->validate([
             'asset_group_id' => ['required', 'string'],
             'code' => [
@@ -207,6 +229,8 @@ class AssetClassificationController extends Controller
 
     public function updateCategory(Request $request, AssetCategory $category): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         $validated = $request->validate([
             'code' => [
                 'nullable',
@@ -225,6 +249,8 @@ class AssetClassificationController extends Controller
 
     public function destroyCategory(AssetCategory $category): RedirectResponse
     {
+        Gate::authorize('asset.classification.delete');
+
         $category->delete();
 
         return back()->with('success', 'Kategori berhasil dihapus.');
@@ -232,6 +258,8 @@ class AssetClassificationController extends Controller
 
     public function storeCluster(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.classification.create');
+
         $validated = $request->validate([
             'asset_category_id' => ['required', 'string'],
             'code' => [
@@ -253,6 +281,8 @@ class AssetClassificationController extends Controller
 
     public function updateCluster(Request $request, AssetCluster $cluster): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         $validated = $request->validate([
             'code' => [
                 'nullable',
@@ -271,6 +301,8 @@ class AssetClassificationController extends Controller
 
     public function destroyCluster(AssetCluster $cluster): RedirectResponse
     {
+        Gate::authorize('asset.classification.delete');
+
         $cluster->delete();
 
         return back()->with('success', 'Cluster berhasil dihapus.');
@@ -278,6 +310,8 @@ class AssetClassificationController extends Controller
 
     public function storeSubCluster(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.classification.create');
+
         $validated = $request->validate([
             'asset_cluster_id' => ['required', 'string'],
             'code' => [
@@ -300,6 +334,8 @@ class AssetClassificationController extends Controller
 
     public function updateSubCluster(Request $request, AssetSubCluster $subCluster): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         $validated = $request->validate([
             'code' => [
                 'nullable',
@@ -319,6 +355,8 @@ class AssetClassificationController extends Controller
 
     public function destroySubCluster(AssetSubCluster $subCluster): RedirectResponse
     {
+        Gate::authorize('asset.classification.delete');
+
         $subCluster->delete();
 
         return back()->with('success', 'Sub Cluster berhasil dihapus.');
@@ -326,6 +364,8 @@ class AssetClassificationController extends Controller
 
     public function reorder(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         $validated = $request->validate([
             'level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
             'parent_id' => ['nullable', 'string'],
@@ -333,43 +373,139 @@ class AssetClassificationController extends Controller
             'ids.*' => ['required', 'string'],
         ]);
 
+        $level = $validated['level'];
+        $model = $this->modelForLevel($level);
+
+        if ($model === null) {
+            throw ValidationException::withMessages(['level' => 'Level klasifikasi tidak valid.']);
+        }
+
+        if ($level === 'group' && $validated['parent_id'] !== null) {
+            throw ValidationException::withMessages(['parent_id' => 'Golongan tidak memiliki induk.']);
+        }
+
+        // Tenant-scoped ownership: every id must belong to the current tenant.
+        if ($model::whereKey($validated['ids'])->count() !== count($validated['ids'])) {
+            throw ValidationException::withMessages(['ids' => 'Item tidak ditemukan.']);
+        }
+
+        $parentId = $validated['parent_id'];
+
+        if ($parentId !== null) {
+            $this->resolveParent($level, $parentId);
+        }
+
         $this->applyOrder(
-            level: $validated['level'],
+            level: $level,
             ids: $validated['ids'],
-            parentId: $validated['parent_id'],
+            parentId: $parentId,
         );
 
         return back();
     }
 
+    public function destroyBulk(Request $request): RedirectResponse
+    {
+        Gate::authorize('asset.classification.delete');
+
+        $validated = $request->validate([
+            'level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string'],
+        ]);
+
+        $model = $this->modelForLevel($validated['level']);
+
+        if ($model === null) {
+            throw ValidationException::withMessages(['level' => 'Level klasifikasi tidak valid.']);
+        }
+
+        // Tenant-scoped ownership: every id must belong to the current tenant.
+        if ($model::whereKey($validated['ids'])->count() !== count($validated['ids'])) {
+            throw ValidationException::withMessages(['ids' => 'Item tidak ditemukan.']);
+        }
+
+        DB::transaction(function () use ($model, $validated): void {
+            $model::whereKey($validated['ids'])->get()->each->delete();
+        });
+
+        return back()->with('success', count($validated['ids']).' item berhasil dihapus.');
+    }
+
+    /**
+     * Resolve the reparent target through the tenant scope (404 on
+     * cross-tenant or missing parents instead of silent reassignment).
+     */
+    private function resolveParent(string $level, string $parentId): void
+    {
+        $parent = match ($level) {
+            'category' => AssetGroup::whereKey($parentId)->first(),
+            'cluster' => AssetCategory::whereKey($parentId)->first(),
+            'sub-cluster' => AssetCluster::whereKey($parentId)->first(),
+            default => null,
+        };
+
+        if ($level !== 'group' && $parent === null) {
+            throw ValidationException::withMessages(['parent_id' => 'Induk tidak ditemukan.']);
+        }
+    }
+
     public function import(Request $request, ImportClassificationsAction $action): RedirectResponse
     {
+        Gate::authorize('asset.classification.edit');
+
         if ($request->hasFile('file')) {
+            $validated = $request->validate([
+                'file' => ['required', 'file', 'mimes:xlsx,csv,xls,ods', 'max:5120'],
+            ]);
+
             /** @var UploadedFile $file */
-            $file = $request->file('file');
+            $file = $validated['file'];
             $tempPath = $file->store('classification/imports', ['disk' => 'local']);
 
             if (! is_string($tempPath)) {
                 throw new \RuntimeException('Tidak dapat menyimpan file sementara.');
             }
 
-            $action->fromFile(Storage::disk('local')->path($tempPath));
+            try {
+                $summary = $action->fromFile(Storage::disk('local')->path($tempPath));
+            } finally {
+                Storage::disk('local')->delete($tempPath);
+            }
 
-            Storage::disk('local')->delete($tempPath);
-        } else {
-            $validated = $request->validate([
-                'rows' => ['required', 'array', 'min:1'],
-                'rows.*.level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
-                'rows.*.name' => ['required', 'string', 'max:255'],
-                'rows.*.code' => ['nullable', 'string', 'max:20'],
-                'rows.*.description' => ['nullable', 'string'],
-                'rows.*.parent_code' => ['nullable', 'string', 'max:20'],
-            ]);
-
-            $action->fromRows($validated['rows']);
+            return back()->with('success', $this->importSummaryMessage($summary));
         }
 
-        return back();
+        $validated = $request->validate([
+            'rows' => ['required', 'array', 'min:1'],
+            'rows.*.level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
+            'rows.*.name' => ['required', 'string', 'max:255'],
+            'rows.*.code' => ['nullable', 'string', 'max:20'],
+            'rows.*.description' => ['nullable', 'string'],
+            'rows.*.parent_code' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $summary = $action->fromRows($validated['rows']);
+
+        return back()->with('success', $this->importSummaryMessage($summary));
+    }
+
+    /**
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
+     */
+    private function importSummaryMessage(array $summary): string
+    {
+        $message = "{$summary['created']} dibuat, {$summary['updated']} diperbarui.";
+
+        if ($summary['skipped'] !== []) {
+            $message .= ' Dilewati: '.implode('; ', array_slice($summary['skipped'], 0, 3));
+
+            if (count($summary['skipped']) > 3) {
+                $message .= sprintf(' (+%d lainnya)', count($summary['skipped']) - 3);
+            }
+        }
+
+        return $message;
     }
 
     /** @param non-empty-array<int, string> $ids */
@@ -382,28 +518,44 @@ class AssetClassificationController extends Controller
             default => null,
         };
 
-        $models = match ($level) {
-            'group' => AssetGroup::whereKey($ids)->get()->keyBy('id'),
-            'category' => AssetCategory::whereKey($ids)->get()->keyBy('id'),
-            'cluster' => AssetCluster::whereKey($ids)->get()->keyBy('id'),
-            'sub-cluster' => AssetSubCluster::whereKey($ids)->get()->keyBy('id'),
-            default => throw new \LogicException('Unsupported classification level.'),
-        };
+        $model = $this->modelForLevel($level);
 
-        foreach ($ids as $index => $id) {
-            $model = $models->get($id);
-
-            if (! $model) {
-                continue;
-            }
-
-            $model->sort_order = $index;
-
-            if ($parentField !== null && $parentId !== null) {
-                $model->setAttribute($parentField, $parentId);
-            }
-
-            $model->save();
+        if ($model === null) {
+            throw new \LogicException('Unsupported classification level.');
         }
+
+        DB::transaction(function () use ($model, $ids, $parentField, $parentId): void {
+            $models = $model::whereKey($ids)->get()->keyBy('id');
+
+            foreach ($ids as $index => $id) {
+                $record = $models->get($id);
+
+                // Ids and parents are ownership-checked before this point.
+                if (! $record) {
+                    continue;
+                }
+
+                if ($parentField !== null && $parentId !== null) {
+                    $record->setAttribute($parentField, $parentId);
+                }
+
+                $record->sort_order = $index;
+                $record->save();
+            }
+        });
+    }
+
+    /**
+     * @return class-string<AssetGroup|AssetCategory|AssetCluster|AssetSubCluster>|null
+     */
+    private function modelForLevel(string $level): ?string
+    {
+        return match ($level) {
+            'group' => AssetGroup::class,
+            'category' => AssetCategory::class,
+            'cluster' => AssetCluster::class,
+            'sub-cluster' => AssetSubCluster::class,
+            default => null,
+        };
     }
 }

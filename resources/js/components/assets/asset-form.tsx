@@ -104,7 +104,7 @@ function SectionHeader({
 }) {
     return (
         <div className="flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 shadow-sm">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                 <Icon className="size-4 text-primary" strokeWidth={1.75} />
             </div>
             <div>
@@ -244,7 +244,7 @@ export function AssetForm({
                     description="Pilih item (wajib). Kode aset dibuat otomatis dari kategori item."
                 />
 
-                <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-sm md:p-5">
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 shadow-sm md:p-5">
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <Label
@@ -289,7 +289,7 @@ export function AssetForm({
 
                     <div
                         className={cn(
-                            'mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors',
+                            'mt-4 flex items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors',
                             previewCode
                                 ? 'border-primary/30 bg-primary/5'
                                 : 'border-dashed border-border bg-background/40',
@@ -297,7 +297,7 @@ export function AssetForm({
                     >
                         <div
                             className={cn(
-                                'flex size-8 shrink-0 items-center justify-center rounded-lg border',
+                                'flex size-8 shrink-0 items-center justify-center rounded-md border',
                                 previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
                                     : 'border-border bg-background text-muted-foreground',
@@ -306,7 +306,7 @@ export function AssetForm({
                             <Tags className="size-4" strokeWidth={1.75} />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Kode Aset Otomatis
                             </p>
                             <p
@@ -320,12 +320,12 @@ export function AssetForm({
                                 {previewCode || '—'}
                             </p>
                             {previewCode ? (
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                <p className="mt-0.5 text-xs text-muted-foreground">
                                     Nomor urut dihitung otomatis per kategori
                                     item.
                                 </p>
                             ) : (
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                <p className="mt-0.5 text-xs text-muted-foreground">
                                     Pilih item yang memiliki kategori untuk
                                     membuat kode aset.
                                 </p>
@@ -406,7 +406,7 @@ export function AssetForm({
                     <div className="space-y-2">
                         <Label className="flex items-center gap-1">
                             Foto Aset
-                            <span className="text-[10px] font-normal text-muted-foreground">
+                            <span className="text-xs font-normal text-muted-foreground">
                                 (bisa banyak)
                             </span>
                         </Label>
@@ -421,7 +421,7 @@ export function AssetForm({
                     <div className="space-y-2">
                         <Label className="flex items-center gap-1">
                             Dokumen Pendukung
-                            <span className="text-[10px] font-normal text-muted-foreground">
+                            <span className="text-xs font-normal text-muted-foreground">
                                 (bisa banyak)
                             </span>
                         </Label>
@@ -772,7 +772,7 @@ export function AssetForm({
                 </div>
             </section>
 
-            <div className="flex flex-col-reverse gap-2 border-t pt-6 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
                 <Button
                     type="button"
                     variant="outline"
@@ -783,7 +783,7 @@ export function AssetForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="h-10 gap-2"
+                    className="h-10 gap-2 hover:shadow-[0_0_24px_-6px_var(--primary)]"
                     disabled={form.processing || mediaBusy}
                 >
                     {form.processing && <Spinner className="size-4" />}

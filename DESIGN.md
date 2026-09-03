@@ -1,140 +1,83 @@
 ---
-version: 'alpha'
-name: 'Glassmorphism'
-description: 'Glassmorphic interface with frosted glass effect. Ideal for overlays, modal dialogs, card components, premium interfaces. AI-ready template.'
+version: '1.0'
+name: 'NOON — Illuminate your workflow'
+description: 'Modern SaaS dashboard with subtle Glassmorphism, optimized for data density, accessibility, and productivity.'
 colors:
-    primary: '#0080FF'
-    secondary: '#6971ec'
-    tertiary: '#6971ec'
-    neutral: '#ff9382'
-
+    primary: '#FFB23E' # Primary CTAs, active states, key highlights
+    secondary: '#B892FF' # Secondary accents, tags, charts
+    tertiary: '#5EEAD4' # Success states, positive metrics, badges
+    background-base: '#1B1230' # Main app background (dark mode optimized)
+    background-surface: '#221533' # Cards, sidebars, elevated glass surfaces
+    text-primary: '#F8FAFC'
+    text-secondary: '#94A3B8'
 typography:
     h1:
-        fontFamily: -apple-system, sans-serif
-        fontSize: 2.25rem
+        fontFamily: system-ui, -apple-system, sans-serif
+        fontSize: 2rem
         fontWeight: 700
+        letterSpacing: -0.02em
     body-md:
-        fontFamily: -apple-system, sans-serif
-        fontSize: 1rem
+        fontFamily: system-ui, -apple-system, sans-serif
+        fontSize: 0.875rem # 14px, standard for SaaS data density
         fontWeight: 400
-    label-caps:
-        fontFamily: -apple-system, sans-serif
-        fontSize: 0.75rem
-        fontWeight: 500
-components:
-    button-primary:
-        backgroundColor: '{colors.primary}'
-        textColor: '{colors.neutral}'
-        padding: 12px
+        lineHeight: 1.5
+    mono:
+        fontFamily: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+        fontSize: 0.8125rem # 13px, for code blocks, IDs, data tables
+        fontWeight: 400
+rounded:
+    sm: 6px # Inputs, small buttons
+    md: 8px # Cards, modals
+    lg: 12px # Large containers, sidebars
+spacing:
+    xs: 0.5rem
+    sm: 1rem
+    md: 1.5rem
+    lg: 2.5rem
 ---
 
 ## Overview
 
-Glassmorphic interface with frosted glass effect. Ideal for overlays, modal dialogs, card components, premium interfaces. AI-ready template. Apple didn't invent frosted glass UI, but they made everyone care about it. iOS 7 dropped the skeuomorphism and introduced those translucent panels that let color bleed through from whatever sat behind them. It was polarizing. People hated it, then copied it. By Big Sur, the entire macOS chrome leaned into layered transparency as a spatial cue — and with visionOS, glass became the literal foundation of their spatial computing interface. It's not decoration there; it's architecture.
+NOON — Illuminate your workflow. Modern B2B SaaS dashboard with subtle Glassmorphism.
 
-Microsoft took a parallel path with Fluent Design's acrylic material around 2017. Windows 11 doubled down on it. Their approach was more systematic — defined noise textures, tint layers, luminosity blend modes. Less "pretty blur" and more "engineered material."
+- Density: 7/10 — High density for data tables and dashboards
+- Variance: 4/10 — Consistent UI patterns for predictability
+- Motion: 4/10 — Fast, purposeful micro-interactions, no distracting parallax
 
-What made glassmorphism actually viable for the web was backdrop-filter landing in all major browsers by 2020. Before that, you were faking it with duplicated backgrounds and clip paths — hacky, brittle, not worth the effort. Now it's a single CSS property. By 2026, it's a mature technique with solid browser support, though you still need to think about what happens when that blur can't render.
-
-- Density: 5/10 — Balanced
-- Variance: 4/10 — Moderate
-- Motion: 4/10 — Subtle
-
-- **Style:** Translucent, Layered, Vibrant, Blurred
-- **Keywords:** Frosted glass, transparent, blurred background, layered, vibrant background, light source, depth, multi-layer
-- **Era:** 2020s Modern
-- **Light/Dark:** ✓ Full / ✓ Full
+- **Style:** Subtle Glassmorphism / Clean Corporate
+- **Keywords:** dashboard, data-driven, accessible, clean, productive
+- **Era:** 2020s Modern SaaS
+- **Light/Dark:** ○ Light / ✓ Dark (optimized for dark mode to reduce eye strain)
 
 ## Colors
 
-- \*\*\*\* (rgba(255,255,255,0.1-0.3)) — Primary surface or dominant color
-- **Electric Blue** (#0080FF) — Secondary accent
-- **Neon Purple** (#8B00FF) — Accent color, emphasis elements
-- **Vivid Pink** (#FF1493) — Primary text color
-- **Teal** (#20B2AA) — Secondary accent
+- **#FFB23E** — Primary / CTA
+- **#B892FF** — Secondary / Accent
+- **#5EEAD4** — Tertiary / Success
+- **#1B1230** — Base Background
+- **#221533** — Surface / Glass Background
+- **#F8FAFC** — Text Primary
+- **#94A3B8** — Text Secondary
 
 ## Typography
 
-- **Display / Hero:** System UI stack (-apple-system, sans-serif) — Weight 700, tight tracking, used for headline impact
-- **Body:** System UI stack (-apple-system, sans-serif) — Weight 400, 16px/1.6 line-height, max 72ch per line
-- **UI Labels / Captions:** System UI stack (-apple-system, sans-serif) — 0.875rem, weight 500, slight letter-spacing
-- **Monospace:** JetBrains Mono — Used for code, metadata, and technical values
-
-Scale:
-
-- Hero: clamp(2.5rem, 5vw, 4rem)
-- H1: 2.25rem
-- H2: 1.5rem
-- Body: 1rem / 1.6
-- Small: 0.875rem
+- **system-ui** — headings and body text
+- **ui-monospace** — code, IDs, and data tables
 
 ## Layout
 
-- **Grid:** CSS Grid primary. Max-width containment: 1280px centered with 1.5rem side padding.
-- **Spacing rhythm:** Balanced. Base unit: 0.5rem (8px).
-- **Section vertical gaps:** clamp(4rem, 8vw, 8rem).
-- **Hero layout:** Split-screen (text left, visual right).
-- **Feature sections:** Zig-zag alternating text+image rows. No 3-equal-columns.
-- **Mobile collapse:** All multi-column layouts collapse below 768px. No horizontal overflow.
-- **z-index contract:** base (0) / sticky-nav (100) / overlay (200) / modal (300) / toast (500).
+- **Features:** CSS Grid, Flexbox, Backdrop Filter (for glass sidebars/modals), CSS Variables, Sticky Headers, Responsive Data Tables, CSS Masks
+- **Components:** Sidebar Navigation, Topbar, Data Tables, Metric Cards, Modals, Drawers, Tooltips, Form Inputs
 
-## Elevation & Depth
+## Effects
 
-Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflection, Z-depth
-
-- **Physics:** Ease-out curves, 200-300ms duration. Smooth and predictable.
-- **Entry animations:** Fade + translate-Y (16px → 0) over 420ms ease-out. Staggered cascades for lists: 80ms between items.
-- **Hover states:** Subtle color shift + shadow adjustment over 200ms.
-- **Page transitions:** Fade only (200ms).
-- **Performance:** Only transform and opacity animated. No layout-triggering properties.
-
-## Shapes
-
-- Base corner radius: 4px (small controls, chips, badges).
-- Glass panels (`glass-panel`): `rounded-2xl` (1rem) — the signature soft edge.
-- Overlays (Dialog, Select, Sheet): `rounded-xl` (0.75rem).
-- Buttons: `rounded-lg` (0.5rem).
-- Use only these Tailwind radius steps; do not introduce raw px radii.
-
-## Components
-
-- **Primary Button:** Subtly rounded (0.5rem) shape. Accent color fill. Hover: 8% darken + subtle lift shadow. Active: -1px translate tactile press. Font weight 600. No outer glows.
-- **Secondary / Ghost Button:** Outline variant. 1.5px border in muted color. Text in primary color. Hover: subtle background fill.
-- **Cards:** Subtly rounded (0.5rem) corners. Surface background. Subtle shadow (0 2px 12px rgba(0,0,0,0.06)). 1px border stroke.
-- **Inputs:** Label above input. 1px border stroke. Focus ring: 2px accent color offset 2px. Error text below in semantic red. No floating labels.
-- **Navigation:** Primary surface background. Active item: accent color indicator. Font weight 500 when active.
-- **Skeletons:** Shimmer animation matching component dimensions. No circular spinners.
-- **Empty States:** Icon-based composition with descriptive text and action button.
-
-## Module Accents
-The vibrant background gradient is themed per module via `<VibrantBackground variant="..." />`
-(`resources/js/components/vibrant-background.tsx`). Do not hardcode the gradient inline.
-
-| Variant  | Gradient colors                        | Modules                                                                 |
-| -------- | -------------------------------------- | ----------------------------------------------------------------------- |
-| `default`| Electric Blue #0080FF → Purple #8B5CF6 | assets, asset-history, asset-disposals, items, locations, roles, permissions, audit-logs |
-| `amber`  | Amber #F59E0B → Emerald #10B981        | asset-transfers, Employees, Departments, categories                      |
-| `indigo` | Electric Blue #0080FF → Indigo #6971EC | organizations                                                            |
-
-## Do's and Don'ts
-
-- No emojis in UI — use icon system only (Lucide, Heroicons)
-- No pure black (#000000) — use off-black or charcoal variants
-- No oversaturated accent colors (saturation cap: 80%)
-- No 3-column equal-width feature layouts — use zig-zag or asymmetric grid
-- No `h-screen` — use `min-h-[100dvh]`
-- No AI copywriting clichés: "Elevate", "Seamless", "Unleash", "Next-Gen"
-- No broken external image links — use picsum.photos or inline SVG
-- No generic lorem ipsum in demos
-
-- Do Backdrop-filter blur 10-20px
-- Do Translucent white 15-30% opacity
-- Do Subtle border 1px light
-- Do Vibrant background verified
-- Do Text contrast 4.5:1 checked
+- Subtle Blur — for glassmorphic overlays and sidebars
+- Soft Glow — for primary CTA hover states
+- Glass Effect — for elevated cards and modals
+- Gradients — for subtle background meshes or chart fills
+- Focus Rings — high contrast focus states for accessibility
+- Hover Effects — subtle background shifts, no heavy 3D transforms
 
 ## Use Case
 
-Overlays, Modal dialogs, Card components, Premium interfaces
-
-<!-- Source: https://designmd.app/library/glassmorphism · designmd.app -->
+SaaS Dashboards, B2B Web Applications, Admin Panels, Analytics Tools, CRM Systems.

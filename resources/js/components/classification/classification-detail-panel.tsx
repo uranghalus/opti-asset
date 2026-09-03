@@ -39,12 +39,6 @@ const UPDATE: Record<ClassificationLevel, ItemRouteFn> = {
     'sub-cluster': updateSubCluster,
 };
 
-const PARENT_FIELD: Partial<Record<ClassificationLevel, string>> = {
-    category: 'asset_group_id',
-    cluster: 'asset_category_id',
-    'sub-cluster': 'asset_cluster_id',
-};
-
 const CHILD_LABEL: Partial<Record<ClassificationLevel, string>> = {
     group: 'Kategori',
     category: 'Cluster',
@@ -62,7 +56,6 @@ type DetailProps = {
     level: ClassificationLevel;
     node: ClassificationNode;
     ancestors: ClassificationNode[];
-    parentId: string | null;
     onEdit: () => void;
     onDelete: () => void;
     onDuplicate: () => void;
@@ -74,14 +67,12 @@ export function ClassificationDetailPanel({
     level,
     node,
     ancestors,
-    parentId,
     onEdit,
     onDelete,
     onDuplicate,
     onAddChild,
     onClose,
 }: DetailProps) {
-    const parentField = PARENT_FIELD[level];
     const tint = LEVEL_TINTS[level];
 
     const form = useForm<ClassificationFormValues>({
@@ -94,11 +85,13 @@ export function ClassificationDetailPanel({
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
+        // Moves happen via reorder only: the PATCH validators whitelist
+        // code/name/description/notes, so a parent id must never be sent
+        // from this edit-only panel.
         form.transform((data) => ({
             code: data.code || null,
             name: data.name,
             description: data.description || null,
-            ...(parentField ? { [parentField]: parentId } : {}),
             ...(level === 'sub-cluster' ? { notes: data.notes || null } : {}),
         }));
 

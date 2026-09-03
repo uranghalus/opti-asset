@@ -675,4 +675,107 @@
     .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
         background: var(--sidebar-accent) / 50;
     }
+    @keyframes card-enter {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-card-enter {
+        animation: card-enter 420ms ease-out both;
+    }
+
+    /* ── Manifest Deck (halaman Aset) ──────────────────────────────
+       Kertas manifest + rel tinta ala meja manifest kargo. Barcode,
+       perforasi, dan stempel adalah kosakata fungsional dunia ini. */
+    .barcode-strip {
+        background-image: repeating-linear-gradient(
+            90deg,
+            currentColor 0 2px,
+            transparent 2px 4px,
+            currentColor 4px 7px,
+            transparent 7px 9px,
+            currentColor 9px 10px,
+            transparent 10px 14px
+        );
+    }
+
+    .manifest-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(120, 113, 100, 0.55) transparent;
+    }
+    .manifest-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .manifest-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .manifest-scroll::-webkit-scrollbar-thumb {
+        background: rgba(120, 113, 100, 0.55);
+        border-radius: 4px;
+    }
+    .dark .manifest-scroll {
+        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+    }
+    .dark .manifest-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .manifest-scope ::selection {
+        background: rgba(255, 178, 62, 0.35);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .animate-card-enter,
+        .stamp-slam {
+            animation: none !important;
+            transition: none !important;
+        }
+    }
+}
+
+/* ── NOON scope (DESIGN.md v1.0) ───────────────────────────────────
+   Palet dark-first khusus halaman yang dibungkus `.dark.noon`.
+   Semua komponen berbasis token semantik mengikuti otomatis;
+   halaman lain tidak tersentuh. */
+.noon {
+    color-scheme: dark;
+    --background: oklch(0.2 0.04 300);
+    --foreground: oklch(0.98 0.002 250);
+    --card: oklch(0.24 0.045 300);
+    --card-foreground: oklch(0.98 0.002 250);
+    --popover: oklch(0.24 0.045 300);
+    --popover-foreground: oklch(0.98 0.002 250);
+    --primary: oklch(0.81 0.16 74);
+    --primary-foreground: oklch(0.2 0.04 300);
+    --secondary: oklch(0.72 0.14 295);
+    --secondary-foreground: oklch(0.2 0.04 300);
+    --muted: oklch(0.28 0.05 300);
+    --muted-foreground: oklch(0.71 0.04 250);
+    --accent: oklch(0.28 0.05 300);
+    --accent-foreground: oklch(0.98 0.002 250);
+    --destructive: oklch(0.65 0.2 25);
+    --destructive-foreground: oklch(0.98 0.002 250);
+    --border: oklch(1 0 0 / 0.1);
+    --input: oklch(1 0 0 / 0.12);
+    --ring: oklch(0.81 0.16 74);
+}
+@keyframes stamp-slam {
+    from {
+        opacity: 0;
+        transform: scale(1.4);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.stamp-slam {
+    animation: stamp-slam 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }

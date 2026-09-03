@@ -38,7 +38,35 @@ class AssetController extends Controller
         private RecordAssetHistoryAction $recordHistory,
     ) {}
 
+    /**
+     * Pseudo-node id that lists assets without a classification
+     * at the requested level, so grouped browsing never hides rows.
+     */
+    public const UNCLASSIFIED_NODE = 'unclassified';
+
     public function index(Request $request): Response
+    {
+        return $this->browseResponse($request, 'assets/Index');
+    }
+
+    public function grouped(Request $request): Response
+    {
+        return $this->browseResponse($request, 'assets/Index');
+    }
+
+    public function browse(Request $request): Response
+    {
+        return $this->browseResponse($request, 'assets/Index');
+    }
+
+    /**
+     * Shared grouped-browsing payload: classification tree, drill-down
+     * breadcrumb/selection, and the paginated asset ledger for the
+     * selected node (or null when no node is selected yet).
+     *
+     * @return array<string, mixed>
+     */
+    private function browsePayload(Request $request): array
     {
         $perPage = min((int) $request->integer('per_page', 15), 100);
         $initialLevel = $this->initialFilterLevel($request);
@@ -46,6 +74,7 @@ class AssetController extends Controller
         $nodeId = $request->string('node')->trim()->toString();
         $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
         $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
+        $unclassified = $validLevel && $nodeId === self::UNCLASSIFIED_NODE;
 
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
@@ -58,7 +87,9 @@ class AssetController extends Controller
         $assets = null;
 
         if ($validLevel) {
-            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
+            $breadcrumb = $unclassified
+                ? [['id' => self::UNCLASSIFIED_NODE, 'level' => $level, 'code' => null, 'name' => 'Tanpa Klasifikasi']]
+                : $this->buildBreadcrumb($level, $nodeId);
             $selected = ['level' => $level, 'id' => $nodeId];
             $field = match ($level) {
                 'group' => 'asset_group_id',
@@ -76,7 +107,7 @@ class AssetController extends Controller
                     'assetCluster:id,code,name',
                     'assetSubCluster:id,code,name',
                 ])
-                ->where($field, $nodeId)
+                ->when($unclassified, fn ($query) => $query->whereNull($field), fn ($query) => $query->where($field, $nodeId))
                 ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                     ->where('kode_asset', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%")
@@ -90,29 +121,12 @@ class AssetController extends Controller
                 ->withQueryString();
         }
 
-        if ($request->boolean('json')) {
-            return response()->json([
-                'tree' => $tree,
-                'selected' => $selected,
-                'breadcrumb' => $breadcrumb,
-                'assets' => $assets,
-                'filters' => [
-                    'search' => $search,
-                    'status' => $status,
-                    'department' => $department,
-                    'condition' => $condition,
-                    'level' => $validLevel ? $level : '',
-                    'node' => $validLevel ? $nodeId : '',
-                    'initialLevel' => $initialLevel,
-                ],
-            ]);
-        }
-
-        return Inertia::render('assets/Index', [
+        return [
             'tree' => $tree,
             'selected' => $selected,
             'breadcrumb' => $breadcrumb,
             'assets' => $assets,
+            'unclassifiedCount' => Asset::query()->whereNull('asset_group_id')->count(),
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
             'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
             'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id']),
@@ -127,61 +141,25 @@ class AssetController extends Controller
                 'node' => $validLevel ? $nodeId : '',
                 'initialLevel' => $initialLevel,
             ],
-        ]);
+        ];
     }
 
-    public function grouped(Request $request): Response
+    private function browseResponse(Request $request, string $component): Response
     {
-        // reuse index logic but render glass‑morphic view
-        $perPage = min((int) $request->integer('per_page', 15), 100);
-        $initialLevel = $this->initialFilterLevel($request);
-        // reuse existing processing (duplicate for clarity)
-        $level = $request->string('level')->trim()->toString();
-        $nodeId = $request->string('node')->trim()->toString();
-        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
-        $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
-        $search = $request->string('search')->trim()->toString();
-        $status = $request->string('status')->trim()->toString();
-        $department = $request->string('department')->trim()->toString();
-        $condition = $request->string('condition')->trim()->toString();
-        $tree = $this->buildBrowseTree();
-        $breadcrumb = [];
-        $selected = null;
-        $assets = null;
-        if ($validLevel) {
-            $breadcrumb = $this->buildBreadcrumb($level, $nodeId);
-            $selected = ['level' => $level, 'id' => $nodeId];
-            $field = match ($level) {
-                'group' => 'asset_group_id',
-                'category' => 'asset_category_id',
-                'cluster' => 'asset_cluster_id',
-                'sub-cluster' => 'asset_sub_cluster_id',
-            };
-            $assets = Asset::query()
-                ->with(['item:id,name,code','location:id,name','department:id_department,nama_department','assetGroup:id,code,name','assetCategory:id,code,name','assetCluster:id,code,name','assetSubCluster:id,code,name'])
-                ->where($field, $nodeId)
-                ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q->where('kode_asset','like',"%{$search}%")->orWhere('serial_number','like',"%{$search}%")->orWhere('brand','like',"%{$search}%")->orWhere('model','like',"%{$search}%")))
-                ->when($status !== '', fn ($q)=>$q->where('status',$status))
-                ->when($department !== '', fn ($q)=>$q->where('department_id',$department))
-                ->when($condition !== '', fn ($q)=>$q->where('condition',$condition))
-                ->orderBy('created_at','desc')
-                ->paginate($perPage)
-                ->withQueryString();
+        $payload = $this->browsePayload($request);
+
+        if ($request->boolean('json')) {
+            return response()->json([
+                'tree' => $payload['tree'],
+                'selected' => $payload['selected'],
+                'breadcrumb' => $payload['breadcrumb'],
+                'assets' => $payload['assets'],
+                'unclassifiedCount' => $payload['unclassifiedCount'],
+                'filters' => $payload['filters'],
+            ]);
         }
-        return Inertia::render('assets/Index', [
-            'tree' => $tree,
-            'selected' => $selected,
-            'breadcrumb' => $breadcrumb,
-            'assets' => $assets,
-            'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id','code','name']),
-            'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id','code','name','asset_group_id']),
-            'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id','code','name','category_id']),
-            'locations' => Location::query()->orderBy('name')->get(['id','name']),
-            'departments' => Department::query()->orderBy('nama_department')->get(['id_department','nama_department']),
-            'filters' => [
-                'search'=> $search,'status'=> $status,'department'=> $department,'condition'=> $condition,'level'=> $validLevel ? $level : '','node'=> $validLevel ? $nodeId : '','initialLevel'=> $initialLevel,
-            ],
-        ]);
+
+        return Inertia::render($component, $payload);
     }
 
     /**

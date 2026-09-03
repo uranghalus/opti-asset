@@ -1,11 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 interface EmptyStateProps {
     icon?: LucideIcon;
     title: string;
     description?: string;
     action?: ReactNode;
+    secondaryAction?: ReactNode;
+    variant?: 'glass' | 'plain';
 }
 
 export function EmptyState({
@@ -13,11 +16,27 @@ export function EmptyState({
     title,
     description,
     action,
+    secondaryAction,
+    variant = 'glass',
 }: EmptyStateProps) {
+    const plain = variant === 'plain';
+
     return (
-        <div className="glass-panel card-enter mt-4 flex flex-col items-center justify-center gap-4 py-20 text-center delay-200">
+        <div
+            className={cn(
+                'card-enter flex flex-col items-center justify-center gap-4 py-20 text-center',
+                !plain && 'glass-panel mt-4 delay-200',
+            )}
+        >
             {Icon && (
-                <div className="glass-card flex size-16 items-center justify-center rounded-2xl text-primary shadow-md">
+                <div
+                    className={cn(
+                        'flex size-16 items-center justify-center rounded-2xl text-primary',
+                        plain
+                            ? 'border border-white/20 bg-white/10'
+                            : 'glass-card shadow-md',
+                    )}
+                >
                     <Icon className="size-7" strokeWidth={1.25} />
                 </div>
             )}
@@ -31,7 +50,12 @@ export function EmptyState({
                     </p>
                 )}
             </div>
-            {action}
+            {(action || secondaryAction) && (
+                <div className="flex flex-col items-center gap-2 sm:flex-row">
+                    {action}
+                    {secondaryAction}
+                </div>
+            )}
         </div>
     );
 }

@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('asset-classification')->group(function () {
         Route::post('reorder', [AssetClassificationController::class, 'reorder'])->name('asset-classification.reorder');
+        Route::post('bulk-destroy', [AssetClassificationController::class, 'destroyBulk'])->name('asset-classification.bulk-destroy');
         Route::post('import', [AssetClassificationController::class, 'import'])->name('asset-classification.import');
 
         Route::post('groups', [AssetClassificationController::class, 'storeGroup'])->name('asset-classification.groups.store');
@@ -83,7 +84,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
     Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
-    Route::get('assets/grouped', [AssetController::class, 'grouped'])->name('assets.grouped');
     Route::get('assets/grouped', [AssetController::class, 'grouped'])->name('assets.grouped');
     Route::get('assets/browse', [AssetController::class, 'browse'])->name('assets.browse');
     Route::get('assets/scan', [AssetController::class, 'scan'])->name('assets.scan');

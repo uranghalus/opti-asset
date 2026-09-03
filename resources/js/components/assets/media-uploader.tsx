@@ -269,7 +269,7 @@ export function MediaUploader({
                     handleFiles(Array.from(event.dataTransfer.files));
                 }}
                 className={cn(
-                    'group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-7 text-center transition-all duration-200',
+                    'group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-all duration-200',
                     dragging
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/40 hover:bg-accent/40',
@@ -278,7 +278,7 @@ export function MediaUploader({
             >
                 <span
                     className={cn(
-                        'flex size-11 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 group-hover:scale-105',
+                        'flex size-11 items-center justify-center rounded-md border shadow-sm transition-all duration-200 group-hover:scale-105',
                         dragging
                             ? 'border-primary/30 bg-primary/15 text-primary'
                             : 'border-primary/20 bg-primary/10 text-primary',
@@ -365,12 +365,12 @@ function CommittedItem({
                 <img
                     src={url}
                     alt={name}
-                    className="aspect-square w-24 rounded-xl border border-border/70 object-cover shadow-sm"
+                    className="aspect-square w-24 rounded-lg border border-border/70 object-cover shadow-sm"
                 />
             ) : (
-                <div className="flex aspect-square w-24 flex-col items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-background/60 text-muted-foreground shadow-sm">
+                <div className="flex aspect-square w-24 flex-col items-center justify-center gap-1.5 rounded-lg border border-border/70 bg-background/60 text-muted-foreground shadow-sm">
                     <FileText className="size-6" strokeWidth={1.5} />
-                    <span className="w-full truncate px-1 text-center text-[9px]">
+                    <span className="w-full truncate px-1 text-center text-xs">
                         {name}
                     </span>
                 </div>
@@ -401,7 +401,7 @@ function PendingRow({
     return (
         <li
             className={cn(
-                'flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors',
+                'flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors',
                 hasError
                     ? 'border-destructive/40 bg-destructive/5'
                     : isDone
@@ -416,7 +416,7 @@ function PendingRow({
                     className="size-10 shrink-0 rounded-lg border border-border/60 object-cover"
                 />
             ) : (
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                     <FileText className="size-4.5" strokeWidth={1.75} />
                 </span>
             )}
@@ -427,7 +427,7 @@ function PendingRow({
                         {item.name}
                     </p>
                     {item.originalSize ? (
-                        <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                             {item.compressedSize !== undefined &&
                             item.compressedSize < item.originalSize
                                 ? `${formatBytes(item.originalSize)} → ${formatBytes(item.compressedSize)}`
@@ -450,12 +450,12 @@ function PendingRow({
                         />
                     </div>
                 ) : hasError ? (
-                    <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-destructive">
+                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-destructive">
                         <CircleAlert className="size-3 shrink-0" />
                         {item.error}
                     </p>
                 ) : (
-                    <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="size-3 shrink-0" />
                         Siap digunakan
                     </p>
@@ -467,7 +467,7 @@ function PendingRow({
                     <Loader2 className="size-4 animate-spin text-primary" />
                 )}
                 {item.status === 'uploading' && (
-                    <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">
                         {Math.round(item.progress * 100)}%
                     </span>
                 )}

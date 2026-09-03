@@ -157,8 +157,8 @@ const SEARCH_FOCUS_CLASSES =
 
 function formatDate(value: string | null): string {
     if (!value) {
-return '—';
-}
+        return '—';
+    }
 
     return new Date(value).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -198,12 +198,12 @@ export default function ReportsIndex() {
     useEffect(
         () => () => {
             if (tTimer.current) {
-clearTimeout(tTimer.current);
-}
+                clearTimeout(tTimer.current);
+            }
 
             if (dTimer.current) {
-clearTimeout(dTimer.current);
-}
+                clearTimeout(dTimer.current);
+            }
         },
         [],
     );
@@ -252,8 +252,8 @@ clearTimeout(dTimer.current);
 
     const goToPage = (url: string | null) => {
         if (url) {
-router.get(url, {}, { preserveState: true, replace: true });
-}
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
     };
 
     const activeTCount = [tStatus].filter(Boolean).length + (tSearch ? 1 : 0);
@@ -263,12 +263,12 @@ router.get(url, {}, { preserveState: true, replace: true });
         const params: Record<string, string> = { format };
 
         if (tStatus) {
-params.transfer_status = tStatus;
-}
+            params.transfer_status = tStatus;
+        }
 
         if (tSearch.trim()) {
-params.transfer_search = tSearch.trim();
-}
+            params.transfer_search = tSearch.trim();
+        }
 
         return (
             exportTransfersRoute().url +
@@ -281,12 +281,12 @@ params.transfer_search = tSearch.trim();
         const params: Record<string, string> = { format };
 
         if (dStatus) {
-params.disposal_status = dStatus;
-}
+            params.disposal_status = dStatus;
+        }
 
         if (dSearch.trim()) {
-params.disposal_search = dSearch.trim();
-}
+            params.disposal_search = dSearch.trim();
+        }
 
         return (
             exportDisposalsRoute().url +
@@ -412,10 +412,10 @@ params.disposal_search = dSearch.trim();
                                                 setTSearch(e.target.value);
 
                                                 if (tTimer.current) {
-clearTimeout(
+                                                    clearTimeout(
                                                         tTimer.current,
                                                     );
-}
+                                                }
 
                                                 tTimer.current = setTimeout(
                                                     () =>
@@ -649,10 +649,10 @@ clearTimeout(
                                                 setDSearch(e.target.value);
 
                                                 if (dTimer.current) {
-clearTimeout(
+                                                    clearTimeout(
                                                         dTimer.current,
                                                     );
-}
+                                                }
 
                                                 dTimer.current = setTimeout(
                                                     () =>

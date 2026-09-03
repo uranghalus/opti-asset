@@ -161,21 +161,32 @@ export default function AssetLabelsBatch() {
     return (
         <div className="min-h-[100dvh] bg-white p-4 text-slate-900 md:p-8 print:bg-white print:p-0">
             <div className="mx-auto max-w-4xl print:hidden">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button
-                        type="button"
-                        onClick={() => router.visit(indexRoute().url)}
-                        className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        <ArrowLeft className="size-4" />
-                        Kembali ke Daftar Aset
-                    </button>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => router.visit(indexRoute().url)}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                        >
+                            <ArrowLeft className="size-4" />
+                            Kembali
+                        </button>
+                        <span aria-hidden className="text-slate-300">
+                            /
+                        </span>
+                        <h1 className="text-lg font-bold tracking-tight text-slate-900">
+                            Label Massal
+                        </h1>
+                        <span className="rounded-md bg-primary px-2 py-0.5 font-mono text-[13px] font-bold text-primary-foreground tabular-nums">
+                            {assets.length}
+                        </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
                         <Button
                             variant="outline"
                             onClick={() => printLabels(currentBatch)}
                             disabled={currentBatch.length === 0}
-                            className="gap-2 rounded-xl"
+                            className="gap-2 rounded-md bg-white"
                         >
                             <Printer className="size-4" />
                             Cetak Batch
@@ -183,7 +194,7 @@ export default function AssetLabelsBatch() {
                         <Button
                             onClick={() => exportPdf(currentBatch)}
                             disabled={exporting || currentBatch.length === 0}
-                            className="gap-2 rounded-xl"
+                            className="gap-2 rounded-md"
                         >
                             {exporting ? (
                                 <Spinner className="size-4" />
@@ -195,7 +206,8 @@ export default function AssetLabelsBatch() {
                     </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    {' '}
                     <div className="flex items-center gap-3">
                         <label className="text-sm font-medium text-slate-600">
                             Ukuran batch
@@ -204,7 +216,7 @@ export default function AssetLabelsBatch() {
                             value={String(batchSize)}
                             onValueChange={changeBatchSize}
                         >
-                            <SelectTrigger className="h-9 w-24 rounded-lg bg-white">
+                            <SelectTrigger className="h-9 w-24 rounded-md bg-white">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -226,7 +238,7 @@ export default function AssetLabelsBatch() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 gap-1 rounded-xl"
+                            className="h-9 gap-1 rounded-md"
                             disabled={batchIndex === 0}
                             onClick={() =>
                                 setBatchIndex((index) => Math.max(0, index - 1))
@@ -241,7 +253,7 @@ export default function AssetLabelsBatch() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 gap-1 rounded-xl"
+                            className="h-9 gap-1 rounded-md"
                             disabled={batchIndex >= batches.length - 1}
                             onClick={() =>
                                 setBatchIndex((index) =>
@@ -268,7 +280,7 @@ export default function AssetLabelsBatch() {
                         <Button
                             variant="outline"
                             onClick={() => printLabels(assets)}
-                            className="gap-2 rounded-xl"
+                            className="gap-2 rounded-md bg-white"
                         >
                             <Printer className="size-4" />
                             Cetak Semua ({assets.length} label)

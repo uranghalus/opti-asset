@@ -126,21 +126,38 @@ export default function AssetLabels() {
     return (
         <div className="min-h-[100dvh] bg-white p-4 text-slate-900 md:p-8 print:bg-white print:p-0">
             <div className="mx-auto max-w-4xl print:hidden">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button
-                        type="button"
-                        onClick={() => router.visit(indexRoute().url)}
-                        className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        <ArrowLeft className="size-4" />
-                        Kembali ke Daftar Aset
-                    </button>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => router.visit(indexRoute().url)}
+                                className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                            >
+                                <ArrowLeft className="size-4" />
+                                Kembali
+                            </button>
+                            <span aria-hidden className="text-slate-300">
+                                /
+                            </span>
+                            <h1 className="text-lg font-bold tracking-tight text-slate-900">
+                                Label Barcode
+                            </h1>
+                            <span className="rounded-md bg-primary px-2 py-0.5 font-mono text-[13px] font-bold text-primary-foreground tabular-nums">
+                                {assets.length}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Gunakan tombol Cetak untuk mencetak, atau Export PDF
+                            untuk mengunduh sebagai berkas PDF.
+                        </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
                         <Button
                             variant="outline"
                             onClick={printLabels}
                             disabled={assets.length === 0}
-                            className="gap-2 rounded-xl"
+                            className="gap-2 rounded-md bg-white"
                         >
                             <Printer className="size-4" />
                             Cetak
@@ -148,7 +165,7 @@ export default function AssetLabels() {
                         <Button
                             onClick={exportPdf}
                             disabled={exporting || assets.length === 0}
-                            className="gap-2 rounded-xl"
+                            className="gap-2 rounded-md"
                         >
                             {exporting ? (
                                 <Spinner className="size-4" />
@@ -159,11 +176,6 @@ export default function AssetLabels() {
                         </Button>
                     </div>
                 </div>
-                <p className="mt-4 text-sm text-slate-500">
-                    {assets.length} label barcode dari pilihan Anda. Gunakan
-                    tombol Cetak untuk mencetak, atau Export PDF untuk mengunduh
-                    sebagai berkas PDF.
-                </p>
             </div>
 
             <div className="mx-auto mt-6 max-w-4xl md:mt-8 print:mt-0 print:max-w-none">

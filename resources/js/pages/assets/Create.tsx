@@ -21,7 +21,7 @@ export default function AssetCreate() {
         <>
             <Head title="Tambah Aset" />
 
-            <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
+            <div className="noon dark relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
                 <VibrantBackground variant="default" />
                 <div className="mx-auto w-full max-w-4xl">
                     <Link
@@ -32,13 +32,13 @@ export default function AssetCreate() {
                         Kembali ke Daftar Aset
                     </Link>
 
-                    <div className="glass-panel card-enter mt-5 flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="glass-panel card-enter mt-5 flex flex-col gap-4 rounded-xl p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="glass-card flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary shadow-md ring-1 ring-primary/10">
                                 <Boxes className="size-6" strokeWidth={1.5} />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                                <h1 className="text-[2rem] font-bold tracking-[-0.02em] text-foreground">
                                     Tambah Aset
                                 </h1>
                                 <p className="mt-1 text-sm text-muted-foreground">
@@ -53,7 +53,7 @@ export default function AssetCreate() {
                         </span>
                     </div>
 
-                    <div className="glass-panel card-enter mt-4 rounded-2xl p-5 delay-100 md:p-7">
+                    <div className="glass-panel card-enter mt-4 rounded-xl p-5 delay-100 md:p-7">
                         <AssetForm
                             mode="create"
                             items={props.items}

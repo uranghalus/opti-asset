@@ -2,16 +2,25 @@
 
 namespace Tests\Feature;
 
+use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
+use App\Models\Item;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\AssetClassificationPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AssetClassificationTest extends TestCase
@@ -31,10 +40,20 @@ class AssetClassificationTest extends TestCase
         }
         Cache::flush();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        foreach (['asset.classification.view', 'asset.classification.create', 'asset.classification.edit', 'asset.classification.delete'] as $name) {
+            Permission::create(['name' => $name, 'guard_name' => 'web']);
+        }
+
+        $role = Role::create(['name' => 'super-admin', 'guard_name' => 'web']);
+        $role->givePermissionTo(['asset.classification.view', 'asset.classification.create', 'asset.classification.edit', 'asset.classification.delete']);
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->assignRole('super-admin');
     }
 
     public function test_index_renders_classification_tree(): void
@@ -301,7 +320,7 @@ class AssetClassificationTest extends TestCase
         $this->assertSame(0, $category->fresh()->sort_order);
     }
 
-    public function test_reorder_ignores_ids_from_another_tenant(): void
+    public function test_reorder_rejects_ids_from_another_tenant(): void
     {
         Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
         $foreignGroup = AssetGroup::factory()->create();
@@ -309,15 +328,15 @@ class AssetClassificationTest extends TestCase
         $own = AssetGroup::factory()->create(['code' => null]);
 
         $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
             ->post(route('asset-classification.reorder'), [
                 'level' => 'group',
                 'parent_id' => null,
                 'ids' => [$foreignGroup->id, $own->id],
             ])
-            ->assertRedirect();
+            ->assertSessionHasErrors('ids');
 
-        $this->assertSame(1, $own->fresh()->sort_order);
-        $this->assertSame(0, $foreignGroup->fresh()->sort_order);
+        $this->assertSame(0, $own->fresh()->sort_order);
     }
 
     public function test_import_creates_full_hierarchy(): void
@@ -492,5 +511,176 @@ class AssetClassificationTest extends TestCase
             ->first();
 
         $this->assertSame('Chiller', $chiller?->name);
+    }
+
+    public function test_guests_cannot_view_classification(): void
+    {
+        $this->get(route('asset-classification.index'))->assertRedirect();
+    }
+
+    public function test_user_without_permission_is_forbidden(): void
+    {
+        $outsider = User::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        $this->actingAs($outsider)
+            ->get(route('asset-classification.index'))
+            ->assertForbidden();
+
+        $this->actingAs($outsider)
+            ->post(route('asset-classification.groups.store'), ['name' => 'X'])
+            ->assertForbidden();
+    }
+
+    public function test_reorder_rejects_unknown_parent(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => null]);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
+
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.reorder'), [
+                'level' => 'category',
+                'parent_id' => '00000000-0000-0000-0000-000000000000',
+                'ids' => [$category->id],
+            ])
+            ->assertSessionHasErrors('parent_id');
+    }
+
+    public function test_reorder_rejects_parent_for_group_level(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => null]);
+
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.reorder'), [
+                'level' => 'group',
+                'parent_id' => $group->id,
+                'ids' => [$group->id],
+            ])
+            ->assertSessionHasErrors('parent_id');
+    }
+
+    public function test_bulk_destroy_deletes_single_level_atomically(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => null]);
+        $first = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
+        $second = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
+
+        $this->actingAs($this->user)
+            ->post(route('asset-classification.bulk-destroy'), [
+                'level' => 'category',
+                'ids' => [$first->id, $second->id],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(0, AssetCategory::count());
+        $this->assertSame(1, AssetGroup::count());
+    }
+
+    public function test_bulk_destroy_rejects_unknown_ids(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.bulk-destroy'), [
+                'level' => 'group',
+                'ids' => ['00000000-0000-0000-0000-000000000000'],
+            ])
+            ->assertSessionHasErrors('ids');
+    }
+
+    public function test_bulk_destroy_requires_delete_permission(): void
+    {
+        $viewer = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $viewer->assignRole(Role::create(['name' => 'viewer', 'guard_name' => 'web']));
+        $viewer->givePermissionTo('asset.classification.view');
+
+        $group = AssetGroup::factory()->create(['code' => null]);
+
+        $this->actingAs($viewer)
+            ->post(route('asset-classification.bulk-destroy'), [
+                'level' => 'group',
+                'ids' => [$group->id],
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(1, AssetGroup::count());
+    }
+
+    public function test_import_rejects_invalid_file(): void
+    {
+        $file = UploadedFile::fake()->create('data.txt', 10, 'text/plain');
+
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.import'), ['file' => $file])
+            ->assertSessionHasErrors('file');
+    }
+
+    public function test_import_hierarchy_spreadsheet_reports_summary(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'klas').'.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $writer->addRow(Row::fromValues(['Golongan Aset', 'Bidang/Kategori Aset', 'Kelompok Aset', 'Sub Kelompok Aset', 'Uraian', 'Keterangan']));
+        $writer->addRow(Row::fromValues(['05', '', '', '', 'Golongan Percobaan', '']));
+        $writer->addRow(Row::fromValues(['05', '01', '', '', 'Kategori Percobaan', '']));
+        $writer->addRow(Row::fromValues(['05', '01', '02', '', 'Cluster Percobaan', '']));
+        $writer->close();
+
+        $file = new UploadedFile($path, 'hierarki.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.import'), ['file' => $file])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $flash = session('success');
+        $this->assertStringContainsString('3 dibuat', (string) $flash);
+
+        $this->assertSame(1, AssetGroup::where('code', '05')->count());
+        $this->assertSame(1, AssetCategory::where('code', '01')->count());
+        $this->assertSame(1, AssetCluster::where('code', '02')->count());
+    }
+
+    public function test_tree_carries_asset_counts_and_levels(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '01']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '01.01']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '01.01.01']);
+        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '01.01.01.01']);
+        Asset::factory()->create([
+            'item_id' => Item::factory()->create()->id,
+            'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('asset-classification.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('groups.0.level', 'group')
+                ->where('groups.0.children.0.level', 'category')
+                ->where('groups.0.children.0.children.0.level', 'cluster')
+                ->where('groups.0.children.0.children.0.children.0.level', 'sub-cluster')
+                ->where('groups.0.children.0.children.0.children.0.item_count', 1));
+    }
+
+    public function test_classification_permission_seeder_grants_super_admin_access(): void
+    {
+        Permission::query()->delete();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $this->actingAs($this->user)
+            ->get(route('asset-classification.index'))
+            ->assertForbidden();
+
+        $this->seed(AssetClassificationPermissionSeeder::class);
+
+        $this->actingAs($this->user)
+            ->get(route('asset-classification.index'))
+            ->assertOk();
     }
 }

@@ -1265,4 +1265,49 @@ class AssetTest extends TestCase
         $this->assertIsArray($flash);
         $this->assertStringContainsString("Sub Cluster '99' tidak ditemukan di bawah cluster '11'", (string) ($flash['toast']['message'] ?? ''));
     }
+
+    public function test_index_exposes_unclassified_count(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create();
+        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->where('unclassifiedCount', 2)
+                ->where('assets', null));
+    }
+
+    public function test_index_unclassified_node_lists_orphaned_assets(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create();
+        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index', ['level' => 'group', 'node' => 'unclassified']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->where('selected.level', 'group')
+                ->where('selected.id', 'unclassified')
+                ->has('assets.data', 2)
+                ->has('breadcrumb', 1)
+                ->where('breadcrumb.0.name', 'Tanpa Klasifikasi'));
+    }
+
+    public function test_browse_route_renders_index_view(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('assets.browse'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('tree'));
+    }
 }

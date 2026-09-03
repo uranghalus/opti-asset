@@ -145,7 +145,7 @@ export function StatusBadge({
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1',
+                'inline-flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs font-bold tracking-[0.14em] uppercase ring-1 ring-inset',
                 assetStatusChip(value),
                 className,
             )}

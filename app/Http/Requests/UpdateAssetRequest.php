@@ -47,6 +47,12 @@ class UpdateAssetRequest extends FormRequest
             'garansi_exp' => ['nullable', 'date'],
             'status' => ['nullable', Rule::enum(AssetStatus::class)],
             'vendor_name' => ['nullable', 'string', 'max:100'],
+            'asset_type' => ['nullable', Rule::in(['fixed_asset', 'equipment'])],
+            'acquisition_cost' => ['nullable', 'numeric', 'min:0'],
+            'useful_life_years' => ['nullable', 'integer', 'min:1'],
+            'depreciation_method' => ['nullable', Rule::in(['straight_line', 'declining_balance', 'none'])],
+            'accumulated_depreciation' => ['nullable', 'numeric', 'min:0'],
+            'type_override_reason' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

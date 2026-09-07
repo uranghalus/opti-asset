@@ -78,6 +78,7 @@ class AssetController extends Controller
 
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
+        $assetType = $request->string('asset_type')->trim()->toString();
         $department = $request->string('department')->trim()->toString();
         $condition = $request->string('condition')->trim()->toString();
 
@@ -114,6 +115,7 @@ class AssetController extends Controller
                     ->orWhere('brand', 'like', "%{$search}%")
                     ->orWhere('model', 'like', "%{$search}%")))
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->when($assetType !== '', fn ($query) => $query->where('asset_type', $assetType))
                 ->when($department !== '', fn ($query) => $query->where('department_id', $department))
                 ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
                 ->orderBy('created_at', 'desc')
@@ -135,6 +137,7 @@ class AssetController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'asset_type' => $assetType,
                 'department' => $department,
                 'condition' => $condition,
                 'level' => $validLevel ? $level : '',
@@ -339,7 +342,17 @@ class AssetController extends Controller
 
     public function show(Asset $asset): Response
     {
-        $asset->load(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name', 'histories' => fn ($query) => $query->latest()->limit(50)]);
+        $asset->load([
+            'item:id,name,code',
+            'location:id,name',
+            'department:id_department,nama_department',
+            'assetGroup:id,code,name',
+            'assetCategory:id,code,name',
+            'assetCluster:id,code,name',
+            'assetSubCluster:id,code,name',
+            'bookValues' => fn ($query) => $query->latest('period_ends_at')->limit(50),
+            'histories' => fn ($query) => $query->latest()->limit(50),
+        ]);
 
         return Inertia::render('assets/Show', ['asset' => $asset]);
     }
@@ -366,6 +379,13 @@ class AssetController extends Controller
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
     {
         $validated = $request->validated();
+
+        // Handle Manual Override
+        if ($request->has('type_override_reason')) {
+            $asset->type_override_reason = $request->input('type_override_reason');
+            $asset->asset_type = $request->input('asset_type');
+        }
+
         $itemId = $validated['item_id'] ?? $asset->item_id;
         $itemChanged = $itemId !== $asset->item_id;
         $data = $validated;

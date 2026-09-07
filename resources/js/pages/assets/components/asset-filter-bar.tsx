@@ -1,18 +1,21 @@
+import { AssetTypeFilter } from '@/components/assets/asset-type-filter';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 
-/**
- * Meja kontrol lembar kerja — pencarian pos, tombol saringan
- * dengan cap hitungan, dan tombol reset.
- */
+export type AssetType = 'fixed_asset' | 'equipment';
+
 export function AssetFilterBar({
     search,
     onSearchChange,
     onSearchClear,
     activeFilterCount,
     onClearFilters,
+    assetType,
+    onAssetTypeChange,
+    status,
+    onStatusChange,
     allSelected,
     onToggleSelectAll,
     hasAssets,
@@ -24,6 +27,10 @@ export function AssetFilterBar({
     onSearchClear: () => void;
     activeFilterCount: number;
     onClearFilters: () => void;
+    assetType: AssetType | '';
+    onAssetTypeChange: (value: AssetType | '') => void;
+    status: string;
+    onStatusChange: (status: string) => void;
     allSelected: boolean;
     onToggleSelectAll: () => void;
     hasAssets: boolean;
@@ -64,6 +71,14 @@ export function AssetFilterBar({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+                {hasAssets && (
+                    <AssetTypeFilter
+                        value={assetType}
+                        onChange={onAssetTypeChange}
+                        status={status}
+                        onStatusChange={onStatusChange}
+                    />
+                )}
                 <Button
                     type="button"
                     variant="outline"
@@ -95,10 +110,6 @@ export function AssetFilterBar({
     );
 }
 
-/**
- * Baris cap borongan — identitas lembar aktif, total pos,
- * dan hitungan pilihan dalam satu garis ledger.
- */
 export function SelectAllBar({
     allSelected,
     onToggleSelectAll,

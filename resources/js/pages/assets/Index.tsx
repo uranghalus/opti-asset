@@ -68,6 +68,7 @@ export default function AssetsIndex() {
     // Local state
     const [search, setSearch] = useState(filters.search);
     const [statusFilter, setStatusFilter] = useState(filters.status);
+    const [assetTypeFilter, setAssetTypeFilter] = useState<string>((filters as any).asset_type ?? '');
     const [departmentFilter, setDepartmentFilter] = useState(
         filters.department,
     );
@@ -379,6 +380,24 @@ export default function AssetsIndex() {
                                 }}
                                 activeFilterCount={activeFilterCount}
                                 onClearFilters={clearFilters}
+                                assetType={
+                                    assetTypeFilter as '' | 'fixed_asset' | 'equipment'
+                                }
+                                onAssetTypeChange={(v) => {
+                                    setAssetTypeFilter(v);
+                                    reload(
+                                        v
+                                            ? { asset_type: v }
+                                            : { asset_type: '' },
+                                    );
+                                }}
+                                status={statusFilter}
+                                onStatusChange={(v) => {
+                                    setStatusFilter(v);
+                                    reload(
+                                        v ? { status: v } : { status: '' },
+                                    );
+                                }}
                                 allSelected={allSelected}
                                 onToggleSelectAll={toggleSelectAll}
                                 hasAssets={safeAssets.data.length > 0}

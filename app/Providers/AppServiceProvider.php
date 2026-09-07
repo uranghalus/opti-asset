@@ -10,6 +10,7 @@ use App\Models\AssetSubCluster;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\Location;
+use App\Observers\AssetObserver;
 use App\Observers\RecordsActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +39,15 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->registerOidcProvider();
         $this->registerActivityObservers();
+        $this->registerAssetObservers();
+    }
+
+    /**
+     * Asset module specific observers (FR-13).
+     */
+    protected function registerAssetObservers(): void
+    {
+        Asset::observe(AssetObserver::class);
     }
 
     /**

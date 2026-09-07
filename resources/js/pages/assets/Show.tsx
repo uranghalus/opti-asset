@@ -26,6 +26,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Barcode as AssetBarcode } from '@/components/assets/barcode';
+import { BookValueHistory } from '@/components/assets/book-value-history';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -77,6 +78,13 @@ type AssetDetail = {
     photo_url: string[];
     document_url: string[];
     created_at: string;
+    asset_type: string | null;
+    acquisition_cost: string | null;
+    useful_life_years: string | null;
+    depreciation_method: string | null;
+    accumulated_depreciation: string | null;
+    type_override_reason: string | null;
+    book_values?: { id: number; period_ends_at: string; book_value: string; accumulated_depreciation: string; notes?: string | null }[];
     item: { id: string; name: string; code: string } | null;
     location: { id: string; name: string } | null;
     department: { id_department: string; nama_department: string } | null;
@@ -623,6 +631,102 @@ export default function AssetShow() {
                                     }
                                 />
                             </div>
+                        </Section>
+
+                        <Section
+                            icon={Wallet}
+                            title="Tipe Aset & Data Akuntansi"
+                            description="Klasifikasi akuntansi dan perhitungan nilai buku."
+                        >
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+                                <DetailItem
+                                    icon={Tags}
+                                    label="Tipe Aset"
+                                    value={
+                                        asset.asset_type === 'fixed_asset'
+                                            ? 'Aktiva Tetap'
+                                            : asset.asset_type === 'equipment'
+                                              ? 'Peralatan'
+                                              : '—'
+                                    }
+                                />
+                                <DetailItem
+                                    icon={Wallet}
+                                    label="Nilai Perolehan"
+                                    value={formatPrice(asset.acquisition_cost)}
+                                />
+                                <DetailItem
+                                    icon={CalendarClock}
+                                    label="Masa Manfaat"
+                                    value={
+                                        asset.useful_life_years
+                                            ? `${asset.useful_life_years} Tahun`
+                                            : '—'
+                                    }
+                                />
+                                <DetailItem
+                                    icon={FileText}
+                                    label="Metode Penyusutan"
+                                    value={
+                                        asset.depreciation_method ===
+                                        'straight_line'
+                                            ? 'Garis Lurus'
+                                            : asset.depreciation_method ===
+                                                'declining_balance'
+                                              ? 'Saldo Menurun'
+                                              : asset.depreciation_method ===
+                                                  'none'
+                                                ? 'Tidak Disusutkan'
+                                                : '—'
+                                    }
+                                />
+                                <DetailItem
+                                    icon={Wallet}
+                                    label="Akumulasi Penyusutan"
+                                    value={formatPrice(
+                                        asset.accumulated_depreciation,
+                                    )}
+                                />
+                                <DetailItem
+                                    icon={Wallet}
+                                    label="Nilai Buku"
+                                    value={
+                                        asset.asset_type === 'fixed_asset' &&
+                                        asset.acquisition_cost
+                                            ? formatPrice(
+                                                  String(
+                                                      Number(
+                                                          asset.acquisition_cost,
+                                                      ) -
+                                                          Number(
+                                                              asset.accumulated_depreciation ??
+                                                                  0,
+                                                          ),
+                                                  ),
+                                              )
+                                            : '—'
+                                    }
+                                    mono
+                                />
+                            </div>
+                            {asset.type_override_reason ? (
+                                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                                    <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                                        Alasan Override Manual
+                                    </p>
+                                    <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                                        {asset.type_override_reason}
+                                    </p>
+                                </div>
+                            ) : null}
+                            {asset.book_values &&
+                            asset.book_values.length > 0 ? (
+                                <div className="mt-6">
+                                    <BookValueHistory
+                                        snapshots={asset.book_values}
+                                    />
+                                </div>
+                            ) : null}
                         </Section>
 
                         <Section

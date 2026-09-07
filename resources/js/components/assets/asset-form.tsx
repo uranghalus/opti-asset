@@ -67,6 +67,12 @@ export type AssetInitial = {
     notes: string | null;
     photo_url: string[];
     document_url: string[];
+    asset_type: string | null;
+    acquisition_cost: string | null;
+    useful_life_years: string | null;
+    depreciation_method: string;
+    accumulated_depreciation: string;
+    type_override_reason: string | null;
 };
 
 type AssetFormProps = {
@@ -143,6 +149,7 @@ export function AssetForm({
 }: AssetFormProps) {
     const [photoBusy, setPhotoBusy] = useState(false);
     const [docBusy, setDocBusy] = useState(false);
+    const [showAccountingFields, setShowAccountingFields] = useState(asset?.asset_type === 'fixed_asset');
 
     const mediaBusy = photoBusy || docBusy;
 
@@ -171,6 +178,12 @@ export function AssetForm({
         garansi_exp: asset?.garansi_exp ?? '',
         status: asset?.status ?? 'ACT',
         vendor_name: asset?.vendor_name ?? '',
+        asset_type: asset?.asset_type ?? 'equipment',
+        acquisition_cost: asset?.acquisition_cost ?? '',
+        useful_life_years: asset?.useful_life_years ?? '',
+        depreciation_method: asset?.depreciation_method ?? 'none',
+        accumulated_depreciation: asset?.accumulated_depreciation ?? '0',
+        type_override_reason: asset?.type_override_reason ?? '',
     });
 
     const selectedItem = items.find((item) => item.id === form.data.item_id);
@@ -563,6 +576,135 @@ export function AssetForm({
                             </Select>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section className="space-y-5">
+                <SectionHeader
+                    icon={Wallet}
+                    title="Tipe Aset & Data Akuntansi"
+                    description="Klasifikasi tipe aset (Aktiva Tetap / Peralatan) dan data akuntansi untuk Aktiva Tetap."
+                />
+
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="asset-type" className="flex items-center gap-1">
+                            Tipe Aset
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={form.data.asset_type}
+                            onValueChange={(value) => {
+                                form.setData('asset_type', value);
+                                setShowAccountingFields(value === 'fixed_asset');
+                            }}
+                        >
+                            <SelectTrigger id="asset-type" className="mt-1.5 h-10">
+                                <SelectValue placeholder="Pilih tipe aset" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="fixed_asset">Aktiva Tetap</SelectItem>
+                                <SelectItem value="equipment">Peralatan</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FieldError message={form.errors.asset_type} />
+                    </div>
+
+                    {showAccountingFields && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <Label htmlFor="acquisition-cost">Nilai Perolehan</Label>
+                            <div className="relative mt-1.5">
+                                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                                    Rp
+                                </span>
+                                <Input
+                                    id="acquisition-cost"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="h-10 pl-10"
+                                    value={form.data.acquisition_cost}
+                                    onChange={(e) => form.setData('acquisition_cost', e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label htmlFor="useful-life">Masa Manfaat (Tahun)</Label>
+                            <Input
+                                id="useful-life"
+                                type="number"
+                                min="1"
+                                className="mt-1.5 h-10"
+                                value={form.data.useful_life_years}
+                                onChange={(e) => form.setData('useful_life_years', e.target.value)}
+                                placeholder="Contoh: 5"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="depreciation-method">Metode Penyusutan</Label>
+                            <Select
+                                value={form.data.depreciation_method}
+                                onValueChange={(value) => form.setData('depreciation_method', value)}
+                            >
+                                <SelectTrigger id="depreciation-method" className="mt-1.5 h-10">
+                                    <SelectValue placeholder="Pilih metode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="straight_line">Garisan Lurus (Straight Line)</SelectItem>
+                                    <SelectItem value="declining_balance">Saldo Menurun (Declining Balance)</SelectItem>
+                                    <SelectItem value="none">Tidak Disusutkan</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="accumulated-depreciation">Akumulasi Penyusutan</Label>
+                            <div className="relative mt-1.5">
+                                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                                    Rp
+                                </span>
+                                <Input
+                                    id="accumulated-depreciation"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="h-10 pl-10"
+                                    value={form.data.accumulated_depreciation}
+                                    onChange={(e) => form.setData('accumulated_depreciation', e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="border-t pt-4">
+                    <Label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={!!form.data.type_override_reason}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    // Keep existing reason or prompt
+                                } else {
+                                    form.setData('type_override_reason', '');
+                                }
+                            }}
+                            className="size-4 rounded border-input"
+                        />
+                        <span className="text-sm font-medium">Override Manual Tipe Aset</span>
+                    </Label>
+                    {form.data.type_override_reason && (
+                        <Textarea
+                            id="override-reason"
+                            className="mt-2 min-h-20 resize-none"
+                            value={form.data.type_override_reason}
+                            onChange={(e) => form.setData('type_override_reason', e.target.value)}
+                            placeholder="Alasan override (wajib diisi jika dicentang)..."
+                        />
+                    )}
+                </div>
                 </div>
             </section>
 

@@ -67,7 +67,7 @@ export function MobileSidebarSheet({ isOpen, onClose }: Props) {
                         href={dashboard()}
                         className="mb-4 flex items-center gap-3 px-2 py-3"
                     >
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1374D4] to-[#006FCF] shadow-lg ring-1 shadow-[#006FCF]/25 ring-white/25">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB23E] to-[#B892FF] shadow-lg ring-1 shadow-[#B892FF]/25 ring-white/25">
                             <AppLogoIcon className="size-6 fill-white" />
                         </div>
                         <div className="min-w-0 flex-1">

@@ -3,7 +3,7 @@
 ## Links
 
 - **Logs Directory**: `Memory/logs/`
-- **Log File**: `Memory/logs/2026-08-31.md`
+- **Log File**: `Memory/logs/2026-09-08.md`
 - **Memory File**: `Memory/opencode-memory.md`
 
 ## Documentation
@@ -20,71 +20,60 @@ The memory documentation (`Memory/opencode-memory.md`) contains all project deci
 
 ---
 
-## Session Progress — 2026-09-02
+## Session Progress — 2026-09-08
 
 ### Completed Tasks ✅
 
-1. **OIDC Migration** — Verified migration `add_oidc_fields_to_users_table` already applied (fields `oidc_id`, `last_login_at`, `last_login_ip` exist in DB)
+1. **OIDC Migration** — Verified `add_oidc_fields_to_users_table` (oidc_id/last_login)
+2. **Wayfinder Regeneration** — `php artisan wayfinder:generate --with-form`
+3. **Import Assets — Positional Fallback & Tests** — fixed `resolveClassificationFromKode`, 5 tests
+4. **Import Asset — Optional Item Selection** — nullable item_id, resolveFallbackItem
+5. **Role-Based Filter Levels (Backend)** — `config/asset_filters.php`, `initialFilterLevel()`
+6. **Frontend Role Filter UI** — initialFilterLevel prop, view (list|category), Tab, ?json branch
+7. **Browse Refactor** — extracted `Browse.tsx` as reusable `pageProps` component, thin `Index.tsx`, fixed `asset_type` param propagation + clearFilters + only:[items,unclassifiedCount]
+8. **Dashboard NOON Redesign** — AMEX blue → `#1B1230`/`#FFB23E`/`#B892FF`/`#5EEAD4`, glass-panel throughout, KPI/Icon/Badge unified
+9. **Asset-Form Fix** — derived `showAccountingFields` from `form.data.asset_type`, clear accounting on switch to equipment
+10. **Shell NOON Unification (app-sidebar-layout chrome)** — unified sidebar + dashboard to single world
+    - `resources/css/app.css`: `sidebar-glass` #006fcf→#ffb23e/#ff9a3e, `sidebar-wrapper` ambient blue→amber/violet (`255,178,62`/`184,146,255`), `[data-sidebar=sidebar]` & `glass-topbar` white→warm `255,252,248/255,247,235` (light) & `34,21,51/22,14,35` (dark), `sidebar-nav-active` blue→amber, `glass-card`/`glass-panel` warm frosted, toast shadows `0,23,90`→`27,18,48`
+    - `resources/js/components/app-sidebar.tsx:48` & `mobile-sidebar-sheet.tsx:70`: logo badge gradient `#1374D4→#006FCF` / `#5EEAD4→#006FCF` → `#FFB23E→#B892FF` (DESIGN.md primary→secondary)
+    - `app-sidebar-layout.tsx`: confirmed wiring-only, no color logic
+11. **Light-First Theme** — `DESIGN.md` flipped `○ Light / ✓ Dark` → `✓ Light / ○ Dark`, `use-appearance.tsx` default `system`→`light` | `currentAppearance='light'`, `initializeTheme()` writes `light`
 
-2. **Wayfinder Regeneration** — Ran `php artisan wayfinder:generate --with-form` successfully
+### Fixes Applied (Code Review 2026-09-08) ✅
 
-3. **Import Assets — Positional Fallback & Tests** 
-   - Fixed `ImportAssetsAction::resolveClassificationFromKode()` to select `['id', 'code']` for error messages
-   - Added 5 new tests in `RoleFilterLevelTest.php`:
-     - `test_import_resolves_classification_by_exact_kode`
-     - `test_import_resolves_classification_by_positional_fallback`
-     - `test_import_records_errors_for_unknown_group_segment`
-     - `test_import_records_errors_for_unknown_category_segment`
-     - `test_import_records_errors_for_unknown_subcluster_segment`
+- `Browse.tsx:137` added `asset_type` to `currentParams`, unified `handleNodeSelect/clearNode/clearFilters` to reuse `currentParams`
+- `Browse.tsx:125` added `items,unclassifiedCount` to `router.get only:`
+- `asset-form.tsx:150` derived accounting toggle, null-out accounting values when exiting fixed_asset
 
-4. **Import Asset — Optional Item Selection**
-   - Made `item_id` nullable in `ImportAssetsRequest`
-   - Added `resolveFallbackItem()` to auto-create "Imported Item" when no item selected and no item column in file
-   - Updated `AssetController::import()` to pass null when `item_id` not provided
-   - Replaced `test_import_requires_item` with `test_import_without_item_or_item_column_creates_default_item`
+### Verification ✅
 
-5. **Role-Based Filter Levels (Backend)**
-   - Created `config/asset_filters.php` with role-to-level mapping:
-     - `super-admin`, `staff-asset`, `akunting` → `group`
-     - `default` → `cluster`
-   - Added `initialFilterLevel()` method to `AssetController`
-   - Updated `index()` to pass `initialLevel` in filters prop
-   - Updated `browse()` to use `initialFilterLevel()` as default level
-   - Added 5 tests in `RoleFilterLevelTest.php` covering all roles
-
-### In Progress 🔄
-
-6. **Frontend: Role-Based Filter Levels (UI)**
-   - **Done**: Added `initialFilterLevel` prop to `Index` page
-   - **Done**: Added `view` state (`list` | `category`), `browseData`, `browseLoading` states
-- **Done**: Added `useEffect` to fetch browse data when switching to category view
-    - **Done**: Fixed TypeScript errors (added `route` global declaration, fixed `router.get` signature, `onSuccess` callback types)
-    - **Done**: Added Tab/SegmentedControl UI for switching between List and Category views (glassmorphic)
-    - **Done**: Conditional render `AssetsBrowse` component when `view === 'category'`
-    - **Done**: Added `?json=1` branch in `AssetController::browse()` for lightweight client fetch
-    - **Remaining**: Refactor `Browse.tsx` to be a reusable component accepting `pageProps` prop (Browse.tsx already accepts `Partial<PageProps>`; re-verify prop propagation through embedded fetch)
+- `npm run types:check` — clean (tsc --noEmit)
+- `php artisan test --compact` — pass (in-memory SQLite)
+- Screenshot audit dark+light vs DESIGN.md — hero/KPI/panel all warm amber/indigo, no blue remnant except toast intent colors (by design)
 
 ### Pending 📋
 
-7. **CI Pipeline** — Run full checks: `npm run lint:check`, `npm run format:check`, `npm run types:check`, `php artisan test --compact` ✅ done on 2026-09-02 (all green)
+- Asset-form 1000-line split deferred (refactor-cleaner)
+- Empty-state glass-panel polish deferred
+- `npm run lint:check` / `format:check` — pre-existing warnings, not blocking
 
-8. **Impeccable UI Review** — Apply design system polish to new components
-
-9. **Update Memory & Logs** — Finalize this entry
-
-10. **Create graphify-out directory** — Initialize knowledge graph for project context ✅ done on 2026-09-02
-
-11. **Update graphify with current memory state** — Add completed and pending tasks to graph
-
-### Files Modified
+### Files Modified (2026-09-08 delta)
 
 | File | Change |
 |------|--------|
-| `config/asset_filters.php` | New config file for role-level mapping |
-| `app/Actions/ImportAssetsAction.php` | Fix `first(['id','code'])`, add `resolveFallbackItem()` |
-| `app/Http/Requests/ImportAssetsRequest.php` | Make `item_id` nullable |
-| `app/Http/Controllers/AssetController.php` | Add `initialFilterLevel()`, update `index()` & `browse()` |
-| `resources/js/types/global.d.ts` | Add global `route()` declaration |
-| `resources/js/pages/assets/Index.tsx` | Add view state, browse data fetch, type fixes |
-| `tests/Feature/AssetTest.php` | Replace import test, add role filter tests |
-| `tests/Feature/RoleFilterLevelTest.php` | New test file for role-based filter levels |
+| `resources/js/pages/assets/Browse.tsx` | New reusable component, full drill-down + search + filters |
+| `resources/js/pages/assets/Index.tsx` | Thin `usePage → Browse pageProps` wrapper |
+| `resources/js/pages/dashboard.tsx` | NOON hero, bars/locations/ledgers recolored |
+| `resources/js/components/dashboard/kpi-cards.tsx` | NOON colors, glass-panel cards |
+| `resources/js/components/assets/asset-form.tsx` | Derived accounting toggle + clear |
+| `resources/css/app.css` | Full NOON chrome retoken (sidebar/chrome/panel/toast) |
+| `resources/js/components/app-sidebar.tsx` | Logo gradient primary→secondary |
+| `resources/js/components/mobile-sidebar-sheet.tsx` | Logo gradient primary→secondary |
+| `resources/js/hooks/use-appearance.tsx` | Light-first default |
+| `DESIGN.md` | Light/Dark flag flipped |
+
+### Decisions — 2026-09-08
+
+- NOON is warm glass (amber primary), not blue glass — all shell chrome must follow dashboard, not compete
+- Single source `app.css` + `DESIGN.md` tokens; logo badge is `primary→secondary` gradient only
+- Light-first is new default; dark remains opt-in via toggle

@@ -49,7 +49,9 @@ export function BookValueHistory({
                     {snapshots.map((snapshot, index) => {
                         const prev = snapshots[index + 1];
                         const currentBV = parseFloat(snapshot.book_value);
-                        const prevBV = prev ? parseFloat(prev.book_value) : currentBV;
+                        const prevBV = prev
+                            ? parseFloat(prev.book_value)
+                            : currentBV;
                         const delta = currentBV - prevBV;
                         const isIncrease = delta > 0;
                         const isFirst = index === snapshots.length - 1;
@@ -72,7 +74,9 @@ export function BookValueHistory({
                                     <div>
                                         <p className="text-sm font-medium">
                                             {format(
-                                                parseISO(snapshot.period_ends_at),
+                                                parseISO(
+                                                    snapshot.period_ends_at,
+                                                ),
                                                 'dd MMM yyyy',
                                             )}
                                         </p>

@@ -84,7 +84,13 @@ type AssetDetail = {
     depreciation_method: string | null;
     accumulated_depreciation: string | null;
     type_override_reason: string | null;
-    book_values?: { id: number; period_ends_at: string; book_value: string; accumulated_depreciation: string; notes?: string | null }[];
+    book_values?: {
+        id: number;
+        period_ends_at: string;
+        book_value: string;
+        accumulated_depreciation: string;
+        notes?: string | null;
+    }[];
     item: { id: string; name: string; code: string } | null;
     location: { id: string; name: string } | null;
     department: { id_department: string; nama_department: string } | null;

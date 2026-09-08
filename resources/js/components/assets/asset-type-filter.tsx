@@ -1,4 +1,10 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
 export function AssetTypeFilter({
@@ -15,27 +21,33 @@ export function AssetTypeFilter({
     return (
         <div className="flex items-center gap-3">
             <div className="flex flex-col gap-1">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Tipe Aset</Label>
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Tipe Aset
+                </Label>
                 <Select
                     value={value}
                     onValueChange={(v) =>
                         onChange(v as '' | 'fixed_asset' | 'equipment')
                     }
                 >
-                    <SelectTrigger className="h-9 w-[140px] bg-white/10 border-white/15">
+                    <SelectTrigger className="h-9 w-[140px] border-white/15 bg-white/10">
                         <SelectValue placeholder="Semua Tipe" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Semua Tipe</SelectItem>
-                        <SelectItem value="fixed_asset">Aktiva Tetap</SelectItem>
+                        <SelectItem value="fixed_asset">
+                            Aktiva Tetap
+                        </SelectItem>
                         <SelectItem value="equipment">Peralatan</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
             <div className="flex flex-col gap-1">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Status</Label>
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Status
+                </Label>
                 <Select value={status} onValueChange={onStatusChange}>
-                    <SelectTrigger className="h-9 w-[130px] bg-white/10 border-white/15">
+                    <SelectTrigger className="h-9 w-[130px] border-white/15 bg-white/10">
                         <SelectValue placeholder="Semua Status" />
                     </SelectTrigger>
                     <SelectContent>

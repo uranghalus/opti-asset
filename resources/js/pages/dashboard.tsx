@@ -1,6 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
 import {
-    Activity,
     AlertTriangle,
     BarChart3,
     Building2,
@@ -88,21 +87,21 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
               : 'Selamat malam';
 
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#002A6E] via-[#00175A] to-[#000C3D] p-6 shadow-lg shadow-[#00175A]/20 sm:p-7">
-            <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[#006FCF]/25 blur-3xl" />
-            <div className="pointer-events-none absolute top-8 right-32 size-32 rounded-full bg-[#3B9FE8]/10 blur-2xl" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1230] via-[#221533] to-[#1B1230] p-6 shadow-lg shadow-[#000C3D]/20 sm:p-7">
+            <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[#FFB23E]/10 blur-3xl" />
+            <div className="pointer-events-none absolute top-8 right-32 size-32 rounded-full bg-[#B892FF]/10 blur-2xl" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] text-[#8FB4E8] uppercase">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] text-[#94A3B8] uppercase">
                         {greeting}
                     </p>
                     <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-[28px]">
                         Halo, {name}
                     </h1>
-                    <p className="mt-2 max-w-md text-sm leading-relaxed text-[#B7C3D9]">
+                    <p className="mt-2 max-w-md text-sm leading-relaxed text-[#94A3B8]">
                         Ringkasan portofolio aset hari ini. Skor kelengkapan
                         klasifikasi:{' '}
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-[#FFB23E]">
                             {score}%
                         </span>{' '}
                         (target 95%).
@@ -112,9 +111,9 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-9 gap-1.5 rounded-lg border-white/15 bg-white/[0.06] px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/[0.12] hover:text-white"
+                        className="h-9 gap-1.5 rounded-lg border-white/10 bg-white/5 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
                     >
-                        <CalendarDays className="h-4 w-4 text-[#8FB4E8]" />
+                        <CalendarDays className="h-4 w-4 text-[#94A3B8]" />
                         {new Date().toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
@@ -123,7 +122,7 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                     </Button>
                     <Button
                         size="sm"
-                        className="h-9 gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-[#00175A] shadow-sm hover:bg-white/90"
+                        className="h-9 gap-1.5 rounded-lg bg-[#FFB23E] px-3 text-[13px] font-semibold text-[#1B1230] shadow-sm hover:bg-[#FFB23E]/90"
                     >
                         <Download className="h-4 w-4" />
                         Ekspor
@@ -159,7 +158,7 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
                         </span>
                         <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
                             <div
-                                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#006FCF] to-[#3B9FE8]"
+                                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#FFB23E] to-[#FFD166]"
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
@@ -199,7 +198,7 @@ function LocationStack({ slices }: { slices: LocationSlice[] }) {
                         </span>
                         <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:block">
                             <div
-                                className="h-full rounded-full bg-[#8B5CF6]"
+                                className="h-full rounded-full bg-[#B892FF]"
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
@@ -252,7 +251,7 @@ function MiniLedger({
                     key={r.id}
                     className="grid grid-cols-1 gap-1 border-b border-border/40 px-2 py-2 text-sm last:border-b-0 sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                    <span className="font-mono text-xs font-semibold text-primary sm:col-span-4">
+                    <span className="font-mono text-xs font-semibold text-[#FFB23E] sm:col-span-4">
                         {r.asset_kode}
                     </span>
                     <span className="text-xs text-muted-foreground sm:col-span-4">
@@ -261,7 +260,7 @@ function MiniLedger({
                             : (r as RecentDisposal).reason}
                     </span>
                     <span className="sm:col-span-2">
-                        <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary ring-1 ring-primary/15">
+                        <span className="inline-flex rounded-full bg-[#FFB23E]/10 px-2 py-0.5 text-[10px] font-semibold text-[#FFB23E] ring-1 ring-[#FFB23E]/20">
                             {r.status}
                         </span>
                     </span>
@@ -303,14 +302,14 @@ export default function Dashboard() {
                     <section className="glass-panel relative flex min-h-[280px] flex-col gap-4 rounded-2xl p-5 lg:col-span-2">
                         <header className="flex items-start justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
                                     FR-10.1
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
                                     Aset per Klasifikasi
                                 </h3>
                             </div>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-500/20">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/10 px-2 py-1 text-[11px] font-semibold text-[#5EEAD4] ring-1 ring-[#5EEAD4]/20">
                                 <ShieldCheck className="size-3" />
                                 {integrityGood
                                     ? 'Target Tercapai'
@@ -326,7 +325,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#8B5CF6] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
                                     FR-10.3
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -341,7 +340,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#B95000] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
                                     FR-10.4
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -358,7 +357,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-rose-600 uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
                                     FR-10.5
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -373,7 +372,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-amber-600 uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
                                     Peringatan
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">

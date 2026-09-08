@@ -53,7 +53,7 @@ NOON — Illuminate your workflow. Modern B2B SaaS dashboard with subtle Glassmo
 - **Style:** Subtle Glassmorphism / Clean Corporate
 - **Keywords:** dashboard, data-driven, accessible, clean, productive, responsive
 - **Era:** 2020s Modern SaaS
-- **Light/Dark:** ○ Light / ✓ Dark (optimized for dark mode to reduce eye strain)
+- **Light/Dark:** ✓ Light (optimized default) / ○ Dark (opt-in)
 
 ## Colors
 

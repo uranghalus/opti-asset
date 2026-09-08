@@ -71,28 +71,28 @@ export function KpiCards({ stats }: { stats: Stats }) {
             value: stats.total_assets.toLocaleString('id-ID'),
             icon: CircleCheck,
             sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
-            color: '#006FCF',
+            color: '#FFB23E',
         },
         {
             label: 'Aktif',
             value: stats.asset_by_status.ACT.toLocaleString('id-ID'),
             icon: CircleCheck,
             sparkline: [20, 25, 22, 28, 25, 30, 28, 32, 30, 35, 33, 38],
-            color: '#00875A',
+            color: '#5EEAD4',
         },
         {
             label: 'Dalam Perbaikan',
             value: stats.asset_by_status.RPR.toLocaleString('id-ID'),
             icon: Hammer,
             sparkline: [5, 3, 4, 6, 8, 7, 9, 8, 10, 9, 11, 10],
-            color: '#B95000',
+            color: '#B892FF',
         },
         {
             label: 'Menunggu Mutasi',
             value: stats.pending_transfers.toLocaleString('id-ID'),
             icon: MoveRight,
             sparkline: [8, 10, 12, 9, 11, 13, 15, 14, 16, 18, 17, 20],
-            color: '#BF9B30',
+            color: '#FFB23E',
         },
     ];
 
@@ -104,7 +104,7 @@ export function KpiCards({ stats }: { stats: Stats }) {
                 return (
                     <div
                         key={kpi.label}
-                        className="group relative overflow-hidden rounded-2xl border border-[#D5D9DC] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-transparent hover:shadow-lg hover:shadow-black/[0.06] dark:border-[#1e293b] dark:bg-[#0f172a] dark:hover:shadow-black/40"
+                        className="group glass-panel relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5"
                     >
                         <span
                             className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
@@ -113,7 +113,7 @@ export function KpiCards({ stats }: { stats: Stats }) {
                         <div className="flex items-start justify-between">
                             <div
                                 className="flex h-10 w-10 items-center justify-center rounded-lg"
-                                style={{ backgroundColor: `${kpi.color}10` }}
+                                style={{ backgroundColor: `${kpi.color}15` }}
                             >
                                 <Icon
                                     className="h-5 w-5"
@@ -122,15 +122,15 @@ export function KpiCards({ stats }: { stats: Stats }) {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <p className="text-[11px] font-semibold tracking-wide text-[#86888C] uppercase">
+                            <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
                                 {kpi.label}
                             </p>
-                            <p className="mt-1 text-2xl font-bold tracking-tight text-[#1A1A1A] dark:text-white">
+                            <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
                                 {kpi.value}
                             </p>
                         </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-[#ECEDEE] pt-3 dark:border-[#1e293b]">
-                            <span className="text-[10px] text-[#86888C]">
+                        <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3">
+                            <span className="text-[10px] text-muted-foreground">
                                 Terbaru
                             </span>
                             <MiniSparkline

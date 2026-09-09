@@ -93,20 +93,17 @@ architectural state. Session-by-session detail lives in the logs; check here fir
   without an employee record.
 
 ## Pending Work
+**Next Sprint Priorities (Confirmed)**
+1. **FR-13.8** — Dashboard breakdown by asset type (count + value)
+2. **FR-11.3** — `Gate::authorize` in `AssetController` (asset CRUD ungated)
+3. **Auto depreciation** — Calculate `accumulated_depreciation` from `depreciation_method`
+4. **PHPStan Fixes** — Resolve 93 pre-existing errors for green CI
+5. **UI polish** — Apply NOON warm glass design system (glassmorphism)
 
-**FR-13 leftovers**
-- FR-13.8: asset-type breakdown (count + value) on dashboard
-- Automatic depreciation from `depreciation_method` (currently manual input)
+**Other leftovers**
 - `AssetHistory`: record `asset_type`/override changes in `fromUpdate()`
-
-**FR-11 / FR-04**
-- `Gate::authorize` in `AssetController` (asset CRUD still ungated)
 - Location filter in Browse (FR-04.2) + search by item name (FR-04.1)
-
-**Debt / external**
-- 93 pre-existing PHPStan errors in untouched files (my-session files are clean) — blocks a green `composer ci:check`
-- Pre-existing lint/format noise in dashboard files (~2680 eslint errors, 5 prettier warnings)
-- `AssetClassificationPermissionSeeder` was removed — classification permissions now live only in `RolePermissionSeeder`
+- Pre-existing lint/format noise in dashboard files (~2680 eslint errors)
 
 ## Referensi
 

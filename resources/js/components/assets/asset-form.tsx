@@ -600,6 +600,7 @@ export function AssetForm({
                             value={form.data.asset_type}
                             onValueChange={(value) => {
                                 form.setData('asset_type', value);
+
                                 if (value !== 'fixed_asset') {
                                     form.setData('acquisition_cost', '');
                                     form.setData('useful_life_years', '');

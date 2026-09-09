@@ -11,14 +11,15 @@ import {
     MoveRight,
     ShieldCheck,
     Trash2,
+    TrendingUp,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { dashboard } from '@/routes';
-import { cn } from '@/lib/utils';
 import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { StatusDonut } from '@/components/dashboard/status-donut';
 import { WarrantyAlerts } from '@/components/dashboard/warranty-alerts';
 import { EmptyState } from '@/components/empty-state';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { dashboard } from '@/routes';
 
 type AssetByStatus = {
     ACT: number;
@@ -85,20 +86,23 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
             : hour < 18
               ? 'Selamat siang'
               : 'Selamat malam';
+    const integrityGood = score >= 95;
 
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1230] via-[#221533] to-[#1B1230] p-6 shadow-lg shadow-[#000C3D]/20 sm:p-7">
-            <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[#FFB23E]/10 blur-3xl" />
-            <div className="pointer-events-none absolute top-8 right-32 size-32 rounded-full bg-[#B892FF]/10 blur-2xl" />
-            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1230] via-[#221533] to-[#1B1230] p-6 shadow-lg shadow-[#000C3D]/20 sm:p-8">
+            <div className="pointer-events-none absolute -top-24 -right-20 size-80 rounded-full bg-[#FFB23E]/10 blur-3xl animate-pulse-slow" />
+            <div className="pointer-events-none absolute -bottom-16 -left-12 size-64 rounded-full bg-[#B892FF]/10 blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
+            <div className="pointer-events-none absolute top-1/2 left-1/2 size-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5EEAD4]/5 blur-2xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-3">
                     <p className="text-[11px] font-semibold tracking-[0.18em] text-[#94A3B8] uppercase">
                         {greeting}
                     </p>
-                    <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-[28px]">
+                    <h1 className="text-3xl font-bold tracking-tight text-white sm:text-[32px]">
                         Halo, {name}
                     </h1>
-                    <p className="mt-2 max-w-md text-sm leading-relaxed text-[#94A3B8]">
+                    <p className="max-w-md text-sm leading-relaxed text-[#94A3B8]">
                         Ringkasan portofolio aset hari ini. Skor kelengkapan
                         klasifikasi:{' '}
                         <span className="font-semibold text-[#FFB23E]">
@@ -106,12 +110,31 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                         </span>{' '}
                         (target 95%).
                     </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        <span
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
+                                integrityGood
+                                    ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
+                                    : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
+                            )}
+                        >
+                            <ShieldCheck className="size-3" />
+                            {integrityGood
+                                ? 'Target Tercapai'
+                                : 'Di Bawah Target'}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#B892FF]/10 px-3 py-1 text-[11px] font-semibold text-[#B892FF] ring-1 ring-[#B892FF]/20">
+                            <TrendingUp className="size-3" />
+                            Perbaruan real-time
+                        </span>
+                    </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-9 gap-1.5 rounded-lg border-white/10 bg-white/5 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                        className="h-10 gap-1.5 rounded-lg border-white/10 bg-white/5 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
                     >
                         <CalendarDays className="h-4 w-4 text-[#94A3B8]" />
                         {new Date().toLocaleDateString('id-ID', {
@@ -122,19 +145,20 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                     </Button>
                     <Button
                         size="sm"
-                        className="h-9 gap-1.5 rounded-lg bg-[#FFB23E] px-3 text-[13px] font-semibold text-[#1B1230] shadow-sm hover:bg-[#FFB23E]/90"
+                        className="h-10 gap-1.5 rounded-lg bg-[#FFB23E] px-3 text-[13px] font-semibold text-[#1B1230] shadow-sm hover:bg-[#FFB23E]/90"
                     >
                         <Download className="h-4 w-4" />
                         Ekspor
                     </Button>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
 
 function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
     const max = Math.max(1, ...slices.map((s) => s.count));
+
     if (slices.length === 0) {
         return (
             <EmptyState
@@ -144,25 +168,33 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
             />
         );
     }
+
+    const COLORS = ['#FFB23E', '#B892FF', '#5EEAD4', '#FF9A3E', '#3B9FE8'];
+
     return (
-        <ul className="flex flex-col gap-2.5">
-            {slices.map((s) => {
+        <ul className="flex flex-col gap-3">
+            {slices.map((s, i) => {
                 const pct = Math.round((s.count / max) * 100);
+                const color = COLORS[i % COLORS.length];
+
                 return (
                     <li
                         key={s.name}
-                        className="flex items-center gap-3 text-sm"
+                        className="group flex items-center gap-3 text-sm"
                     >
-                        <span className="w-32 shrink-0 truncate font-medium text-foreground">
+                        <span className="w-28 shrink-0 truncate font-medium text-foreground">
                             {s.name}
                         </span>
-                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted/50">
                             <div
-                                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#FFB23E] to-[#FFD166]"
-                                style={{ width: `${pct}%` }}
+                                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                                style={{
+                                    width: `${pct}%`,
+                                    backgroundColor: color,
+                                }}
                             />
                         </div>
-                        <span className="w-14 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                        <span className="w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
                             {s.count} ({pct}%)
                         </span>
                     </li>
@@ -174,6 +206,7 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
 
 function LocationStack({ slices }: { slices: LocationSlice[] }) {
     const max = Math.max(1, ...slices.map((s) => s.count));
+
     if (slices.length === 0) {
         return (
             <EmptyState
@@ -183,26 +216,28 @@ function LocationStack({ slices }: { slices: LocationSlice[] }) {
             />
         );
     }
+
     return (
         <ul className="flex flex-col divide-y divide-border/40">
             {slices.map((s) => {
                 const pct = Math.round((s.count / max) * 100);
+
                 return (
                     <li
                         key={s.name}
-                        className="flex items-center gap-3 py-2 text-sm"
+                        className="flex items-center gap-3 py-2.5 text-sm"
                     >
-                        <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                        <Building2 className="size-4 shrink-0 text-muted-foreground" />
                         <span className="min-w-0 flex-1 truncate font-medium">
                             {s.name}
                         </span>
-                        <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:block">
+                        <div className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-muted/50 sm:block">
                             <div
-                                className="h-full rounded-full bg-[#B892FF]"
+                                className="h-full rounded-full bg-gradient-to-r from-[#B892FF] to-[#5EEAD4]"
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
-                        <span className="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                        <span className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
                             {s.count}
                         </span>
                     </li>
@@ -212,13 +247,7 @@ function LocationStack({ slices }: { slices: LocationSlice[] }) {
     );
 }
 
-function MiniLedger({
-    rows,
-    kind,
-}: {
-    rows: RecentTransfer[] | RecentDisposal[];
-    kind: 'transfer' | 'disposal';
-}) {
+function MiniLedger({ rows, kind }: { rows: RecentTransfer[] | RecentDisposal[]; kind: 'transfer' | 'disposal' }) {
     if (rows.length === 0) {
         return (
             <EmptyState
@@ -236,6 +265,9 @@ function MiniLedger({
             />
         );
     }
+
+    const accent = kind === 'transfer' ? '#FFB23E' : '#B892FF';
+
     return (
         <div className="flex flex-col">
             <div className="hidden grid-cols-12 gap-2 border-b border-border/60 px-2 pb-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase sm:grid">
@@ -251,7 +283,7 @@ function MiniLedger({
                     key={r.id}
                     className="grid grid-cols-1 gap-1 border-b border-border/40 px-2 py-2 text-sm last:border-b-0 sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                    <span className="font-mono text-xs font-semibold text-[#FFB23E] sm:col-span-4">
+                    <span className="font-mono text-xs font-semibold sm:col-span-4" style={{ color: accent }}>
                         {r.asset_kode}
                     </span>
                     <span className="text-xs text-muted-foreground sm:col-span-4">
@@ -260,7 +292,7 @@ function MiniLedger({
                             : (r as RecentDisposal).reason}
                     </span>
                     <span className="sm:col-span-2">
-                        <span className="inline-flex rounded-full bg-[#FFB23E]/10 px-2 py-0.5 text-[10px] font-semibold text-[#FFB23E] ring-1 ring-[#FFB23E]/20">
+                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1" style={{ backgroundColor: `${accent}15`, color: accent, borderColor: `${accent}30` }}>
                             {r.status}
                         </span>
                     </span>
@@ -272,6 +304,121 @@ function MiniLedger({
                     </span>
                 </div>
             ))}
+        </div>
+    );
+}
+
+function RecentActivity({ transfers, disposals }: { transfers: RecentTransfer[]; disposals: RecentDisposal[] }) {
+    const items = [
+        ...transfers.map((t) => ({ ...t, type: 'mutasi' as const })),
+        ...disposals.map((d) => ({ ...d, type: 'disposal' as const })),
+    ]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+    if (items.length === 0) {
+        return (
+            <EmptyState
+                icon={MoveRight}
+                title="Belum ada aktivitas"
+                description="Mutasi dan disposal terbaru akan muncul di sini."
+            />
+        );
+    }
+
+    return (
+        <div className="flex flex-col">
+            {items.map((item) => (
+                <div
+                    key={item.id}
+                    className="flex items-start gap-3 border-b border-border/40 py-2.5 text-sm last:border-b-0"
+                >
+                    <div className={cn(
+                        'mt-0.5 size-2 shrink-0 rounded-full',
+                        item.type === 'mutasi' ? 'bg-[#FFB23E]' : 'bg-[#B892FF]',
+                    )} />
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-foreground">
+                            {item.asset_kode}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                            {item.type === 'mutasi'
+                                ? `${(item as RecentTransfer).from} → ${(item as RecentTransfer).to}`
+                                : (item as RecentDisposal).reason}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground/60 tabular-nums">
+                            {new Date(item.date).toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
+                        </p>
+                    </div>
+                    <span className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold',
+                        item.status === 'Disetujui'
+                            ? 'bg-[#5EEAD4]/10 text-[#5EEAD4]'
+                            : 'bg-[#FFB23E]/10 text-[#FFB23E]',
+                    )}>
+                        {item.status}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function IntegrityRing({ score }: { score: number }) {
+    const radius = 52;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    const good = score >= 95;
+    const color = good ? '#5EEAD4' : '#FFB23E';
+
+    return (
+        <div className="flex flex-col items-center gap-3">
+            <div className="relative size-32">
+                <svg className="size-full -rotate-90" viewBox="0 0 120 120">
+                    <circle
+                        cx="60"
+                        cy="60"
+                        r={radius}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.06)"
+                        strokeWidth="8"
+                    />
+                    <circle
+                        cx="60"
+                        cy="60"
+                        r={radius}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        className="transition-all duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                    />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-white">
+                        {score}%
+                    </span>
+                    <span className="text-[10px] text-[#94A3B8]">
+                        Kelengkapan
+                    </span>
+                </div>
+            </div>
+            <span className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
+                good
+                    ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
+                    : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
+            )}>
+                <ShieldCheck className="size-3" />
+                {good ? 'Target Tercapai' : 'Di Bawah Target'}
+            </span>
         </div>
     );
 }
@@ -288,7 +435,6 @@ export default function Dashboard() {
         warranty_alerts,
     } = usePage().props as unknown as PageProps;
     const name = auth?.user?.name?.split(' ')[0] ?? 'User';
-    const integrityGood = integrity_score >= 95;
 
     return (
         <>
@@ -298,6 +444,7 @@ export default function Dashboard() {
 
                 <KpiCards stats={stats} />
 
+                {/* Row 2: Classification + Donut + Integrity */}
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                     <section className="glass-panel relative flex min-h-[280px] flex-col gap-4 rounded-2xl p-5 lg:col-span-2">
                         <header className="flex items-start justify-between">
@@ -311,16 +458,32 @@ export default function Dashboard() {
                             </div>
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/10 px-2 py-1 text-[11px] font-semibold text-[#5EEAD4] ring-1 ring-[#5EEAD4]/20">
                                 <ShieldCheck className="size-3" />
-                                {integrityGood
+                                {integrity_score >= 95
                                     ? 'Target Tercapai'
                                     : 'Di Bawah Target'}
                             </span>
                         </header>
                         <ClassificationBars slices={asset_by_classification} />
                     </section>
-                    <StatusDonut stats={stats} />
+                    <div className="flex flex-col gap-5">
+                        <section className="glass-panel flex flex-col items-center gap-4 rounded-2xl p-5">
+                            <header className="w-full">
+                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
+                                    FR-10.2
+                                </p>
+                                <h3 className="mt-1 text-base font-semibold">
+                                    Skor Integritas
+                                </h3>
+                            </header>
+                            <IntegrityRing score={integrity_score} />
+                        </section>
+                        <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
+                            <StatusDonut stats={stats} />
+                        </section>
+                    </div>
                 </div>
 
+                {/* Row 3: Location + Activity + Warranty */}
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
@@ -340,16 +503,19 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
-                                    FR-10.4
+                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
+                                    FR-10.6
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
-                                    Mutasi Terkini
+                                    Aktivitas Terkini
                                 </h3>
                             </div>
                             <MoveRight className="size-4 text-muted-foreground" />
                         </header>
-                        <MiniLedger rows={recent_transfers} kind="transfer" />
+                        <RecentActivity
+                            transfers={recent_transfers}
+                            disposals={recent_disposals}
+                        />
                     </section>
                 </div>
 

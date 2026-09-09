@@ -99,7 +99,7 @@ class OIDCController extends Controller
         }
     }
 
-    public function logout(Request $request)
+    public function logoutCallback(Request $request)
     {
         // ponytail: grab id_token BEFORE session clear for RP-initiated logout
         Log::info('Received logout request. Session ID: ', $request->all());

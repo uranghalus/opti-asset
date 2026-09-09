@@ -591,6 +591,16 @@
         animation: card-enter 0.45s cubic-bezier(0.32, 0.72, 0, 1) backwards;
     }
 
+    /* Slow pulse for ambient glow blobs */
+    @keyframes pulse-slow {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    .animate-pulse-slow {
+        animation: pulse-slow 6s ease-in-out infinite;
+    }
+
     /* Stagger delays */
     .delay-100 {
         transition-delay: 100ms;

@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Settings;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCapitalizationThresholdRequest;
 use App\Models\CapitalizationThreshold;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Services\AssetTypeAssigner;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,41 +15,68 @@ class CapitalizationThresholdController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Settings/CapitalizationThreshold', [
-            'thresholds' => CapitalizationThreshold::orderBy('created_at', 'desc')->get(),
-            'activeThreshold' => CapitalizationThreshold::where('is_active', true)->first(),
+        Gate::authorize('setting.edit');
+
+        $thresholds = CapitalizationThreshold::query()
+            ->with('creator:id,name')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return Inertia::render('settings/capitalization-threshold', [
+            'thresholds' => $thresholds,
+            'activeThreshold' => CapitalizationThreshold::query()->where('is_active', true)->first(),
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreCapitalizationThresholdRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'currency' => 'required|string|max:3',
-        ]);
+        Gate::authorize('setting.edit');
 
-        // Deactivate others
+        $validated = $request->validated();
+
         CapitalizationThreshold::query()->update(['is_active' => false]);
 
-        $threshold = CapitalizationThreshold::create([
+        CapitalizationThreshold::create([
             'amount' => $validated['amount'],
-            'currency' => $validated['currency'],
-            'created_by' => auth()->id(),
+            'currency' => $validated['currency'] ?? 'IDR',
+            'created_by' => $request->user()->id,
             'is_active' => true,
             'activated_at' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Threshold updated successfully',
-            'data' => $threshold,
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Ambang batas kapitalisasi berhasil disimpan.',
         ]);
+
+        return back();
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(CapitalizationThreshold $threshold): RedirectResponse
     {
-        $threshold = CapitalizationThreshold::findOrFail($id);
+        Gate::authorize('setting.edit');
+
         $threshold->delete();
 
-        return response()->json(['message' => 'Threshold deleted successfully']);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Riwayat ambang batas dihapus.',
+        ]);
+
+        return back();
+    }
+
+    public function reassignTypes(): RedirectResponse
+    {
+        Gate::authorize('setting.edit');
+
+        $reassigned = app(AssetTypeAssigner::class)->reassignAll();
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Tipe aset dihitung ulang untuk {$reassigned} aset.",
+        ]);
+
+        return back();
     }
 }

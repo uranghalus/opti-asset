@@ -128,12 +128,14 @@ Route::middleware('auth')->group(function () {
     Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
     Route::patch('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
 });
 
-Route::get('auth/redirect', [OIDCController::class, 'redirect'])->name('authsso');
-Route::get('auth/oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
-Route::get('auth/logout', [OIDCController::class, 'logout'])->name('auth.logout');
-
+Route::prefix('auth')->group(function () {
+    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');
+});
 Route::middleware('auth')->group(function () {
     Route::get('asset-disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
     Route::get('asset-disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');

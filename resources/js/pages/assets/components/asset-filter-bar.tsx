@@ -1,5 +1,5 @@
-import { AssetTypeFilter } from '@/components/assets/asset-type-filter';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { AssetTypeFilter } from '@/components/assets/asset-type-filter';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';

@@ -1,5 +1,4 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
-import { Button } from '@/components/ui/button';
 
 type AssetByStatus = {
     ACT: number;
@@ -13,6 +12,7 @@ type Stats = {
     total_assets: number;
     asset_by_status: AssetByStatus;
     pending_transfers: number;
+    pending_disposals: number;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -43,23 +43,14 @@ export function StatusDonut({ stats }: { stats: Stats }) {
     const total = data.reduce((sum, d) => sum + d.value, 0);
 
     return (
-        <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
-            <div className="mb-5 flex items-center justify-between">
-                <div>
-                    <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
-                        Status
-                    </p>
-                    <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                        Distribusi Aset
-                    </h3>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 rounded-md px-2.5 text-[11px] font-medium text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white"
-                >
-                    Saat Ini
-                </Button>
+        <div className="flex flex-col gap-4">
+            <div>
+                <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
+                    FR-10.2
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-white">
+                    Distribusi Aset
+                </h3>
             </div>
 
             <div className="flex items-center gap-6">
@@ -78,16 +69,19 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                                 strokeWidth={0}
                             >
                                 {data.map((entry) => (
-                                    <Cell key={entry.name} fill={entry.color} />
+                                    <Cell
+                                        key={entry.name}
+                                        fill={entry.color}
+                                    />
                                 ))}
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-[#1A1A1A] dark:text-white">
+                        <span className="text-xl font-bold text-white">
                             {total}
                         </span>
-                        <span className="text-[10px] text-[#86888C]">
+                        <span className="text-[10px] text-[#94A3B8]">
                             Total
                         </span>
                     </div>
@@ -105,14 +99,14 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                                 key={item.name}
                                 className="flex items-center justify-between"
                             >
-                                <span className="flex items-center gap-2 text-sm text-[#1A1A1A] dark:text-white">
+                                <span className="flex items-center gap-2 text-sm text-white/90">
                                     <span
                                         className="h-2.5 w-2.5 rounded-full"
                                         style={{ backgroundColor: item.color }}
                                     />
                                     {item.name}
                                 </span>
-                                <span className="text-xs text-[#86888C] tabular-nums">
+                                <span className="text-xs text-[#94A3B8] tabular-nums">
                                     {item.value} ({pct}%)
                                 </span>
                             </div>

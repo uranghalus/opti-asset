@@ -12,6 +12,7 @@ import {
     ArchiveX,
     Building2,
     Network,
+    Coins,
     ShieldCheck,
     KeyRound,
 } from 'lucide-react';
@@ -253,6 +254,15 @@ export const sidebarData: SidebarData = {
                     title: 'Preferensi',
                     url: '/settings/preferences',
                     icon: Sliders,
+                },
+                {
+                    title: 'Ambang Kapitalisasi',
+                    url: '/settings/capitalization-threshold',
+                    icon: Coins,
+                    permission: {
+                        resource: 'setting',
+                        actions: ['edit'],
+                    },
                 },
                 {
                     title: 'Impor & Ekspor',

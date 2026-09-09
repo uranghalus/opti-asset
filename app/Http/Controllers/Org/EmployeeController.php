@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Org;
 
+use App\Actions\SyncUserRolesFromEmployeeAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignEmployeeRolesRequest;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -71,7 +74,17 @@ class EmployeeController extends Controller
      */
     public function assignRoles(AssignEmployeeRolesRequest $request, Employee $employee): RedirectResponse
     {
+        Gate::authorize('employee.edit');
+
         $employee->syncRoles($request->validated('roles'));
+
+        // Push the new roles onto the linked User immediately so the change
+        // takes effect without waiting for their next login.
+        $linkedUser = User::withoutGlobalScopes()->where('email', $employee->email)->first();
+
+        if ($linkedUser !== null) {
+            app(SyncUserRolesFromEmployeeAction::class)->execute($linkedUser);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Role karyawan berhasil diperbarui.']);
 

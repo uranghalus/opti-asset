@@ -48,7 +48,7 @@ export default function Browse({ pageProps }: BrowseProps) {
     const [search, setSearch] = useState(filters.search);
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [assetTypeFilter, setAssetTypeFilter] = useState<string>(
-        (filters as any).asset_type ?? '',
+        filters.asset_type ?? '',
     );
     const [departmentFilter, setDepartmentFilter] = useState(
         filters.department,
@@ -399,6 +399,7 @@ export default function Browse({ pageProps }: BrowseProps) {
             <AssetBulkDeleteDialog
                 open={bulkDeleteOpen}
                 count={selected.size}
+                selectedIds={Array.from(selected)}
                 onOpenChange={setBulkDeleteOpen}
                 onSuccess={() => setSelected(new Set())}
             />

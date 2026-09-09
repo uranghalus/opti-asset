@@ -65,6 +65,7 @@ export type PageProps = {
     filters: {
         search: string;
         status: string;
+        asset_type: string;
         department: string;
         condition: string;
         level: string;

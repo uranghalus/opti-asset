@@ -97,11 +97,13 @@ export function AssetDeleteDialog({
 export function AssetBulkDeleteDialog({
     open,
     count,
+    selectedIds,
     onOpenChange,
     onSuccess,
 }: {
     open: boolean;
     count: number;
+    selectedIds: string[];
     onOpenChange: (v: boolean) => void;
     onSuccess: () => void;
 }) {
@@ -115,7 +117,7 @@ export function AssetBulkDeleteDialog({
         setBulkDeleting(true);
 
         router.delete(destroyBulk.url(), {
-            data: { ids: [] },
+            data: { ids: selectedIds },
             only: ['assets', 'tree', 'selected', 'breadcrumb'],
             preserveState: true,
             preserveScroll: true,

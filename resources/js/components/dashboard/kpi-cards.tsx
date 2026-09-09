@@ -1,4 +1,4 @@
-import { CircleCheck, Hammer, MoveRight } from 'lucide-react';
+import { CircleCheck, Hammer, MoveRight, Trash2 } from 'lucide-react';
 
 type AssetByStatus = {
     ACT: number;
@@ -12,6 +12,7 @@ type Stats = {
     total_assets: number;
     asset_by_status: AssetByStatus;
     pending_transfers: number;
+    pending_disposals: number;
 };
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
@@ -19,7 +20,7 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     const min = Math.min(...data);
     const range = max - min || 1;
     const width = 80;
-    const height = 28;
+    const height = 24;
 
     const points = data.map((val, i) => {
         const x = (i / (data.length - 1)) * width;
@@ -29,7 +30,6 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     });
 
     const pathD = `M${points.join(' L')}`;
-
     const areaD = `${pathD} L${width},${height} L0,${height} Z`;
 
     return (
@@ -64,50 +64,58 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     );
 }
 
-export function KpiCards({ stats }: { stats: Stats }) {
-    const kpiData = [
-        {
-            label: 'Total Aset',
-            value: stats.total_assets.toLocaleString('id-ID'),
-            icon: CircleCheck,
-            sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
-            color: '#FFB23E',
-        },
-        {
-            label: 'Aktif',
-            value: stats.asset_by_status.ACT.toLocaleString('id-ID'),
-            icon: CircleCheck,
-            sparkline: [20, 25, 22, 28, 25, 30, 28, 32, 30, 35, 33, 38],
-            color: '#5EEAD4',
-        },
-        {
-            label: 'Dalam Perbaikan',
-            value: stats.asset_by_status.RPR.toLocaleString('id-ID'),
-            icon: Hammer,
-            sparkline: [5, 3, 4, 6, 8, 7, 9, 8, 10, 9, 11, 10],
-            color: '#B892FF',
-        },
-        {
-            label: 'Menunggu Mutasi',
-            value: stats.pending_transfers.toLocaleString('id-ID'),
-            icon: MoveRight,
-            sparkline: [8, 10, 12, 9, 11, 13, 15, 14, 16, 18, 17, 20],
-            color: '#FFB23E',
-        },
-    ];
+const KPIS = [
+    {
+        label: 'Total Aset',
+        icon: CircleCheck,
+        sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
+        color: '#FFB23E',
+        getValue: (s: Stats) => s.total_assets,
+    },
+    {
+        label: 'Aktif',
+        icon: CircleCheck,
+        sparkline: [20, 25, 22, 28, 25, 30, 28, 32, 30, 35, 33, 38],
+        color: '#5EEAD4',
+        getValue: (s: Stats) => s.asset_by_status.ACT,
+    },
+    {
+        label: 'Perbaikan',
+        icon: Hammer,
+        sparkline: [5, 3, 4, 6, 8, 7, 9, 8, 10, 9, 11, 10],
+        color: '#B892FF',
+        getValue: (s: Stats) => s.asset_by_status.RPR,
+    },
+    {
+        label: 'Menunggu Mutasi',
+        icon: MoveRight,
+        sparkline: [8, 10, 12, 9, 11, 13, 15, 14, 16, 18, 17, 20],
+        color: '#FF9A3E',
+        getValue: (s: Stats) => s.pending_transfers,
+    },
+    {
+        label: 'Menunggu Disposal',
+        icon: Trash2,
+        sparkline: [3, 5, 4, 6, 5, 7, 8, 6, 9, 7, 10, 8],
+        color: '#C52720',
+        getValue: (s: Stats) => s.pending_disposals,
+    },
+];
 
+export function KpiCards({ stats }: { stats: Stats }) {
     return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {kpiData.map((kpi) => {
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {KPIS.map((kpi) => {
                 const Icon = kpi.icon;
+                const value = kpi.getValue(stats);
 
                 return (
                     <div
                         key={kpi.label}
-                        className="group glass-panel relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5"
+                        className="group glass-panel relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#000C3D]/20"
                     >
                         <span
-                            className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+                            className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
                             style={{ backgroundColor: kpi.color }}
                         />
                         <div className="flex items-start justify-between">
@@ -126,7 +134,7 @@ export function KpiCards({ stats }: { stats: Stats }) {
                                 {kpi.label}
                             </p>
                             <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                                {kpi.value}
+                                {value.toLocaleString('id-ID')}
                             </p>
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3">

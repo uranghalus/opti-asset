@@ -2,78 +2,113 @@
 
 ## Links
 
-- **Logs Directory**: `Memory/logs/`
-- **Log File**: `Memory/logs/2026-09-08.md`
-- **Memory File**: `Memory/opencode-memory.md`
+- **Memory File**: `Memory/opencode-memory.md` (this file — canonical, current-state-first)
+- **Logs Directory**: `Memory/logs/` (per-session detail; latest: `2026-09-09.md`)
 
 ## Documentation
 
-Memory documentation lives in `Memory/opencode-memory.md` and is linked to logs via the `logs/` directory.
+Memory documentation lives in this file and is linked to logs via the `logs/` directory.
 
-**Note**: All logs are stored in `Memory/logs/` and referenced in `Memory/opencode-memory.md`.
-
-## Memory & Logs Relationship
-
-The memory documentation (`Memory/opencode-memory.md`) contains all project decisions, architecture notes, and implementation details. Log files in `Memory/logs/` provide runtime context that complements the static documentation.
-
-**Important**: The memory.md file contains the canonical reference for all design decisions and architectural choices. Always check memory.md before making changes to understand the current state of the system.
+**Important**: This file contains the canonical reference for design decisions and
+architectural state. Session-by-session detail lives in the logs; check here first.
 
 ---
 
-## Session Progress — 2026-09-08
+## Current State
 
-### Completed Tasks ✅
+### Stack
 
-1. **OIDC Migration** — Verified `add_oidc_fields_to_users_table` (oidc_id/last_login)
-2. **Wayfinder Regeneration** — `php artisan wayfinder:generate --with-form`
-3. **Import Assets — Positional Fallback & Tests** — fixed `resolveClassificationFromKode`, 5 tests
-4. **Import Asset — Optional Item Selection** — nullable item_id, resolveFallbackItem
-5. **Role-Based Filter Levels (Backend)** — `config/asset_filters.php`, `initialFilterLevel()`
-6. **Frontend Role Filter UI** — initialFilterLevel prop, view (list|category), Tab, ?json branch
-7. **Browse Refactor** — extracted `Browse.tsx` as reusable `pageProps` component, thin `Index.tsx`, fixed `asset_type` param propagation + clearFilters + only:[items,unclassifiedCount]
-8. **Dashboard NOON Redesign** — AMEX blue → `#1B1230`/`#FFB23E`/`#B892FF`/`#5EEAD4`, glass-panel throughout, KPI/Icon/Badge unified
-9. **Asset-Form Fix** — derived `showAccountingFields` from `form.data.asset_type`, clear accounting on switch to equipment
-10. **Shell NOON Unification (app-sidebar-layout chrome)** — unified sidebar + dashboard to single world
-    - `resources/css/app.css`: `sidebar-glass` #006fcf→#ffb23e/#ff9a3e, `sidebar-wrapper` ambient blue→amber/violet (`255,178,62`/`184,146,255`), `[data-sidebar=sidebar]` & `glass-topbar` white→warm `255,252,248/255,247,235` (light) & `34,21,51/22,14,35` (dark), `sidebar-nav-active` blue→amber, `glass-card`/`glass-panel` warm frosted, toast shadows `0,23,90`→`27,18,48`
-    - `resources/js/components/app-sidebar.tsx:48` & `mobile-sidebar-sheet.tsx:70`: logo badge gradient `#1374D4→#006FCF` / `#5EEAD4→#006FCF` → `#FFB23E→#B892FF` (DESIGN.md primary→secondary)
-    - `app-sidebar-layout.tsx`: confirmed wiring-only, no color logic
-11. **Light-First Theme** — `DESIGN.md` flipped `○ Light / ✓ Dark` → `✓ Light / ○ Dark`, `use-appearance.tsx` default `system`→`light` | `currentAppearance='light'`, `initializeTheme()` writes `light`
+- **PHP 8.4** / Laravel 13 / Fortify 1 / Inertia v3 / React 19 / Tailwind 4 / Vite 8
+- **Wayfinder** (typed TS routes; regenerate with `php artisan wayfinder:generate --with-form`)
+- **Spatie laravel-permission v8** · shadcn/ui (New York) · React Compiler active
+- OIDC SSO via Socialite (`OIDCProvider`, back-channel SLO endpoint exists for the IdP)
 
-### Fixes Applied (Code Review 2026-09-08) ✅
+### Auth & Permissions (rebuilt 2026-09-09)
 
-- `Browse.tsx:137` added `asset_type` to `currentParams`, unified `handleNodeSelect/clearNode/clearFilters` to reuse `currentParams`
-- `Browse.tsx:125` added `items,unclassifiedCount` to `router.get only:`
-- `asset-form.tsx:150` derived accounting toggle, null-out accounting values when exiting fixed_asset
+- **Roles are assigned to `Employee`** (UUID PK, `tb_employee`) in the Employees section;
+  **gates run against `User`** (int id). The bridge between them:
+  - `App\Actions\SyncUserRolesFromEmployeeAction` — matches Employee by email
+    (`withoutGlobalScopes`), `syncRoles` onto the User. No employee → User roles untouched.
+  - Fired on `Illuminate\Auth\Events\Login` (listener closure in `AppServiceProvider` —
+    project convention, no Listeners folder) → covers OIDC + Fortify logins.
+  - Also fired immediately after `EmployeeController::assignRoles` (which uses `syncRoles`)
+    so role changes apply without re-login.
+- **super-admin = 0 permissions in DB** — `Gate::before` in `AppServiceProvider::grantSuperAdmin()`
+  grants everything (Spatie "super-admin" pattern). `administrator` = full 58-permission catalogue.
+- Seed roles: `super-admin` (0), `administrator` (58), `manager` (24), `staff-asset` (9), `akunting` (8).
+- Schema: single migration `2026_09_09_010000_create_permission_tables.php` with `model_id`
+  as **varchar** (supports both `User` int and `Employee` UUID morphs).
+- Admin endpoints are gated: `role.*` / `permission.*` on Role/PermissionController,
+  `employee.edit` on assignRoles, `setting.edit` on capitalization threshold.
+- **Bootstrap**: first super-admin gets the role via Employees page or tinker; `Gate::before` does the rest.
 
-### Verification ✅
+### Design System
 
-- `npm run types:check` — clean (tsc --noEmit)
-- `php artisan test --compact` — pass (in-memory SQLite)
-- Screenshot audit dark+light vs DESIGN.md — hero/KPI/panel all warm amber/indigo, no blue remnant except toast intent colors (by design)
+- **NOON warm glass** — amber primary `#FFB23E`, secondary `#B892FF`, tertiary `#5EEAD4`,
+  base `#1B1230`. All shell chrome (sidebar, topbar, panels, toasts) follows the dashboard's
+  warm palette — never blue. Tokens live in `resources/css/app.css` + `DESIGN.md`.
+- **Light-first** default (dark opt-in) — `use-appearance.tsx`, `DESIGN.md`.
+- Logo badge gradient: `primary→secondary` only (`app-sidebar.tsx`, `mobile-sidebar-sheet.tsx`).
 
-### Pending 📋
+### Testing Conventions
 
-- Asset-form 1000-line split deferred (refactor-cleaner)
-- Empty-state glass-panel polish deferred
-- `npm run lint:check` / `format:check` — pre-existing warnings, not blocking
+- In-memory SQLite; `RefreshDatabase`; `tests/TestCase::setUp()` pins
+  `config(['cache.default' => 'array'])` — do NOT rely on phpunit.xml `<env>`/`<server>` to
+  override `.env` (Laravel's env repo reads `.env` first; this defeated `CACHE_STORE=array`
+  and caused Windows file-cache lock flakiness).
+- `actingAs()` does **not** dispatch `Login` — use `auth()->login()` when testing the role bridge.
+- Test users needing gated endpoints: create the Permission rows in `setUp` then
+  `givePermissionTo` (tables start empty under RefreshDatabase).
+- Make count/position assertions **relative** to setUp fixtures, not absolute.
 
-### Files Modified (2026-09-08 delta)
+### Persistent Gotchas
 
-| File | Change |
-|------|--------|
-| `resources/js/pages/assets/Browse.tsx` | New reusable component, full drill-down + search + filters |
-| `resources/js/pages/assets/Index.tsx` | Thin `usePage → Browse pageProps` wrapper |
-| `resources/js/pages/dashboard.tsx` | NOON hero, bars/locations/ledgers recolored |
-| `resources/js/components/dashboard/kpi-cards.tsx` | NOON colors, glass-panel cards |
-| `resources/js/components/assets/asset-form.tsx` | Derived accounting toggle + clear |
-| `resources/css/app.css` | Full NOON chrome retoken (sidebar/chrome/panel/toast) |
-| `resources/js/components/app-sidebar.tsx` | Logo gradient primary→secondary |
-| `resources/js/components/mobile-sidebar-sheet.tsx` | Logo gradient primary→secondary |
-| `resources/js/hooks/use-appearance.tsx` | Light-first default |
-| `DESIGN.md` | Light/Dark flag flipped |
+- `DatabaseSeeder` uses `WithoutModelEvents` → permission model events don't refresh the
+  registrar cache. Any seeder that bulk-creates permissions must call
+  `forgetCachedPermissions()` after the catalogue, before `syncPermissions`.
+- Wayfinder: always regenerate with `--with-form`; never hardcode URLs; no global `route()`
+  helper exists (that's Ziggy — two bugs already came from using it).
+- `POST /logout` (Fortify) is the user logout; `POST /auth/oidc/logout` is the IdP
+  back-channel SLO endpoint (JSON, not for browsers).
+- Generated/gitignored: `resources/js/{actions,routes,wayfinder}/`, `components/ui/`.
 
-### Decisions — 2026-09-08
+---
 
-- NOON is warm glass (amber primary), not blue glass — all shell chrome must follow dashboard, not compete
-- Single source `app.css` + `DESIGN.md` tokens; logo badge is `primary→secondary` gradient only
-- Light-first is new default; dark remains opt-in via toggle
+## Session History (detail in logs)
+
+| Date | Log | Summary |
+|------|-----|---------|
+| 2026-09-08 | `Memory/logs/2026-09-08.md` | Browse refactor (reusable pageProps), dashboard NOON redesign, asset-form derived accounting, shell NOON unification, light-first theme |
+| 2026-09-09 | `Memory/logs/2026-09-09.md` | Assets review vs PRD v1.2 + critical fixes (bulk delete, `recorded_by`, threshold page), 22 FR-13 tests, flaky-test root cause, logout fix, PRD v1.3, **permissions feature full rebuild** (config check → teardown → migration → seeders → Employee→User bridge → gates → UI → 13 infra tests) |
+
+## Key Decisions (chronological)
+
+- Test env: pin config in `TestCase::setUp()`; never trust phpunit.xml env overrides against `.env`.
+- Book-value snapshots dedup per (asset, day); `recorded_by` nullable for CLI/seeder contexts.
+- Threshold changes are not retroactive — use the "hitung ulang" (reassign) action.
+- Employee-role changes take effect immediately (assignRoles re-syncs the User) and at every login.
+- External changes landing mid-session (Gate::before FR-14, phpunit.xml edits, dashboard component
+  deletions) are preserved, not reverted.
+- Super-admin keeps zero DB permissions; direct role assignment on `User` remains valid for users
+  without an employee record.
+
+## Pending Work
+
+**FR-13 leftovers**
+- FR-13.8: asset-type breakdown (count + value) on dashboard
+- Automatic depreciation from `depreciation_method` (currently manual input)
+- `AssetHistory`: record `asset_type`/override changes in `fromUpdate()`
+
+**FR-11 / FR-04**
+- `Gate::authorize` in `AssetController` (asset CRUD still ungated)
+- Location filter in Browse (FR-04.2) + search by item name (FR-04.1)
+
+**Debt / external**
+- 93 pre-existing PHPStan errors in untouched files (my-session files are clean) — blocks a green `composer ci:check`
+- Pre-existing lint/format noise in dashboard files (~2680 eslint errors, 5 prettier warnings)
+- `AssetClassificationPermissionSeeder` was removed — classification permissions now live only in `RolePermissionSeeder`
+
+## Referensi
+
+- [[2026-09-09]] — latest session log
+- [[2026-09-08]] — previous session log

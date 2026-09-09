@@ -10,7 +10,7 @@ use App\Models\AssetSubCluster;
 use App\Models\Item;
 use App\Models\Tenant;
 use App\Models\User;
-use Database\Seeders\AssetClassificationPermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -673,11 +673,13 @@ class AssetClassificationTest extends TestCase
         Permission::query()->delete();
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->actingAs($this->user)
+        // Pengguna tanpa peran super-admin ditolak sebelum seeder dijalankan.
+        $plainUser = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->actingAs($plainUser)
             ->get(route('asset-classification.index'))
             ->assertForbidden();
 
-        $this->seed(AssetClassificationPermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $this->actingAs($this->user)
             ->get(route('asset-classification.index'))

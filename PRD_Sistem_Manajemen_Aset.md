@@ -17,6 +17,7 @@
 | 1.0   | 23 Jul 2026 | Tim Produk  | Draft awal PRD disusun dari problem statement, goals, user story, dan requirement awal.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 1.1   | 25 Agu 2026 | Tim Dev     | Update tracking §12: FR-04/07/12 ditandai Selesai (filter kategori cascade, Disposal UI+enum+toast Indonesia, Audit Trail `ActivityLog`+observer+UI). Tambah fitur bulk delete aset, import spreadsheet format kantor, remember-last-list, toast glass premium.                                                                                                                                                                                                                                                                       |
 | 1.2   | 1 Sep 2026  | Tim Produk  | Tambah requirement Tipe Aset: aset dipilah menjadi **Aktiva Tetap** dan **Peralatan** (field terpisah, independen dari struktur klasifikasi Group/Category/Cluster/Sub-cluster). Penentuan tipe otomatis berdasarkan ambang batas (threshold) nilai perolehan yang dapat dikonfigurasi. Tambah field akuntansi khusus Aktiva Tetap (nilai perolehan, masa manfaat, metode & akumulasi penyusutan, nilai buku), override manual tipe aset, riwayat nilai buku per periode, dan mekanisme migrasi/backfill data aset lama. Lihat FR-13. |
+| 1.3   | 9 Sep 2026  | Tim Dev     | Update tracking §12 hasil review implementasi: FR-13 dari ❌ menjadi 🟡 (migrasi, model, observer, service, UI form/detail, filter, halaman pengaturan ambang batas + hitung ulang/backfill sudah ada; sisa: breakdown dashboard per tipe). Ekspor PDF/Excel (FR-10.6) dari ❌ menjadi ✅ (laporan mutasi & disposal, XLSX + PDF). Prioritas selanjutnya disegarkan. |
 
 ---
 
@@ -519,7 +520,7 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 | FR-10 | Dashboard & Pelaporan                                            | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.                                                                                                         |
 | FR-11 | Manajemen Pengguna & Hak Akses                                   | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada.                                                                                                           |
 | FR-12 | Audit Trail                                                      | ✅ Selesai  | `ActivityLog` model + observer + controller + UI halaman `/audit-logs` + tests.                                                                                          |
-| FR-13 | Manajemen Tipe Aset (Aktiva Tetap/Peralatan) + data akuntansi    | ❌ Belum    | Requirement baru (v1.2). Perlu: field tipe aset, setting threshold kapitalisasi, field akuntansi khusus Aktiva Tetap, kalkulasi nilai buku, filter & dashboard per tipe. |
+| FR-13 | Manajemen Tipe Aset (Aktiva Tetap/Peralatan) + data akuntansi    | 🟡 Sebagian | Migrasi, model, `AssetTypeAssigner` (otomatis via ambang batas aktif), observer snapshot nilai buku harian, field akuntansi pada form (tampil hanya untuk Aktiva Tetap), override manual + alasan, filter tipe di daftar aset, halaman pengaturan ambang batas (`settings/capitalization-threshold`, izin `setting.edit`, audit log), hitung ulang massal (FR-13.11), test suite `CapitalizationThresholdTest`. Sisa: FR-13.8 breakdown dashboard per tipe; kalkulasi penyusutan otomatis dari metode terpilih. |
 
 | Kode | Fitur Tambahan (diluar FR awal)     | Status     | Keterangan                                                                  |
 | ---- | ----------------------------------- | ---------- | --------------------------------------------------------------------------- |
@@ -535,15 +536,15 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 | Item                   | Status      | Keterangan                                                                              |
 | ---------------------- | ----------- | --------------------------------------------------------------------------------------- |
 | Multi‑tenant           | ✅ Selesai  | Model `Tenant` + `tenant/switch`.                                                       |
-| Ekspor PDF/Excel       | ❌ Belum    | FR-10.6 belum diimplementasikan.                                                        |
+| Ekspor PDF/Excel       | ✅ Selesai  | FR-10.6: `reports/export/transfers` & `reports/export/disposals`, format xlsx + pdf.     |
 | Sync eksternal         | 🟡 Sebagian | Route `sync` ada, tapi integrasi backend belum lengkap.                                 |
 | UI mengikuti DESIGN.md | 🟡 Sebagian | Glassmorphism diterapkan di sebagian komponen (Toast premium glass, kartu aset, tabel). |
 
 ### 12.3 Rencana Selanjutnya (Prioritas)
 
-1. **Manajemen Tipe Aset & Data Akuntansi (FR-13)** — tambah field tipe aset, setting threshold kapitalisasi, field akuntansi Aktiva Tetap, kalkulasi nilai buku.
-2. **Asset History UI (FR-08)** — ekspos `AssetHistory` via controller + halaman detail.
-3. **Ekspor Laporan (FR-10.6)** — tambahkan ekspor Excel/PDF di `AssetController` + laporan mutasi/disposal.
+1. **FR-13.8** — ringkasan/breakdown jumlah & nilai aset per Tipe Aset pada dashboard.
+2. **FR-11.3** — terapkan `Gate::authorize` (`asset.view/create/edit/delete`) di `AssetController` (saat ini belum ada pemeriksaan otorisasi di controller aset).
+3. **Kalkulasi penyusutan otomatis** — akumulasi penyusutan saat ini input manual; metode tersimpan tetapi belum dipakai menghitung.
 4. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill _impeccable_.
 
 ---

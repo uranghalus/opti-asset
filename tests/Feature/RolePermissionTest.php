@@ -34,6 +34,22 @@ class RolePermissionTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        // The rebuilt feature authorizes these endpoints; grant the test user
+        // the admin permissions directly (super-admin bypasses via Gate::before).
+        foreach ([
+            'role.view', 'role.create', 'role.edit', 'role.delete',
+            'permission.view', 'permission.create', 'permission.edit', 'permission.delete',
+            'employee.edit',
+        ] as $name) {
+            Permission::create(['name' => $name, 'guard_name' => 'web']);
+        }
+
+        $this->user->givePermissionTo([
+            'role.view', 'role.create', 'role.edit', 'role.delete',
+            'permission.view', 'permission.create', 'permission.edit', 'permission.delete',
+            'employee.edit',
+        ]);
     }
 
     private function makePermission(string $name): Permission
@@ -61,9 +77,9 @@ class RolePermissionTest extends TestCase
                 ->has('roles.data', 1)
                 ->where('roles.data.0.name', 'manager')
                 ->where('roles.data.0.users_count', 0)
-                ->has('permissionGroups', 2)
+                ->has('permissionGroups', 5)
                 ->where('permissionGroups.0.group', 'asset.location')
-                ->where('permissionGroups.1.group', 'inventory'));
+                ->where('permissionGroups.2.group', 'inventory'));
     }
 
     public function test_roles_index_searches_and_sorts(): void
@@ -173,8 +189,10 @@ class RolePermissionTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('permissions/Index')
-                ->has('permissions.data', 2)
-                ->has('groups', 2));
+                ->where('permissions.total', Permission::count())
+                ->has('groups', 5)
+                ->where('groups.0.name', 'asset.location')
+                ->where('groups.2.name', 'inventory'));
 
         $this->actingAs($this->user)
             ->get(route('permissions.index', ['group' => 'inventory']))
@@ -192,7 +210,7 @@ class RolePermissionTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertSame(2, Permission::count());
+        $this->assertSame(2, Permission::whereIn('name', ['asset.view', 'asset.create'])->count());
         $this->assertTrue(Permission::where('name', 'asset.view')->exists());
         $this->assertTrue(Permission::where('name', 'asset.create')->exists());
     }
@@ -208,7 +226,7 @@ class RolePermissionTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertSame(2, Permission::count());
+        $this->assertSame(2, Permission::whereIn('name', ['asset.view', 'asset.edit'])->count());
         $this->assertTrue(Permission::where('name', 'asset.view')->exists());
         $this->assertTrue(Permission::where('name', 'asset.edit')->exists());
     }
@@ -253,6 +271,6 @@ class RolePermissionTest extends TestCase
             ->delete(route('permissions.destroy', $permission->id))
             ->assertRedirect();
 
-        $this->assertSame(0, Permission::count());
+        $this->assertFalse(Permission::where('name', 'asset.browse')->exists());
     }
 }

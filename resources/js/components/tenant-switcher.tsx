@@ -35,6 +35,7 @@ export function TenantSwitcher() {
     const roles = page.auth.user.roles ?? [];
     const isSuperAdmin = roles.some((r) => {
         const n = r.toLowerCase().replace(/_/g, '-');
+
         return n === 'super-admin' || n === 'superadmin';
     });
     const [open, setOpen] = useState(false);

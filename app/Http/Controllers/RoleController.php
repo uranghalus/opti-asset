@@ -6,6 +6,7 @@ use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +17,8 @@ class RoleController extends Controller
 {
     public function index(Request $request): Response
     {
+        Gate::authorize('role.view');
+
         $perPage = min((int) $request->integer('per_page', 10), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -48,6 +51,8 @@ class RoleController extends Controller
 
     public function store(StoreRoleRequest $request): RedirectResponse
     {
+        Gate::authorize('role.create');
+
         $role = Role::create(['name' => $request->validated()['name'], 'guard_name' => 'web']);
 
         if ($permissions = $request->input('permissions')) {
@@ -59,6 +64,8 @@ class RoleController extends Controller
 
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
+        Gate::authorize('role.edit');
+
         $role->update(['name' => $request->validated()['name']]);
 
         if ($request->has('permissions')) {
@@ -70,6 +77,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        Gate::authorize('role.delete');
+
         if ($role->name === 'super-admin') {
             return back()->withErrors(['role' => 'Peran super-admin tidak dapat dihapus.']);
         }
@@ -81,6 +90,8 @@ class RoleController extends Controller
 
     public function syncPermissions(Request $request, Role $role): RedirectResponse
     {
+        Gate::authorize('role.edit');
+
         $validated = $request->validate([
             'permissions' => ['present', 'array'],
             'permissions.*' => ['exists:permissions,name'],

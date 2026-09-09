@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -34,6 +35,10 @@ class EmployeeTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        // Assigning employee roles is gated behind employee.edit (FR-11).
+        Permission::create(['name' => 'employee.edit', 'guard_name' => 'web']);
+        $this->user->givePermissionTo('employee.edit');
     }
 
     public function test_employee_gets_tenant_id_on_create(): void

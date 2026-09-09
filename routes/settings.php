@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\CapitalizationThresholdController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    // FR-13.3 — Ambang batas kapitalisasi (Super User / setting.edit)
+    Route::get('settings/capitalization-threshold', [CapitalizationThresholdController::class, 'index'])
+        ->name('settings.capitalization-threshold.index');
+
+    Route::post('settings/capitalization-threshold', [CapitalizationThresholdController::class, 'store'])
+        ->name('settings.capitalization-threshold.store');
+
+    Route::post('settings/capitalization-threshold/reassign-types', [CapitalizationThresholdController::class, 'reassignTypes'])
+        ->name('settings.capitalization-threshold.reassign-types');
+
+    Route::delete('settings/capitalization-threshold/{threshold}', [CapitalizationThresholdController::class, 'destroy'])
+        ->name('settings.capitalization-threshold.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

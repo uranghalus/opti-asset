@@ -789,3 +789,31 @@
 .stamp-slam {
     animation: stamp-slam 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
+
+/* Mobile-first tap targets: ensure interactive elements meet 44px minimum on touch devices */
+@media (pointer: coarse) {
+    button,
+    a,
+    [role='button'],
+    input[type='checkbox'],
+    input[type='radio'] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    button *,
+    a * {
+        min-height: auto;
+        min-width: auto;
+    }
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+        min-height: 44px;
+        font-size: 16px;
+    }
+}
+
+/* Utility for consistent mobile card stacking */
+.mobile-stack > * + * {
+    margin-top: 0.75rem;
+}

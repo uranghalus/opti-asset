@@ -36,11 +36,13 @@ class AssetBookValue extends Model
         ];
     }
 
+    /** @return BelongsTo<Asset, $this> */
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');

@@ -13,6 +13,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AssetTransferTest extends TestCase
@@ -34,7 +36,63 @@ class AssetTransferTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.transfer.view', 'asset.transfer.create', 'asset.transfer.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.transfer.view', 'asset.transfer.create', 'asset.transfer.edit']);
+    }
+
+    public function test_store_forbids_user_without_transfer_create_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.transfer.create');
+
+        $asset = Asset::factory()->create();
+        $location = Location::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('asset-transfers.store'), [
+                'asset_id' => $asset->id,
+                'to_location_id' => $location->id,
+                'quantity' => 1,
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('asset_transfers', 0);
+    }
+
+    public function test_approve_forbids_user_without_transfer_edit_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.transfer.edit');
+
+        $transfer = AssetTransfer::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('asset-transfers.approve', $transfer))
+            ->assertForbidden();
+
+        $this->assertSame(AssetTransferStatus::Pending, $transfer->refresh()->status);
+    }
+
+    // ---------- FR-07.6: aset terhapus tidak masuk transaksi aktif ----------
+
+    public function test_store_rejects_transfer_of_disposed_asset(): void
+    {
+        $asset = Asset::factory()->create(['status' => 'DSP']);
+        $location = Location::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('asset-transfers.store'), [
+                'asset_id' => $asset->id,
+                'to_location_id' => $location->id,
+                'quantity' => 1,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('asset_transfers', 0);
     }
 
     public function test_index_renders_transfers_with_pagination(): void

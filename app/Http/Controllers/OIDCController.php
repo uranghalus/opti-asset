@@ -20,15 +20,15 @@ class OIDCController extends Controller
         private CreateTenantAction $createTenant,
     ) {}
 
-    public function redirect()
+    public function redirect(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         return Socialite::driver('oidc')->redirect();
     }
 
-    public function callback(Request $request)
+    public function callback(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         try {
-            /** @var SocialiteOAuth2AbstractProvider $driver */
+            /** @var \App\Providers\OIDCProvider $driver */
             $driver = Socialite::driver('oidc');
             $ssoUser = $driver->stateless()->user();
 
@@ -66,11 +66,11 @@ class OIDCController extends Controller
                 ]
             );
 
-            if (! $user) {
+            if ($user === null) {
                 throw new \RuntimeException('Gagal membuat atau menemukan user.');
             }
 
-            if (! $user->tenant_id && $ssoCompanyId) {
+            if ($user->tenant_id !== null && $ssoCompanyId !== null) {
                 $tenant = Tenant::find($ssoCompanyId);
                 if ($tenant) {
                     $user->update(['tenant_id' => $tenant->id]);
@@ -78,7 +78,7 @@ class OIDCController extends Controller
                 } else {
                     $this->createTenant->execute($user);
                 }
-            } elseif (! $user->tenant_id) {
+            } elseif ($user->tenant_id === null) {
                 $this->createTenant->execute($user);
             }
 
@@ -99,7 +99,7 @@ class OIDCController extends Controller
         }
     }
 
-    public function logoutCallback(Request $request)
+    public function logoutCallback(Request $request): \Illuminate\Http\JsonResponse
     {
         // ponytail: grab id_token BEFORE session clear for RP-initiated logout
         Log::info('Received logout request. Session ID: ', $request->all());
@@ -124,7 +124,7 @@ class OIDCController extends Controller
             $oidcId = $payload->sub;
             $user = User::where('oidc_id', $oidcId)->first();
             if ($user) {
-                $user->remember_token = null;
+                $user->forceFill(['remember_token' => null])->save();
                 $user->save();
                 if (config('session.driver') === 'redis') {
                     $handler = session()->getHandler();

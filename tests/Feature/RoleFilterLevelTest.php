@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class RoleFilterLevelTest extends TestCase
@@ -12,6 +14,7 @@ class RoleFilterLevelTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $user;
 
     protected function setUp(): void
@@ -25,8 +28,12 @@ class RoleFilterLevelTest extends TestCase
 
         // Create roles needed for tests
         foreach (['super-admin', 'staff-asset', 'akunting', 'some-other-role'] as $roleName) {
-            \Spatie\Permission\Models\Role::create(['name' => $roleName, 'guard_name' => 'web']);
+            Role::create(['name' => $roleName, 'guard_name' => 'web']);
         }
+
+        // FR-11.3 — browsing assets requires the asset.view permission.
+        Permission::findOrCreate('asset.view', 'web');
+        $this->user->givePermissionTo('asset.view');
     }
 
     public function test_super_admin_gets_group_level(): void

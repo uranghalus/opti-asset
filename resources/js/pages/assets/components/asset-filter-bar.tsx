@@ -16,11 +16,14 @@ export function AssetFilterBar({
     onAssetTypeChange,
     status,
     onStatusChange,
-    allSelected,
-    onToggleSelectAll,
+    locations,
+    location,
+    onLocationChange,
+    allSelected: _allSelected,
+    onToggleSelectAll: _onToggleSelectAll,
     hasAssets,
-    selectedCount,
-    selectedNodeName,
+    selectedCount: _selectedCount,
+    selectedNodeName: _selectedNodeName,
 }: {
     search: string;
     onSearchChange: (value: string) => void;
@@ -31,6 +34,9 @@ export function AssetFilterBar({
     onAssetTypeChange: (value: AssetType | '') => void;
     status: string;
     onStatusChange: (status: string) => void;
+    locations: { id: string; name: string }[];
+    location: string;
+    onLocationChange: (value: string) => void;
     allSelected: boolean;
     onToggleSelectAll: () => void;
     hasAssets: boolean;
@@ -77,6 +83,9 @@ export function AssetFilterBar({
                         onChange={onAssetTypeChange}
                         status={status}
                         onStatusChange={onStatusChange}
+                        locations={locations}
+                        location={location}
+                        onLocationChange={onLocationChange}
                     />
                 )}
                 <Button

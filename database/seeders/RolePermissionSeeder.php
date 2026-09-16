@@ -18,6 +18,7 @@ class RolePermissionSeeder extends Seeder
         'dashboard.view',
         'audit.view', 'audit.export',
         'asset.view', 'asset.create', 'asset.edit', 'asset.delete',
+        'asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete',
         'asset.classification.view', 'asset.classification.create', 'asset.classification.edit', 'asset.classification.delete',
         'asset.category.view', 'asset.category.create', 'asset.category.edit', 'asset.category.delete',
         'asset.location.view', 'asset.location.create', 'asset.location.edit', 'asset.location.delete',
@@ -64,6 +65,7 @@ class RolePermissionSeeder extends Seeder
         $manager->syncPermissions([
             'dashboard.view', 'audit.view',
             'asset.view', 'asset.create', 'asset.edit',
+            'asset.item.view', 'asset.item.create', 'asset.item.edit',
             'asset.classification.view', 'asset.classification.create', 'asset.classification.edit',
             'asset.category.view', 'asset.category.create', 'asset.category.edit',
             'asset.location.view', 'asset.location.create', 'asset.location.edit',
@@ -77,6 +79,7 @@ class RolePermissionSeeder extends Seeder
         $staff->syncPermissions([
             'dashboard.view', 'audit.view',
             'asset.view',
+            'asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete',
             'asset.classification.view',
             'asset.category.view',
             'asset.location.view',
@@ -89,6 +92,7 @@ class RolePermissionSeeder extends Seeder
         $accounting->syncPermissions([
             'dashboard.view', 'audit.view',
             'asset.view',
+            'asset.item.view',
             'asset.classification.view',
             'asset.category.view',
             'asset.location.view',

@@ -605,10 +605,6 @@ export function AssetForm({
                                     form.setData('acquisition_cost', '');
                                     form.setData('useful_life_years', '');
                                     form.setData('depreciation_method', 'none');
-                                    form.setData(
-                                        'accumulated_depreciation',
-                                        '0',
-                                    );
                                 }
                             }}
                         >
@@ -711,6 +707,9 @@ export function AssetForm({
                             <div>
                                 <Label htmlFor="accumulated-depreciation">
                                     Akumulasi Penyusutan
+                                    <span className="font-normal text-muted-foreground">
+                                        (otomatis)
+                                    </span>
                                 </Label>
                                 <div className="relative mt-1.5">
                                     <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
@@ -718,22 +717,22 @@ export function AssetForm({
                                     </span>
                                     <Input
                                         id="accumulated-depreciation"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        className="h-10 pl-10"
+                                        type="text"
+                                        inputMode="decimal"
+                                        readOnly
+                                        aria-readonly="true"
+                                        className="h-10 cursor-default bg-muted/50 pl-10 text-muted-foreground"
+                                        title="Dihitung otomatis dari metode penyusutan, masa manfaat, dan tanggal mulai digunakan"
                                         value={
                                             form.data.accumulated_depreciation
                                         }
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'accumulated_depreciation',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="0"
+                                        placeholder="Otomatis"
                                     />
                                 </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Dihitung server dari metode penyusutan, masa
+                                    manfaat, dan tanggal mulai digunakan.
+                                </p>
                             </div>
                         </div>
                     )}

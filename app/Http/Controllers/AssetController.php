@@ -6,6 +6,7 @@ use App\Actions\GenerateAssetCodeAction;
 use App\Actions\GenerateAssetImportTemplateAction;
 use App\Actions\ImportAssetsAction;
 use App\Actions\RecordAssetHistoryAction;
+use App\Enums\AssetStatus;
 use App\Http\Requests\ImportAssetsRequest;
 use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
@@ -25,12 +26,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
+/**
+ * @phpstan-type BrowseNode array{id: string, code: string|null, name: string, description: string|null, notes?: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>}
+ */
 class AssetController extends Controller
 {
     public function __construct(
@@ -44,18 +49,24 @@ class AssetController extends Controller
      */
     public const UNCLASSIFIED_NODE = 'unclassified';
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|JsonResponse
     {
+        Gate::authorize('asset.view');
+
         return $this->browseResponse($request, 'assets/Index');
     }
 
-    public function grouped(Request $request): Response
+    public function grouped(Request $request): Response|JsonResponse
     {
+        Gate::authorize('asset.view');
+
         return $this->browseResponse($request, 'assets/Index');
     }
 
-    public function browse(Request $request): Response
+    public function browse(Request $request): Response|JsonResponse
     {
+        Gate::authorize('asset.view');
+
         return $this->browseResponse($request, 'assets/Index');
     }
 
@@ -81,6 +92,7 @@ class AssetController extends Controller
         $assetType = $request->string('asset_type')->trim()->toString();
         $department = $request->string('department')->trim()->toString();
         $condition = $request->string('condition')->trim()->toString();
+        $location = $request->string('location')->trim()->toString();
 
         $tree = $this->buildBrowseTree();
         $breadcrumb = [];
@@ -113,11 +125,15 @@ class AssetController extends Controller
                     ->where('kode_asset', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%")
                     ->orWhere('brand', 'like', "%{$search}%")
-                    ->orWhere('model', 'like', "%{$search}%")))
+                    ->orWhere('model', 'like', "%{$search}%")
+                    // FR-04.1 — pencarian juga mencocokkan nama item.
+                    ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%"))))
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
                 ->when($assetType !== '', fn ($query) => $query->where('asset_type', $assetType))
                 ->when($department !== '', fn ($query) => $query->where('department_id', $department))
                 ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
+                // FR-04.2 — filter lokasi pada halaman daftar aset.
+                ->when($location !== '', fn ($query) => $query->where('location_id', $location))
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage)
                 ->withQueryString();
@@ -140,6 +156,7 @@ class AssetController extends Controller
                 'asset_type' => $assetType,
                 'department' => $department,
                 'condition' => $condition,
+                'location' => $location,
                 'level' => $validLevel ? $level : '',
                 'node' => $validLevel ? $nodeId : '',
                 'initialLevel' => $initialLevel,
@@ -147,7 +164,7 @@ class AssetController extends Controller
         ];
     }
 
-    private function browseResponse(Request $request, string $component): Response
+    private function browseResponse(Request $request, string $component): Response|JsonResponse
     {
         $payload = $this->browsePayload($request);
 
@@ -166,7 +183,7 @@ class AssetController extends Controller
     }
 
     /**
-     * @return array<int, array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>}>
+     * @return array<int, BrowseNode>
      */
     private function buildBrowseTree(): array
     {
@@ -198,8 +215,8 @@ class AssetController extends Controller
             ->all();
     }
 
-    /** @param AssetGroup $group @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
-    private function serializeBrowseGroup($group): array
+    /** @return BrowseNode */
+    private function serializeBrowseGroup(AssetGroup $group): array
     {
         return [
             'id' => $group->id,
@@ -213,8 +230,8 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetCategory $category @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
-    private function serializeBrowseCategory($category): array
+    /** @return BrowseNode */
+    private function serializeBrowseCategory(AssetCategory $category): array
     {
         return [
             'id' => $category->id,
@@ -228,8 +245,8 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetCluster $cluster @return array{id: string, code: string|null, name: string, description: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
-    private function serializeBrowseCluster($cluster): array
+    /** @return BrowseNode */
+    private function serializeBrowseCluster(AssetCluster $cluster): array
     {
         return [
             'id' => $cluster->id,
@@ -243,8 +260,8 @@ class AssetController extends Controller
         ];
     }
 
-    /** @param AssetSubCluster $subCluster @return array{id: string, code: string|null, name: string, description: string|null, notes: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>} */
-    private function serializeBrowseSubCluster($subCluster): array
+    /** @return BrowseNode */
+    private function serializeBrowseSubCluster(AssetSubCluster $subCluster): array
     {
         return [
             'id' => $subCluster->id,
@@ -268,11 +285,6 @@ class AssetController extends Controller
             'cluster' => AssetCluster::class,
             'sub-cluster' => AssetSubCluster::class,
         ];
-        $parentFields = [
-            'category' => 'asset_group_id',
-            'cluster' => 'asset_category_id',
-            'sub-cluster' => 'asset_cluster_id',
-        ];
         $parentLevels = [
             'category' => 'group',
             'cluster' => 'category',
@@ -281,19 +293,23 @@ class AssetController extends Controller
         $crumbs = [];
         $currentLevel = $level;
         $currentId = $nodeId;
-        while ($currentLevel !== null) {
+        while (true) {
             $model = $levelModels[$currentLevel];
-            $node = $model::where('id', $currentId)->first();
+            $node = $model::query()->where('id', $currentId)->first();
             if ($node === null) {
                 break;
             }
             $crumbs[] = ['id' => $node->id, 'level' => $currentLevel, 'code' => $node->code, 'name' => $node->name];
-            $parentField = $parentFields[$currentLevel] ?? null;
             $nextLevel = $parentLevels[$currentLevel] ?? null;
-            if ($parentField === null || $nextLevel === null) {
+            if ($nextLevel === null) {
                 break;
             }
-            $parentId = $node->{$parentField};
+            $parentId = match ($currentLevel) {
+                'category' => $node instanceof AssetCategory ? $node->asset_group_id : null,
+                'cluster' => $node instanceof AssetCluster ? $node->asset_category_id : null,
+                'sub-cluster' => $node instanceof AssetSubCluster ? $node->asset_cluster_id : null,
+                default => null,
+            };
             if ($parentId === null) {
                 break;
             }
@@ -306,6 +322,8 @@ class AssetController extends Controller
 
     public function labels(Request $request): Response
     {
+        Gate::authorize('asset.view');
+
         $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'string']]);
         $assets = Asset::query()->whereKey($validated['ids'])->with($this->labelRelations())->orderBy('kode_asset')->get();
 
@@ -314,6 +332,8 @@ class AssetController extends Controller
 
     public function labelsBatch(Request $request): Response
     {
+        Gate::authorize('asset.view');
+
         $assets = Asset::query()->with($this->labelRelations())->orderBy('kode_asset')->get();
 
         return Inertia::render('assets/LabelsBatch', ['assets' => $assets]);
@@ -321,11 +341,15 @@ class AssetController extends Controller
 
     public function scan(): Response
     {
+        Gate::authorize('asset.view');
+
         return Inertia::render('assets/Scan');
     }
 
     public function scanLookup(Request $request): JsonResponse
     {
+        Gate::authorize('asset.view');
+
         $validated = $request->validate(['code' => ['required', 'string', 'max:100']]);
         $asset = Asset::query()->where('kode_asset', $validated['code'])->with(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name'])->first();
         if ($asset === null) {
@@ -337,11 +361,15 @@ class AssetController extends Controller
 
     public function create(): Response
     {
+        Gate::authorize('asset.create');
+
         return Inertia::render('assets/Create', $this->formProps());
     }
 
     public function show(Asset $asset): Response
     {
+        Gate::authorize('asset.view');
+
         $asset->load([
             'item:id,name,code',
             'location:id,name',
@@ -359,6 +387,8 @@ class AssetController extends Controller
 
     public function edit(Asset $asset): Response
     {
+        Gate::authorize('asset.edit');
+
         $asset->load(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name']);
 
         return Inertia::render('assets/Edit', [...$this->formProps($asset->id), 'asset' => $asset]);
@@ -366,6 +396,8 @@ class AssetController extends Controller
 
     public function store(StoreAssetRequest $request): RedirectResponse
     {
+        Gate::authorize('asset.create');
+
         $validated = $request->validated();
         $item = Item::query()->with('category')->whereKey($validated['item_id'])->firstOrFail();
         $chain = $item->category !== null ? $this->generateAssetCode->fromCategory($item->category) : $this->emptyChain();
@@ -378,13 +410,19 @@ class AssetController extends Controller
 
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
     {
-        $validated = $request->validated();
+        Gate::authorize('asset.edit');
 
-        // Handle Manual Override
-        if ($request->has('type_override_reason')) {
-            $asset->type_override_reason = $request->input('type_override_reason');
-            $asset->asset_type = $request->input('asset_type');
+        // FR-07.6 — aset terhapus tidak boleh diubah (kecuali statusnya sendiri).
+        if ($asset->status === AssetStatus::DISPOSED) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Aset yang telah dihapus tidak dapat diperbarui.',
+            ]);
+
+            return back();
         }
+
+        $validated = $request->validated();
 
         $itemId = $validated['item_id'] ?? $asset->item_id;
         $itemChanged = $itemId !== $asset->item_id;
@@ -398,7 +436,16 @@ class AssetController extends Controller
             $data['asset_cluster_id'] = $chain['asset_cluster_id'];
             $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'];
         }
+
+        // FR-13.9 — riwayat dicatat sebelum mutasi override agar nilai lama terbaca.
         $this->recordHistory->fromUpdate($asset, $validated, $data['kode_asset'] ?? null, $request->user());
+
+        // Handle Manual Override
+        if ($request->has('type_override_reason')) {
+            $asset->type_override_reason = $request->input('type_override_reason');
+            $asset->asset_type = $request->input('asset_type');
+        }
+
         $asset->update($data);
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
@@ -437,6 +484,8 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset): RedirectResponse
     {
+        Gate::authorize('asset.delete');
+
         $asset->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil dihapus.']);
 
@@ -445,6 +494,8 @@ class AssetController extends Controller
 
     public function destroyBulk(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.delete');
+
         $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'uuid', Rule::exists('assets', 'id')->where('tenant_id', Tenant::current()?->id)]]);
         $assets = Asset::query()->whereKey($validated['ids'])->get();
         foreach ($assets as $asset) {
@@ -457,6 +508,8 @@ class AssetController extends Controller
 
     public function upload(UploadAssetMediaRequest $request): JsonResponse
     {
+        Gate::authorize('asset.create');
+
         $tenantId = Tenant::current()->id;
         /** @var FilesystemAdapter $disk */
         $disk = Storage::disk('public');
@@ -470,6 +523,8 @@ class AssetController extends Controller
 
     public function importTemplate(GenerateAssetImportTemplateAction $action): BinaryFileResponse
     {
+        Gate::authorize('asset.create');
+
         $path = storage_path('app/'.'temp-import-aset-'.uniqid().'.xlsx');
         $action($path);
 
@@ -478,6 +533,8 @@ class AssetController extends Controller
 
     public function import(ImportAssetsRequest $request, ImportAssetsAction $action): RedirectResponse
     {
+        Gate::authorize('asset.create');
+
         $file = $request->file('file');
         if (! $file instanceof UploadedFile) {
             throw new \RuntimeException('File upload tidak valid.');

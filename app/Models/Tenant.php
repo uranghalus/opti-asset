@@ -20,6 +20,7 @@ class Tenant extends SpatieTenant
         'id' => 'string',
     ];
 
+    /** @return BelongsToMany<User, $this, \Illuminate\Database\Eloquent\Relations\Pivot, 'users'> */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_tenants', 'tenant_id', 'user_id');

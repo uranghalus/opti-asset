@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +12,14 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Employee extends Model
 {
+    /** @use HasFactory<EmployeeFactory> */
     use BelongsToTenant, HasFactory, HasRoles, HasUuids;
 
     protected $table = 'tb_employee';
 
     protected $primaryKey = 'id_employee';
 
+    /** @var string */
     protected $guard_name = 'web';
 
     public $incrementing = false;

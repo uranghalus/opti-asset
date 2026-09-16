@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\AssetStatus;
 use App\Models\Asset;
 use App\Models\AssetTransfer;
+use App\Models\CapitalizationThreshold;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,10 +56,53 @@ class DashboardTest extends TestCase
                 ->where('stats.pending_disposals', 0)
                 ->has('warranty_alerts')
                 ->has('asset_by_classification')
+                ->has('asset_by_type')
                 ->has('asset_by_location')
                 ->has('recent_transfers')
                 ->has('recent_disposals')
                 ->has('integrity_score'));
+    }
+
+    // ---------- FR-13.8: breakdown jumlah & nilai per Tipe Aset ----------
+
+    public function test_dashboard_shows_asset_type_breakdown_with_values(): void
+    {
+        // Threshold aktif agar assigner membiarkan tipe eksplisit tetap terpasang
+        // (tanpa threshold, observer menimpa fixed_asset → equipment).
+        CapitalizationThreshold::create([
+            'amount' => 5_000_000,
+            'currency' => 'IDR',
+            'created_by' => $this->user->id,
+            'is_active' => true,
+            'activated_at' => now(),
+        ]);
+
+        // Aktiva Tetap: 10jt perolehan, 2jt akumulasi → nilai buku 8jt.
+        Asset::factory()->create([
+            'asset_type' => 'fixed_asset',
+            'acquisition_cost' => 10_000_000,
+            'accumulated_depreciation' => 2_000_000,
+        ]);
+
+        // Peralatan: 4jt perolehan (di bawah threshold).
+        Asset::factory()->create([
+            'acquisition_cost' => 4_000_000,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('dashboard')
+                ->has('asset_by_type', 2)
+                ->where('asset_by_type.0.type', 'equipment')
+                ->where('asset_by_type.0.count', 1)
+                ->where('asset_by_type.0.value', '4000000.00')
+                ->where('asset_by_type.0.book_value', '4000000.00')
+                ->where('asset_by_type.1.type', 'fixed_asset')
+                ->where('asset_by_type.1.count', 1)
+                ->where('asset_by_type.1.value', '10000000.00')
+                ->where('asset_by_type.1.book_value', '8000000.00'));
     }
 
     public function test_dashboard_counts_pending_transfers(): void

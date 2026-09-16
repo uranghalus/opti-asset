@@ -8,6 +8,8 @@ export type User = {
     created_at: string;
     updated_at: string;
     tenant_id?: string | null;
+    roles?: string[];
+    permissions?: string[];
     [key: string]: unknown;
 };
 

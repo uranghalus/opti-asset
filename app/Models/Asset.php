@@ -45,10 +45,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $asset_cluster_id
  * @property string|null $asset_sub_cluster_id
  * @property string|null $asset_type
- * @property string|null $acquisition_cost
+ * @property numeric-string|null $acquisition_cost
  * @property int|null $useful_life_years
  * @property string $depreciation_method
- * @property string $accumulated_depreciation
+ * @property numeric-string $accumulated_depreciation
  * @property int|null $capitalization_threshold_id
  * @property string|null $type_override_reason
  * @property-read string|null $book_value

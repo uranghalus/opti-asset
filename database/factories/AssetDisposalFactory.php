@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\Asset;
+use App\Models\AssetDisposal;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<AssetDisposal>
+ * @extends Factory<\App\Models\AssetDisposal>
  */
 class AssetDisposalFactory extends Factory
 {
@@ -21,7 +22,7 @@ class AssetDisposalFactory extends Factory
         return [
             'asset_id' => Asset::factory(),
             'reason' => $this->faker->optional()->sentence(),
-            'disposal_date' => $this->faker->optional()->dateTimeBetween('-1 year', '+1 year')?->format('Y-m-d'),
+            'disposal_date' => $this->faker->optional()->dateTimeBetween('-1 year', '+1 year')->format('Y-m-d'),
             'disposed_by' => User::factory(),
             'status' => 'pending',
         ];

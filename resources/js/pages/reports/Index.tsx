@@ -180,20 +180,16 @@ export default function ReportsIndex() {
     const dTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
 
-    useEffect(() => {
-        if (
-            filters.transfer_search !== prevFilters.transfer_search ||
-            filters.transfer_status !== prevFilters.transfer_status ||
-            filters.disposal_search !== prevFilters.disposal_search ||
-            filters.disposal_status !== prevFilters.disposal_status
-        ) {
-            setPrevFilters(filters);
-            setTSearch(filters.transfer_search ?? '');
-            setTStatus(filters.transfer_status ?? '');
-            setDSearch(filters.disposal_search ?? '');
-            setDStatus(filters.disposal_status ?? '');
-        }
-    }, [filters, prevFilters]);
+    // Sinkronkan state lokal saat filter server berubah (partial reload) —
+    // pola "adjust state during render" (React docs): setState hanya saat
+    // props berubah, langsung saat render tanpa effect.
+    if (filters !== prevFilters) {
+        setPrevFilters(filters);
+        setTSearch(filters.transfer_search ?? '');
+        setTStatus(filters.transfer_status ?? '');
+        setDSearch(filters.disposal_search ?? '');
+        setDStatus(filters.disposal_status ?? '');
+    }
 
     useEffect(
         () => () => {

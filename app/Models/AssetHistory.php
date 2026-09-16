@@ -41,4 +41,10 @@ class AssetHistory extends Model
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }
+
+    /** @return BelongsTo<User, $this> */
+    public function changedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'changed_by');
+    }
 }

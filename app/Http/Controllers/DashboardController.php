@@ -13,7 +13,7 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): \Inertia\Response
     {
         $assetCounts = Asset::query()
             ->selectRaw('status, count(*) as total')
@@ -31,6 +31,30 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        // FR-13.8 — ringkasan jumlah & nilai aset per Tipe Aset (Aktiva Tetap / Peralatan).
+        /**
+         * @var \Illuminate\Support\Collection<int, object{asset_type: string|null, total: int|string, total_value: int|string, total_book_value: int|string}> $typeRows
+         */
+        $typeRows = Asset::query()
+            ->selectRaw("asset_type, count(*) as total, coalesce(sum(acquisition_cost), 0) as total_value, coalesce(sum(case when asset_type = 'fixed_asset' then coalesce(acquisition_cost, 0) - coalesce(accumulated_depreciation, 0) else acquisition_cost end), 0) as total_book_value")
+            ->groupBy('asset_type')
+            ->orderBy('asset_type')
+            ->get();
+
+        $assetByType = $typeRows
+            ->map(fn ($row): array => [
+                'type' => $row->asset_type ?? 'unclassified',
+                'label' => match ($row->asset_type) {
+                    'fixed_asset' => 'Aktiva Tetap',
+                    'equipment' => 'Peralatan',
+                    default => 'Tidak ditentukan',
+                },
+                'count' => (int) $row->total,
+                'value' => number_format((float) $row->total_value, 2, '.', ''),
+                'book_value' => number_format((float) $row->total_book_value, 2, '.', ''),
+            ])
+            ->toArray();
+
         $assetByClassification = AssetGroup::query()
             ->withCount('assets')
             ->orderByDesc('assets_count')
@@ -42,18 +66,23 @@ class DashboardController extends Controller
             ])
             ->toArray();
 
-        $assetByLocation = Asset::query()
+        /**
+         * @var \Illuminate\Support\Collection<int, object{location_id: string, total: int|string}> $locationRows
+         */
+        $locationRows = Asset::query()
             ->selectRaw('location_id, count(*) as total')
             ->whereNotNull('location_id')
             ->groupBy('location_id')
             ->orderByDesc('total')
             ->take(6)
-            ->get()
-            ->map(function ($row) {
-                $location = Location::find($row->location_id);
+            ->get();
+
+        $assetByLocation = $locationRows
+            ->map(function ($row): array {
+                $location = Location::query()->find($row->location_id);
 
                 return [
-                    'name' => $location?->name ?? 'Tidak diketahui',
+                    'name' => ($location !== null ? $location->name : null) ?? 'Tidak diketahui',
                     'count' => (int) $row->total,
                 ];
             })
@@ -110,6 +139,7 @@ class DashboardController extends Controller
                 'pending_disposals' => $pendingDisposals,
             ],
             'asset_by_classification' => $assetByClassification,
+            'asset_by_type' => $assetByType,
             'asset_by_location' => $assetByLocation,
             'recent_transfers' => $recentTransfers,
             'recent_disposals' => $recentDisposals,

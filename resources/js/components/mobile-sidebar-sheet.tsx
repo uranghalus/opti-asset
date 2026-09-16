@@ -1,13 +1,10 @@
 'use client';
 
 import { Link, router } from '@inertiajs/react';
-import { usePage } from '@inertiajs/react';
 import { UserCircle, LayoutDashboard } from 'lucide-react';
 import { useEffect } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { NotificationBell } from '@/components/notification-bell';
 import { TenantSwitcher } from '@/components/tenant-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -23,10 +20,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { UserInfo } from '@/components/user-info';
 import { sidebarData } from '@/data/sidebar';
+import { useCan } from '@/hooks/use-can';
 import { dashboard, logout } from '@/routes';
-import type { User } from '@/types';
 
 type Props = {
     isOpen: boolean;
@@ -34,8 +30,23 @@ type Props = {
 };
 
 export function MobileSidebarSheet({ isOpen, onClose }: Props) {
-    const { auth } = usePage().props as { auth?: { user?: User } };
-    const user = auth?.user;
+    const can = useCan();
+
+    const visibleGroups = sidebarData.navGroups
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => {
+                const permission = item.permission;
+
+                return (
+                    !permission ||
+                    permission.actions.some((action) =>
+                        can(`${permission.resource}.${action}`),
+                    )
+                );
+            }),
+        }))
+        .filter((group) => group.items.length > 0);
 
     useEffect(() => {
         if (isOpen) {
@@ -88,7 +99,7 @@ export function MobileSidebarSheet({ isOpen, onClose }: Props) {
                     {/* Navigation Groups */}
                     <div className="flex w-full flex-col">
                         <SidebarContent className="gap-2">
-                            {sidebarData.navGroups.map((group, groupIndex) => (
+                            {visibleGroups.map((group, groupIndex) => (
                                 <SidebarGroup
                                     key={group.title}
                                     className="px-1 py-0"
@@ -127,8 +138,7 @@ export function MobileSidebarSheet({ isOpen, onClose }: Props) {
                                             </SidebarMenuItem>
                                         ))}
                                     </SidebarMenu>
-                                    {groupIndex <
-                                        sidebarData.navGroups.length - 1 && (
+                                    {groupIndex < visibleGroups.length - 1 && (
                                         <div className="mx-1 my-2 h-px bg-border/50" />
                                     )}
                                 </SidebarGroup>

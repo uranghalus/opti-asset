@@ -69,10 +69,7 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                                 strokeWidth={0}
                             >
                                 {data.map((entry) => (
-                                    <Cell
-                                        key={entry.name}
-                                        fill={entry.color}
-                                    />
+                                    <Cell key={entry.name} fill={entry.color} />
                                 ))}
                             </Pie>
                         </PieChart>

@@ -10,6 +10,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AuditLogTest extends TestCase
@@ -31,7 +33,21 @@ class AuditLogTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        Permission::findOrCreate('audit.view', 'web');
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo('audit.view');
+    }
+
+    public function test_index_forbids_user_without_audit_view_permission(): void
+    {
+        $this->user->revokePermissionTo('audit.view');
+
+        $this->actingAs($this->user)
+            ->get(route('audit-logs.index'))
+            ->assertForbidden();
     }
 
     public function test_creating_asset_records_activity_log(): void

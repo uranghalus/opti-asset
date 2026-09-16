@@ -9,16 +9,6 @@ import {
     TableCell,
 } from '@/components/ui/table';
 
-type HistoryEntry = {
-    id: string;
-    field: string;
-    old_value: string | null;
-    new_value: string | null;
-    changed_by: string | null;
-    changed_by_name: string | null;
-    created_at: string;
-};
-
 const FIELD_LABELS: Record<string, string> = {
     status: 'Status',
     condition: 'Kondisi',

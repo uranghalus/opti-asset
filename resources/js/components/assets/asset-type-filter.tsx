@@ -12,11 +12,17 @@ export function AssetTypeFilter({
     onChange,
     status,
     onStatusChange,
+    locations = [],
+    location,
+    onLocationChange,
 }: {
     value: '' | 'fixed_asset' | 'equipment';
     onChange: (value: '' | 'fixed_asset' | 'equipment') => void;
     status: string;
     onStatusChange: (status: string) => void;
+    locations?: { id: string; name: string }[];
+    location?: string;
+    onLocationChange?: (value: string) => void;
 }) {
     return (
         <div className="flex items-center gap-3">
@@ -60,6 +66,29 @@ export function AssetTypeFilter({
                     </SelectContent>
                 </Select>
             </div>
+            {onLocationChange && (
+                <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                        Lokasi
+                    </Label>
+                    <Select
+                        value={location ?? ''}
+                        onValueChange={onLocationChange}
+                    >
+                        <SelectTrigger className="h-9 w-[150px] border-white/15 bg-white/10">
+                            <SelectValue placeholder="Semua Lokasi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">Semua Lokasi</SelectItem>
+                            {locations.map((loc) => (
+                                <SelectItem key={loc.id} value={loc.id}>
+                                    {loc.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
         </div>
     );
 }

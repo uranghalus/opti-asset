@@ -51,7 +51,6 @@ class StoreAssetRequest extends FormRequest
             'acquisition_cost' => ['nullable', 'numeric', 'min:0'],
             'useful_life_years' => ['nullable', 'integer', 'min:1'],
             'depreciation_method' => ['nullable', Rule::in(['straight_line', 'declining_balance', 'none'])],
-            'accumulated_depreciation' => ['nullable', 'numeric', 'min:0'],
             'type_override_reason' => ['nullable', 'string', 'max:500'],
         ];
     }

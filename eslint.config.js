@@ -63,6 +63,13 @@ export default [
         },
         rules: {
             '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                },
+            ],
             '@typescript-eslint/consistent-type-imports': [
                 'error',
                 {
@@ -111,6 +118,15 @@ export default [
             'tailwind.config.js',
             'vite.config.ts',
             'cypress',
+            '.agents/**',
+            '.claude/**',
+            '.cursor/**',
+            '.impeccable/**',
+            '.opencode/**',
+            '.qwen/**',
+            'graphify-out/**',
+            'Memory/**',
+            'tasks/**',
             'resources/js/actions/**',
             'resources/js/components/ui/*',
             'resources/js/routes/**',

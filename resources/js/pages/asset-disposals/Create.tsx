@@ -30,7 +30,7 @@ type PageProps = {
 
 export default function AssetDisposalsCreate() {
     const { assets } = usePage().props as unknown as PageProps;
-    const { data, setData, post, errors, processing } = useForm({
+    const { data, setData, post, errors } = useForm({
         asset_id: '',
         reason: '',
         disposal_date: '',

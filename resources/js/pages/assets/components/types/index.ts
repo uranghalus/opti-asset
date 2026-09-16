@@ -68,6 +68,7 @@ export type PageProps = {
         asset_type: string;
         department: string;
         condition: string;
+        location: string;
         level: string;
         node: string;
         initialLevel: string;

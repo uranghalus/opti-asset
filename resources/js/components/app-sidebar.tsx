@@ -22,7 +22,7 @@ type Props = {
     onClose?: () => void;
 };
 
-export function AppSidebar({ isMobile = false, open = false, onClose }: Props) {
+export function AppSidebar({ isMobile = false, open = false }: Props) {
     const sidebarClassName = cn(
         'sidebar-glass ease-out-[cubic-bezier(0.16,1,0.3,1)] border-r-0 transition-all duration-300',
         isMobile &&

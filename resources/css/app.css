@@ -593,8 +593,13 @@
 
     /* Slow pulse for ambient glow blobs */
     @keyframes pulse-slow {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
+        0%,
+        100% {
+            opacity: 0.6;
+        }
+        50% {
+            opacity: 1;
+        }
     }
 
     .animate-pulse-slow {

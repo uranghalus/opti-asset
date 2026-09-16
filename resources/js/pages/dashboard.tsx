@@ -37,6 +37,13 @@ type Stats = {
 };
 
 type ClassificationSlice = { name: string; count: number };
+type AssetTypeSlice = {
+    type: string;
+    label: string;
+    count: number;
+    value: string;
+    book_value: string;
+};
 type LocationSlice = { name: string; count: number };
 type RecentTransfer = {
     id: string;
@@ -71,6 +78,7 @@ type WarrantyAlerts = {
 type PageProps = {
     stats: Stats;
     asset_by_classification: ClassificationSlice[];
+    asset_by_type: AssetTypeSlice[];
     asset_by_location: LocationSlice[];
     recent_transfers: RecentTransfer[];
     recent_disposals: RecentDisposal[];
@@ -90,9 +98,15 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
 
     return (
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1230] via-[#221533] to-[#1B1230] p-6 shadow-lg shadow-[#000C3D]/20 sm:p-8">
-            <div className="pointer-events-none absolute -top-24 -right-20 size-80 rounded-full bg-[#FFB23E]/10 blur-3xl animate-pulse-slow" />
-            <div className="pointer-events-none absolute -bottom-16 -left-12 size-64 rounded-full bg-[#B892FF]/10 blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
-            <div className="pointer-events-none absolute top-1/2 left-1/2 size-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5EEAD4]/5 blur-2xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+            <div className="animate-pulse-slow pointer-events-none absolute -top-24 -right-20 size-80 rounded-full bg-[#FFB23E]/10 blur-3xl" />
+            <div
+                className="animate-pulse-slow pointer-events-none absolute -bottom-16 -left-12 size-64 rounded-full bg-[#B892FF]/10 blur-3xl"
+                style={{ animationDelay: '1s' }}
+            />
+            <div
+                className="animate-pulse-slow pointer-events-none absolute top-1/2 left-1/2 size-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5EEAD4]/5 blur-2xl"
+                style={{ animationDelay: '2s' }}
+            />
 
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-3">
@@ -153,6 +167,76 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                 </div>
             </div>
         </section>
+    );
+}
+
+function AssetTypeBreakdown({ slices }: { slices: AssetTypeSlice[] }) {
+    const formatter = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 2,
+    });
+
+    const total = slices.reduce((sum, s) => sum + s.count, 0);
+    const COLORS: Record<string, string> = {
+        fixed_asset: '#FFB23E',
+        equipment: '#B892FF',
+        unclassified: '#5EEAD4',
+    };
+
+    return (
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {slices.map((s) => {
+                const pct = total > 0 ? Math.round((s.count / total) * 100) : 0;
+                const color = COLORS[s.type] ?? '#94A3B8';
+
+                return (
+                    <li
+                        key={s.type}
+                        className="group relative overflow-hidden rounded-xl border border-border/60 bg-background/40 p-4 transition-colors duration-150 hover:border-primary/30"
+                    >
+                        <div
+                            className="absolute inset-x-0 top-0 h-0.5"
+                            style={{ backgroundColor: color }}
+                        />
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">
+                                    {s.label}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    {pct}% dari total aset
+                                </p>
+                            </div>
+                            <span
+                                className="font-mono text-lg font-bold tabular-nums"
+                                style={{ color }}
+                            >
+                                {s.count}
+                            </span>
+                        </div>
+                        <dl className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <dt className="text-[11px] text-muted-foreground">
+                                    Nilai Perolehan
+                                </dt>
+                                <dd className="font-mono text-xs font-semibold text-foreground tabular-nums">
+                                    {formatter.format(parseFloat(s.value))}
+                                </dd>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <dt className="text-[11px] text-muted-foreground">
+                                    Nilai Buku
+                                </dt>
+                                <dd className="font-mono text-xs font-semibold text-foreground tabular-nums">
+                                    {formatter.format(parseFloat(s.book_value))}
+                                </dd>
+                            </div>
+                        </dl>
+                    </li>
+                );
+            })}
+        </ul>
     );
 }
 
@@ -247,7 +331,13 @@ function LocationStack({ slices }: { slices: LocationSlice[] }) {
     );
 }
 
-function MiniLedger({ rows, kind }: { rows: RecentTransfer[] | RecentDisposal[]; kind: 'transfer' | 'disposal' }) {
+function MiniLedger({
+    rows,
+    kind,
+}: {
+    rows: RecentTransfer[] | RecentDisposal[];
+    kind: 'transfer' | 'disposal';
+}) {
     if (rows.length === 0) {
         return (
             <EmptyState
@@ -283,7 +373,10 @@ function MiniLedger({ rows, kind }: { rows: RecentTransfer[] | RecentDisposal[];
                     key={r.id}
                     className="grid grid-cols-1 gap-1 border-b border-border/40 px-2 py-2 text-sm last:border-b-0 sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                    <span className="font-mono text-xs font-semibold sm:col-span-4" style={{ color: accent }}>
+                    <span
+                        className="font-mono text-xs font-semibold sm:col-span-4"
+                        style={{ color: accent }}
+                    >
                         {r.asset_kode}
                     </span>
                     <span className="text-xs text-muted-foreground sm:col-span-4">
@@ -292,7 +385,14 @@ function MiniLedger({ rows, kind }: { rows: RecentTransfer[] | RecentDisposal[];
                             : (r as RecentDisposal).reason}
                     </span>
                     <span className="sm:col-span-2">
-                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1" style={{ backgroundColor: `${accent}15`, color: accent, borderColor: `${accent}30` }}>
+                        <span
+                            className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1"
+                            style={{
+                                backgroundColor: `${accent}15`,
+                                color: accent,
+                                borderColor: `${accent}30`,
+                            }}
+                        >
                             {r.status}
                         </span>
                     </span>
@@ -308,7 +408,13 @@ function MiniLedger({ rows, kind }: { rows: RecentTransfer[] | RecentDisposal[];
     );
 }
 
-function RecentActivity({ transfers, disposals }: { transfers: RecentTransfer[]; disposals: RecentDisposal[] }) {
+function RecentActivity({
+    transfers,
+    disposals,
+}: {
+    transfers: RecentTransfer[];
+    disposals: RecentDisposal[];
+}) {
     const items = [
         ...transfers.map((t) => ({ ...t, type: 'mutasi' as const })),
         ...disposals.map((d) => ({ ...d, type: 'disposal' as const })),
@@ -333,10 +439,14 @@ function RecentActivity({ transfers, disposals }: { transfers: RecentTransfer[];
                     key={item.id}
                     className="flex items-start gap-3 border-b border-border/40 py-2.5 text-sm last:border-b-0"
                 >
-                    <div className={cn(
-                        'mt-0.5 size-2 shrink-0 rounded-full',
-                        item.type === 'mutasi' ? 'bg-[#FFB23E]' : 'bg-[#B892FF]',
-                    )} />
+                    <div
+                        className={cn(
+                            'mt-0.5 size-2 shrink-0 rounded-full',
+                            item.type === 'mutasi'
+                                ? 'bg-[#FFB23E]'
+                                : 'bg-[#B892FF]',
+                        )}
+                    />
                     <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-semibold text-foreground">
                             {item.asset_kode}
@@ -355,12 +465,14 @@ function RecentActivity({ transfers, disposals }: { transfers: RecentTransfer[];
                             })}
                         </p>
                     </div>
-                    <span className={cn(
-                        'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold',
-                        item.status === 'Disetujui'
-                            ? 'bg-[#5EEAD4]/10 text-[#5EEAD4]'
-                            : 'bg-[#FFB23E]/10 text-[#FFB23E]',
-                    )}>
+                    <span
+                        className={cn(
+                            'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold',
+                            item.status === 'Disetujui'
+                                ? 'bg-[#5EEAD4]/10 text-[#5EEAD4]'
+                                : 'bg-[#FFB23E]/10 text-[#FFB23E]',
+                        )}
+                    >
                         {item.status}
                     </span>
                 </div>
@@ -410,12 +522,14 @@ function IntegrityRing({ score }: { score: number }) {
                     </span>
                 </div>
             </div>
-            <span className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
-                good
-                    ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
-                    : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
-            )}>
+            <span
+                className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
+                    good
+                        ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
+                        : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
+                )}
+            >
                 <ShieldCheck className="size-3" />
                 {good ? 'Target Tercapai' : 'Di Bawah Target'}
             </span>
@@ -428,6 +542,7 @@ export default function Dashboard() {
     const {
         stats,
         asset_by_classification,
+        asset_by_type,
         asset_by_location,
         recent_transfers,
         recent_disposals,
@@ -466,6 +581,17 @@ export default function Dashboard() {
                         <ClassificationBars slices={asset_by_classification} />
                     </section>
                     <div className="flex flex-col gap-5">
+                        <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
+                            <header>
+                                <p className="text-[10px] font-semibold tracking-widest text-[#5EEAD4] uppercase">
+                                    FR-13.8
+                                </p>
+                                <h3 className="mt-1 text-base font-semibold">
+                                    Aset per Tipe
+                                </h3>
+                            </header>
+                            <AssetTypeBreakdown slices={asset_by_type} />
+                        </section>
                         <section className="glass-panel flex flex-col items-center gap-4 rounded-2xl p-5">
                             <header className="w-full">
                                 <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">

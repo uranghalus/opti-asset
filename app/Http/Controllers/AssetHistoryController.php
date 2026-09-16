@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\AssetHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +16,8 @@ class AssetHistoryController extends Controller
      */
     public function index(Request $request, Asset $asset): Response
     {
+        Gate::authorize('asset.view');
+
         $perPage = min((int) $request->integer('per_page', 20), 100);
 
         $histories = AssetHistory::query()

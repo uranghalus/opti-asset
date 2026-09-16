@@ -68,7 +68,7 @@ export const sidebarData: SidebarData = {
                     url: '/items',
                     icon: Package,
                     permission: {
-                        resource: 'inventory',
+                        resource: 'asset.item',
                         actions: ['view'],
                     },
                 },
@@ -105,8 +105,8 @@ export const sidebarData: SidebarData = {
                     url: '/asset-disposals',
                     icon: ArchiveX,
                     permission: {
-                        resource: 'asset',
-                        actions: ['delete'],
+                        resource: 'asset.disposal',
+                        actions: ['view'],
                     },
                 },
                 {
@@ -114,7 +114,7 @@ export const sidebarData: SidebarData = {
                     url: '/audit-logs',
                     icon: History,
                     permission: {
-                        resource: 'audit.log',
+                        resource: 'audit',
                         actions: ['view'],
                     },
                 },

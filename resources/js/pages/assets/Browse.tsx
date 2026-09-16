@@ -42,6 +42,7 @@ export default function Browse({ pageProps }: BrowseProps) {
         assets,
         unclassifiedCount,
         items,
+        locations,
         filters,
     } = pageProps;
 
@@ -52,6 +53,9 @@ export default function Browse({ pageProps }: BrowseProps) {
     );
     const [departmentFilter, setDepartmentFilter] = useState(
         filters.department,
+    );
+    const [locationFilter, setLocationFilter] = useState(
+        filters.location ?? '',
     );
     const [conditionFilter, setConditionFilter] = useState(filters.condition);
     const [treeSearch, setTreeSearch] = useState('');
@@ -117,8 +121,12 @@ export default function Browse({ pageProps }: BrowseProps) {
     const allSelected =
         pageIds.length > 0 && pageIds.every((id) => selected.has(id));
     const activeFilterCount =
-        [statusFilter, departmentFilter, conditionFilter].filter(Boolean)
-            .length +
+        [
+            statusFilter,
+            departmentFilter,
+            conditionFilter,
+            locationFilter,
+        ].filter(Boolean).length +
         (search ? 1 : 0) +
         (selectedId ? 1 : 0);
 
@@ -165,6 +173,10 @@ export default function Browse({ pageProps }: BrowseProps) {
             p.department = departmentFilter;
         }
 
+        if (locationFilter) {
+            p.location = locationFilter;
+        }
+
         if (assetTypeFilter) {
             p.asset_type = assetTypeFilter;
         }
@@ -200,6 +212,7 @@ export default function Browse({ pageProps }: BrowseProps) {
         setStatusFilter('');
         setAssetTypeFilter('');
         setDepartmentFilter('');
+        setLocationFilter('');
         setConditionFilter('');
         navigate(currentParams());
     };
@@ -344,6 +357,14 @@ export default function Browse({ pageProps }: BrowseProps) {
                                     setStatusFilter(v);
                                     reload(v ? { status: v } : { status: '' });
                                 }}
+                                locations={locations}
+                                location={locationFilter}
+                                onLocationChange={(v) => {
+                                    setLocationFilter(v);
+                                    reload(
+                                        v ? { location: v } : { location: '' },
+                                    );
+                                }}
                                 allSelected={allSelected}
                                 onToggleSelectAll={toggleSelectAll}
                                 hasAssets={safeAssets.data.length > 0}
@@ -382,6 +403,7 @@ export default function Browse({ pageProps }: BrowseProps) {
                                     search.trim() ||
                                     statusFilter ||
                                     departmentFilter ||
+                                    locationFilter ||
                                     conditionFilter,
                                 )}
                                 onClearFilters={clearFilters}

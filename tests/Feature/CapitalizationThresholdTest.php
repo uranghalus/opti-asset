@@ -8,6 +8,7 @@ use App\Models\CapitalizationThreshold;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -123,22 +124,25 @@ class CapitalizationThresholdTest extends TestCase
 
         $this->actingAs($this->superAdmin);
 
+        // 12jt / 4 tahun = 250rb per bulan; 8 bulan layanan = 2jt akumulasi.
         $asset = Asset::factory()->create([
-            'acquisition_cost' => 10_000_000,
-            'accumulated_depreciation' => 2_000_000,
+            'acquisition_cost' => 12_000_000,
+            'useful_life_years' => 4,
+            'depreciation_method' => 'straight_line',
+            'in_come_date' => today()->subMonthsNoOverflow(8),
         ]);
 
         $asset->refresh();
 
         $this->assertDatabaseHas('asset_book_values', [
             'asset_id' => $asset->id,
-            'book_value' => 8_000_000,
+            'book_value' => 10_000_000,
             'accumulated_depreciation' => 2_000_000,
             'recorded_by' => $this->superAdmin->id,
         ]);
     }
 
-    public function test_book_value_snapshot_is_deduplicated_per_day(): void
+    public function test_book_value_snapshot_is_deduplicated_per_month(): void
     {
         $this->createActiveThreshold(5_000_000);
 
@@ -152,6 +156,27 @@ class CapitalizationThresholdTest extends TestCase
         $asset->update(['brand' => 'Ubah Tanpa Ubah Nilai']);
 
         $this->assertSame(1, AssetBookValue::query()->where('asset_id', $asset->id)->count());
+    }
+
+    public function test_book_value_snapshot_created_once_per_period(): void
+    {
+        $this->createActiveThreshold(5_000_000);
+
+        $this->actingAs($this->superAdmin);
+
+        $this->travelTo(Carbon::parse('2026-08-31'));
+
+        $asset = Asset::factory()->create([
+            'acquisition_cost' => 10_000_000,
+            'accumulated_depreciation' => 0,
+        ]);
+
+        // Bulan berikutnya — snapshot baru wajar dibuat (periode berbeda).
+        $this->travelTo(Carbon::parse('2026-09-15'));
+
+        $asset->update(['brand' => 'Ubah Di Bulan Baru']);
+
+        $this->assertSame(2, AssetBookValue::query()->where('asset_id', $asset->id)->count());
     }
 
     public function test_equipment_does_not_snapshot_book_value(): void
@@ -170,14 +195,17 @@ class CapitalizationThresholdTest extends TestCase
         $this->createActiveThreshold(5_000_000);
 
         // Tidak ada sesi (CLI/seeder) — snapshot tetap tercatat tanpa recorded_by.
+        // 12jt / 4 tahun = 250rb per bulan; 8 bulan layanan = 2jt akumulasi.
         $asset = Asset::factory()->create([
-            'acquisition_cost' => 10_000_000,
-            'accumulated_depreciation' => 1_000_000,
+            'acquisition_cost' => 12_000_000,
+            'useful_life_years' => 4,
+            'depreciation_method' => 'straight_line',
+            'in_come_date' => today()->subMonthsNoOverflow(8),
         ]);
 
         $this->assertDatabaseHas('asset_book_values', [
             'asset_id' => $asset->id,
-            'book_value' => 9_000_000,
+            'book_value' => 10_000_000,
             'recorded_by' => null,
         ]);
     }
@@ -188,14 +216,17 @@ class CapitalizationThresholdTest extends TestCase
     {
         $this->createActiveThreshold(5_000_000);
 
+        // 12jt / 4 tahun = 250rb per bulan; 10 bulan layanan = 2,5jt akumulasi.
         $asset = Asset::factory()->create([
-            'acquisition_cost' => 10_000_000,
-            'accumulated_depreciation' => 2_500_000,
+            'acquisition_cost' => 12_000_000,
+            'useful_life_years' => 4,
+            'depreciation_method' => 'straight_line',
+            'in_come_date' => today()->subMonthsNoOverflow(10),
         ]);
 
         $asset->refresh();
 
-        $this->assertSame('7500000.00', $asset->book_value);
+        $this->assertSame('9500000.00', $asset->book_value);
     }
 
     public function test_book_value_is_null_for_equipment(): void
@@ -347,6 +378,38 @@ class CapitalizationThresholdTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('settings.capitalization-threshold.reassign-types'))
             ->assertForbidden();
+    }
+
+    // ---------- FR-13.9: override manual tercatat di riwayat aset ----------
+
+    public function test_type_override_is_recorded_in_asset_history(): void
+    {
+        $this->createActiveThreshold(5_000_000);
+
+        $asset = Asset::factory()->create(['acquisition_cost' => 20_000_000]);
+        $this->assertSame('fixed_asset', $asset->refresh()->asset_type);
+
+        $this->actingAs($this->superAdmin)
+            ->from(route('assets.index'))
+            ->patch(route('assets.update', $asset), [
+                'asset_type' => 'equipment',
+                'type_override_reason' => 'Kebijakan internal perusahaan',
+            ])
+            ->assertRedirect();
+
+        $asset->refresh();
+
+        $this->assertSame('equipment', $asset->asset_type);
+        $this->assertSame('Kebijakan internal perusahaan', $asset->type_override_reason);
+
+        $typeEntry = $asset->histories()->where('field', 'asset_type')->first();
+        $this->assertNotNull($typeEntry);
+        $this->assertSame('Aktiva Tetap', $typeEntry->old_value);
+        $this->assertSame('Peralatan', $typeEntry->new_value);
+
+        $reasonEntry = $asset->histories()->where('field', 'type_override_reason')->first();
+        $this->assertNotNull($reasonEntry);
+        $this->assertSame('Kebijakan internal perusahaan', $reasonEntry->new_value);
     }
 
     public function test_threshold_routes_require_authentication(): void

@@ -1,32 +1,47 @@
-# TODO — Permissions Feature Rebuild
+# TODO — PRD Gap Closure
 
-Plan: `tasks/plan.md` · Scope: full rebuild · Bridge: sync-at-login · `migrate:fresh --seed` approved.
+Plan: `tasks/plan.md` · Approved 2026-09-16 · Scope: full gap closure
 
-## Phase 1: Teardown
+## Phase 1: Security
 
-- [x] Task 1: Remove permissions feature (migrations, seeders, controllers, requests, tests, UI pages, routes, sidebar links)
+- [ ] Task 1: Gates on AssetController + AssetHistoryController (`asset.view/create/edit/delete`) + tests
+- [ ] Task 2: Gates on AssetTransferController + AssetDisposalController + tests
+- [ ] Task 3: `asset.item.*` permissions + gates on Item/Category/Location controllers + sidebar gating
+- [ ] Task 4: `audit.view` gate on AuditLogController + sidebar link
+- [ ] Task 5: FR-07.6 disposed-asset guard (transfer store + asset edit/delete paths) + tests
 
-## Phase 2: Foundation
+## Checkpoint: Security
 
-- [x] Task 2: Single permission-tables migration (`model_id` string) + `migrate:fresh --seed`
-- [x] Task 3: Seeders rebuilt (super-admin = no permissions) + `Gate::before` cleanup
+- [ ] Focused test runs green; 403 for users without permissions; sidebar respects permissions
 
-## Phase 3: Role Bridge
+## Phase 2: FR-13 Completion
 
-- [x] Task 4: `SyncUserRolesFromEmployeeAction` + `Login` event listener + re-sync after employee role change
+- [ ] Task 6: DepreciationCalculator (monthly straight-line + 200% DDB floored at zero) wired into AssetObserver; forms show derived accumulation
+- [ ] Task 7: Monthly book-value snapshots (replace daily dedup) + tests
+- [ ] Task 8: FR-13.10 book-value history UI on asset Show page (impeccable craft-floor)
+- [ ] Task 9: FR-13.9 record asset_type/override changes in RecordAssetHistoryAction + tests
 
-## Phase 4: Admin Slices
+## Checkpoint: FR-13 Complete
 
-- [x] Task 5: Role admin slice (controller + requests + `role.*` gates + routes + wayfinder)
-- [x] Task 6: Permission admin slice (controller + requests + `permission.*` gates + routes + wayfinder)
-- [x] Task 7: Recreate roles/permissions UI pages (restored from git) + sidebar entries
+- [ ] Hand-verified depreciation examples pass; FR-13.1–13.11 all demonstrably met
 
-## Phase 5: Polish
+## Phase 3: Dashboard & Filters
 
-- [x] Task 8: Pint, phpstan (my files clean), full suite (321 passed), frontend checks, wayfinder, memory + graphify
+- [ ] Task 10: FR-13.8 dashboard breakdown per asset type (count + value) (impeccable craft-floor) + tests
+- [ ] Task 11: FR-04 Browse location filter + item-name search + tests
+
+## Checkpoint: Features Complete
+
+- [ ] Dashboard type card + Browse filters verified
+
+## Phase 4: CI Green
+
+- [ ] Task 12: ESLint --fix + Pint + format residuals
+- [ ] Task 13: PHPStan level 7 → 0 errors
+- [ ] Task 14: Full `composer ci:check` green + PRD §12 update + Memory update + graphify update
 
 ## Checkpoints
 
-- [x] After Task 3: `migrate:fresh --seed` green; infra tests pass
-- [x] After Task 7: end-to-end login→roles→gates covered by tests
-- [x] Task 8: all suites green, docs updated
+- [ ] After Phase 1: security tests green
+- [ ] After Phase 2: depreciation hand-checks pass
+- [ ] After Phase 4: `composer ci:check` fully green; PRD + memory updated

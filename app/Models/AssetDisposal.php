@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Enums\AssetDisposalStatus;
 use App\Models\Concerns\BelongsToTenant;
+use Database\Factories\AssetDisposalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AssetDisposal extends Model
 {
+    /** @use HasFactory<AssetDisposalFactory> */
     use BelongsToTenant, HasFactory;
 
     protected $fillable = [
@@ -25,11 +27,13 @@ class AssetDisposal extends Model
         'status' => AssetDisposalStatus::class,
     ];
 
+    /** @return BelongsTo<Asset, $this> */
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function disposedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'disposed_by');

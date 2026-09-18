@@ -151,7 +151,7 @@ export default function OrganizationsIndex() {
 
                     <div className="card-enter flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3.5">
-                            <div className="glass-card flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-indigo-500/15 text-primary shadow-md ring-1 ring-primary/10">
+                            <div className="glass-card flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB23E]/20 to-[#B892FF]/20 text-primary shadow-md ring-1 ring-primary/10">
                                 <Building2
                                     className="size-6"
                                     strokeWidth={1.5}

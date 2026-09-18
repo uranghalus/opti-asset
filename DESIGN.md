@@ -1,110 +1,125 @@
 ---
-version: '1.1'
-name: 'NOON — Illuminate your workflow'
-description: 'Modern SaaS dashboard with subtle Glassmorphism, optimized for data density, accessibility, and interactive productivity.'
+version: 'alpha'
+name: 'Soft UI Evolution'
+description: 'Design evolved neumorphism with improved contrast (WCAG AA+), modern aesthetics, subtle depth, accessibility focus. Ideal for landing pages, saas. AI-ready template.'
 colors:
-    primary: '#FFB23E' # Primary CTAs, active states, key highlights
-    secondary: '#B892FF' # Secondary accents, tags, charts
-    tertiary: '#5EEAD4' # Success states, positive metrics, badges
-    background-base: '#1B1230' # Main app background (dark mode optimized)
-    background-surface: '#221533' # Cards, sidebars, elevated glass surfaces
-    text-primary: '#F8FAFC'
-    text-secondary: '#94A3B8'
+    primary: '#87CEEB'
+    secondary: '#FFB6C1'
+    tertiary: '#90EE90'
 typography:
     h1:
-        fontFamily: system-ui, -apple-system, sans-serif
-        fontSize: 2rem
+        fontFamily: System UI stack
+        fontSize: 2.25rem
         fontWeight: 700
-        letterSpacing: -0.02em
     body-md:
-        fontFamily: system-ui, -apple-system, sans-serif
-        fontSize: 0.875rem # 14px, standard for SaaS data density
+        fontFamily: System UI stack
+        fontSize: 1rem
         fontWeight: 400
-        lineHeight: 1.5
-    mono:
-        fontFamily: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
-        fontSize: 0.8125rem # 13px, for code blocks, IDs, data tables
-        fontWeight: 400
+    label-caps:
+        fontFamily: System UI stack
+        fontSize: 0.75rem
+        fontWeight: 500
 rounded:
-    sm: 6px # Inputs, small buttons
-    md: 8px # Cards, modals
-    lg: 12px # Large containers, sidebars
-spacing:
-    xs: 0.5rem
-    sm: 1rem
-    md: 1.5rem
-    lg: 2.5rem
-motion:
-    duration-fast: 120ms # Hover, focus, toggle
-    duration-base: 200ms # Row expand/collapse, drawer content swap
-    duration-slow: 320ms # Modal/drawer enter-exit, page transitions
-    easing-standard: cubic-bezier(0.4, 0, 0.2, 1) # Default in/out
-    easing-emphasized: cubic-bezier(0.16, 1, 0.3, 1) # Drag-drop settle, success states
+    sm: 10px
+    md: 20px
+    lg: 30px
+components:
+    button-primary:
+        backgroundColor: '{colors.primary}'
+        rounded: '{rounded.sm}'
+        padding: 12px
 ---
 
 ## Overview
 
-NOON — Illuminate your workflow. Modern B2B SaaS dashboard with subtle Glassmorphism, tuned for an interactive, feedback-rich classification workflow (drag-and-drop tree, inline editing, bulk actions).
+Design evolved neumorphism with improved contrast (WCAG AA+), modern aesthetics, subtle depth, accessibility focus. Ideal for landing pages, saas. AI-ready template. Remember 2020 neumorphism? That beautiful disaster. Designers lost their minds over those puffy, extruded buttons — and then watched usability testers fail to distinguish active states from disabled ones. The contrast ratios were abysmal. WCAG compliance? Nonexistent. The style died fast, but the desire for tactile, physical-feeling interfaces never went away.
 
-- Density: 7/10 — High density for data tables and dashboards
-- Variance: 4/10 — Consistent UI patterns for predictability
-- Motion: 6/10 — Deliberate, responsive micro-interactions on every action; no ambient/parallax motion
+Samsung's One UI quietly showed the path forward. Soft shadows, generous padding, rounded containers — but with actual color differentiation and readable text. They proved you could have depth without sacrificing legibility. Apple's visionOS spatial design language pushed it further: layered surfaces with clear hierarchy, not just embossed sameness.
 
-- **Style:** Subtle Glassmorphism / Clean Corporate
-- **Keywords:** dashboard, data-driven, accessible, clean, productive, responsive
-- **Era:** 2020s Modern SaaS
-- **Light/Dark:** ✓ Light (optimized default) / ○ Dark (opt-in)
+By 2026, Soft UI Evolution is what neumorphism should have been from the start. Real contrast ratios meeting AA standards. Shadows that communicate elevation, not decoration. Color palettes that use soft tones without washing out interactive elements. The tactile metaphor survived — it just grew up.
+
+- Density: 5/10 — Balanced
+- Variance: 4/10 — Moderate
+- Motion: 4/10 — Subtle
+
+- **Style:** Soft, Subtle, Pastel, Refined
+- **Keywords:** Evolved soft UI, better contrast, modern aesthetics, subtle depth, accessibility-focused, improved shadows, hybrid
+- **Era:** 2020s Modern
+- **Light/Dark:** ✓ Full / ✓ Full
 
 ## Colors
 
-- **#FFB23E** — Primary / CTA
-- **#B892FF** — Secondary / Accent
-- **#5EEAD4** — Tertiary / Success
-- **#1B1230** — Base Background
-- **#221533** — Surface / Glass Background
-- **#F8FAFC** — Text Primary
-- **#94A3B8** — Text Secondary
+- **Soft Blue** (#87CEEB) — Accent highlight, links and focus states
+- **Soft Pink** (#FFB6C1) — Primary text color
+- **Soft Green** (#90EE90) — Supporting palette color
 
 ## Typography
 
-- **system-ui** — headings and body text
-- **ui-monospace** — code, IDs, and data tables
+- **Display / Hero:** System UI stack (-apple-system, sans-serif) — Weight 700, tight tracking, used for headline impact
+- **Body:** System UI stack (-apple-system, sans-serif) — Weight 400, 16px/1.6 line-height, max 72ch per line
+- **UI Labels / Captions:** System UI stack (-apple-system, sans-serif) — 0.875rem, weight 500, slight letter-spacing
+- **Monospace:** JetBrains Mono — Used for code, metadata, and technical values
+
+Scale:
+
+- Hero: clamp(2.5rem, 5vw, 4rem)
+- H1: 2.25rem
+- H2: 1.5rem
+- Body: 1rem / 1.6
+- Small: 0.875rem
 
 ## Layout
 
-- **Features:** CSS Grid, Flexbox, Backdrop Filter (for glass sidebars/modals), CSS Variables, Sticky Headers, Responsive Data Tables, CSS Masks
-- **Components:** Sidebar Navigation, Topbar, Data Tables, Metric Cards, Modals, Drawers, Tooltips, Form Inputs, Tree View, Toast/Snackbar, Progress Bar, Skeleton Loader, Command Palette
+- **Grid:** CSS Grid primary. Max-width containment: 1280px centered with 1.5rem side padding.
+- **Spacing rhythm:** Balanced. Base unit: 0.5rem (8px).
+- **Section vertical gaps:** clamp(4rem, 8vw, 8rem).
+- **Hero layout:** Split-screen (text left, visual right).
+- **Feature sections:** Zig-zag alternating text+image rows. No 3-equal-columns.
+- **Mobile collapse:** All multi-column layouts collapse below 768px. No horizontal overflow.
+- **z-index contract:** base (0) / sticky-nav (100) / overlay (200) / modal (300) / toast (500).
 
-## Effects
+## Elevation & Depth
 
-- Subtle Blur — for glassmorphic overlays and sidebars
-- Soft Glow — for primary CTA hover states
-- Glass Effect — for elevated cards and modals
-- Gradients — for subtle background meshes or chart fills
-- Focus Rings — high contrast focus states for accessibility
-- Hover Effects — subtle background shifts and 2–4px lift on cards/rows, no heavy 3D transforms
-- Press Feedback — brief scale-down (0.97x) on buttons and draggable rows for tactile confirmation
-- Skeleton Shimmer — animated placeholder for tables/cards while data loads
-- Toast/Snackbar Slide-in — success/error feedback slides in from the corner, auto-dismisses with a shrinking progress bar
+Improved shadows (softer than flat, clearer than neumorphism), modern (200-300ms), focus visible, WCAG AA/AAA
 
-## Interaction States
+- **Physics:** Ease-out curves, 200-300ms duration. Smooth and predictable.
+- **Entry animations:** Fade + translate-Y (16px → 0) over 420ms ease-out. Staggered cascades for lists: 80ms between items.
+- **Hover states:** Subtle color shift + shadow adjustment over 200ms.
+- **Page transitions:** Fade only (200ms).
+- **Performance:** Only transform and opacity animated. No layout-triggering properties.
 
-- **Hover:** background tint shift + soft glow on interactive elements (buttons, table rows, tree nodes); duration-fast
-- **Active/Pressed:** scale-down 0.97x, glow intensifies briefly; duration-fast
-- **Focus:** 2px high-contrast focus ring in primary color, always visible for keyboard navigation
-- **Disabled:** reduced opacity (0.5), no hover/press response
-- **Loading:** skeleton shimmer for data tables/cards; spinner + disabled state for buttons mid-action
-- **Drag:** dragged row/node lifts with glass shadow and slight scale (1.02x); drop target highlights with a dashed primary-color outline; on release, node animates into place with easing-emphasized
-- **Expand/Collapse:** tree nodes and accordion panels animate height + fade (duration-base, easing-standard), chevron rotates 90 degrees
-- **Success confirmation:** brief tertiary-color pulse/glow on the affected row after save, then fades
+## Shapes
 
-## Motion Guidelines
+Base corner radius: 10px. See rounded tokens in front matter for the full scale.
 
-- Every interactive element responds within duration-fast (120ms) — no dead clicks/taps
-- Structural changes (drawer open, modal enter, tree expand) use duration-base to duration-slow with easing-standard
-- Drag-and-drop and success states use easing-emphasized for a satisfying "settle" feel
-- Respect `prefers-reduced-motion`: fall back to opacity-only transitions, no scale/translate
+## Components
+
+- **Primary Button:** Rounded (10px) shape. Accent color fill. Hover: 8% darken + subtle lift shadow. Active: -1px translate tactile press. Font weight 600. No outer glows.
+- **Secondary / Ghost Button:** Outline variant. 1.5px border in muted color. Text in primary color. Hover: subtle background fill.
+- **Cards:** Rounded (10px) corners. Surface background. Subtle shadow (0 2px 12px rgba(0,0,0,0.06)). 1px border stroke.
+- **Inputs:** Label above input. 1px border stroke. Focus ring: 2px accent color offset 2px. Error text below in semantic red. No floating labels.
+- **Navigation:** Primary surface background. Active item: accent color indicator. Font weight 500 when active.
+- **Skeletons:** Shimmer animation matching component dimensions. No circular spinners.
+- **Empty States:** Icon-based composition with descriptive text and action button.
+
+## Do's and Don'ts
+
+- No emojis in UI — use icon system only (Lucide, Heroicons)
+- No pure black (#000000) — use off-black or charcoal variants
+- No oversaturated accent colors (saturation cap: 80%)
+- No 3-column equal-width feature layouts — use zig-zag or asymmetric grid
+- No `h-screen` — use `min-h-[100dvh]`
+- No AI copywriting clichés: "Elevate", "Seamless", "Unleash", "Next-Gen"
+- No broken external image links — use picsum.photos or inline SVG
+- No generic lorem ipsum in demos
+
+- Do Improved contrast AA/AAA
+- Do Soft shadows modern
+- Do Border-radius 8-12px
+- Do Animations 200-300ms
+- Do Focus states visible
+- Do Color hierarchy clear
 
 ## Use Case
 
-SaaS Dashboards, B2B Web Applications, Admin Panels, Analytics Tools, CRM Systems — especially interactive tree/hierarchy management with drag-and-drop, inline editing, and bulk operations.
+Landing pages, SaaS

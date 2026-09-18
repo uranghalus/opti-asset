@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,6 +20,8 @@ class DepartmentController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('department.view');
+
         $query = Department::query();
 
         // Server-side search across kode_department and nama_department
@@ -46,6 +49,8 @@ class DepartmentController extends Controller
      */
     public function show(Department $department): Response
     {
+        Gate::authorize('department.view');
+
         return Inertia::render('Departments/Show', [
             'department' => $department->load(['employees', 'hod', 'manager']),
         ]);
@@ -56,6 +61,8 @@ class DepartmentController extends Controller
      */
     public function sync(): RedirectResponse
     {
+        Gate::authorize('department.edit');
+
         $exitCode = Artisan::call('app:sync-departments', [
             '--tenant' => Tenant::current()?->id,
         ]);

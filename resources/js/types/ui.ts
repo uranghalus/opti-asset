@@ -6,6 +6,7 @@ export type SharedPageProps = {
     name: string;
     auth: {
         user: User | null;
+        isSuperAdmin?: boolean;
     };
     sidebarOpen: boolean;
 };

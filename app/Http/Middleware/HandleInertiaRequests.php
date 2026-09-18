@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                         'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
                     ])
                     : null,
+                'isSuperAdmin' => $user !== null && $user->hasRole('super-admin'),
             ],
             'tenant' => $currentTenant,
             'availableTenants' => $availableTenants,

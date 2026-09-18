@@ -1,42 +1,37 @@
 import { usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-type PageProps = {
-    auth?: {
-        user?: {
-            roles?: string[];
-            permissions?: string[];
-        } | null;
+type SharedAuth = {
+    user?: {
+        roles?: string[];
+        permissions?: string[];
     } | null;
+    isSuperAdmin?: boolean;
 };
 
-function userIsSuperAdmin(roles: string[] | undefined): boolean {
-    return (roles ?? []).some((role) => {
-        const normalized = role.toLowerCase().replace(/_/g, '-');
-
-        return normalized === 'super-admin' || normalized === 'superadmin';
-    });
-}
-
 /**
- * Client-side permission check driven by the shared `auth.user.permissions`
- * list (see HandleInertiaRequests). Mirrors Gate::before: super-admin sees
- * everything regardless of stored permissions.
+ * Client-side permission checks mirroring the server's Gate. Reads the
+ * shared `auth.permissions` array; super-admin bypasses everything,
+ * mirroring Gate::before.
  */
 export function useCan() {
-    const page = usePage().props as unknown as PageProps;
+    const { auth } = usePage().props as unknown as { auth: SharedAuth };
 
     return useMemo(() => {
-        const roles = page.auth?.user?.roles;
-        const isSuperAdmin = userIsSuperAdmin(roles);
-        const granted = new Set(page.auth?.user?.permissions ?? []);
+        const permissions = new Set(auth.user?.permissions ?? []);
+        const isSuperAdmin = auth.isSuperAdmin === true;
 
-        return (permission: string): boolean => {
-            if (isSuperAdmin) {
-                return true;
-            }
+        const can = (permission: string): boolean =>
+            isSuperAdmin || permissions.has(permission);
 
-            return granted.has(permission);
+        const canAny = (names: string[]): boolean =>
+            isSuperAdmin || names.some((name) => permissions.has(name));
+
+        return {
+            can,
+            canAny,
+            isSuperAdmin,
+            roles: auth.user?.roles ?? [],
         };
-    }, [page.auth]);
+    }, [auth.user?.permissions, auth.isSuperAdmin, auth.user?.roles]);
 }

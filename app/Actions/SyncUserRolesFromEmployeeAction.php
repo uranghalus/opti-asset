@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Employee;
 use App\Models\User;
+use Database\Seeders\SuperAdminSeeder;
 use Spatie\Permission\PermissionRegistrar;
 
 class SyncUserRolesFromEmployeeAction
@@ -33,6 +34,15 @@ class SyncUserRolesFromEmployeeAction
             ->withoutGlobalScopes()
             ->pluck('name')
             ->all();
+
+        // super-admin tidak pernah dicabut oleh sinkronisasi — role ini
+        // diberikan langsung pada User dan harus tetap menempel.
+        $protectedRoles = array_values(array_intersect(
+            $existing,
+            [SuperAdminSeeder::SUPER_ADMIN_ROLE],
+        ));
+
+        $roleNames = array_values(array_unique(array_merge($roleNames, $protectedRoles)));
 
         if ($existing === $roleNames) {
             return;

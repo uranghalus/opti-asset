@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\SuperAdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -95,6 +96,27 @@ class PermissionsInfrastructureTest extends TestCase
         );
     }
 
+    public function test_seeder_permission_names_are_unique(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $names = RolePermissionSeeder::PERMISSIONS;
+
+        $this->assertSame(count($names), count(array_unique($names)));
+        $this->assertSame(count($names), Permission::count());
+    }
+
+    public function test_seeder_wipes_stale_rows_on_rerun(): void
+    {
+        $stale = Role::create(['name' => 'stale-role', 'guard_name' => 'web']);
+        $stalePermission = Permission::create(['name' => 'stale.permission', 'guard_name' => 'web']);
+
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertDatabaseMissing('roles', ['id' => $stale->id]);
+        $this->assertDatabaseMissing('permissions', ['id' => $stalePermission->id]);
+    }
+
     public function test_gate_before_grants_super_admin_everything_without_permissions(): void
     {
         $this->user->assignRole('super-admin');
@@ -120,6 +142,59 @@ class PermissionsInfrastructureTest extends TestCase
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->assertTrue(Gate::forUser($this->user)->denies('asset.view'));
+    }
+
+    public function test_super_admin_seeder_creates_user_and_assigns_role(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        $this->seed(SuperAdminSeeder::class);
+
+        $user = User::where('email', SuperAdminSeeder::EMAIL)->first();
+
+        $this->assertNotNull($user);
+        $this->assertTrue($user->hasRole('super-admin'));
+    }
+
+    public function test_super_admin_seeder_is_idempotent(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        $this->seed(SuperAdminSeeder::class);
+        $this->seed(SuperAdminSeeder::class);
+
+        $users = User::where('email', SuperAdminSeeder::EMAIL)->get();
+
+        $this->assertSame(1, $users->count());
+        $this->assertTrue($users->first()->hasRole('super-admin'));
+    }
+
+    public function test_super_admin_seeder_assigns_role_to_matching_employee(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $employee = Employee::factory()->create(['email' => SuperAdminSeeder::EMAIL]);
+
+        $this->seed(SuperAdminSeeder::class);
+
+        $this->assertTrue($employee->fresh()->hasRole('super-admin'));
+
+        $user = User::where('email', SuperAdminSeeder::EMAIL)->first();
+        $this->assertNotNull($user);
+        $this->assertTrue($user->hasRole('super-admin'));
+    }
+
+    public function test_sync_action_preserves_super_admin_role(): void
+    {
+        $this->user->assignRole('super-admin');
+
+        $role = Role::create(['name' => 'staff-asset', 'guard_name' => 'web']);
+        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee->assignRole($role);
+
+        app(SyncUserRolesFromEmployeeAction::class)->execute($this->user);
+
+        $fresh = $this->user->fresh();
+        $this->assertTrue($fresh->hasRole('super-admin'));
+        $this->assertTrue($fresh->hasRole('staff-asset'));
     }
 
     public function test_sync_action_copies_employee_roles_to_linked_user(): void

@@ -67,6 +67,12 @@ export type AssetInitial = {
     notes: string | null;
     photo_url: string[];
     document_url: string[];
+    asset_type: string | null;
+    acquisition_cost: string | null;
+    useful_life_years: string | null;
+    depreciation_method: string;
+    accumulated_depreciation: string;
+    type_override_reason: string | null;
 };
 
 type AssetFormProps = {
@@ -104,7 +110,7 @@ function SectionHeader({
 }) {
     return (
         <div className="flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 shadow-sm">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                 <Icon className="size-4 text-primary" strokeWidth={1.75} />
             </div>
             <div>
@@ -171,7 +177,15 @@ export function AssetForm({
         garansi_exp: asset?.garansi_exp ?? '',
         status: asset?.status ?? 'ACT',
         vendor_name: asset?.vendor_name ?? '',
+        asset_type: asset?.asset_type ?? 'equipment',
+        acquisition_cost: asset?.acquisition_cost ?? '',
+        useful_life_years: asset?.useful_life_years ?? '',
+        depreciation_method: asset?.depreciation_method ?? 'none',
+        accumulated_depreciation: asset?.accumulated_depreciation ?? '0',
+        type_override_reason: asset?.type_override_reason ?? '',
     });
+
+    const showAccountingFields = form.data.asset_type === 'fixed_asset';
 
     const selectedItem = items.find((item) => item.id === form.data.item_id);
 
@@ -244,7 +258,7 @@ export function AssetForm({
                     description="Pilih item (wajib). Kode aset dibuat otomatis dari kategori item."
                 />
 
-                <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-sm md:p-5">
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 shadow-sm md:p-5">
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <Label
@@ -289,7 +303,7 @@ export function AssetForm({
 
                     <div
                         className={cn(
-                            'mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors',
+                            'mt-4 flex items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors',
                             previewCode
                                 ? 'border-primary/30 bg-primary/5'
                                 : 'border-dashed border-border bg-background/40',
@@ -297,7 +311,7 @@ export function AssetForm({
                     >
                         <div
                             className={cn(
-                                'flex size-8 shrink-0 items-center justify-center rounded-lg border',
+                                'flex size-8 shrink-0 items-center justify-center rounded-md border',
                                 previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
                                     : 'border-border bg-background text-muted-foreground',
@@ -306,7 +320,7 @@ export function AssetForm({
                             <Tags className="size-4" strokeWidth={1.75} />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Kode Aset Otomatis
                             </p>
                             <p
@@ -320,12 +334,12 @@ export function AssetForm({
                                 {previewCode || '—'}
                             </p>
                             {previewCode ? (
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                <p className="mt-0.5 text-xs text-muted-foreground">
                                     Nomor urut dihitung otomatis per kategori
                                     item.
                                 </p>
                             ) : (
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                <p className="mt-0.5 text-xs text-muted-foreground">
                                     Pilih item yang memiliki kategori untuk
                                     membuat kode aset.
                                 </p>
@@ -406,7 +420,7 @@ export function AssetForm({
                     <div className="space-y-2">
                         <Label className="flex items-center gap-1">
                             Foto Aset
-                            <span className="text-[10px] font-normal text-muted-foreground">
+                            <span className="text-xs font-normal text-muted-foreground">
                                 (bisa banyak)
                             </span>
                         </Label>
@@ -421,7 +435,7 @@ export function AssetForm({
                     <div className="space-y-2">
                         <Label className="flex items-center gap-1">
                             Dokumen Pendukung
-                            <span className="text-[10px] font-normal text-muted-foreground">
+                            <span className="text-xs font-normal text-muted-foreground">
                                 (bisa banyak)
                             </span>
                         </Label>
@@ -562,6 +576,202 @@ export function AssetForm({
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="space-y-5">
+                <SectionHeader
+                    icon={Wallet}
+                    title="Tipe Aset & Data Akuntansi"
+                    description="Klasifikasi tipe aset (Aktiva Tetap / Peralatan) dan data akuntansi untuk Aktiva Tetap."
+                />
+
+                <div className="space-y-4">
+                    <div>
+                        <Label
+                            htmlFor="asset-type"
+                            className="flex items-center gap-1"
+                        >
+                            Tipe Aset
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={form.data.asset_type}
+                            onValueChange={(value) => {
+                                form.setData('asset_type', value);
+
+                                if (value !== 'fixed_asset') {
+                                    form.setData('acquisition_cost', '');
+                                    form.setData('useful_life_years', '');
+                                    form.setData('depreciation_method', 'none');
+                                }
+                            }}
+                        >
+                            <SelectTrigger
+                                id="asset-type"
+                                className="mt-1.5 h-10"
+                            >
+                                <SelectValue placeholder="Pilih tipe aset" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="fixed_asset">
+                                    Aktiva Tetap
+                                </SelectItem>
+                                <SelectItem value="equipment">
+                                    Peralatan
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FieldError message={form.errors.asset_type} />
+                    </div>
+
+                    {showAccountingFields && (
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <Label htmlFor="acquisition-cost">
+                                    Nilai Perolehan
+                                </Label>
+                                <div className="relative mt-1.5">
+                                    <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                                        Rp
+                                    </span>
+                                    <Input
+                                        id="acquisition-cost"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        className="h-10 pl-10"
+                                        value={form.data.acquisition_cost}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'acquisition_cost',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="useful-life">
+                                    Masa Manfaat (Tahun)
+                                </Label>
+                                <Input
+                                    id="useful-life"
+                                    type="number"
+                                    min="1"
+                                    className="mt-1.5 h-10"
+                                    value={form.data.useful_life_years}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'useful_life_years',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Contoh: 5"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="depreciation-method">
+                                    Metode Penyusutan
+                                </Label>
+                                <Select
+                                    value={form.data.depreciation_method}
+                                    onValueChange={(value) =>
+                                        form.setData(
+                                            'depreciation_method',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger
+                                        id="depreciation-method"
+                                        className="mt-1.5 h-10"
+                                    >
+                                        <SelectValue placeholder="Pilih metode" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="straight_line">
+                                            Garisan Lurus (Straight Line)
+                                        </SelectItem>
+                                        <SelectItem value="declining_balance">
+                                            Saldo Menurun (Declining Balance)
+                                        </SelectItem>
+                                        <SelectItem value="none">
+                                            Tidak Disusutkan
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="accumulated-depreciation">
+                                    Akumulasi Penyusutan
+                                    <span className="font-normal text-muted-foreground">
+                                        (otomatis)
+                                    </span>
+                                </Label>
+                                <div className="relative mt-1.5">
+                                    <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                                        Rp
+                                    </span>
+                                    <Input
+                                        id="accumulated-depreciation"
+                                        type="text"
+                                        inputMode="decimal"
+                                        readOnly
+                                        aria-readonly="true"
+                                        className="h-10 cursor-default bg-muted/50 pl-10 text-muted-foreground"
+                                        title="Dihitung otomatis dari metode penyusutan, masa manfaat, dan tanggal mulai digunakan"
+                                        value={
+                                            form.data.accumulated_depreciation
+                                        }
+                                        placeholder="Otomatis"
+                                    />
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Dihitung server dari metode penyusutan, masa
+                                    manfaat, dan tanggal mulai digunakan.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="border-t pt-4">
+                        <Label className="flex cursor-pointer items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={!!form.data.type_override_reason}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        // Keep existing reason or prompt
+                                    } else {
+                                        form.setData(
+                                            'type_override_reason',
+                                            '',
+                                        );
+                                    }
+                                }}
+                                className="size-4 rounded border-input"
+                            />
+                            <span className="text-sm font-medium">
+                                Override Manual Tipe Aset
+                            </span>
+                        </Label>
+                        {form.data.type_override_reason && (
+                            <Textarea
+                                id="override-reason"
+                                className="mt-2 min-h-20 resize-none"
+                                value={form.data.type_override_reason}
+                                onChange={(e) =>
+                                    form.setData(
+                                        'type_override_reason',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="Alasan override (wajib diisi jika dicentang)..."
+                            />
+                        )}
                     </div>
                 </div>
             </section>
@@ -772,7 +982,7 @@ export function AssetForm({
                 </div>
             </section>
 
-            <div className="flex flex-col-reverse gap-2 border-t pt-6 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
                 <Button
                     type="button"
                     variant="outline"
@@ -783,7 +993,7 @@ export function AssetForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="h-10 gap-2"
+                    className="h-10 gap-2 hover:shadow-[0_0_24px_-6px_var(--primary)]"
                     disabled={form.processing || mediaBusy}
                 >
                     {form.processing && <Spinner className="size-4" />}

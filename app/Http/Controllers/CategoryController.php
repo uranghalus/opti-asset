@@ -10,6 +10,7 @@ use App\Models\AssetSubCluster;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,6 +19,8 @@ class CategoryController extends Controller
 {
     public function index(Request $request): Response
     {
+        Gate::authorize('asset.category.view');
+
         $perPage = min((int) $request->integer('per_page', 15), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -56,6 +59,8 @@ class CategoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.category.create');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'classification_type' => ['required', Rule::enum(ClassificationLevel::class)],
@@ -80,6 +85,8 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category): RedirectResponse
     {
+        Gate::authorize('asset.category.edit');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'classification_type' => ['required', Rule::enum(ClassificationLevel::class)],
@@ -104,6 +111,8 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): RedirectResponse
     {
+        Gate::authorize('asset.category.delete');
+
         $category->delete();
 
         return back();
@@ -111,6 +120,8 @@ class CategoryController extends Controller
 
     public function destroyBulk(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.category.delete');
+
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['required', 'string'],

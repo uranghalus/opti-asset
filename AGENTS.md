@@ -1,5 +1,21 @@
 # AGENTS.md — Opti-Asset (Laravel + Inertia + React)
 
+# Memory Protocol — Vault: Opti-Asset
+
+OpenCode punya akses ke vault Obsidian bernama "Opti-Asset" lewat MCP tool `obsidian`.
+
+## Struktur memori
+
+- `Memory/opencode-memory.md` — ringkasan konteks proyek, keputusan arsitektur, dan preferensi yang berlaku terus-menerus.
+- `Memory/logs/YYYY-MM-DD.md` — catatan progres per sesi (opsional, buat kalau relevan).
+
+## Aturan
+
+1. Di awal sesi, sebelum mulai kerja, baca isi "Memory/opencode-memory.md" via tool obsidian (get_file_contents) untuk memahami konteks sebelumnya.
+2. Setiap kali ada keputusan penting, konvensi baru, perubahan arsitektur, atau progres signifikan — tambahkan ringkasannya ke "Memory/opencode-memory.md" via append_content atau patch_content.
+3. Jangan pernah menyimpan kredensial, API key, token, atau data sensitif lain ke catatan ini.
+4. Tulis ringkas dan terstruktur (poin-poin), bukan transkrip percakapan mentah.
+
 ## Stack
 
 - **PHP 8.4** / Laravel 13 / Fortify 1 / Inertia v3 / React 19 / Tailwind 4 / Vite 8
@@ -192,7 +208,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 
@@ -309,3 +325,16 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - IMPORTANT: Activate `inertia-react-development` when working with Inertia React client-side patterns.
 
 </laravel-boost-guidelines>
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

@@ -13,6 +13,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class CategoryTest extends TestCase
@@ -34,7 +36,14 @@ class CategoryTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.category.view', 'asset.category.create', 'asset.category.edit', 'asset.category.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.category.view', 'asset.category.create', 'asset.category.edit', 'asset.category.delete']);
     }
 
     public function test_index_renders_categories_with_pagination(): void

@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,6 +24,8 @@ class AssetDisposalController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('asset.disposal.view');
+
         $perPage = min((int) $request->integer('per_page', 15), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -54,6 +57,8 @@ class AssetDisposalController extends Controller
      */
     public function create(): Response
     {
+        Gate::authorize('asset.disposal.create');
+
         // Hanya aset aktif tanpa pengajuan pending/approved.
         $assets = Asset::query()
             ->where('status', AssetStatus::ACTIVE->value)
@@ -74,7 +79,22 @@ class AssetDisposalController extends Controller
      */
     public function store(StoreAssetDisposalRequest $request): RedirectResponse
     {
+        Gate::authorize('asset.disposal.create');
+
         $validated = $request->validated();
+
+        $asset = Asset::query()->findOrFail((string) $validated['asset_id']);
+
+        // FR-07.6 — hanya aset aktif yang dapat diajukan untuk penghapusan.
+        if ($asset->status !== AssetStatus::ACTIVE) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Hanya aset berstatus aktif yang dapat diajukan untuk penghapusan.',
+            ]);
+
+            return back();
+        }
+
         $validated['disposed_by'] = Auth::id();
 
         $disposal = AssetDisposal::create($validated);
@@ -95,6 +115,8 @@ class AssetDisposalController extends Controller
      */
     public function show(AssetDisposal $disposal): Response
     {
+        Gate::authorize('asset.disposal.view');
+
         $disposal->load(['asset:id,kode_asset,serial_number,item_id', 'asset.item:id,name,code', 'disposedBy:id,name']);
 
         return Inertia::render('asset-disposals/Show', [
@@ -107,6 +129,8 @@ class AssetDisposalController extends Controller
      */
     public function edit(AssetDisposal $disposal): Response|RedirectResponse
     {
+        Gate::authorize('asset.disposal.edit');
+
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diedit.']);
 
@@ -136,6 +160,8 @@ class AssetDisposalController extends Controller
      */
     public function update(UpdateAssetDisposalRequest $request, AssetDisposal $disposal): RedirectResponse
     {
+        Gate::authorize('asset.disposal.edit');
+
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diperbarui.']);
 
@@ -150,17 +176,24 @@ class AssetDisposalController extends Controller
         $disposal->update($validated);
 
         if ($oldAssetId !== $newAssetId) {
-            app(RecordAssetHistoryAction::class)->record(
-                Asset::find($oldAssetId),
-                [['disposal', 'Dihapus dari pengajuan penghapusan', null]],
-                Auth::user()
-            );
+            $oldAsset = Asset::query()->find((string) $oldAssetId);
+            $newAsset = Asset::query()->find((string) $newAssetId);
 
-            app(RecordAssetHistoryAction::class)->record(
-                Asset::find($newAssetId),
-                [['disposal', null, 'Ditambahkan ke pengajuan penghapusan: '.$validated['reason']]],
-                Auth::user()
-            );
+            if ($oldAsset !== null) {
+                app(RecordAssetHistoryAction::class)->record(
+                    $oldAsset,
+                    [['disposal', 'Dihapus dari pengajuan penghapusan', null]],
+                    Auth::user()
+                );
+            }
+
+            if ($newAsset !== null) {
+                app(RecordAssetHistoryAction::class)->record(
+                    $newAsset,
+                    [['disposal', null, 'Ditambahkan ke pengajuan penghapusan: '.$validated['reason']]],
+                    Auth::user()
+                );
+            }
         } else {
             app(RecordAssetHistoryAction::class)->record(
                 $disposal->asset,
@@ -179,6 +212,8 @@ class AssetDisposalController extends Controller
      */
     public function destroy(AssetDisposal $disposal): RedirectResponse
     {
+        Gate::authorize('asset.disposal.delete');
+
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat dihapus.']);
 
@@ -188,11 +223,15 @@ class AssetDisposalController extends Controller
         $assetId = $disposal->asset_id;
         $disposal->delete();
 
-        app(RecordAssetHistoryAction::class)->record(
-            Asset::find($assetId),
-            [['disposal', 'Pengajuan penghapusan dibatalkan', null]],
-            Auth::user()
-        );
+        $asset = Asset::query()->find((string) $assetId);
+
+        if ($asset !== null) {
+            app(RecordAssetHistoryAction::class)->record(
+                $asset,
+                [['disposal', 'Pengajuan penghapusan dibatalkan', null]],
+                Auth::user()
+            );
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dihapus.']);
 
@@ -204,6 +243,8 @@ class AssetDisposalController extends Controller
      */
     public function approve(AssetDisposal $disposal): RedirectResponse
     {
+        Gate::authorize('asset.disposal.edit');
+
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat disetujui.']);
 
@@ -236,6 +277,8 @@ class AssetDisposalController extends Controller
      */
     public function reject(AssetDisposal $disposal): RedirectResponse
     {
+        Gate::authorize('asset.disposal.edit');
+
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat ditolak.']);
 
@@ -260,6 +303,8 @@ class AssetDisposalController extends Controller
      */
     public function bulk(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.disposal.delete');
+
         $validated = $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['exists:asset_disposals,id'],
@@ -282,8 +327,14 @@ class AssetDisposalController extends Controller
         AssetDisposal::destroy($pendingIds->all());
 
         foreach ($assetIds as $assetId) {
+            $asset = Asset::query()->find((string) $assetId);
+
+            if ($asset === null) {
+                continue;
+            }
+
             app(RecordAssetHistoryAction::class)->record(
-                Asset::find($assetId),
+                $asset,
                 [['disposal', 'Pengajuan penghapusan dibatalkan (massal)', null]],
                 Auth::user()
             );

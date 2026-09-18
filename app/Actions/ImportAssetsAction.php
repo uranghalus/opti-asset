@@ -7,10 +7,13 @@ use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
+use App\Models\Category;
 use App\Models\Department;
 use App\Models\Item;
 use App\Models\Location;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -95,7 +98,7 @@ class ImportAssetsAction
      *
      * @return ImportResult
      */
-    public function __invoke(string $filePath, Item $fallbackItem): array
+    public function __invoke(string $filePath, ?Item $fallbackItem = null): array
     {
         $rows = SimpleExcelReader::create($filePath)
             ->noHeaderRow()
@@ -197,7 +200,7 @@ class ImportAssetsAction
                 $itemName = $this->valueOrNull($row['item'] ?? null);
                 $item = $itemName !== null
                     ? $this->resolveItem($itemName, $items)
-                    : $fallbackItem->loadMissing('category');
+                    : $this->resolveFallbackItem($fallbackItem, $items);
 
                 $locationName = $this->valueOrNull($row['location'] ?? null);
                 $locationId = $locationName !== null
@@ -233,16 +236,18 @@ class ImportAssetsAction
                 ];
 
                 if ($fileKode !== null) {
-                    $classification = $this->resolveClassificationFromKode($fileKode);
+                    $result = $this->resolveClassificationFromKode($fileKode);
 
-                    if ($classification !== null) {
-                        $data['asset_group_id'] = $classification['group_id'];
-                        $data['asset_category_id'] = $classification['category_id'];
-                        $data['asset_cluster_id'] = $classification['cluster_id'];
-                        $data['asset_sub_cluster_id'] = $classification['subcluster_id'];
+                    if ($result['classification'] !== null) {
+                        $data['asset_group_id'] = $result['classification']['group_id'];
+                        $data['asset_category_id'] = $result['classification']['category_id'];
+                        $data['asset_cluster_id'] = $result['classification']['cluster_id'];
+                        $data['asset_sub_cluster_id'] = $result['classification']['subcluster_id'];
                     } else {
-                        // Kode aset dari file tidak cocok dengan klasifikasi yang tersedia;
-                        // simpan kode aset apa adanya, biarkan ID klasifikasi kosong.
+                        foreach ($result['errors'] as $error) {
+                            $errors[] = ['row' => $line, 'message' => $error];
+                        }
+
                         $data['asset_group_id'] = null;
                         $data['asset_category_id'] = null;
                         $data['asset_cluster_id'] = null;
@@ -348,6 +353,22 @@ class ImportAssetsAction
     }
 
     /**
+     * Use a pre-selected item when available; otherwise create a shared
+     * "[Item Name]" item so that rows without explicit item columns still
+     * import. Created once per call, reused across rows.
+     *
+     * @param  array<string, Item>  $cache
+     */
+    private function resolveFallbackItem(?Item $fallbackItem, array &$cache): Item
+    {
+        if ($fallbackItem !== null) {
+            return $fallbackItem->loadMissing('category');
+        }
+
+        return $this->resolveItem('Imported Item', $cache);
+    }
+
+    /**
      * Find an existing item by name or create it so office exports that mix
      * several units in one file import without pre-registering every item.
      *
@@ -448,53 +469,126 @@ class ImportAssetsAction
 
     /**
      * Resolve the classification IDs from a dotted asset code.
-     * Format: golongan.category.cluster.subcluster[.no_urut].
      *
-     * @return array{group_id: string, category_id: string, cluster_id: string, subcluster_id: string}|null
+     * Supports two code formats:
+     *   1) Direct code:  group.code . category.code . cluster.code . subcluster.code  (e.g. 03.08.11.07)
+     *   2) Positional:   group.code . category.code . <position+1>  . <position+1>     (e.g. 03.08.01.03)
+     *
+     * Positional segments are tried when the exact code lookup fails — the
+     * system walks the sorted children at each level and picks the Nth entry
+     * (1-based). This handles legacy Excel files that used sequential
+     * numbering instead of the actual cluster/subcluster codes.
+     *
+     * @return array{classification: array{group_id: string, category_id: string, cluster_id: string, subcluster_id: string}|null, errors: array<int, string>}
      */
-    private function resolveClassificationFromKode(string $kode): ?array
+    private function resolveClassificationFromKode(string $kode): array
     {
         $parts = explode('.', $kode);
+        $errors = [];
 
         if (count($parts) < 4) {
-            return null;
+            $errors[] = "Kode aset '{$kode}' tidak memiliki minimal 4 segmen (Golongan.Kategori.Cluster.Sub-cluster)";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
-        $group = AssetGroup::query()->where('code', $parts[0])->first(['id']);
+        // Level 1 — Group (by code)
+        $group = AssetGroup::query()->where('code', $parts[0])->first(['id', 'code']);
+
         if ($group === null) {
-            return null;
+            $errors[] = "Golongan '{$parts[0]}' tidak ditemukan di master data";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
+        // Level 2 — Category (by code or by position within group)
         $category = AssetCategory::query()
             ->where('asset_group_id', $group->id)
             ->where('code', $parts[1])
-            ->first(['id']);
-        if ($category === null) {
-            return null;
+            ->first(['id', 'code']);
+
+        if ($category === null && ctype_digit($parts[1])) {
+            $category = $this->findByPosition(
+                AssetCategory::query()
+                    ->where('asset_group_id', $group->id)
+                    ->orderBy('sort_order')
+                    ->orderBy('code'),
+                (int) $parts[1],
+            );
         }
 
+        if ($category === null) {
+            $errors[] = "Kategori '{$parts[1]}' tidak ditemukan di bawah golongan '{$parts[0]}'";
+
+            return ['classification' => null, 'errors' => $errors];
+        }
+
+        // Level 3 — Cluster (by code or by position within category)
         $cluster = AssetCluster::query()
             ->where('asset_category_id', $category->id)
             ->where('code', $parts[2])
-            ->first(['id']);
-        if ($cluster === null) {
-            return null;
+            ->first(['id', 'code']);
+
+        if ($cluster === null && ctype_digit($parts[2])) {
+            $cluster = $this->findByPosition(
+                AssetCluster::query()
+                    ->where('asset_category_id', $category->id)
+                    ->orderBy('sort_order')
+                    ->orderBy('code'),
+                (int) $parts[2],
+            );
         }
 
+        if ($cluster === null) {
+            $errors[] = "Cluster '{$parts[2]}' tidak ditemukan di bawah kategori '{$category->code}'";
+
+            return ['classification' => null, 'errors' => $errors];
+        }
+
+        // Level 4 — Sub-cluster (by code or by position within cluster)
         $subcluster = AssetSubCluster::query()
             ->where('asset_cluster_id', $cluster->id)
             ->where('code', $parts[3])
-            ->first(['id']);
+            ->first(['id', 'code']);
+
+        if ($subcluster === null && ctype_digit($parts[3])) {
+            $subcluster = $this->findByPosition(
+                AssetSubCluster::query()
+                    ->where('asset_cluster_id', $cluster->id)
+                    ->orderBy('sort_order')
+                    ->orderBy('code'),
+                (int) $parts[3],
+            );
+        }
+
         if ($subcluster === null) {
-            return null;
+            $errors[] = "Sub Cluster '{$parts[3]}' tidak ditemukan di bawah cluster '{$cluster->code}'";
+
+            return ['classification' => null, 'errors' => $errors];
         }
 
         return [
-            'group_id' => $group->id,
-            'category_id' => $category->id,
-            'cluster_id' => $cluster->id,
-            'subcluster_id' => $subcluster->id,
+            'classification' => [
+                'group_id' => $group->id,
+                'category_id' => $category->id,
+                'cluster_id' => $cluster->id,
+                'subcluster_id' => $subcluster->id,
+            ],
+            'errors' => [],
         ];
+    }
+
+    /**
+     * Find a model by 1-based position (Nth child) within an ordered query.
+     * Used as fallback when the segment doesn't match any code directly.
+     */
+    private function findByPosition(Builder $query, int $position): ?Model
+    {
+        if ($position < 1) {
+            return null;
+        }
+
+        return $query->skip($position - 1)->take(1)->first(['id', 'code']);
     }
 
     private function valueOrNull(mixed $value): ?string

@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ItemTest extends TestCase
@@ -30,7 +32,25 @@ class ItemTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete']);
+    }
+
+    public function test_store_forbids_user_without_item_create_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.item.create');
+
+        $this->actingAs($this->user)
+            ->post(route('items.store'), ['name' => 'Baru', 'code' => 'ITM-BARU'])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('items', ['code' => 'ITM-BARU']);
     }
 
     public function test_index_renders_items_with_pagination(): void

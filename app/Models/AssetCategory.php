@@ -47,4 +47,10 @@ class AssetCategory extends Model
     {
         return $this->hasMany(AssetCluster::class);
     }
+
+    /** @return HasMany<Asset, $this> */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class, 'asset_category_id');
+    }
 }

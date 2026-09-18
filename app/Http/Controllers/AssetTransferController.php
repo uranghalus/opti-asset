@@ -13,6 +13,7 @@ use App\Models\Employee;
 use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,6 +25,8 @@ class AssetTransferController extends Controller
 
     public function index(Request $request): Response
     {
+        Gate::authorize('asset.transfer.view');
+
         $perPage = min((int) $request->integer('per_page', 15), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -60,6 +63,8 @@ class AssetTransferController extends Controller
 
     public function create(): Response
     {
+        Gate::authorize('asset.transfer.create');
+
         return Inertia::render('asset-transfers/Create', [
             'assets' => Asset::query()
                 ->where('status', '!=', 'DSP')
@@ -73,9 +78,21 @@ class AssetTransferController extends Controller
 
     public function store(StoreAssetTransferRequest $request): RedirectResponse
     {
+        Gate::authorize('asset.transfer.create');
+
         $validated = $request->validated();
 
-        $asset = Asset::findOrFail($validated['asset_id']);
+        $asset = Asset::query()->findOrFail((string) $validated['asset_id']);
+
+        // FR-07.6 — aset yang telah dihapus tidak boleh masuk transaksi aktif.
+        if ($asset->status === AssetStatus::DISPOSED) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Aset yang telah dihapus tidak dapat dimutasi.',
+            ]);
+
+            return back();
+        }
 
         $transfer = AssetTransfer::create([
             ...$validated,
@@ -96,6 +113,8 @@ class AssetTransferController extends Controller
 
     public function show(AssetTransfer $assetTransfer): Response
     {
+        Gate::authorize('asset.transfer.view');
+
         $assetTransfer->load([
             'asset:id,kode_asset,serial_number,brand,model,status,purchase_date,notes',
             'fromLocation:id,name',
@@ -111,6 +130,8 @@ class AssetTransferController extends Controller
 
     public function approve(Request $request, AssetTransfer $assetTransfer): RedirectResponse
     {
+        Gate::authorize('asset.transfer.edit');
+
         $request->validate([
             'notes' => ['nullable', 'string'],
         ]);
@@ -152,6 +173,8 @@ class AssetTransferController extends Controller
 
     public function reject(Request $request, AssetTransfer $assetTransfer): RedirectResponse
     {
+        Gate::authorize('asset.transfer.edit');
+
         $request->validate([
             'notes' => ['nullable', 'string'],
         ]);

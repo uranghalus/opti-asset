@@ -83,7 +83,36 @@ class RecordAssetHistoryAction
             $entries[] = ['kode_asset', $asset->kode_asset, $kodeAsset];
         }
 
+        // FR-13.9 — perubahan tipe aset (termasuk override manual) tercatat di riwayat.
+        if (array_key_exists('asset_type', $validated)
+            && $validated['asset_type'] !== null
+            && $validated['asset_type'] !== $asset->asset_type) {
+            $entries[] = [
+                'asset_type',
+                $this->assetTypeLabel($asset->asset_type),
+                $this->assetTypeLabel($validated['asset_type']),
+            ];
+        }
+
+        if (array_key_exists('type_override_reason', $validated)
+            && (string) $validated['type_override_reason'] !== (string) ($asset->type_override_reason ?? '')) {
+            $entries[] = [
+                'type_override_reason',
+                $asset->type_override_reason ?? '',
+                $validated['type_override_reason'] ?? '',
+            ];
+        }
+
         $this->record($asset, $entries, $actor);
+    }
+
+    private function assetTypeLabel(?string $type): string
+    {
+        return match ($type) {
+            'fixed_asset' => 'Aktiva Tetap',
+            'equipment' => 'Peralatan',
+            default => 'Tidak ditentukan',
+        };
     }
 
     private function locationName(?string $id): ?string

@@ -20,15 +20,15 @@ class OIDCController extends Controller
         private CreateTenantAction $createTenant,
     ) {}
 
-    public function redirect()
+    public function redirect(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         return Socialite::driver('oidc')->redirect();
     }
 
-    public function callback(Request $request)
+    public function callback(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         try {
-            /** @var SocialiteOAuth2AbstractProvider $driver */
+            /** @var \App\Providers\OIDCProvider $driver */
             $driver = Socialite::driver('oidc');
             $ssoUser = $driver->stateless()->user();
 
@@ -46,16 +46,12 @@ class OIDCController extends Controller
                 try {
                     if ($user?->tenant_id) {
                         $departmentId = Tenant::find($user->tenant_id)
-                            ?->execute(fn() => $this->findDepartmentId($ssoDepartmentName));
+                            ?->execute(fn () => $this->findDepartmentId($ssoDepartmentName));
                     }
                 } catch (\Exception $e) {
-                    Log::warning('SSO Callback: Gagal query Department — ' . $e->getMessage());
+                    Log::warning('SSO Callback: Gagal query Department — '.$e->getMessage());
                 }
             }
-
-            $position = is_array($rawData['position'] ?? null)
-                ? ($rawData['position']['name'] ?? $rawData['position']['id'] ?? json_encode($rawData['position']))
-                : ($rawData['position'] ?? null);
 
             $user = User::updateOrCreate(
                 ['email' => $ssoUser->getEmail()],
@@ -63,19 +59,18 @@ class OIDCController extends Controller
                     'name' => $ssoUser->getName(),
                     'email' => $ssoUser->getEmail(),
                     'password' => null,
-                    'phone' => null,
                     'department' => $departmentId,
-                    'position' => $position,
-                    'last_login_at' => $rawData['last_login_at'] ?? now(),
-                    'last_login_ip' => $rawData['last_login_ip'] ?? request()->ip(),
+                    'oidc_id' => $ssoUser->getId(),
+                    'last_login_at' => now(),
+                    'last_login_ip' => request()->ip(),
                 ]
             );
 
-            if (! $user) {
+            if ($user === null) {
                 throw new \RuntimeException('Gagal membuat atau menemukan user.');
             }
 
-            if (! $user->tenant_id && $ssoCompanyId) {
+            if ($user->tenant_id !== null && $ssoCompanyId !== null) {
                 $tenant = Tenant::find($ssoCompanyId);
                 if ($tenant) {
                     $user->update(['tenant_id' => $tenant->id]);
@@ -83,7 +78,7 @@ class OIDCController extends Controller
                 } else {
                     $this->createTenant->execute($user);
                 }
-            } elseif (! $user->tenant_id) {
+            } elseif ($user->tenant_id === null) {
                 $this->createTenant->execute($user);
             }
 
@@ -93,24 +88,26 @@ class OIDCController extends Controller
             $request->session()->regenerate();
 
             // ponytail: store raw id_token for RP-initiated logout. Add column if IdP rotates tokens frequently.
-            $request->session()->put('oidc_id_token', $tokenResponse['id_token'] ?? null);
+            $idToken = $ssoUser->accessTokenResponseBody['id_token'] ?? null;
+            $request->session()->put('oidc_id_token', $idToken);
 
             return redirect()->route('dashboard');
         } catch (\Exception $e) {
-            Log::error('OIDC SSO Callback Error: ' . $e->getMessage());
+            Log::error('OIDC SSO Callback Error: '.$e->getMessage());
 
-            return redirect('/')->with('error', 'Terjadi kesalahan saat login SSO: ' . $e->getMessage());
+            return redirect('/')->with('error', 'Terjadi kesalahan saat login SSO: '.$e->getMessage());
         }
     }
 
-    public function logout(Request $request)
+    public function logoutCallback(Request $request): \Illuminate\Http\JsonResponse
     {
         // ponytail: grab id_token BEFORE session clear for RP-initiated logout
         Log::info('Received logout request. Session ID: ', $request->all());
         $idToken = $request->input('logout_token');
 
-        if (!$idToken) {
+        if (! $idToken) {
             Log::error('Missing logout_token in SLO request');
+
             return response()->json(['error' => 'Missing logout_token'], 400);
         }
 
@@ -121,13 +118,13 @@ class OIDCController extends Controller
             }
             $payload = json_decode(base64_decode(strtr($tokenParts[1], '-_', '+/')));
 
-            if (!$payload || !isset($payload->sub)) {
+            if (! $payload || ! isset($payload->sub)) {
                 return response()->json(['error' => 'Invalid token payload'], 400);
             }
             $oidcId = $payload->sub;
             $user = User::where('oidc_id', $oidcId)->first();
             if ($user) {
-                $user->remember_token = null;
+                $user->forceFill(['remember_token' => null])->save();
                 $user->save();
                 if (config('session.driver') === 'redis') {
                     $handler = session()->getHandler();
@@ -148,9 +145,11 @@ class OIDCController extends Controller
                 }
                 DB::table('sessions')->where('user_id', $user->id)->delete();
             }
+
             return response()->json(['message' => 'Successfully logged out']);
         } catch (\Throwable $th) {
-            Log::error('OIDC Backchannel Logout Error: ' . $th->getMessage());
+            Log::error('OIDC Backchannel Logout Error: '.$th->getMessage());
+
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }

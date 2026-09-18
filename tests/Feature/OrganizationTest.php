@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class OrganizationTest extends TestCase
@@ -29,6 +30,12 @@ class OrganizationTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        // Endpoint organisasi digerbangi organization.*.
+        foreach (['organization.view', 'organization.create', 'organization.edit', 'organization.delete'] as $name) {
+            Permission::findOrCreate($name, 'web');
+        }
+        $this->user->givePermissionTo(['organization.view', 'organization.create', 'organization.edit', 'organization.delete']);
     }
 
     public function test_index_renders_organizations(): void

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Database\Factories\DepartmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
+    /** @use HasFactory<DepartmentFactory> */
     use BelongsToTenant, HasFactory, HasUuids;
 
     protected $table = 'tb_department';
@@ -22,12 +24,15 @@ class Department extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id_department',
         'tenant_id',
         'kode_department',
         'nama_department',
         'hod_user_id',
         'manager_user_id',
+    ];
+
+    protected $guarded = [
+        'id_department',
     ];
 
     /** @return HasMany<Employee, $this> */

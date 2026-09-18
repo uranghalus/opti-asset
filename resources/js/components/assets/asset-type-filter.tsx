@@ -1,0 +1,94 @@
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
+export function AssetTypeFilter({
+    value,
+    onChange,
+    status,
+    onStatusChange,
+    locations = [],
+    location,
+    onLocationChange,
+}: {
+    value: '' | 'fixed_asset' | 'equipment';
+    onChange: (value: '' | 'fixed_asset' | 'equipment') => void;
+    status: string;
+    onStatusChange: (status: string) => void;
+    locations?: { id: string; name: string }[];
+    location?: string;
+    onLocationChange?: (value: string) => void;
+}) {
+    return (
+        <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-1">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Tipe Aset
+                </Label>
+                <Select
+                    value={value}
+                    onValueChange={(v) =>
+                        onChange(v as '' | 'fixed_asset' | 'equipment')
+                    }
+                >
+                    <SelectTrigger className="h-9 w-[140px] border-white/15 bg-white/10">
+                        <SelectValue placeholder="Semua Tipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Tipe</SelectItem>
+                        <SelectItem value="fixed_asset">
+                            Aktiva Tetap
+                        </SelectItem>
+                        <SelectItem value="equipment">Peralatan</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="flex flex-col gap-1">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Status
+                </Label>
+                <Select value={status} onValueChange={onStatusChange}>
+                    <SelectTrigger className="h-9 w-[130px] border-white/15 bg-white/10">
+                        <SelectValue placeholder="Semua Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">Semua Status</SelectItem>
+                        <SelectItem value="ACT">Aktif</SelectItem>
+                        <SelectItem value="LOAN">Dipinjamkan</SelectItem>
+                        <SelectItem value="RPR">Perbaikan</SelectItem>
+                        <SelectItem value="MUT">Dimutasi</SelectItem>
+                        <SelectItem value="DSP">Dihapus</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            {onLocationChange && (
+                <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] font-bold text-muted-foreground uppercase">
+                        Lokasi
+                    </Label>
+                    <Select
+                        value={location ?? ''}
+                        onValueChange={onLocationChange}
+                    >
+                        <SelectTrigger className="h-9 w-[150px] border-white/15 bg-white/10">
+                            <SelectValue placeholder="Semua Lokasi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">Semua Lokasi</SelectItem>
+                            {locations.map((loc) => (
+                                <SelectItem key={loc.id} value={loc.id}>
+                                    {loc.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+        </div>
+    );
+}

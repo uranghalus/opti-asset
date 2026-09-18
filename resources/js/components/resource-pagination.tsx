@@ -30,7 +30,7 @@ export function ResourcePagination({
     return (
         <div className="card-enter mt-6 flex items-center justify-between gap-3 delay-200">
             <p className="text-xs text-muted-foreground tabular-nums">
-                <span className="hidden sm:inline">Menampilkan{' '}</span>
+                <span className="hidden sm:inline">Menampilkan </span>
                 {from}–{to}
                 <span className="hidden sm:inline"> dari </span>
                 <span className="sm:hidden"> / </span>
@@ -49,26 +49,24 @@ export function ResourcePagination({
                 </Button>
                 <span className="min-w-14 text-center text-sm font-semibold text-foreground tabular-nums">
                     {currentPage}
-                    <span className="text-muted-foreground">{' '}/{lastPage}</span>
+                    <span className="text-muted-foreground"> /{lastPage}</span>
                 </span>
                 <div className="hidden items-center gap-1 sm:flex">
-                    {links
-                        .slice(1, -1)
-                        .map((link, i) => (
-                            <Button
-                                key={i}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="icon"
-                                className={cn(
-                                    'h-9 w-9 rounded-xl',
-                                    !link.active && 'hidden lg:inline-flex',
-                                )}
-                                disabled={!link.url}
-                                onClick={() => onPageChange(link.url)}
-                            >
-                                {link.label}
-                            </Button>
-                        ))}
+                    {links.slice(1, -1).map((link, i) => (
+                        <Button
+                            key={i}
+                            variant={link.active ? 'default' : 'outline'}
+                            size="icon"
+                            className={cn(
+                                'h-9 w-9 rounded-xl',
+                                !link.active && 'hidden lg:inline-flex',
+                            )}
+                            disabled={!link.url}
+                            onClick={() => onPageChange(link.url)}
+                        >
+                            {link.label}
+                        </Button>
+                    ))}
                 </div>
                 <Button
                     variant="outline"

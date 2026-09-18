@@ -22,7 +22,7 @@ export default function AssetEdit() {
         <>
             <Head title="Edit Aset" />
 
-            <div className="relative flex min-h-[100dvh] flex-col p-4 md:p-8">
+            <div className="noon dark relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
                 <VibrantBackground variant="default" />
                 <div className="mx-auto w-full max-w-3xl">
                     <Link
@@ -33,21 +33,21 @@ export default function AssetEdit() {
                         Kembali ke Daftar Aset
                     </Link>
 
-                    <div className="glass-panel card-enter mt-5 flex items-center gap-3.5 rounded-2xl p-5">
-                        <div className="glass-card flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10">
+                    <div className="glass-panel card-enter mt-5 flex items-center gap-3.5 rounded-xl p-5">
+                        <div className="flex size-12 items-center justify-center rounded-md bg-primary/10 text-primary shadow-md ring-1 ring-primary/10">
                             <Boxes className="size-6" strokeWidth={1.5} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                            <h1 className="text-[2rem] font-bold tracking-[-0.02em] text-foreground">
                                 Edit Aset
                             </h1>
-                            <p className="mt-1 font-mono text-xs text-muted-foreground">
+                            <p className="mt-1 font-mono text-[13px] text-muted-foreground">
                                 {props.asset.kode_asset ?? '—'}
                             </p>
                         </div>
                     </div>
 
-                    <div className="glass-panel card-enter mt-4 rounded-2xl p-5 delay-100 md:p-6">
+                    <div className="glass-panel card-enter mt-4 rounded-xl p-5 delay-100 md:p-6">
                         <AssetForm
                             mode="edit"
                             asset={props.asset}

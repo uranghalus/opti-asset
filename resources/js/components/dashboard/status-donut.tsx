@@ -1,5 +1,4 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
-import { Button } from '@/components/ui/button';
 
 type AssetByStatus = {
     ACT: number;
@@ -13,14 +12,17 @@ type Stats = {
     total_assets: number;
     asset_by_status: AssetByStatus;
     pending_transfers: number;
+    pending_disposals: number;
 };
 
+// NOON status palette — WCAG AA against both light and dark glass surfaces.
+// No blue: teal stands in for "active/positive" per DESIGN.md's never-blue rule.
 const STATUS_COLORS: Record<string, string> = {
-    ACT: '#00875A',
-    LOAN: '#006FCF',
-    RPR: '#B95000',
-    MUT: '#7C3AED',
-    DSP: '#C52720',
+    ACT: '#0D9488',
+    LOAN: '#8B5CF6',
+    RPR: '#D97706',
+    MUT: '#6D28D9',
+    DSP: '#E11D48',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -43,23 +45,14 @@ export function StatusDonut({ stats }: { stats: Stats }) {
     const total = data.reduce((sum, d) => sum + d.value, 0);
 
     return (
-        <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
-            <div className="mb-5 flex items-center justify-between">
-                <div>
-                    <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
-                        Status
-                    </p>
-                    <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                        Distribusi Aset
-                    </h3>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 rounded-md px-2.5 text-[11px] font-medium text-[#86888C] hover:text-[#1A1A1A] dark:text-[#B7C3D9] dark:hover:text-white"
-                >
-                    Saat Ini
-                </Button>
+        <div className="flex flex-col gap-4">
+            <div>
+                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
+                    FR-10.2
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-foreground">
+                    Distribusi Aset
+                </h3>
             </div>
 
             <div className="flex items-center gap-6">
@@ -84,10 +77,10 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                         </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-[#1A1A1A] dark:text-white">
+                        <span className="text-xl font-bold text-foreground">
                             {total}
                         </span>
-                        <span className="text-[10px] text-[#86888C]">
+                        <span className="text-[10px] text-muted-foreground">
                             Total
                         </span>
                     </div>
@@ -105,14 +98,14 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                                 key={item.name}
                                 className="flex items-center justify-between"
                             >
-                                <span className="flex items-center gap-2 text-sm text-[#1A1A1A] dark:text-white">
+                                <span className="flex items-center gap-2 text-sm text-foreground/90">
                                     <span
                                         className="h-2.5 w-2.5 rounded-full"
                                         style={{ backgroundColor: item.color }}
                                     />
                                     {item.name}
                                 </span>
-                                <span className="text-xs text-[#86888C] tabular-nums">
+                                <span className="text-xs text-muted-foreground tabular-nums">
                                     {item.value} ({pct}%)
                                 </span>
                             </div>

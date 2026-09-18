@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class LocationTest extends TestCase
@@ -29,7 +31,14 @@ class LocationTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.location.view', 'asset.location.create', 'asset.location.edit', 'asset.location.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.location.view', 'asset.location.create', 'asset.location.edit', 'asset.location.delete']);
     }
 
     public function test_index_renders_locations_with_pagination(): void

@@ -6,15 +6,33 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCan } from '@/hooks/use-can';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { SidebarNavGroup } from '@/types/navigation';
 
 export function NavMain({ groups = [] }: { groups: SidebarNavGroup[] }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { can } = useCan();
+
+    const visibleGroups = groups
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => {
+                const permission = item.permission;
+
+                return (
+                    !permission ||
+                    permission.actions.some((action) =>
+                        can(`${permission.resource}.${action}`),
+                    )
+                );
+            }),
+        }))
+        .filter((group) => group.items.length > 0);
 
     return (
         <>
-            {groups.map((group, groupIndex) => (
+            {visibleGroups.map((group, groupIndex) => (
                 <SidebarGroup key={group.title} className="px-2 py-0">
                     <SidebarGroupLabel className="mt-0 mb-1 h-auto px-2 py-0 text-[10px] font-semibold tracking-[0.14em] text-sidebar-foreground/50 uppercase">
                         {group.title}
@@ -63,7 +81,7 @@ export function NavMain({ groups = [] }: { groups: SidebarNavGroup[] }) {
                             );
                         })}
                     </SidebarMenu>
-                    {groupIndex < groups.length - 1 && (
+                    {groupIndex < visibleGroups.length - 1 && (
                         <div className="mx-2 my-2 h-px bg-sidebar-border" />
                     )}
                 </SidebarGroup>

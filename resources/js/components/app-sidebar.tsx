@@ -22,7 +22,7 @@ type Props = {
     onClose?: () => void;
 };
 
-export function AppSidebar({ isMobile = false, open = false, onClose }: Props) {
+export function AppSidebar({ isMobile = false, open = false }: Props) {
     const sidebarClassName = cn(
         'sidebar-glass ease-out-[cubic-bezier(0.16,1,0.3,1)] border-r-0 transition-all duration-300',
         isMobile &&
@@ -45,7 +45,7 @@ export function AppSidebar({ isMobile = false, open = false, onClose }: Props) {
                             className="h-12 gap-3 px-2 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
                         >
                             <Link href={dashboard()}>
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1374D4] to-[#006FCF] shadow-lg ring-1 shadow-[#006FCF]/25 ring-white/25 group-data-[collapsible=icon]:size-8">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB23E] to-[#B892FF] shadow-lg ring-1 shadow-[#B892FF]/25 ring-white/25 group-data-[collapsible=icon]:size-8">
                                     <AppLogoIcon className="size-5 fill-white" />
                                 </div>
                                 <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">

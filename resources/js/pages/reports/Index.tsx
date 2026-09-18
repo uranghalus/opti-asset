@@ -156,7 +156,10 @@ const SEARCH_FOCUS_CLASSES =
     'transition-all duration-200 placeholder:text-muted-foreground focus:border-primary/50 focus:shadow-md focus:ring-primary/25';
 
 function formatDate(value: string | null): string {
-    if (!value) return '—';
+    if (!value) {
+        return '—';
+    }
+
     return new Date(value).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'short',
@@ -177,25 +180,26 @@ export default function ReportsIndex() {
     const dTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
 
-    useEffect(() => {
-        if (
-            filters.transfer_search !== prevFilters.transfer_search ||
-            filters.transfer_status !== prevFilters.transfer_status ||
-            filters.disposal_search !== prevFilters.disposal_search ||
-            filters.disposal_status !== prevFilters.disposal_status
-        ) {
-            setPrevFilters(filters);
-            setTSearch(filters.transfer_search ?? '');
-            setTStatus(filters.transfer_status ?? '');
-            setDSearch(filters.disposal_search ?? '');
-            setDStatus(filters.disposal_status ?? '');
-        }
-    }, [filters, prevFilters]);
+    // Sinkronkan state lokal saat filter server berubah (partial reload) —
+    // pola "adjust state during render" (React docs): setState hanya saat
+    // props berubah, langsung saat render tanpa effect.
+    if (filters !== prevFilters) {
+        setPrevFilters(filters);
+        setTSearch(filters.transfer_search ?? '');
+        setTStatus(filters.transfer_status ?? '');
+        setDSearch(filters.disposal_search ?? '');
+        setDStatus(filters.disposal_status ?? '');
+    }
 
     useEffect(
         () => () => {
-            if (tTimer.current) clearTimeout(tTimer.current);
-            if (dTimer.current) clearTimeout(dTimer.current);
+            if (tTimer.current) {
+                clearTimeout(tTimer.current);
+            }
+
+            if (dTimer.current) {
+                clearTimeout(dTimer.current);
+            }
         },
         [],
     );
@@ -208,14 +212,17 @@ export default function ReportsIndex() {
                 overrides.tSearch !== undefined ? overrides.tSearch : tSearch
             ).trim();
         }
+
         if (overrides.tStatus !== undefined ? overrides.tStatus : tStatus) {
             params.transfer_status = overrides.tStatus ?? tStatus;
         }
+
         if (overrides.dSearch !== undefined ? overrides.dSearch : dSearch) {
             params.disposal_search = (
                 overrides.dSearch !== undefined ? overrides.dSearch : dSearch
             ).trim();
         }
+
         if (overrides.dStatus !== undefined ? overrides.dStatus : dStatus) {
             params.disposal_status = overrides.dStatus ?? dStatus;
         }
@@ -240,7 +247,9 @@ export default function ReportsIndex() {
     };
 
     const goToPage = (url: string | null) => {
-        if (url) router.get(url, {}, { preserveState: true, replace: true });
+        if (url) {
+            router.get(url, {}, { preserveState: true, replace: true });
+        }
     };
 
     const activeTCount = [tStatus].filter(Boolean).length + (tSearch ? 1 : 0);
@@ -248,8 +257,15 @@ export default function ReportsIndex() {
 
     const buildTransferExportUrl = (format: string) => {
         const params: Record<string, string> = { format };
-        if (tStatus) params.transfer_status = tStatus;
-        if (tSearch.trim()) params.transfer_search = tSearch.trim();
+
+        if (tStatus) {
+            params.transfer_status = tStatus;
+        }
+
+        if (tSearch.trim()) {
+            params.transfer_search = tSearch.trim();
+        }
+
         return (
             exportTransfersRoute().url +
             '?' +
@@ -259,8 +275,15 @@ export default function ReportsIndex() {
 
     const buildDisposalExportUrl = (format: string) => {
         const params: Record<string, string> = { format };
-        if (dStatus) params.disposal_status = dStatus;
-        if (dSearch.trim()) params.disposal_search = dSearch.trim();
+
+        if (dStatus) {
+            params.disposal_status = dStatus;
+        }
+
+        if (dSearch.trim()) {
+            params.disposal_search = dSearch.trim();
+        }
+
         return (
             exportDisposalsRoute().url +
             '?' +
@@ -383,10 +406,13 @@ export default function ReportsIndex() {
                                             value={tSearch}
                                             onChange={(e) => {
                                                 setTSearch(e.target.value);
-                                                if (tTimer.current)
+
+                                                if (tTimer.current) {
                                                     clearTimeout(
                                                         tTimer.current,
                                                     );
+                                                }
+
                                                 tTimer.current = setTimeout(
                                                     () =>
                                                         reload({
@@ -617,10 +643,13 @@ export default function ReportsIndex() {
                                             value={dSearch}
                                             onChange={(e) => {
                                                 setDSearch(e.target.value);
-                                                if (dTimer.current)
+
+                                                if (dTimer.current) {
                                                     clearTimeout(
                                                         dTimer.current,
                                                     );
+                                                }
+
                                                 dTimer.current = setTimeout(
                                                     () =>
                                                         reload({

@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Item;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,8 @@ class ItemController extends Controller
 {
     public function index(Request $request): Response
     {
+        Gate::authorize('asset.item.view');
+
         $perPage = min((int) $request->integer('per_page', 15), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -58,6 +61,8 @@ class ItemController extends Controller
 
     public function store(StoreItemRequest $request): RedirectResponse
     {
+        Gate::authorize('asset.item.create');
+
         Item::create($request->validated());
 
         return back();
@@ -68,6 +73,8 @@ class ItemController extends Controller
      */
     public function assignCategoryBatch(Request $request): RedirectResponse
     {
+        Gate::authorize('asset.item.edit');
+
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['required', 'string'],
@@ -83,6 +90,8 @@ class ItemController extends Controller
 
     public function update(UpdateItemRequest $request, Item $item): RedirectResponse
     {
+        Gate::authorize('asset.item.edit');
+
         $item->update($request->validated());
 
         return back();
@@ -90,6 +99,8 @@ class ItemController extends Controller
 
     public function destroy(Item $item): RedirectResponse
     {
+        Gate::authorize('asset.item.delete');
+
         $item->delete();
 
         return back();

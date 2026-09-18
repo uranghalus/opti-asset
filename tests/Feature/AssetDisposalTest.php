@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AssetDisposalTest extends TestCase
@@ -31,7 +33,61 @@ class AssetDisposalTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.disposal.view', 'asset.disposal.create', 'asset.disposal.edit', 'asset.disposal.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.disposal.view', 'asset.disposal.create', 'asset.disposal.edit', 'asset.disposal.delete']);
+    }
+
+    public function test_store_forbids_user_without_disposal_create_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.disposal.create');
+
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('disposals.store'), [
+                'asset_id' => $asset->id,
+                'reason' => 'Rusak',
+                'disposal_date' => now()->toDateString(),
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('asset_disposals', 0);
+    }
+
+    public function test_approve_forbids_user_without_disposal_edit_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.disposal.edit');
+
+        $disposal = AssetDisposal::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('disposals.approve', $disposal))
+            ->assertForbidden();
+
+        $this->assertNotSame(AssetStatus::DISPOSED, $disposal->asset->refresh()->status);
+    }
+
+    // ---------- FR-07.6: hanya aset aktif yang dapat dihapus ----------
+
+    public function test_store_rejects_disposal_of_non_active_asset(): void
+    {
+        $asset = Asset::factory()->create(['status' => 'DSP']);
+
+        $this->actingAs($this->user)
+            ->post(route('disposals.store'), [
+                'asset_id' => $asset->id,
+                'reason' => 'Sudah dihapus sebelumnya',
+                'disposal_date' => now()->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('asset_disposals', 0);
     }
 
     public function test_index_renders_disposals_with_pagination(): void

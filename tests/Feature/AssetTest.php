@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ClassificationLevel;
 use App\Models\Asset;
+use App\Models\AssetBookValue;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
@@ -17,10 +18,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AssetTest extends TestCase
@@ -42,7 +46,138 @@ class AssetTest extends TestCase
         $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach (['asset.view', 'asset.create', 'asset.edit', 'asset.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->givePermissionTo(['asset.view', 'asset.create', 'asset.edit', 'asset.delete']);
+    }
+
+    // ---------- FR-11.3: otorisasi berbasis peran ----------
+
+    public function test_index_forbids_user_without_asset_view_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.view');
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index'))
+            ->assertForbidden();
+    }
+
+    public function test_create_forbids_user_without_asset_create_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.create');
+
+        $this->actingAs($this->user)
+            ->get(route('assets.create'))
+            ->assertForbidden();
+    }
+
+    public function test_store_forbids_user_without_asset_create_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.create');
+
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $this->actingAs($this->user)
+            ->post(route('assets.store'), [
+                'item_id' => $item->id,
+                'serial_number' => 'SN-NO-PERM',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('assets', ['serial_number' => 'SN-NO-PERM']);
+    }
+
+    public function test_edit_forbids_user_without_asset_edit_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.edit');
+
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->user)
+            ->get(route('assets.edit', $asset))
+            ->assertForbidden();
+    }
+
+    public function test_update_forbids_user_without_asset_edit_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.edit');
+
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->user)
+            ->patch(route('assets.update', $asset), ['brand' => 'Tidak Boleh'])
+            ->assertForbidden();
+
+        $this->assertSame($asset->refresh()->brand, $asset->brand);
+    }
+
+    public function test_destroy_forbids_user_without_asset_delete_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.delete');
+
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->user)
+            ->delete(route('assets.destroy', $asset))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('assets', ['id' => $asset->id]);
+    }
+
+    public function test_scan_lookup_forbids_user_without_asset_view_permission(): void
+    {
+        $this->user->revokePermissionTo('asset.view');
+
+        $this->actingAs($this->user)
+            ->getJson(route('assets.scan-lookup', ['code' => 'X']))
+            ->assertForbidden();
+    }
+
+    public function test_history_page_forbids_user_without_asset_view_permission(): void
+    {
+        $asset = Asset::factory()->create();
+        $this->user->revokePermissionTo('asset.view');
+
+        $this->actingAs($this->user)
+            ->get(route('assets.history', $asset))
+            ->assertForbidden();
+    }
+
+    // ---------- FR-07.6: aset terhapus tidak dapat digunakan dalam transaksi aktif ----------
+
+    public function test_update_rejects_changes_to_disposed_asset(): void
+    {
+        $asset = Asset::factory()->create([
+            'status' => 'DSP',
+            'brand' => 'Brand Asli',
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->patch(route('assets.update', $asset), ['brand' => 'Brand Baru'])
+            ->assertRedirect();
+
+        $this->assertSame('Brand Asli', $asset->refresh()->brand);
+    }
+
+    public function test_disposed_asset_still_viewable_and_deletable(): void
+    {
+        $asset = Asset::factory()->create(['status' => 'DSP']);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.show', $asset))
+            ->assertOk();
+
+        $this->actingAs($this->user)
+            ->delete(route('assets.destroy', $asset))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
     }
 
     public function test_asset_gets_tenant_id_on_create(): void
@@ -161,14 +296,27 @@ class AssetTest extends TestCase
 
     public function test_index_renders_assets(): void
     {
-        Asset::factory()->count(2)->create();
+        $item = Item::factory()->create();
 
         $this->actingAs($this->user)
             ->get(route('assets.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
-                ->has('assets.data', 2));
+                ->has('tree'));
+    }
+
+    public function test_grouped_route_renders_index_view(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+
+        $this->actingAs($this->user)
+            ->get(route('assets.grouped', ['level' => $group->id, 'node' => $subCluster->id]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('tree')
+                ->has('assets'));
     }
 
     public function test_show_page_renders_with_relations(): void
@@ -217,6 +365,47 @@ class AssetTest extends TestCase
             ->get(route('assets.scan'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('assets/Scan'));
+    }
+
+    // ---------- FR-13.10: riwayat nilai buku per periode ditampilkan ----------
+
+    public function test_show_page_renders_book_value_history(): void
+    {
+        $this->travelTo(Carbon::parse('2026-08-20'));
+
+        $asset = Asset::factory()->create([
+            'asset_type' => 'fixed_asset',
+            'acquisition_cost' => 12_000_000,
+            'useful_life_years' => 4,
+            'depreciation_method' => 'straight_line',
+            'in_come_date' => Carbon::parse('2024-01-01'),
+            'accumulated_depreciation' => 2_000_000,
+        ]);
+
+        AssetBookValue::create([
+            'asset_id' => $asset->id,
+            'period_ends_at' => Carbon::parse('2026-08-20'),
+            'book_value' => '10000000.00',
+            'accumulated_depreciation' => '2000000.00',
+        ]);
+
+        $this->travelTo(Carbon::parse('2026-09-15'));
+
+        AssetBookValue::create([
+            'asset_id' => $asset->id,
+            'period_ends_at' => Carbon::parse('2026-09-15'),
+            'book_value' => '9750000.00',
+            'accumulated_depreciation' => '2250000.00',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.show', $asset))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Show')
+                ->has('asset.book_values', 2)
+                ->where('asset.book_values.0.book_value', '9750000.00')
+                ->where('asset.book_values.1.book_value', '10000000.00'));
     }
 
     public function test_scan_lookup_finds_asset_by_code(): void
@@ -806,17 +995,24 @@ class AssetTest extends TestCase
         $this->assertSame(1, Asset::count());
     }
 
-    public function test_import_requires_item(): void
+    public function test_import_without_item_or_item_column_creates_default_item(): void
     {
-        $file = UploadedFile::fake()->createWithContent(
-            'assets.csv',
-            $this->csvContent(['Brand X', '', 'SN-IMPORT-X']),
-        );
+        $file = $this->xlsxFile([
+            ['Brand', 'Model', 'Serial Number'],
+            ['Brand X', 'Model Y', 'SN-DEFAULT-ITEM'],
+        ]);
 
         $this->actingAs($this->user)
             ->from(route('assets.index'))
-            ->post(route('assets.import'), ['file' => $file])
-            ->assertSessionHasErrors(['item_id']);
+            ->post(route('assets.import'), [
+                'file' => $file,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('serial_number', 'SN-DEFAULT-ITEM')->first();
+        $this->assertNotNull($asset);
+        $this->assertNotNull($asset->item_id);
+        $this->assertNotNull(Item::find($asset->item_id));
     }
 
     public function test_import_requires_valid_file(): void
@@ -1106,5 +1302,188 @@ class AssetTest extends TestCase
         $row = array_pad($values, count($headers), '');
 
         return implode(',', $headers)."\n".implode(',', $row)."\n";
+    }
+
+    public function test_import_resolves_classification_by_exact_kode(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '11']);
+        $subCluster = AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id, 'code' => '07']);
+
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.11.07'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', '03.08.11.07')->first();
+
+        $this->assertNotNull($asset);
+        $this->assertSame($group->id, $asset->asset_group_id);
+        $this->assertSame($category->id, $asset->asset_category_id);
+        $this->assertSame($cluster->id, $asset->asset_cluster_id);
+        $this->assertSame($subCluster->id, $asset->asset_sub_cluster_id);
+    }
+
+    public function test_import_resolves_classification_by_positional_fallback(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+
+        // Three clusters under category — codes do NOT match '01' so positional kicks in.
+        $firstCluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1A', 'sort_order' => 1]);
+        $secondCluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1B', 'sort_order' => 2]);
+        AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '1C', 'sort_order' => 3]);
+
+        // Two subclusters under the 2nd cluster.
+        $firstSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $secondCluster->id, 'code' => '2A', 'sort_order' => 1]);
+        $secondSub = AssetSubCluster::factory()->create(['asset_cluster_id' => $secondCluster->id, 'code' => '2B', 'sort_order' => 2]);
+
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.02.02'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', '03.08.02.02')->first();
+
+        $this->assertNotNull($asset);
+        $this->assertSame($secondCluster->id, $asset->asset_cluster_id, 'Positional fallback picks the 2nd cluster');
+        $this->assertSame($secondSub->id, $asset->asset_sub_cluster_id, 'Positional fallback picks the 2nd subcluster');
+    }
+
+    public function test_import_records_errors_for_unknown_group_segment(): void
+    {
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '99.01.01.01'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Golongan '99' tidak ditemukan", (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    public function test_import_records_errors_for_unknown_category_segment(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $item = Item::factory()->create();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.XX.01.01'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Kategori 'XX' tidak ditemukan di bawah golongan '03'", (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    public function test_import_records_errors_for_unknown_subcluster_segment(): void
+    {
+        $group = AssetGroup::factory()->create(['code' => '03']);
+        $category = AssetCategory::factory()->create(['asset_group_id' => $group->id, 'code' => '08']);
+        $cluster = AssetCluster::factory()->create(['asset_category_id' => $category->id, 'code' => '11']);
+        $item = Item::factory()->create();
+
+        // Kode '99' is numeric but exceeds available subclusters (only 0 exist).
+        $file = $this->xlsxFile([
+            ['Unit', 'Kode Asset'],
+            ['Meja', '03.08.11.99'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertStringContainsString("Sub Cluster '99' tidak ditemukan di bawah cluster '11'", (string) ($flash['toast']['message'] ?? ''));
+    }
+
+    public function test_index_exposes_unclassified_count(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create();
+        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->where('unclassifiedCount', 2)
+                ->where('assets', null));
+    }
+
+    public function test_index_unclassified_node_lists_orphaned_assets(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create();
+        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index', ['level' => 'group', 'node' => 'unclassified']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->where('selected.level', 'group')
+                ->where('selected.id', 'unclassified')
+                ->has('assets.data', 2)
+                ->has('breadcrumb', 1)
+                ->where('breadcrumb.0.name', 'Tanpa Klasifikasi'));
+    }
+
+    public function test_browse_route_renders_index_view(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('assets.browse'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('tree'));
     }
 }

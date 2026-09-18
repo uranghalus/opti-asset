@@ -47,4 +47,10 @@ class AssetCluster extends Model
     {
         return $this->hasMany(AssetSubCluster::class);
     }
+
+    /** @return HasMany<Asset, $this> */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class, 'asset_cluster_id');
+    }
 }

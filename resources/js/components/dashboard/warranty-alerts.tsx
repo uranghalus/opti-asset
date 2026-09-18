@@ -53,7 +53,7 @@ function DaysBadge({ days }: { days: number }) {
                     ? 'bg-rose-500/10 text-rose-600 ring-rose-500/20 dark:text-rose-300'
                     : days <= 14
                       ? 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300'
-                      : 'bg-sky-500/10 text-sky-600 ring-sky-500/20 dark:text-sky-300',
+                      : 'bg-[#5EEAD4]/10 text-teal-700 ring-[#5EEAD4]/30 dark:text-teal-300',
             )}
         >
             <Clock className="size-3" />
@@ -65,25 +65,23 @@ function DaysBadge({ days }: { days: number }) {
 export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
     if (alerts.expired === 0 && alerts.expiring_soon === 0) {
         return (
-            <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
-                <div className="mb-4 flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-semibold tracking-widest text-[#00875A] uppercase">
-                            Garansi
-                        </p>
-                        <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
-                            Status Garansi
-                        </h3>
-                    </div>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-[#0D9488] uppercase">
+                        Garansi
+                    </p>
+                    <h3 className="mt-1 text-base font-semibold text-foreground">
+                        Status Garansi
+                    </h3>
                 </div>
                 <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                    <div className="flex size-12 items-center justify-center rounded-xl bg-[#00875A]/10">
-                        <ShieldAlert className="size-6 text-[#00875A]" />
+                    <div className="flex size-12 items-center justify-center rounded-xl bg-[#5EEAD4]/10">
+                        <ShieldAlert className="size-6 text-[#5EEAD4]" />
                     </div>
-                    <p className="text-sm font-medium text-[#1A1A1A] dark:text-white">
+                    <p className="text-sm font-medium text-foreground">
                         Semua garansi aktif
                     </p>
-                    <p className="text-xs text-[#86888C]">
+                    <p className="text-xs text-muted-foreground">
                         Tidak ada aset dengan garansi kedaluwarsa atau mendekati
                         batas waktu.
                     </p>
@@ -93,13 +91,13 @@ export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
     }
 
     return (
-        <div className="rounded-2xl border border-[#D5D9DC] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-semibold tracking-widest text-[#B95000] uppercase">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#D97706] uppercase">
                         Peringatan
                     </p>
-                    <h3 className="mt-1 text-base font-semibold text-[#1A1A1A] dark:text-white">
+                    <h3 className="mt-1 text-base font-semibold text-foreground">
                         Garansi Mendekati Batas Waktu
                     </h3>
                 </div>
@@ -124,18 +122,18 @@ export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
                     <Link
                         key={asset.id}
                         href={`/assets/${asset.id}`}
-                        className="group flex items-center justify-between gap-3 rounded-lg border border-transparent p-3 transition-all duration-200 hover:border-[#D5D9DC] hover:bg-[#F7F8F9]/50 dark:hover:border-[#1e293b] dark:hover:bg-white/[0.02]"
+                        className="group flex items-center justify-between gap-3 rounded-lg border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-accent/50"
                     >
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-[#1A1A1A] group-hover:text-[#006FCF] dark:text-white dark:group-hover:text-[#3B9FE8]">
+                            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary">
                                 {asset.kode_asset ?? '—'}
                             </p>
-                            <p className="truncate text-xs text-[#86888C]">
+                            <p className="truncate text-xs text-muted-foreground">
                                 {asset.brand
                                     ? `${asset.brand} ${asset.model ?? ''}`
                                     : 'Tanpa nama'}
                             </p>
-                            <p className="mt-1 text-[11px] text-[#86888C]">
+                            <p className="mt-1 text-[11px] text-muted-foreground">
                                 Berakhir: {formatDate(asset.warranty_expire)}
                             </p>
                         </div>

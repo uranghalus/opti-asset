@@ -1,57 +1,57 @@
 ---
 version: 'alpha'
-name: 'Glassmorphism'
-description: 'Glassmorphic interface with frosted glass effect. Ideal for overlays, modal dialogs, card components, premium interfaces. AI-ready template.'
+name: 'Soft UI Evolution'
+description: 'Design evolved neumorphism with improved contrast (WCAG AA+), modern aesthetics, subtle depth, accessibility focus. Ideal for landing pages, saas. AI-ready template.'
 colors:
-    primary: '#0080FF'
-    secondary: '#6971ec'
-    tertiary: '#6971ec'
-    neutral: '#ff9382'
-
+    primary: '#87CEEB'
+    secondary: '#FFB6C1'
+    tertiary: '#90EE90'
 typography:
     h1:
-        fontFamily: -apple-system, sans-serif
+        fontFamily: System UI stack
         fontSize: 2.25rem
         fontWeight: 700
     body-md:
-        fontFamily: -apple-system, sans-serif
+        fontFamily: System UI stack
         fontSize: 1rem
         fontWeight: 400
     label-caps:
-        fontFamily: -apple-system, sans-serif
+        fontFamily: System UI stack
         fontSize: 0.75rem
         fontWeight: 500
+rounded:
+    sm: 10px
+    md: 20px
+    lg: 30px
 components:
     button-primary:
         backgroundColor: '{colors.primary}'
-        textColor: '{colors.neutral}'
+        rounded: '{rounded.sm}'
         padding: 12px
 ---
 
 ## Overview
 
-Glassmorphic interface with frosted glass effect. Ideal for overlays, modal dialogs, card components, premium interfaces. AI-ready template. Apple didn't invent frosted glass UI, but they made everyone care about it. iOS 7 dropped the skeuomorphism and introduced those translucent panels that let color bleed through from whatever sat behind them. It was polarizing. People hated it, then copied it. By Big Sur, the entire macOS chrome leaned into layered transparency as a spatial cue — and with visionOS, glass became the literal foundation of their spatial computing interface. It's not decoration there; it's architecture.
+Design evolved neumorphism with improved contrast (WCAG AA+), modern aesthetics, subtle depth, accessibility focus. Ideal for landing pages, saas. AI-ready template. Remember 2020 neumorphism? That beautiful disaster. Designers lost their minds over those puffy, extruded buttons — and then watched usability testers fail to distinguish active states from disabled ones. The contrast ratios were abysmal. WCAG compliance? Nonexistent. The style died fast, but the desire for tactile, physical-feeling interfaces never went away.
 
-Microsoft took a parallel path with Fluent Design's acrylic material around 2017. Windows 11 doubled down on it. Their approach was more systematic — defined noise textures, tint layers, luminosity blend modes. Less "pretty blur" and more "engineered material."
+Samsung's One UI quietly showed the path forward. Soft shadows, generous padding, rounded containers — but with actual color differentiation and readable text. They proved you could have depth without sacrificing legibility. Apple's visionOS spatial design language pushed it further: layered surfaces with clear hierarchy, not just embossed sameness.
 
-What made glassmorphism actually viable for the web was backdrop-filter landing in all major browsers by 2020. Before that, you were faking it with duplicated backgrounds and clip paths — hacky, brittle, not worth the effort. Now it's a single CSS property. By 2026, it's a mature technique with solid browser support, though you still need to think about what happens when that blur can't render.
+By 2026, Soft UI Evolution is what neumorphism should have been from the start. Real contrast ratios meeting AA standards. Shadows that communicate elevation, not decoration. Color palettes that use soft tones without washing out interactive elements. The tactile metaphor survived — it just grew up.
 
 - Density: 5/10 — Balanced
 - Variance: 4/10 — Moderate
 - Motion: 4/10 — Subtle
 
-- **Style:** Translucent, Layered, Vibrant, Blurred
-- **Keywords:** Frosted glass, transparent, blurred background, layered, vibrant background, light source, depth, multi-layer
+- **Style:** Soft, Subtle, Pastel, Refined
+- **Keywords:** Evolved soft UI, better contrast, modern aesthetics, subtle depth, accessibility-focused, improved shadows, hybrid
 - **Era:** 2020s Modern
 - **Light/Dark:** ✓ Full / ✓ Full
 
 ## Colors
 
-- \*\*\*\* (rgba(255,255,255,0.1-0.3)) — Primary surface or dominant color
-- **Electric Blue** (#0080FF) — Secondary accent
-- **Neon Purple** (#8B00FF) — Accent color, emphasis elements
-- **Vivid Pink** (#FF1493) — Primary text color
-- **Teal** (#20B2AA) — Secondary accent
+- **Soft Blue** (#87CEEB) — Accent highlight, links and focus states
+- **Soft Pink** (#FFB6C1) — Primary text color
+- **Soft Green** (#90EE90) — Supporting palette color
 
 ## Typography
 
@@ -80,7 +80,7 @@ Scale:
 
 ## Elevation & Depth
 
-Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflection, Z-depth
+Improved shadows (softer than flat, clearer than neumorphism), modern (200-300ms), focus visible, WCAG AA/AAA
 
 - **Physics:** Ease-out curves, 200-300ms duration. Smooth and predictable.
 - **Entry animations:** Fade + translate-Y (16px → 0) over 420ms ease-out. Staggered cascades for lists: 80ms between items.
@@ -90,31 +90,17 @@ Backdrop blur (10-20px), subtle border (1px solid rgba white 0.2), light reflect
 
 ## Shapes
 
-- Base corner radius: 4px (small controls, chips, badges).
-- Glass panels (`glass-panel`): `rounded-2xl` (1rem) — the signature soft edge.
-- Overlays (Dialog, Select, Sheet): `rounded-xl` (0.75rem).
-- Buttons: `rounded-lg` (0.5rem).
-- Use only these Tailwind radius steps; do not introduce raw px radii.
+Base corner radius: 10px. See rounded tokens in front matter for the full scale.
 
 ## Components
 
-- **Primary Button:** Subtly rounded (0.5rem) shape. Accent color fill. Hover: 8% darken + subtle lift shadow. Active: -1px translate tactile press. Font weight 600. No outer glows.
+- **Primary Button:** Rounded (10px) shape. Accent color fill. Hover: 8% darken + subtle lift shadow. Active: -1px translate tactile press. Font weight 600. No outer glows.
 - **Secondary / Ghost Button:** Outline variant. 1.5px border in muted color. Text in primary color. Hover: subtle background fill.
-- **Cards:** Subtly rounded (0.5rem) corners. Surface background. Subtle shadow (0 2px 12px rgba(0,0,0,0.06)). 1px border stroke.
+- **Cards:** Rounded (10px) corners. Surface background. Subtle shadow (0 2px 12px rgba(0,0,0,0.06)). 1px border stroke.
 - **Inputs:** Label above input. 1px border stroke. Focus ring: 2px accent color offset 2px. Error text below in semantic red. No floating labels.
 - **Navigation:** Primary surface background. Active item: accent color indicator. Font weight 500 when active.
 - **Skeletons:** Shimmer animation matching component dimensions. No circular spinners.
 - **Empty States:** Icon-based composition with descriptive text and action button.
-
-## Module Accents
-The vibrant background gradient is themed per module via `<VibrantBackground variant="..." />`
-(`resources/js/components/vibrant-background.tsx`). Do not hardcode the gradient inline.
-
-| Variant  | Gradient colors                        | Modules                                                                 |
-| -------- | -------------------------------------- | ----------------------------------------------------------------------- |
-| `default`| Electric Blue #0080FF → Purple #8B5CF6 | assets, asset-history, asset-disposals, items, locations, roles, permissions, audit-logs |
-| `amber`  | Amber #F59E0B → Emerald #10B981        | asset-transfers, Employees, Departments, categories                      |
-| `indigo` | Electric Blue #0080FF → Indigo #6971EC | organizations                                                            |
 
 ## Do's and Don'ts
 
@@ -127,14 +113,13 @@ The vibrant background gradient is themed per module via `<VibrantBackground var
 - No broken external image links — use picsum.photos or inline SVG
 - No generic lorem ipsum in demos
 
-- Do Backdrop-filter blur 10-20px
-- Do Translucent white 15-30% opacity
-- Do Subtle border 1px light
-- Do Vibrant background verified
-- Do Text contrast 4.5:1 checked
+- Do Improved contrast AA/AAA
+- Do Soft shadows modern
+- Do Border-radius 8-12px
+- Do Animations 200-300ms
+- Do Focus states visible
+- Do Color hierarchy clear
 
 ## Use Case
 
-Overlays, Modal dialogs, Card components, Premium interfaces
-
-<!-- Source: https://designmd.app/library/glassmorphism · designmd.app -->
+Landing pages, SaaS

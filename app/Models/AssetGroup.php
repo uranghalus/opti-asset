@@ -38,4 +38,10 @@ class AssetGroup extends Model
     {
         return $this->hasMany(AssetCategory::class);
     }
+
+    /** @return HasMany<Asset, $this> */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class, 'asset_group_id');
+    }
 }

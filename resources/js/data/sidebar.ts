@@ -12,9 +12,9 @@ import {
     ArchiveX,
     Building2,
     Network,
+    Coins,
     ShieldCheck,
     KeyRound,
-    FolderTree,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -55,12 +55,6 @@ export const sidebarData: SidebarData = {
                     },
                 },
                 {
-                    title: 'Telusuri Aset',
-                    url: '/assets/browse',
-                    icon: FolderTree,
-                    permission: { resource: 'asset', actions: ['view'] },
-                },
-                {
                     title: 'Klasifikasi Aset',
                     url: '/asset-classification',
                     icon: Tags,
@@ -74,7 +68,7 @@ export const sidebarData: SidebarData = {
                     url: '/items',
                     icon: Package,
                     permission: {
-                        resource: 'inventory',
+                        resource: 'asset.item',
                         actions: ['view'],
                     },
                 },
@@ -111,8 +105,8 @@ export const sidebarData: SidebarData = {
                     url: '/asset-disposals',
                     icon: ArchiveX,
                     permission: {
-                        resource: 'asset',
-                        actions: ['delete'],
+                        resource: 'asset.disposal',
+                        actions: ['view'],
                     },
                 },
                 {
@@ -120,7 +114,7 @@ export const sidebarData: SidebarData = {
                     url: '/audit-logs',
                     icon: History,
                     permission: {
-                        resource: 'audit.log',
+                        resource: 'audit',
                         actions: ['view'],
                     },
                 },
@@ -204,7 +198,7 @@ export const sidebarData: SidebarData = {
                     url: '/organizations',
                     icon: Building2,
                     permission: {
-                        resource: 'ac',
+                        resource: 'organization',
                         actions: ['view'],
                     },
                 },
@@ -262,12 +256,21 @@ export const sidebarData: SidebarData = {
                     icon: Sliders,
                 },
                 {
+                    title: 'Ambang Kapitalisasi',
+                    url: '/settings/capitalization-threshold',
+                    icon: Coins,
+                    permission: {
+                        resource: 'setting',
+                        actions: ['edit'],
+                    },
+                },
+                {
                     title: 'Impor & Ekspor',
                     url: '/settings/import-export',
                     icon: Upload,
                     permission: {
                         resource: 'asset',
-                        actions: ['import'],
+                        actions: ['create'],
                     },
                 },
             ],

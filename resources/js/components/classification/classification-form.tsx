@@ -95,11 +95,14 @@ export function ClassificationForm({
             },
         };
 
+        // Moves happen via reorder only: the PATCH validators whitelist
+        // code/name/description/notes, so the parent id is sent on create
+        // (where the store validators require it) but never on update.
         form.transform((data) => ({
             code: data.code || null,
             name: data.name,
             description: data.description || null,
-            ...(parentField ? { [parentField]: parentId } : {}),
+            ...(!isEditing && parentField ? { [parentField]: parentId } : {}),
             ...(level === 'sub-cluster' ? { notes: data.notes || null } : {}),
         }));
 

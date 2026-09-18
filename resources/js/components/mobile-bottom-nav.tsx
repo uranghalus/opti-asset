@@ -1,47 +1,38 @@
-import { usePage } from '@inertiajs/react';
 import { Link, router } from '@inertiajs/react';
-import {
-    LayoutDashboard,
-    Boxes,
-    Building2,
-    Settings,
-    Menu,
-    X,
-    ChevronLeft,
-    Bell,
-    Search,
-} from 'lucide-react';
-import { useState } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { NotificationBell } from '@/components/notification-bell';
-import { SearchModal } from '@/components/search-modal';
-import { TenantSwitcher } from '@/components/tenant-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { sidebarData } from '@/data/sidebar';
-import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { cn } from '@/lib/utils';
-import { logout } from '@/routes';
+import { LayoutDashboard, Boxes, Building2, Settings } from 'lucide-react';
+import { useCan } from '@/hooks/use-can';
 import { dashboard } from '@/routes';
-import type { User } from '@/types';
-
-type Props = {
-    isMobile: boolean;
-    open: boolean;
-    onClose: () => void;
-};
 
 const NAV_ITEMS = [
-    { href: dashboard(), icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/assets', icon: Boxes, label: 'Aset' },
-    { href: '/organizations', icon: Building2, label: 'Organisasi' },
-    { href: '/settings/profile', icon: Settings, label: 'Pengaturan' },
+    { href: dashboard(), icon: LayoutDashboard, label: 'Dashboard', permission: null },
+    { href: '/assets', icon: Boxes, label: 'Aset', permission: 'asset.view' },
+    {
+        href: '/organizations',
+        icon: Building2,
+        label: 'Organisasi',
+        permission: 'organization.view',
+    },
+    {
+        href: '/settings/profile',
+        icon: Settings,
+        label: 'Pengaturan',
+        permission: null,
+    },
 ] as const;
 
 export function MobileBottomNav() {
-    const { auth } = usePage().props as { auth?: { user?: User } };
-    const user = auth?.user;
+    const { can } = useCan();
+    const visibleItems = NAV_ITEMS.filter(
+        (item) => !item.permission || can(item.permission),
+    );
+
+    // Static class map — Tailwind's JIT cannot see dynamic template classes.
+    const gridClass =
+        visibleItems.length === 4
+            ? 'grid-cols-4'
+            : visibleItems.length === 3
+                ? 'grid-cols-3'
+                : 'grid-cols-2';
 
     return (
         <nav
@@ -49,8 +40,8 @@ export function MobileBottomNav() {
             role="navigation"
             aria-label="Navigasi utama mobile"
         >
-            <div className="grid grid-cols-4">
-                {NAV_ITEMS.map((item) => (
+            <div className={gridClass}>
+                {visibleItems.map((item) => (
                     <Link
                         key={item.label}
                         href={item.href}

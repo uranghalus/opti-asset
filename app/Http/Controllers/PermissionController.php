@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePermissionRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +17,8 @@ class PermissionController extends Controller
 {
     public function index(Request $request): Response
     {
+        Gate::authorize('permission.view');
+
         $perPage = min((int) $request->integer('per_page', 10), 100);
 
         $search = $request->string('search')->trim()->toString();
@@ -56,6 +59,8 @@ class PermissionController extends Controller
 
     public function store(StorePermissionRequest $request): RedirectResponse
     {
+        Gate::authorize('permission.create');
+
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated): void {
@@ -72,6 +77,8 @@ class PermissionController extends Controller
 
     public function update(UpdatePermissionRequest $request, Permission $permission): RedirectResponse
     {
+        Gate::authorize('permission.edit');
+
         $permission->update(['name' => $request->validated()['name']]);
 
         return back();
@@ -79,6 +86,8 @@ class PermissionController extends Controller
 
     public function destroy(Permission $permission): RedirectResponse
     {
+        Gate::authorize('permission.delete');
+
         $permission->delete();
 
         return back();

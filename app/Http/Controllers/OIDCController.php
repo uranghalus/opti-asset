@@ -6,6 +6,8 @@ use App\Actions\CreateTenantAction;
 use App\Models\Department;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Providers\OIDCProvider;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class OIDCController extends Controller
 {
@@ -20,19 +23,19 @@ class OIDCController extends Controller
         private CreateTenantAction $createTenant,
     ) {}
 
-    public function redirect(): \Symfony\Component\HttpFoundation\RedirectResponse
+    public function redirect(): RedirectResponse
     {
         return Socialite::driver('oidc')->redirect();
     }
 
-    public function callback(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
+    public function callback(Request $request): RedirectResponse
     {
         try {
-            /** @var \App\Providers\OIDCProvider $driver */
+            /** @var OIDCProvider $driver */
             $driver = Socialite::driver('oidc');
             $ssoUser = $driver->stateless()->user();
 
-            $rawData = $ssoUser->user ?? [];
+            $rawData = $ssoUser->user;
             $ssoCompanyId = $rawData['company'] ?? null;
             Log::info('OIDC Raw Data:', $rawData);
             $ssoDepartmentName = is_array($rawData['department'] ?? null)
@@ -66,12 +69,8 @@ class OIDCController extends Controller
                 ]
             );
 
-            if ($user === null) {
-                throw new \RuntimeException('Gagal membuat atau menemukan user.');
-            }
-
             if ($user->tenant_id !== null && $ssoCompanyId !== null) {
-                $tenant = Tenant::find($ssoCompanyId);
+                $tenant = Tenant::find((string) $ssoCompanyId);
                 if ($tenant) {
                     $user->update(['tenant_id' => $tenant->id]);
                     $user->tenants()->syncWithoutDetaching([$tenant->id]);
@@ -99,7 +98,7 @@ class OIDCController extends Controller
         }
     }
 
-    public function logoutCallback(Request $request): \Illuminate\Http\JsonResponse
+    public function logoutCallback(Request $request): JsonResponse
     {
         // ponytail: grab id_token BEFORE session clear for RP-initiated logout
         Log::info('Received logout request. Session ID: ', $request->all());

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TenantSwitchController extends Controller
 {
-    public function switch(Request $request)
+    public function switch(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'tenant_id' => 'required|string|exists:tenants,id',

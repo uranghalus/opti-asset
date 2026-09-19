@@ -17,11 +17,14 @@ use Illuminate\Support\Carbon;
  */
 class DepreciationCalculator
 {
+    /**
+     * @return numeric-string
+     */
     public function compute(Asset $asset, ?Carbon $at = null): string
     {
         $method = $asset->depreciation_method;
 
-        if ($method === 'none' || $method === null || $method === '') {
+        if ($method === 'none' || $method === '') {
             return '0.00';
         }
 

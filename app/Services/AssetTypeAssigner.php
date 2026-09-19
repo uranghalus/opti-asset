@@ -33,7 +33,7 @@ class AssetTypeAssigner
             return $asset;
         }
 
-        $amount = (float) ($thresholdAmount ?? $threshold?->amount);
+        $amount = (float) ($thresholdAmount ?? $threshold->amount);
 
         $asset->asset_type = (float) $asset->acquisition_cost >= $amount
             ? 'fixed_asset'

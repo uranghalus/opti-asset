@@ -106,7 +106,7 @@ class ImportAssetsAction
             ->getRows();
 
         $locations = Location::query()->pluck('id', 'name');
-        $departments = Department::query()->pluck('id_department', 'nama_department');
+        $departments = $this->departmentLookup();
 
         // ponytail: in-memory dedupe sets; stream to a store if imports hit six figures.
         $serials = [];
@@ -468,6 +468,30 @@ class ImportAssetsAction
     }
 
     /**
+     * Master data lookup keyed by both department code and name (normalized to
+     * lowercase) so rows may reference either — office exports typically carry
+     * "ENG"/"FIN" codes while the template uses full names.
+     *
+     * @return Collection<string, string>
+     */
+    private function departmentLookup(): Collection
+    {
+        return Department::query()
+            ->get(['id_department', 'kode_department', 'nama_department'])
+            ->flatMap(function (Department $department): array {
+                $entries = [];
+
+                foreach ([$department->kode_department, $department->nama_department] as $label) {
+                    if (is_string($label) && $label !== '') {
+                        $entries[mb_strtolower(trim($label))] = $department->id_department;
+                    }
+                }
+
+                return $entries;
+            });
+    }
+
+    /**
      * Resolve the classification IDs from a dotted asset code.
      *
      * Supports two code formats:
@@ -581,6 +605,11 @@ class ImportAssetsAction
     /**
      * Find a model by 1-based position (Nth child) within an ordered query.
      * Used as fallback when the segment doesn't match any code directly.
+     *
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
+     * @return TModel|null
      */
     private function findByPosition(Builder $query, int $position): ?Model
     {

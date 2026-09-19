@@ -545,9 +545,19 @@ class AssetController extends Controller
         }
         $result = $action(Storage::disk('local')->path($tempPath), $request->string('item_id')->toString() !== '' ? Item::find($request->string('item_id')->toString()) : null);
         Storage::disk('local')->delete($tempPath);
+
         $message = $result['skipped'] > 0 ? "{$result['imported']} aset diimpor, {$result['skipped']} baris dilewati." : "{$result['imported']} aset berhasil diimpor.";
         $details = collect($result['errors'])->take(3)->pluck('message')->implode(' | ');
         Inertia::flash('toast', ['type' => $details === '' && $result['skipped'] === 0 ? 'success' : 'warning', 'message' => $details === '' ? $message : "{$message} {$details}"]);
+
+        // Full per-row detail for the import result panel; capped to keep the
+        // session payload sane on huge spreadsheets (toast carries the summary).
+        Inertia::flash('import_report', [
+            'imported' => $result['imported'],
+            'skipped' => $result['skipped'],
+            'total_errors' => count($result['errors']),
+            'errors' => collect($result['errors'])->take(250)->all(),
+        ]);
 
         return redirect()->route('assets.index');
     }

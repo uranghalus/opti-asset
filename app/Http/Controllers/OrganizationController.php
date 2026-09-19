@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrganizationController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         Gate::authorize('organization.view');
 
@@ -29,7 +30,7 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function store(StoreOrganizationRequest $request)
+    public function store(StoreOrganizationRequest $request): RedirectResponse
     {
         Gate::authorize('organization.create');
 
@@ -40,7 +41,7 @@ class OrganizationController extends Controller
         return redirect()->back();
     }
 
-    public function update(UpdateOrganizationRequest $request, Tenant $tenant)
+    public function update(UpdateOrganizationRequest $request, Tenant $tenant): RedirectResponse
     {
         Gate::authorize('organization.edit');
 
@@ -49,7 +50,7 @@ class OrganizationController extends Controller
         return redirect()->back();
     }
 
-    public function destroy(Tenant $tenant)
+    public function destroy(Tenant $tenant): RedirectResponse
     {
         Gate::authorize('organization.delete');
 

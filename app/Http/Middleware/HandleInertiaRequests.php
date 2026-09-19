@@ -27,7 +27,7 @@ class HandleInertiaRequests extends Middleware
                 $query = $user
                     ? ($user->hasRole('super-admin')
                         ? Tenant::latest()->get()
-                        : $user->tenants())
+                        : $user->tenants()->get())
                     : collect();
                 $availableTenants = $query->map(fn (Tenant $t) => $this->mapTenant($t));
             } elseif ($user) {

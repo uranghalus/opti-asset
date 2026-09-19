@@ -9,10 +9,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrganizationController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $perPage = min((int) $request->input('per_page', 15), 100);
 
@@ -26,7 +27,7 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function store(StoreOrganizationRequest $request)
+    public function store(StoreOrganizationRequest $request): RedirectResponse
     {
         $tenant = Tenant::create($request->validated());
 
@@ -35,14 +36,14 @@ class OrganizationController extends Controller
         return redirect()->back();
     }
 
-    public function update(UpdateOrganizationRequest $request, Tenant $tenant)
+    public function update(UpdateOrganizationRequest $request, Tenant $tenant): RedirectResponse
     {
         $tenant->update($request->validated());
 
         return redirect()->back();
     }
 
-    public function destroy(Tenant $tenant)
+    public function destroy(Tenant $tenant): RedirectResponse
     {
         $tenant->delete();
 

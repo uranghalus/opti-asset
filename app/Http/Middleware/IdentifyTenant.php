@@ -15,7 +15,7 @@ class IdentifyTenant
         protected MakeTenantCurrentAction $makeTenantCurrentAction,
     ) {}
 
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         try {
             $tenant = $this->tenantFinder->findForRequest($request);

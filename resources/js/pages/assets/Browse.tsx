@@ -22,6 +22,7 @@ import { AssetFilterBar, SelectAllBar } from './components/asset-filter-bar';
 import { AssetsPageHeader } from './components/asset-page-header';
 import { ClassificationSidebar } from './components/classification-sidebar';
 import { FolderChips } from './components/folder-chips';
+import { ImportResultPanel } from './components/import-result-panel';
 import type {
     Asset,
     BrowseNode,
@@ -311,6 +312,10 @@ export default function Browse({ pageProps }: BrowseProps) {
                         onClear={clearNode}
                         onNavigate={handleNodeSelect}
                     />
+
+                    <div className="mt-4">
+                        <ImportResultPanel />
+                    </div>
 
                     <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start">
                         <ClassificationSidebar

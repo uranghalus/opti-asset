@@ -17,6 +17,9 @@ class CreateNewUser implements CreatesNewUsers
         private CreateTenantAction $createTenant,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $input
+     */
     public function create(array $input): User
     {
         Validator::make($input, [

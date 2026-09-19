@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use GuzzleHttp\RequestOptions;
 use Laravel\Socialite\Two\InvalidStateException;
+use SocialiteProviders\Manager\OAuth2\User;
 use SocialiteProviders\OIDC\Provider as BaseProvider;
 
 class OIDCProvider extends BaseProvider
@@ -76,6 +77,9 @@ class OIDCProvider extends BaseProvider
 
     /**
      * Map data user ke objek Laravel Socialite User.
+     *
+     * @param  array<string, mixed>  $user
+     * @return User
      */
     protected function mapUserToObject(array $user)
     {
@@ -87,6 +91,7 @@ class OIDCProvider extends BaseProvider
             $user['nickname'] = $user['username'];
         }
 
+        /** @var User $mappedUser */
         $mappedUser = parent::mapUserToObject($user);
 
         // Map foto profil (photo_url, photo, picture atau avatar) agar tidak bernilai null

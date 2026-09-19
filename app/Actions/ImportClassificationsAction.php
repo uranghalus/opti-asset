@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Spatie\SimpleExcel\SimpleExcelReader;
 
+/**
+ * @phpstan-type ClassificationRow array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}
+ */
 class ImportClassificationsAction
 {
     /**
@@ -39,8 +42,9 @@ class ImportClassificationsAction
     {
         $summary = ['created' => 0, 'updated' => 0, 'skipped' => []];
 
+        /** @var Collection<int, ClassificationRow> $collection */
         $collection = collect($rows)
-            ->filter(fn (array $row): bool => ($row['name'] ?? '') !== '')
+            ->filter(fn (array $row): bool => $row['name'] !== '')
             ->values();
 
         if ($collection->isEmpty()) {
@@ -60,10 +64,19 @@ class ImportClassificationsAction
         $grouped = $collection->groupBy('level');
 
         DB::transaction(function () use ($grouped, &$allGroups, &$allCategories, &$allClusters, &$allSubClusters, &$summary): void {
-            $this->processGroups($grouped->get('group', collect()), $allGroups, $summary);
-            $this->processCategories($grouped->get('category', collect()), $allGroups, $allCategories, $summary);
-            $this->processClusters($grouped->get('cluster', collect()), $allGroups, $allCategories, $allClusters, $summary);
-            $this->processSubClusters($grouped->get('sub-cluster', collect()), $allGroups, $allCategories, $allClusters, $allSubClusters, $summary);
+            /** @var array<int, ClassificationRow> $groupRows */
+            $groupRows = $grouped->get('group', collect())->all();
+            /** @var array<int, ClassificationRow> $categoryRows */
+            $categoryRows = $grouped->get('category', collect())->all();
+            /** @var array<int, ClassificationRow> $clusterRows */
+            $clusterRows = $grouped->get('cluster', collect())->all();
+            /** @var array<int, ClassificationRow> $subClusterRows */
+            $subClusterRows = $grouped->get('sub-cluster', collect())->all();
+
+            $this->processGroups($groupRows, $allGroups, $summary);
+            $this->processCategories($categoryRows, $allGroups, $allCategories, $summary);
+            $this->processClusters($clusterRows, $allGroups, $allCategories, $allClusters, $summary);
+            $this->processSubClusters($subClusterRows, $allGroups, $allCategories, $allClusters, $allSubClusters, $summary);
         });
 
         Cache::forget('classification.tree.'.Tenant::current()?->id);
@@ -72,11 +85,11 @@ class ImportClassificationsAction
     }
 
     /**
-     * @param  Collection<int, array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}>  $rows
+     * @param  array<int, ClassificationRow>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processGroups(Collection $rows, Collection &$allGroups, array &$summary): void
+    private function processGroups(array $rows, Collection &$allGroups, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -106,12 +119,12 @@ class ImportClassificationsAction
     }
 
     /**
-     * @param  Collection<int, array>  $rows
+     * @param  array<int, ClassificationRow>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
      * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processCategories(Collection $rows, Collection $allGroups, Collection &$allCategories, array &$summary): void
+    private function processCategories(array $rows, Collection $allGroups, Collection &$allCategories, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -156,13 +169,13 @@ class ImportClassificationsAction
     }
 
     /**
-     * @param  Collection<int, array>  $rows
+     * @param  array<int, ClassificationRow>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
      * @param  Collection<string, AssetCluster>  $allClusters  keyed by "category_id.code"
      * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection &$allClusters, array &$summary): void
+    private function processClusters(array $rows, Collection $allGroups, Collection $allCategories, Collection &$allClusters, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -199,14 +212,14 @@ class ImportClassificationsAction
     }
 
     /**
-     * @param  Collection<int, array>  $rows
+     * @param  array<int, ClassificationRow>  $rows
      * @param  Collection<string, AssetGroup>  $allGroups  keyed by code
      * @param  Collection<string, AssetCategory>  $allCategories  keyed by "group_id.code"
      * @param  Collection<string, AssetCluster>  $allClusters  keyed by "category_id.code"
      * @param  Collection<string, AssetSubCluster>  $allSubClusters  keyed by "cluster_id.code"
      * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
      */
-    private function processSubClusters(Collection $rows, Collection $allGroups, Collection $allCategories, Collection $allClusters, Collection &$allSubClusters, array &$summary): void
+    private function processSubClusters(array $rows, Collection $allGroups, Collection $allCategories, Collection $allClusters, Collection &$allSubClusters, array &$summary): void
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
@@ -244,6 +257,11 @@ class ImportClassificationsAction
 
     /**
      * Resolve parent from in-memory cache instead of DB queries.
+     *
+     * @param  array<int, string|null>  $segments
+     * @param  Collection<string, AssetGroup>  $allGroups
+     * @param  Collection<string, AssetCategory>  $allCategories
+     * @param  Collection<string, AssetCluster>  $allClusters
      */
     private function resolveParentFromCache(
         string $model,
@@ -293,7 +311,7 @@ class ImportClassificationsAction
      * Parse row from SimpleExcel (snake_case headers) into our normalized format.
      *
      * @param  array<string, mixed>  $row
-     * @return array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}
+     * @return ClassificationRow
      */
     private function normalizeRow(array $row): array
     {
@@ -308,8 +326,8 @@ class ImportClassificationsAction
         // Legacy flat format: level / name / code / description / parent_code
         if (isset($normalized['level'], $normalized['name'])) {
             return [
-                'level' => $this->castLevel((string) ($normalized['level'] ?? '')),
-                'name' => (string) ($normalized['name'] ?? ''),
+                'level' => $this->castLevel((string) $normalized['level']),
+                'name' => (string) $normalized['name'],
                 'code' => $normalized['code'] ?? null,
                 'description' => $normalized['description'] ?? null,
                 'parent_code' => $normalized['parent_code'] ?? null,

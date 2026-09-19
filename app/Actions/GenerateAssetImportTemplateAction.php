@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Models\Department;
 use App\Models\Location;
 use OpenSpout\Common\Entity\Style\CellAlignment;
 use OpenSpout\Common\Entity\Style\Color;
@@ -42,19 +43,15 @@ class GenerateAssetImportTemplateAction
             ->setHeaderStyle($headerStyle)
             ->addHeader(self::HEADERS);
 
-        $example = $this->exampleRow();
-
-        if ($example !== null) {
-            $writer->addRow($example);
-        }
+        $writer->addRow($this->exampleRow());
 
         $writer->close();
 
         return $filePath;
     }
 
-    /** @return array<int, string>|null */
-    private function exampleRow(): ?array
+    /** @return array<int, string> */
+    private function exampleRow(): array
     {
         return [
             '01.01.01.01.001',
@@ -69,7 +66,7 @@ class GenerateAssetImportTemplateAction
             date('Y-m-d'),
             '15000000',
             Location::query()->value('name') ?? '',
-            '',
+            Department::query()->value('nama_department') ?? '',
             'Aktif',
             '',
             'Hapus baris contoh ini sebelum mengimpor.',

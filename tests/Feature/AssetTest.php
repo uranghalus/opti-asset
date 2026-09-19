@@ -1259,6 +1259,161 @@ class AssetTest extends TestCase
         $this->assertStringContainsString('DEPT GAK ADA', (string) ($flash['toast']['message'] ?? ''));
     }
 
+    public function test_import_links_department_by_code_or_name(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $eng = Department::factory()->create(['kode_department' => 'ENG', 'nama_department' => 'Teknik']);
+        $fin = Department::factory()->create(['kode_department' => 'FIN', 'nama_department' => 'Keuangan']);
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Dept', 'Kode Asset'],
+            ['Laptop A', 'eng', 'X.001'],
+            ['Laptop B', 'ENG', 'X.002'],
+            ['Laptop C', 'Keuangan', 'X.003'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $byCode = Asset::query()->where('kode_asset', 'X.001')->first();
+        $byCodeUpper = Asset::query()->where('kode_asset', 'X.002')->first();
+        $byName = Asset::query()->where('kode_asset', 'X.003')->first();
+
+        $this->assertNotNull($byCode);
+        $this->assertSame($eng->id_department, $byCode->department_id);
+        $this->assertSame($eng->id_department, $byCodeUpper?->department_id);
+        $this->assertSame($fin->id_department, $byName?->department_id);
+    }
+
+    public function test_import_does_not_link_departments_from_other_tenant(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $other = Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+        Department::withoutGlobalScopes()->create([
+            'tenant_id' => $other->id,
+            'kode_department' => 'ENG',
+            'nama_department' => 'Teknik Lain',
+        ]);
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Dept', 'Kode Asset'],
+            ['Laptop A', 'ENG', 'X.001'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $asset = Asset::query()->where('kode_asset', 'X.001')->first();
+        $this->assertNotNull($asset);
+        $this->assertNull($asset->department_id);
+    }
+
+    public function test_import_flashes_full_result_report(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+        Department::factory()->create(['kode_department' => 'ENG', 'nama_department' => 'Teknik']);
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Dept', 'Serial Number'],
+            ['Laptop A', 'DEPT GAK ADA 1', 'SN-REPORT-1'],
+            ['Laptop B', 'DEPT GAK ADA 2', 'SN-REPORT-2'],
+            ['Laptop C', 'ENG', 'SN-REPORT-3'],
+            ['Laptop A', 'ENG', 'SN-REPORT-1'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+        $this->assertArrayHasKey('import_report', $flash);
+
+        $report = $flash['import_report'];
+        $this->assertSame(3, $report['imported']);
+        $this->assertSame(1, $report['skipped']);
+        $this->assertSame(3, $report['total_errors'], '2 missing-department warnings + 1 duplicate-serial notice');
+        $this->assertCount(3, $report['errors']);
+        $this->assertStringContainsString('DEPT GAK ADA 1', (string) collect($report['errors'])->pluck('message')->implode(' '));
+        $this->assertStringContainsString('DEPT GAK ADA 2', (string) collect($report['errors'])->pluck('message')->implode(' '));
+        $this->assertStringContainsString('duplikat', (string) collect($report['errors'])->pluck('message')->implode(' '));
+
+        // Toast summary still present for the quick glance.
+        $this->assertArrayHasKey('toast', $flash);
+    }
+
+    public function test_import_report_caps_listed_errors_but_counts_all(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $rows = [['Unit', 'Dept', 'Serial Number']];
+
+        for ($i = 1; $i <= 260; $i++) {
+            $rows[] = ['Laptop', "DEPT MISSING {$i}", "SN-CAP-{$i}"];
+        }
+
+        $file = $this->xlsxFile($rows);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+
+        $report = $flash['import_report'];
+        $this->assertSame(260, $report['imported']);
+        $this->assertSame(0, $report['skipped']);
+        $this->assertSame(260, $report['total_errors']);
+        $this->assertCount(250, $report['errors'], 'Listed errors are capped; total_errors counts all');
+    }
+
+    public function test_import_report_deduplicates_repeated_master_data_warnings(): void
+    {
+        [, , , , , $item] = $this->itemWithCategory();
+
+        $file = $this->xlsxFile([
+            ['Unit', 'Dept', 'Serial Number'],
+            ['Laptop A', 'DEPT HILANG', 'SN-DEDUPE-1'],
+            ['Laptop B', 'dept hilang', 'SN-DEDUPE-2'],
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('assets.index'))
+            ->post(route('assets.import'), [
+                'file' => $file,
+                'item_id' => $item->id,
+            ])
+            ->assertRedirect(route('assets.index'));
+
+        $flash = session('inertia.flash_data');
+        $this->assertIsArray($flash);
+
+        $report = $flash['import_report'];
+        $this->assertSame(2, $report['imported']);
+        $this->assertSame(1, $report['total_errors']);
+    }
+
     /**
      * @param  array<int, array<int, string>>  $rows
      */

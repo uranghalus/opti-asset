@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\AssetStatus;
+use App\Models\Asset;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,9 @@ class UpdateAssetRequest extends FormRequest
      */
     public function rules(): array
     {
+        /** @var Asset|null $asset */
+        $asset = $this->route('asset');
+
         return [
             'item_id' => ['nullable', 'exists:items,id'],
             'condition' => ['nullable', 'string', 'max:100'],
@@ -34,7 +38,7 @@ class UpdateAssetRequest extends FormRequest
             'brand' => ['nullable', 'string', 'max:100'],
             'model' => ['nullable', 'string', 'max:100'],
             'part_number' => ['nullable', 'string', 'max:100'],
-            'serial_number' => ['nullable', 'string', 'max:100', Rule::unique('assets', 'serial_number')->ignore($this->route('asset')?->id)->where('tenant_id', Tenant::current()?->id)],
+            'serial_number' => ['nullable', 'string', 'max:100', Rule::unique('assets', 'serial_number')->ignore($asset?->id)->where('tenant_id', Tenant::current()?->id)],
             'no_spb' => ['nullable', 'string', 'max:100'],
             'document_number' => ['nullable', 'string', 'max:100'],
             'pic' => ['nullable', 'array'],

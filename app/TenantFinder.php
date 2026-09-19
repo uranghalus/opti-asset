@@ -18,11 +18,11 @@ class TenantFinder extends BaseFinder
         $tenantId = $request->session()->get('current_tenant_id');
 
         if ($tenantId) {
-            return Tenant::find($tenantId);
+            return Tenant::find((string) $tenantId);
         }
 
         if ($request->user()?->tenant_id) {
-            $tenant = Tenant::find($request->user()->tenant_id);
+            $tenant = Tenant::find((string) $request->user()->tenant_id);
 
             if ($tenant) {
                 $request->session()->put('current_tenant_id', $tenant->id);

@@ -83,6 +83,14 @@ architectural state. Session-by-session detail lives in the logs; check here fir
 
 ## Key Decisions (chronological)
 
+- 2026-09-19: Asset import matches Department by kode_department OR nama_department
+  (trimmed, case-insensitive) via `ImportAssetsAction::departmentLookup()`; departments are
+  master data and are never auto-created by import (unmatched → warning, department_id null).
+- 2026-09-19: Asset import result reporting — controller flashes `import_report`
+  (imported/skipped/total_errors/errors capped at 250) alongside the toast; assets Browse
+  page renders it in `ImportResultPanel` (dismissible, reference-equality reset — never
+  setState-in-effect, ESLint react-hooks enforces). Toast stays capped at 3 details.
+
 - Test env: pin config in `TestCase::setUp()`; never trust phpunit.xml env overrides against `.env`.
 - Book-value snapshots dedup per (asset, day); `recorded_by` nullable for CLI/seeder contexts.
 - Threshold changes are not retroactive — use the "hitung ulang" (reassign) action.

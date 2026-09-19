@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -10,96 +11,105 @@ use Spatie\Permission\PermissionRegistrar;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Katalog izin (permission) aplikasi.
+     * Katalog izin (permission) aplikasi — satu entri per aksi yang benar-benar
+     * diperiksa Gate::authorize di controller. Nama mengikuti pola resource.aksi.
+     *
+     * Dashboard sengaja tidak digerbangi: halaman ini adalah tujuan login bagi
+     * user baru (OIDC/registrasi) yang belum memiliki role apa pun.
      *
      * @var array<int, string>
      */
     public const PERMISSIONS = [
-        'dashboard.view',
-        'audit.view', 'audit.export',
+        'audit.view',
         'asset.view', 'asset.create', 'asset.edit', 'asset.delete',
-        'asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete',
         'asset.classification.view', 'asset.classification.create', 'asset.classification.edit', 'asset.classification.delete',
         'asset.category.view', 'asset.category.create', 'asset.category.edit', 'asset.category.delete',
         'asset.location.view', 'asset.location.create', 'asset.location.edit', 'asset.location.delete',
-        'asset.transfer.view', 'asset.transfer.create', 'asset.transfer.edit', 'asset.transfer.delete',
+        'asset.transfer.view', 'asset.transfer.create', 'asset.transfer.edit',
         'asset.disposal.view', 'asset.disposal.create', 'asset.disposal.edit', 'asset.disposal.delete',
-        'asset.maintenance.view', 'asset.maintenance.create', 'asset.maintenance.edit', 'asset.maintenance.delete',
-        'inventory.view', 'inventory.create', 'inventory.edit', 'inventory.delete',
-        'inventory.stock.view', 'inventory.stock.adjust',
+        'asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete',
         'organization.view', 'organization.create', 'organization.edit', 'organization.delete',
-        'user.view', 'user.create', 'user.edit', 'user.delete',
+        'department.view', 'department.edit',
+        'employee.view', 'employee.edit',
         'role.view', 'role.create', 'role.edit', 'role.delete',
         'permission.view', 'permission.create', 'permission.edit', 'permission.delete',
-        'setting.view', 'setting.edit',
-        'employee.view', 'employee.edit',
-        'department.view',
+        'setting.edit',
     ];
 
     /**
      * Role super-admin: sengaja TANPA permission di database — Gate::before
-     * yang memberi akses penuh (docs laravel-permission "super-admin").
-     *
-     * @var array<int, string>
+     * yang memberi akses penuh (pola "super-admin" laravel-permission v8).
      */
-    public const SUPER_ADMIN_ROLES = ['super-admin'];
+    public const SUPER_ADMIN = 'super-admin';
 
-    public function run(): void
-    {
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-        foreach (self::PERMISSIONS as $name) {
-            Permission::findOrCreate($name, 'web');
-        }
-
-        // DatabaseSeeder disables model events, so Permission::create does not
-        // refresh the registrar cache; flush it now that every row exists.
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-        Role::findOrCreate('super-admin', 'web');
-
-        $administrator = Role::findOrCreate('administrator', 'web');
-        $administrator->syncPermissions(self::PERMISSIONS);
-
-        $manager = Role::findOrCreate('manager', 'web');
-        $manager->syncPermissions([
-            'dashboard.view', 'audit.view',
+    /**
+     * Role lain beserta izinnya. administrator selalu dapat seluruh katalog.
+     *
+     * @var array<string, array<int, string>>
+     */
+    public const ROLE_PERMISSIONS = [
+        'administrator' => ['*'],
+        'manager' => [
+            'audit.view',
             'asset.view', 'asset.create', 'asset.edit',
-            'asset.item.view', 'asset.item.create', 'asset.item.edit',
             'asset.classification.view', 'asset.classification.create', 'asset.classification.edit',
             'asset.category.view', 'asset.category.create', 'asset.category.edit',
             'asset.location.view', 'asset.location.create', 'asset.location.edit',
             'asset.transfer.view', 'asset.transfer.create', 'asset.transfer.edit',
-            'asset.maintenance.view', 'asset.maintenance.create',
-            'inventory.view', 'inventory.create', 'inventory.edit',
-            'inventory.stock.view', 'inventory.stock.adjust',
-        ]);
-
-        $staff = Role::findOrCreate('staff-asset', 'web');
-        $staff->syncPermissions([
-            'dashboard.view', 'audit.view',
+            'asset.disposal.view', 'asset.disposal.create', 'asset.disposal.edit',
+            'asset.item.view', 'asset.item.create', 'asset.item.edit',
+            'department.view',
+            'employee.view',
+        ],
+        'staff-asset' => [
+            'audit.view',
             'asset.view',
-            'asset.item.view', 'asset.item.create', 'asset.item.edit', 'asset.item.delete',
             'asset.classification.view',
             'asset.category.view',
             'asset.location.view',
             'asset.transfer.view',
-            'inventory.view',
-            'inventory.stock.view',
-        ]);
-
-        $accounting = Role::findOrCreate('akunting', 'web');
-        $accounting->syncPermissions([
-            'dashboard.view', 'audit.view',
-            'asset.view',
             'asset.item.view',
+            'employee.view',
+        ],
+        'akunting' => [
+            'audit.view',
+            'asset.view',
             'asset.classification.view',
             'asset.category.view',
             'asset.location.view',
-            'inventory.view',
-            'inventory.stock.view',
-        ]);
+            'asset.transfer.view',
+            'asset.disposal.view', 'asset.disposal.edit',
+            'setting.edit',
+        ],
+    ];
 
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+    public function run(): void
+    {
+        // Clean slate: rebuild the whole catalogue and every assignment so a
+        // re-run always reflects the current configuration, never stale rows.
+        foreach (['role_has_permissions', 'model_has_roles', 'model_has_permissions', 'roles', 'permissions'] as $table) {
+            DB::table($table)->delete();
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        foreach (self::PERMISSIONS as $name) {
+            Permission::create(['name' => $name, 'guard_name' => 'web']);
+        }
+
+        // DatabaseSeeder disables model events, so Permission::create does not
+        // refresh the registrar cache; flush it now that every row exists.
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        Role::create(['name' => self::SUPER_ADMIN, 'guard_name' => 'web']);
+
+        foreach (self::ROLE_PERMISSIONS as $roleName => $permissions) {
+            $role = Role::create(['name' => $roleName, 'guard_name' => 'web']);
+            $role->syncPermissions($permissions === ['*']
+                ? self::PERMISSIONS
+                : $permissions);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

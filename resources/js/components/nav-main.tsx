@@ -12,7 +12,7 @@ import type { SidebarNavGroup } from '@/types/navigation';
 
 export function NavMain({ groups = [] }: { groups: SidebarNavGroup[] }) {
     const { isCurrentUrl } = useCurrentUrl();
-    const can = useCan();
+    const { can } = useCan();
 
     const visibleGroups = groups
         .map((group) => ({

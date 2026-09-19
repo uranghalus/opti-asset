@@ -23,26 +23,22 @@ architectural state. Session-by-session detail lives in the logs; check here fir
 - **Spatie laravel-permission v8** · shadcn/ui (New York) · React Compiler active
 - OIDC SSO via Socialite (`OIDCProvider`, back-channel SLO endpoint exists for the IdP)
 
-### Auth & Permissions (rebuilt 2026-09-09)
+### Auth & Permissions (re-reconfigured 2026-09-18)
 
-- **Roles are assigned to `Employee`** (UUID PK, `tb_employee`) in the Employees section;
-  **gates run against `User`** (int id). The bridge between them:
-  - `App\Actions\SyncUserRolesFromEmployeeAction` — matches Employee by email
-    (`withoutGlobalScopes`), `syncRoles` onto the User. No employee → User roles untouched.
-  - Fired on `Illuminate\Auth\Events\Login` (listener closure in `AppServiceProvider` —
-    project convention, no Listeners folder) → covers OIDC + Fortify logins.
-  - Also fired immediately after `EmployeeController::assignRoles` (which uses `syncRoles`)
-    so role changes apply without re-login.
-- **super-admin = 0 permissions in DB** — `Gate::before` in `AppServiceProvider::grantSuperAdmin()`
-  grants everything (Spatie "super-admin" pattern). `administrator` = full 58-permission catalogue.
-- Seed roles: `super-admin` (0), `administrator` (58), `manager` (24), `staff-asset` (9), `akunting` (8).
-- Schema: single migration `2026_09_09_010000_create_permission_tables.php` with `model_id`
-  as **varchar** (supports both `User` int and `Employee` UUID morphs).
-- Admin endpoints are gated: `role.*` / `permission.*` on Role/PermissionController,
-  `employee.edit` on assignRoles, `setting.edit` on capitalization threshold.
-- **Bootstrap**: first super-admin gets the role via Employees page or tinker; `Gate::before` does the rest.
+- **Spatie laravel-permission v8 kept** — schema (varchar model_id, 5 tables) and `config/permission.php` unchanged. Only the configuration layer was rebuilt.
+- **Catalogue = actual gates** (`RolePermissionSeeder::PERMISSIONS`, 44 names): `audit.view`, `asset.view|create|edit|delete`, `asset.classification.*`, `asset.category.*`, `asset.location.*`, `asset.transfer.view|create|edit`, `asset.disposal.view|create|edit|delete`, `asset.item.*` (NOT inventory.*), `organization.*`, `department.view|edit`, `employee.view|edit`, `role.*`, `permission.*`, `setting.edit`. When adding a `Gate::authorize`, add the permission to the seeder too.
+- **Dashboard is deliberately ungated** — it is the landing page for fresh OIDC/registered users with zero roles; gating it 403s them on login. Documented deviation.
+- **Seeder wipes permission tables first** (clean-slate rerun), then rebuilds; `forgetCachedPermissions()` before/after (WithoutModelEvents gotcha still applies).
+- **Roles**: `super-admin` (0 perms, bypass), `administrator` (all 44), `manager` (operational, ~26), `staff-asset` (view-heavy), `akunting` (views + disposal.edit + setting.edit).
+- **SuperAdminSeeder** (after RolePermissionSeeder in DatabaseSeeder): `User::firstOrCreate(superadmin@appdutamall.com)` + `assignRole('super-admin')`; also assigns the role to a matching Employee row if one exists. Idempotent.
+- **Sync guard**: `SyncUserRolesFromEmployeeAction` never revokes `super-admin` from a User during employee-role sync (union semantics for that role).
+- **Gates newly wired**: OrganizationController (`organization.*`), DepartmentController (`department.view`/`department.edit`). Everything else already had gates (Asset, Item=asset.item.*, Category, Location, Transfer, Disposal, Classification, Audit, Reports=asset.view, Capitalization=setting.edit, Role, Permission, Employee assign=employee.edit).
+- **Frontend**: Inertia shares `auth.user.permissions` (names array) + `auth.isSuperAdmin`. `useCan()` hook (`resources/js/hooks/use-can.ts`) returns `{ can, canAny, isSuperAdmin, roles }` — destructure `can`, it is NOT callable directly. Sidebar filtering live in `nav-main`, `mobile-sidebar-sheet`, `mobile-bottom-nav` via per-item `permission` metadata in `sidebar.ts` (metadata was dead before; `ac`→`organization`, import/export→`asset.create` fixed).
+- **Roles/Permissions pages**: NOON palette violations fixed (sky/blue accents → amber #FFB23E / violet #B892FF / teal #5EEAD4); super-admin card shows "Bypass semua gate" badge; ACTION_STYLES semantics: teal=view, amber=create, violet=edit, rose=delete.
 
 ### Design System
+
+**NOON token ramp (2026-09-18)**: `:root`/`.dark` semantic tokens in `app.css` migrated from the legacy blue ramp (hue 245–255) to NOON warm — primary amber `oklch(0.66 0.14 70)` light / `oklch(0.81 0.14 74)` dark, secondary violet, plum-300 foregrounds, warm paper surfaces, warm chart + sidebar tokens. Every `bg-primary`/ring/focus app-wide is now NOON, not blue. `glass-header` blue gradient → amber/violet wash; toast info/default accent → violet `#7a4bd6` (dark `#b892ff`); glass-card/panel shadows are soft multi-layer (contact + ambient). Status palette (donut, badges): ACT teal `#0D9488`, LOAN violet `#8B5CF6`, RPR amber `#D97706`, MUT deep violet `#6D28D9`, DSP rose `#E11D48` — WCAG AA on both glass surfaces. Rule: dashboard text uses `text-foreground`/`text-muted-foreground` tokens, never `text-white`/`#94A3B8` (invisible on light glass). NB: the impeccable detector's "color outside DESIGN.md" finding is a false positive — it cannot parse the palette YAML.
 
 - **NOON warm glass** — amber primary `#FFB23E`, secondary `#B892FF`, tertiary `#5EEAD4`,
   base `#1B1230`. All shell chrome (sidebar, topbar, panels, toasts) follows the dashboard's
@@ -92,6 +88,7 @@ architectural state. Session-by-session detail lives in the logs; check here fir
   setState-in-effect, ESLint react-hooks enforces). Toast stays capped at 3 details.
 
 - Test env: pin config in `TestCase::setUp()`; never trust phpunit.xml env overrides against `.env`.
+- Factories: never chain `->format()` on `$this->faker->optional()` — it returns null half the time (`AssetDisposalFactory` was intermittently breaking Disposal/Report suites with "format() on null").
 - Book-value snapshots dedup per (asset, day); `recorded_by` nullable for CLI/seeder contexts.
 - Threshold changes are not retroactive — use the "hitung ulang" (reassign) action.
 - Employee-role changes take effect immediately (assignRoles re-syncs the User) and at every login.

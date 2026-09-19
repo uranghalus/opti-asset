@@ -681,6 +681,10 @@ class AssetClassificationTest extends TestCase
 
         $this->seed(RolePermissionSeeder::class);
 
+        // Seeder membangun ulang tabel roles/permissions; peran super-admin
+        // dibuat ulang dan user tetap memegangnya lewat sinkronisasi ulang.
+        $this->user->assignRole(Role::findByName('super-admin', 'web'));
+
         $this->actingAs($this->user)
             ->get(route('asset-classification.index'))
             ->assertOk();

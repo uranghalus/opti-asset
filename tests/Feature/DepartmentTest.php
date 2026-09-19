@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class DepartmentTest extends TestCase
@@ -33,6 +34,11 @@ class DepartmentTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        // Halaman departemen digerbangi department.view / department.edit.
+        Permission::findOrCreate('department.view', 'web');
+        Permission::findOrCreate('department.edit', 'web');
+        $this->user->givePermissionTo(['department.view', 'department.edit']);
     }
 
     public function test_department_gets_tenant_id_on_create(): void

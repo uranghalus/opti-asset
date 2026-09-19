@@ -148,7 +148,7 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 gap-1.5 rounded-lg border-white/10 bg-white/5 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/10 hover:text-white"
+                        className="h-10 gap-1.5 rounded-lg border-white/20 bg-white/10 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/15 hover:text-white"
                     >
                         <CalendarDays className="h-4 w-4 text-[#94A3B8]" />
                         {new Date().toLocaleDateString('id-ID', {
@@ -253,7 +253,7 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
         );
     }
 
-    const COLORS = ['#FFB23E', '#B892FF', '#5EEAD4', '#FF9A3E', '#3B9FE8'];
+    const COLORS = ['#FFB23E', '#B892FF', '#5EEAD4', '#FF9A3E', '#D9A521'];
 
     return (
         <ul className="flex flex-col gap-3">
@@ -497,7 +497,7 @@ function IntegrityRing({ score }: { score: number }) {
                         cy="60"
                         r={radius}
                         fill="none"
-                        stroke="rgba(255,255,255,0.06)"
+                        className="stroke-muted-foreground/20"
                         strokeWidth="8"
                     />
                     <circle
@@ -514,10 +514,10 @@ function IntegrityRing({ score }: { score: number }) {
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
+                    <span className="text-2xl font-bold text-foreground">
                         {score}%
                     </span>
-                    <span className="text-[10px] text-[#94A3B8]">
+                    <span className="text-[10px] text-muted-foreground">
                         Kelengkapan
                     </span>
                 </div>

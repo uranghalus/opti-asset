@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +16,8 @@ class OrganizationController extends Controller
 {
     public function index(Request $request): Response
     {
+        Gate::authorize('organization.view');
+
         $perPage = min((int) $request->input('per_page', 15), 100);
 
         $tenants = Tenant::latest()
@@ -29,6 +32,8 @@ class OrganizationController extends Controller
 
     public function store(StoreOrganizationRequest $request): RedirectResponse
     {
+        Gate::authorize('organization.create');
+
         $tenant = Tenant::create($request->validated());
 
         $request->user()->tenants()->attach($tenant->id);
@@ -38,6 +43,8 @@ class OrganizationController extends Controller
 
     public function update(UpdateOrganizationRequest $request, Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('organization.edit');
+
         $tenant->update($request->validated());
 
         return redirect()->back();
@@ -45,6 +52,8 @@ class OrganizationController extends Controller
 
     public function destroy(Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('organization.delete');
+
         $tenant->delete();
 
         return redirect()->back();

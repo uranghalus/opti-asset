@@ -97,7 +97,7 @@ const KPIS = [
         label: 'Menunggu Disposal',
         icon: Trash2,
         sparkline: [3, 5, 4, 6, 5, 7, 8, 6, 9, 7, 10, 8],
-        color: '#C52720',
+        color: '#E11D48',
         getValue: (s: Stats) => s.pending_disposals,
     },
 ];

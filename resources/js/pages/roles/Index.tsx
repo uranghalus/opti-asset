@@ -102,26 +102,29 @@ const SORT_OPTIONS = [
     { value: 'users', label: 'Pengguna Terbanyak' },
 ];
 
+// NOON warm palette — primary, secondary, tertiary. Never blue.
 const ACCENTS = [
     {
-        tile: 'from-sky-500 to-blue-600',
-        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(56,189,248,0.22),transparent_60%)]',
+        tile: 'from-[#FFB23E] to-[#F59E0B]',
+        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(255,178,62,0.22),transparent_60%)]',
     },
     {
-        tile: 'from-violet-500 to-indigo-600',
-        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(139,92,246,0.22),transparent_60%)]',
+        tile: 'from-[#B892FF] to-[#8B5CF6]',
+        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(184,146,255,0.22),transparent_60%)]',
     },
     {
-        tile: 'from-teal-500 to-cyan-600',
-        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(45,212,191,0.22),transparent_60%)]',
+        tile: 'from-[#5EEAD4] to-[#14B8A6]',
+        glow: 'bg-[radial-gradient(90%_90%_at_100%_0%,rgba(94,234,212,0.22),transparent_60%)]',
     },
 ];
 
 const ROLE_HINTS: Record<string, string> = {
-    'super-admin': 'Akses penuh ke seluruh sistem',
+    'super-admin': 'Akses penuh ke seluruh sistem (bypass)',
     administrator: 'Mengelola seluruh modul dan pengguna',
-    manager: 'Mengelola aset dan inventaris',
+    manager: 'Mengelola aset, mutasi, dan persetujuan',
+    'staff-asset': 'Pencatatan dan peninjauan aset',
     staff: 'Hak akses lihat dasar',
+    akunting: 'Peninjauan nilai aset dan penghapusan',
 };
 
 function formatDate(value: string): string {
@@ -766,10 +769,17 @@ export default function RolesIndex() {
                                                 <Users className="size-3.5" />
                                                 {role.users_count} pengguna
                                             </span>
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-                                                <ShieldCheck className="size-3.5" />
-                                                {role.permissions.length} izin
-                                            </span>
+                                            {role.name === 'super-admin' ? (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/15 px-2.5 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-300">
+                                                    <ShieldCheck className="size-3.5" />
+                                                    Bypass semua gate
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                                                    <ShieldCheck className="size-3.5" />
+                                                    {role.permissions.length} izin
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="relative mt-4 flex items-center justify-between border-t border-border/60 pt-3">

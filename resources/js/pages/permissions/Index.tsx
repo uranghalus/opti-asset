@@ -93,17 +93,19 @@ type PageProps = {
     groups: GroupOption[];
 };
 
+// NOON action semantics — tertiary (teal) = read, primary (amber) = mutate,
+// destructive rose = delete. Never blue (NOON rule).
 const ACTION_STYLES: Record<string, string> = {
-    view: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-    read: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-    create: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    add: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    edit: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    update: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    delete: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-    adjust: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-    export: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
-    import: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+    view: 'bg-[#5EEAD4]/10 text-teal-600 dark:text-teal-300',
+    read: 'bg-[#5EEAD4]/10 text-teal-600 dark:text-teal-300',
+    create: 'bg-[#FFB23E]/15 text-amber-600 dark:text-amber-300',
+    add: 'bg-[#FFB23E]/15 text-amber-600 dark:text-amber-300',
+    edit: 'bg-[#B892FF]/15 text-violet-600 dark:text-violet-300',
+    update: 'bg-[#B892FF]/15 text-violet-600 dark:text-violet-300',
+    delete: 'bg-rose-500/10 text-rose-600 dark:text-rose-300',
+    adjust: 'bg-[#5EEAD4]/15 text-teal-600 dark:text-teal-300',
+    export: 'bg-[#B892FF]/10 text-violet-600 dark:text-violet-300',
+    import: 'bg-[#FFB23E]/10 text-amber-600 dark:text-amber-300',
 };
 
 const DEFAULT_ACTION_STYLE = 'bg-muted/60 text-muted-foreground';
@@ -555,7 +557,7 @@ export default function PermissionsIndex() {
                         <div className="glass-header relative overflow-hidden px-4 py-2.5">
                             <div
                                 aria-hidden
-                                className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(0,128,255,0.2),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(90,169,236,0.25),transparent_60%)]"
+                                className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(255,178,62,0.16),transparent_60%)] dark:bg-[radial-gradient(60%_120%_at_0%_0%,rgba(184,146,255,0.2),transparent_60%)]"
                             />
                             <div className="relative flex items-center justify-between gap-2">
                                 <h2 className="text-sm font-semibold tracking-wide text-foreground">

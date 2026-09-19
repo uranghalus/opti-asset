@@ -30,7 +30,7 @@ type Props = {
 };
 
 export function MobileSidebarSheet({ isOpen, onClose }: Props) {
-    const can = useCan();
+    const { can } = useCan();
 
     const visibleGroups = sidebarData.navGroups
         .map((group) => ({

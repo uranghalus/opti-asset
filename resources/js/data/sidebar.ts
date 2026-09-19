@@ -198,7 +198,7 @@ export const sidebarData: SidebarData = {
                     url: '/organizations',
                     icon: Building2,
                     permission: {
-                        resource: 'ac',
+                        resource: 'organization',
                         actions: ['view'],
                     },
                 },
@@ -270,7 +270,7 @@ export const sidebarData: SidebarData = {
                     icon: Upload,
                     permission: {
                         resource: 'asset',
-                        actions: ['import'],
+                        actions: ['create'],
                     },
                 },
             ],

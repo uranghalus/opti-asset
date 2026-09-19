@@ -15,12 +15,14 @@ type Stats = {
     pending_disposals: number;
 };
 
+// NOON status palette — WCAG AA against both light and dark glass surfaces.
+// No blue: teal stands in for "active/positive" per DESIGN.md's never-blue rule.
 const STATUS_COLORS: Record<string, string> = {
-    ACT: '#00875A',
-    LOAN: '#006FCF',
-    RPR: '#B95000',
-    MUT: '#7C3AED',
-    DSP: '#C52720',
+    ACT: '#0D9488',
+    LOAN: '#8B5CF6',
+    RPR: '#D97706',
+    MUT: '#6D28D9',
+    DSP: '#E11D48',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -45,10 +47,10 @@ export function StatusDonut({ stats }: { stats: Stats }) {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <p className="text-[10px] font-semibold tracking-widest text-[#006FCF] uppercase">
+                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
                     FR-10.2
                 </p>
-                <h3 className="mt-1 text-base font-semibold text-white">
+                <h3 className="mt-1 text-base font-semibold text-foreground">
                     Distribusi Aset
                 </h3>
             </div>
@@ -75,10 +77,10 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                         </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-white">
+                        <span className="text-xl font-bold text-foreground">
                             {total}
                         </span>
-                        <span className="text-[10px] text-[#94A3B8]">
+                        <span className="text-[10px] text-muted-foreground">
                             Total
                         </span>
                     </div>
@@ -96,14 +98,14 @@ export function StatusDonut({ stats }: { stats: Stats }) {
                                 key={item.name}
                                 className="flex items-center justify-between"
                             >
-                                <span className="flex items-center gap-2 text-sm text-white/90">
+                                <span className="flex items-center gap-2 text-sm text-foreground/90">
                                     <span
                                         className="h-2.5 w-2.5 rounded-full"
                                         style={{ backgroundColor: item.color }}
                                     />
                                     {item.name}
                                 </span>
-                                <span className="text-xs text-[#94A3B8] tabular-nums">
+                                <span className="text-xs text-muted-foreground tabular-nums">
                                     {item.value} ({pct}%)
                                 </span>
                             </div>

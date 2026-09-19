@@ -150,7 +150,7 @@ export default function AuditLogsIndex() {
             <VibrantBackground variant="default" />
             <div className="mx-auto w-full max-w-6xl">
                 <div className="card-enter flex items-center gap-3">
-                    <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 to-violet-500/15 text-primary shadow-md ring-1 ring-primary/10 sm:size-12">
+                    <div className="glass-card flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB23E]/20 to-[#B892FF]/20 text-primary shadow-md ring-1 ring-primary/10 sm:size-12">
                         <History
                             className="size-5 sm:size-6"
                             strokeWidth={1.5}

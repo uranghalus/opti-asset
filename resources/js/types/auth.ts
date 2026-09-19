@@ -20,6 +20,7 @@ export type TenantInfo = {
 
 export type Auth = {
     user: User;
+    isSuperAdmin: boolean;
 };
 
 /* @chisel-passkeys */

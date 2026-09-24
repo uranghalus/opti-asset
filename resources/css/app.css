@@ -2,6 +2,12 @@
 
 @import 'tw-animate-css';
 
+/* Opname Field Desk v2.0 — self-hosted fonts (DESIGN.md §3.4).
+   Public Sans (UI) + Noto Sans Mono (kode aset, barcode, nilai). */
+@import '@fontsource-variable/public-sans';
+@import '@fontsource/noto-sans-mono/400.css';
+@import '@fontsource/noto-sans-mono/500.css';
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
@@ -9,13 +15,32 @@
 
 @theme {
     --font-sans:
-        'Benton Sans', 'Helvetica Neue', Helvetica, Arial, ui-sans-serif,
-        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+        'Public Sans Variable', 'Public Sans', ui-sans-serif, system-ui,
+        'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Noto Color Emoji';
+    --font-mono:
+        'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+        monospace;
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
+    /* Opname Field Desk radii: 4px badges / 8px controls / 12px cards */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+
+    /* Brand aliases (DESIGN.md §3.1) */
+    --color-brand: #0d5c56;
+    --color-brand-hover: #0a4a45;
+    --color-brand-muted: #d8edea;
+    --color-brand-muted-border: #a7d2cc;
+    --color-paper: #f1f4f6;
+    --color-surface-sunken: #e9edf0;
+    --color-ink: #15202b;
+    --color-ink-muted: #5a6a7a;
+    --color-ink-subtle: #8593a2;
+
+    --shadow-sticky: 0 1px 0 rgba(21, 32, 43, 0.08);
+    --shadow-overlay: 0 8px 24px rgba(21, 32, 43, 0.14);
+    --shadow-toast: 0 4px 16px rgba(21, 32, 43, 0.12);
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -45,6 +70,29 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
+    /* Status & tipe map (DESIGN.md §3.2 — LOCKED). Light values; .dark overrides below. */
+    --color-status-act-text: #166534;
+    --color-status-act-bg: #dcfce7;
+    --color-status-act-border: #86efac;
+    --color-status-loan-text: #1e40af;
+    --color-status-loan-bg: #dbeafe;
+    --color-status-loan-border: #93c5fd;
+    --color-status-rpr-text: #92400e;
+    --color-status-rpr-bg: #fef3c7;
+    --color-status-rpr-border: #fcd34d;
+    --color-status-mut-text: #155e75;
+    --color-status-mut-bg: #cffafe;
+    --color-status-mut-border: #67e8f9;
+    --color-status-dsp-text: #9f1239;
+    --color-status-dsp-bg: #ffe4e6;
+    --color-status-dsp-border: #fda4af;
+    --color-tipe-aktiva-text: #0d5c56;
+    --color-tipe-aktiva-bg: #d8edea;
+    --color-tipe-aktiva-border: #a7d2cc;
+    --color-tipe-peralatan-text: #475569;
+    --color-tipe-peralatan-bg: #e9edf0;
+    --color-tipe-peralatan-border: #b9c4ce;
+
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
@@ -59,108 +107,99 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
-
-    --color-sidebar-glow: var(--sidebar-glow);
-    --color-sidebar-gradient: var(--sidebar-gradient);
-    --color-sidebar-divider: var(--sidebar-divider);
-
-    --color-paper: oklch(0.985 0.004 85);
-    --color-paper-soft: oklch(0.45 0.02 300);
-    --color-paper-muted: oklch(0.96 0.006 85);
-    --color-ink: oklch(0.16 0.03 300);
-    --color-ink-soft: oklch(0.32 0.03 300);
-    --color-ink-light: oklch(0.22 0.03 300);
-    --color-ink-accent: oklch(0.49 0.15 245);
-    --color-ink-accent-soft: oklch(0.42 0.15 245);
-    --color-scan-red: oklch(0.57 0.19 25);
 }
 
+/* ── Opname Field Desk v2.0 — light theme ─────────────────────────
+   Cool paper + mineral teal. Opaque surfaces, 1px borders.
+   Values map to DESIGN.md §3.6. */
 :root {
-    /* NOON warm ramp (DESIGN.md): amber primary, violet secondary, teal tertiary.
-       Base surfaces are warm paper; hue 250 was the legacy blue ramp. */
-    --background: oklch(0.97 0.006 85);
-    --foreground: oklch(0.2 0.03 300);
-    --card: oklch(0.99 0.004 85);
-    --card-foreground: oklch(0.2 0.03 300);
-    --popover: oklch(0.99 0.004 85);
-    --popover-foreground: oklch(0.2 0.03 300);
-    --primary: oklch(0.66 0.14 70);
-    --primary-foreground: oklch(0.99 0.005 85);
-    --secondary: oklch(0.62 0.12 295);
-    --secondary-foreground: oklch(0.99 0.005 85);
-    --muted: oklch(0.95 0.008 85);
-    --muted-foreground: oklch(0.42 0.03 300);
-    --accent: oklch(0.95 0.01 85);
-    --accent-foreground: oklch(0.2 0.03 300);
-    --destructive: oklch(0.48 0.18 25);
-    --destructive-foreground: oklch(1 0 0);
-    --border: oklch(0.9 0.01 85);
-    --input: oklch(0.9 0.01 85);
-    --ring: oklch(0.66 0.14 70);
-    --chart-1: oklch(0.66 0.14 70);
-    --chart-2: oklch(0.62 0.12 295);
-    --chart-3: oklch(0.72 0.11 190);
-    --chart-4: oklch(0.7 0.12 85);
-    --chart-5: oklch(0.62 0.18 25);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0.006 85);
-    --sidebar-foreground: oklch(0.24 0.03 300);
-    --sidebar-primary: oklch(0.66 0.14 70);
-    --sidebar-primary-foreground: oklch(0.99 0.005 85);
-    --sidebar-accent: oklch(0.94 0.02 85);
-    --sidebar-accent-foreground: oklch(0.24 0.03 300);
-    --sidebar-border: oklch(0.92 0.012 85);
-    --sidebar-ring: oklch(0.66 0.14 70);
-    --sidebar-glow: oklch(0.66 0.14 70 / 0.08);
-    --sidebar-gradient: linear-gradient(
-        180deg,
-        oklch(0.985 0.006 85) 0%,
-        oklch(0.975 0.008 85) 100%
-    );
-    --sidebar-divider: oklch(0.88 0.014 85);
+    --background: #f1f4f6;
+    --foreground: #15202b;
+    --card: #ffffff;
+    --card-foreground: #15202b;
+    --popover: #ffffff;
+    --popover-foreground: #15202b;
+    --primary: #0d5c56;
+    --primary-foreground: #ffffff;
+    --secondary: #e9edf0;
+    --secondary-foreground: #15202b;
+    --muted: #e9edf0;
+    --muted-foreground: #5a6a7a;
+    --accent: #e9edf0;
+    --accent-foreground: #15202b;
+    --destructive: #b42318;
+    --destructive-foreground: #ffffff;
+    --border: #d5dce3;
+    --input: #d5dce3;
+    --ring: #0d5c56;
+    --chart-1: #0d5c56;
+    --chart-2: #0e7490;
+    --chart-3: #b45309;
+    --chart-4: #1d6a9f;
+    --chart-5: #475569;
+    --radius: 0.75rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #15202b;
+    --sidebar-primary: #0d5c56;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e9edf0;
+    --sidebar-accent-foreground: #15202b;
+    --sidebar-border: #d5dce3;
+    --sidebar-ring: #0d5c56;
 }
 
+/* ── Opname Field Desk v2.0 — dark theme ──────────────────────────
+   Cool navy desk (NO plum, NO amber). Primary lifts to #2A9B93 for AA;
+   button text on it is dark navy. Status recipes from DESIGN.md §3.2. */
 .dark {
-    /* NOON dark: deep violet-plum base (#1B1230 family), amber primary stays bright. */
-    --background: oklch(0.17 0.03 300);
-    --foreground: oklch(0.95 0.01 85);
-    --card: oklch(0.21 0.035 300);
-    --card-foreground: oklch(0.95 0.01 85);
-    --popover: oklch(0.21 0.035 300);
-    --popover-foreground: oklch(0.95 0.01 85);
-    --primary: oklch(0.81 0.14 74);
-    --primary-foreground: oklch(0.17 0.03 300);
-    --secondary: oklch(0.72 0.14 295);
-    --secondary-foreground: oklch(0.17 0.03 300);
-    --muted: oklch(0.26 0.04 300);
-    --muted-foreground: oklch(0.72 0.02 85);
-    --accent: oklch(0.26 0.04 300);
-    --accent-foreground: oklch(0.95 0.01 85);
-    --destructive: oklch(0.65 0.2 25);
-    --destructive-foreground: oklch(0.98 0 0);
-    --border: oklch(0.3 0.04 300);
-    --input: oklch(0.3 0.04 300);
-    --ring: oklch(0.81 0.14 74);
-    --chart-1: oklch(0.81 0.14 74);
-    --chart-2: oklch(0.72 0.14 295);
-    --chart-3: oklch(0.78 0.12 190);
-    --chart-4: oklch(0.7 0.12 85);
-    --chart-5: oklch(0.65 0.19 25);
-    --sidebar: oklch(0.13 0.03 300);
-    --sidebar-foreground: oklch(0.95 0.01 85);
-    --sidebar-primary: oklch(0.81 0.14 74);
-    --sidebar-primary-foreground: oklch(0.17 0.03 300);
-    --sidebar-accent: oklch(0.19 0.035 300);
-    --sidebar-accent-foreground: oklch(0.95 0.01 85);
-    --sidebar-border: oklch(0.24 0.035 300);
-    --sidebar-ring: oklch(0.81 0.14 74);
-    --sidebar-glow: oklch(0.81 0.14 74 / 0.12);
-    --sidebar-gradient: linear-gradient(
-        180deg,
-        oklch(0.13 0.03 300) 0%,
-        oklch(0.11 0.03 300) 100%
-    );
-    --sidebar-divider: oklch(0.2 0.03 300);
+    --background: #0b1220;
+    --foreground: #e8eef2;
+    --card: #1b2534;
+    --card-foreground: #e8eef2;
+    --popover: #1b2534;
+    --popover-foreground: #e8eef2;
+    --primary: #2a9b93;
+    --primary-foreground: #0b1220;
+    --secondary: #1b2534;
+    --secondary-foreground: #e8eef2;
+    --muted: #1b2534;
+    --muted-foreground: #9aa8b5;
+    --accent: #1b2534;
+    --accent-foreground: #e8eef2;
+    --destructive: #f04438;
+    --destructive-foreground: #0b1220;
+    --border: #2a3544;
+    --input: #2a3544;
+    --ring: #2a9b93;
+    --chart-1: #2a9b93;
+    --chart-2: #22a7bd;
+    --chart-3: #d97706;
+    --chart-4: #4a90c2;
+    --chart-5: #8fa3b8;
+    --sidebar: #0b1220;
+    --sidebar-foreground: #e8eef2;
+    --sidebar-primary: #2a9b93;
+    --sidebar-primary-foreground: #0b1220;
+    --sidebar-accent: #1b2534;
+    --sidebar-accent-foreground: #e8eef2;
+    --sidebar-border: #2a3544;
+    --sidebar-ring: #2a9b93;
+
+    --color-status-act-text: #86efac;
+    --color-status-act-bg: #052e16;
+    --color-status-act-border: #052e16;
+    --color-status-loan-text: #93c5fd;
+    --color-status-loan-bg: #172554;
+    --color-status-loan-border: #172554;
+    --color-status-rpr-text: #fcd34d;
+    --color-status-rpr-bg: #451a03;
+    --color-status-rpr-border: #451a03;
+    --color-status-mut-text: #67e8f9;
+    --color-status-mut-bg: #083344;
+    --color-status-mut-border: #083344;
+    --color-status-dsp-text: #fda4af;
+    --color-status-dsp-bg: #4c0519;
+    --color-status-dsp-border: #4c0519;
 }
 
 @layer base {
@@ -171,208 +210,95 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    /* Kode aset, barcode, dan angka moneter selalu mono + tabular (DESIGN.md §3.4) */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
 }
 
 @layer utilities {
-    /* Premium easing */
+    /* Premium easing (kept — token matches DESIGN.md §3.5) */
     .ease-premium {
         transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    /* Glassmorphism sidebar — frosted translucent surface for a fresh, premium look.
-       Variables are declared on the sidebar container (desktop) and the mobile sheet
-       (the shadcn Sidebar mobile branch drops the instance class/vars). */
-    .sidebar-glass,
-    [data-slot='sidebar'][data-mobile='true'] {
-        --sidebar: transparent;
-        --sidebar-foreground: #18122b;
-        --sidebar-primary: #ff9a3e;
-        --sidebar-primary-foreground: #1b1230;
-        --sidebar-accent: rgba(255, 154, 62, 0.1);
-        --sidebar-accent-foreground: #7a4b16;
-        --sidebar-border: rgba(27, 18, 48, 0.08);
-        --sidebar-ring: #ff9a3e;
-        color: var(--sidebar-foreground);
-    }
-    .dark .sidebar-glass,
-    .dark [data-slot='sidebar'][data-mobile='true'] {
-        --sidebar-foreground: #f8fafc;
-        --sidebar-primary: #ffb23e;
-        --sidebar-accent: rgba(255, 178, 62, 0.14);
-        --sidebar-accent-foreground: #ffd8a0;
-        --sidebar-border: rgba(255, 255, 255, 0.08);
-        --sidebar-ring: #ffb23e;
-    }
+    /* ── Legacy class contract (ticket 01 → 02) ────────────────────
+       Names kept for one release so ~25 screens render on-system with
+       zero TSX edits. Definitions are now the OPAQUE ledger recipes:
+       surface bg, 1px border, structural shadow. No blur, no gradient.
+       Ticket 02 removes the names entirely. */
 
-    /* Soft, layered ambient behind the app so the frosted glass reads as glass.
-       Two restrained glows (NOON primary amber + violet) for depth, no rainbow —
-       keeps the surface calm and premium while the header and sidebar stay lit. */
-    [data-slot='sidebar-wrapper'] {
-        position: relative;
-        background:
-            radial-gradient(
-                46% 42% at 0% 0%,
-                rgba(255, 178, 62, 0.12) 0%,
-                transparent 62%
-            ),
-            radial-gradient(
-                40% 36% at 100% 100%,
-                rgba(184, 146, 255, 0.06) 0%,
-                transparent 60%
-            ),
-            var(--background);
-    }
-    .dark [data-slot='sidebar-wrapper'] {
-        background:
-            radial-gradient(
-                46% 42% at 0% 0%,
-                rgba(255, 178, 62, 0.14) 0%,
-                transparent 62%
-            ),
-            radial-gradient(
-                40% 36% at 100% 100%,
-                rgba(184, 146, 255, 0.08) 0%,
-                transparent 60%
-            ),
-            var(--background);
-    }
-
-    /* Frosted glass surface: applied to the desktop inner surface (which sits on top
-       of .sidebar-glass) and the mobile sheet. */
-    .sidebar-glass [data-sidebar='sidebar'],
-    [data-slot='sidebar'][data-mobile='true'] {
-        background: linear-gradient(
-            180deg,
-            rgba(255, 252, 248, 0.78) 0%,
-            rgba(255, 247, 235, 0.58) 100%
-        );
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        border-right: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow:
-            inset 1px 0 0 0 rgba(255, 255, 255, 0.7),
-            8px 0 32px -16px rgba(27, 18, 48, 0.14);
-    }
-    .dark .sidebar-glass [data-sidebar='sidebar'],
-    .dark [data-slot='sidebar'][data-mobile='true'] {
-        background: linear-gradient(
-            180deg,
-            rgba(34, 21, 51, 0.78) 0%,
-            rgba(22, 14, 35, 0.62) 100%
-        );
-        border-right: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow:
-            inset 1px 0 0 0 rgba(255, 255, 255, 0.05),
-            8px 0 32px -16px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Glass topbar — same material as the sidebar so header and sidebar read as
-       one continuous frosted surface across the app. */
-    .glass-topbar {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 252, 248, 0.78) 0%,
-            rgba(255, 247, 235, 0.58) 100%
-        );
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 8px 24px -16px rgba(27, 18, 48, 0.12);
-    }
-    .dark .glass-topbar {
-        background: linear-gradient(
-            90deg,
-            rgba(34, 21, 51, 0.78) 0%,
-            rgba(22, 14, 35, 0.62) 100%
-        );
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 8px 24px -16px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Active nav item — NOON amber wash on the frosted surface */
-    .sidebar-nav-active {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 178, 62, 0.16) 0%,
-            rgba(255, 178, 62, 0.05) 100%
-        );
-        box-shadow: inset 0 0 0 1px rgba(255, 178, 62, 0.16);
-    }
-    .dark .sidebar-nav-active {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 178, 62, 0.18) 0%,
-            rgba(255, 178, 62, 0.06) 100%
-        );
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-    }
-
-    /* Glass Card — NOON warm frosted translucent surface */
     .glass-card {
-        background: linear-gradient(
-            135deg,
-            rgba(255, 252, 248, 0.78) 0%,
-            rgba(255, 247, 235, 0.58) 100%
-        );
-        backdrop-filter: blur(16px) saturate(180%);
-        -webkit-backdrop-filter: blur(16px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 0.75rem;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 2px 4px rgba(27, 18, 48, 0.05),
-            0 8px 20px -8px rgba(27, 18, 48, 0.1);
     }
 
     .dark .glass-card {
-        background: linear-gradient(
-            135deg,
-            rgba(34, 21, 51, 0.78) 0%,
-            rgba(22, 14, 35, 0.62) 100%
-        );
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 2px 4px rgba(0, 0, 0, 0.25),
-            0 8px 20px -8px rgba(0, 0, 0, 0.35);
+        background: var(--card);
+        border: 1px solid var(--border);
     }
 
-    /* Glass Panel — NOON warm frosted larger surface for sections */
     .glass-panel {
-        background: linear-gradient(
-            135deg,
-            rgba(255, 252, 248, 0.72) 0%,
-            rgba(255, 247, 235, 0.52) 100%
-        );
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 0.875rem;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.5),
-            0 2px 4px rgba(27, 18, 48, 0.04),
-            0 12px 32px -12px rgba(27, 18, 48, 0.12);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
     }
 
     .dark .glass-panel {
-        background: linear-gradient(
-            135deg,
-            rgba(34, 21, 51, 0.72) 0%,
-            rgba(22, 14, 35, 0.52) 100%
-        );
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.04),
-            0 2px 4px rgba(0, 0, 0, 0.3),
-            0 12px 32px -12px rgba(0, 0, 0, 0.4);
+        background: var(--card);
+        border: 1px solid var(--border);
     }
 
-    /* ── Sonner toast — glass material ───────────────────────────────
-       Same frosted recipe as .glass-panel so notifications feel native
-       to the world instead of a floating white card from another one.
-       Sonner exposes [data-type] on each toast for per-tone accents. */
+    .glass-topbar {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .glass-header {
+        background: var(--surface-sunken, #e9edf0);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .dark .glass-header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* Sidebar: opaque, paper-on-paper with a single hairline. */
+    .sidebar-glass,
+    [data-slot='sidebar'][data-mobile='true'] {
+        --sidebar: var(--card);
+        --sidebar-foreground: var(--foreground);
+        --sidebar-primary: var(--primary);
+        --sidebar-primary-foreground: var(--primary-foreground);
+        --sidebar-accent: var(--secondary);
+        --sidebar-accent-foreground: var(--foreground);
+        --sidebar-border: var(--border);
+        --sidebar-ring: var(--ring);
+        color: var(--sidebar-foreground);
+    }
+
+    .sidebar-glass [data-sidebar='sidebar'],
+    [data-slot='sidebar'][data-mobile='true'] {
+        background: var(--sidebar);
+        border-right: 1px solid var(--sidebar-border);
+    }
+
+    /* Active nav item — teal treatment (DESIGN.md P1: teal is brand, not status) */
+    .sidebar-nav-active {
+        background: color-mix(in oklab, var(--primary) 10%, transparent);
+        border-left: 3px solid var(--primary);
+        color: var(--primary);
+    }
+
+    .dark .sidebar-nav-active {
+        background: color-mix(in oklab, var(--primary) 16%, transparent);
+    }
+
+    /* ── Sonner toast — solid surface, semantic accents ────────────
+       Solid (never glass): readable over any content, printable mental model. */
     .premium-toast {
         --toast-accent: var(--primary);
 
@@ -380,70 +306,43 @@
         align-items: flex-start !important;
         gap: 0.75rem;
         padding: 0.875rem 1rem !important;
-        border-radius: 0.875rem !important;
-        background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.78) 0%,
-            rgba(255, 255, 255, 0.58) 100%
-        ) !important;
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.55) !important;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 12px 40px -12px rgba(27, 18, 48, 0.28) !important;
-        transition: box-shadow 200ms ease-out;
+        border-radius: 0.75rem !important;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-overlay) !important;
+        transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     .premium-toast:hover {
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 18px 52px -14px rgba(27, 18, 48, 0.36) !important;
-    }
-
-    .dark .premium-toast {
-        background: linear-gradient(
-            135deg,
-            rgba(22, 30, 51, 0.82) 0%,
-            rgba(13, 19, 36, 0.66) 100%
-        ) !important;
-        border-color: rgba(255, 255, 255, 0.09) !important;
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 12px 40px -12px rgba(0, 0, 0, 0.55) !important;
-    }
-
-    .dark .premium-toast:hover {
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 18px 52px -14px rgba(0, 0, 0, 0.65) !important;
+        box-shadow: var(--shadow-overlay) !important;
     }
 
     .premium-toast[data-type='success'] {
-        --toast-accent: rgb(5 150 105);
+        --toast-accent: #1b7f5a;
     }
     .premium-toast[data-type='error'] {
-        --toast-accent: rgb(225 29 72);
+        --toast-accent: #b42318;
     }
     .premium-toast[data-type='warning'] {
-        --toast-accent: rgb(217 119 6);
+        --toast-accent: #b45309;
     }
     .premium-toast[data-type='info'],
     .premium-toast[data-type='default'] {
-        --toast-accent: #7a4bd6;
+        --toast-accent: #1d6a9f;
     }
+
     .dark .premium-toast[data-type='success'] {
-        --toast-accent: rgb(52 211 153);
+        --toast-accent: #34d399;
     }
     .dark .premium-toast[data-type='error'] {
-        --toast-accent: rgb(251 113 133);
+        --toast-accent: #fda4af;
     }
     .dark .premium-toast[data-type='warning'] {
-        --toast-accent: rgb(251 191 36);
+        --toast-accent: #fbbf24;
     }
     .dark .premium-toast[data-type='info'],
     .dark .premium-toast[data-type='default'] {
-        --toast-accent: #b892ff;
+        --toast-accent: #67e8f9;
     }
 
     /* Icon chip — the single tinted element; text stays neutral for contrast. */
@@ -455,7 +354,7 @@
         width: 1.75rem;
         height: 1.75rem;
         margin-top: 1px;
-        border-radius: 0.625rem;
+        border-radius: 0.5rem;
         color: var(--toast-accent);
         background: color-mix(in oklab, var(--toast-accent) 14%, transparent);
         box-shadow: inset 0 0 0 1px
@@ -470,7 +369,7 @@
 
     .premium-toast-title {
         font-size: 0.875rem;
-        font-weight: 650;
+        font-weight: 600;
         letter-spacing: -0.01em;
         line-height: 1.35;
     }
@@ -520,79 +419,11 @@
         }
     }
 
-    /* Glass Header — frosted bar for section headers */
-    .glass-header {
-        background: linear-gradient(
-            135deg,
-            rgba(255, 178, 62, 0.14) 0%,
-            rgba(184, 146, 255, 0.08) 100%
-        );
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.5),
-            inset 0 -1px 0 rgba(27, 18, 48, 0.05);
-    }
-
-    .dark .glass-header {
-        background: linear-gradient(
-            135deg,
-            rgba(255, 178, 62, 0.1) 0%,
-            rgba(184, 146, 255, 0.06) 100%
-        );
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-    }
-
-    /* Double-Bezel outer shell — kept for backward compat */
-    .bezel-outer {
-        background: oklch(0.96 0.003 250);
-        border: 1px solid oklch(0.9 0.005 250);
-        border-radius: 1.25rem;
-        padding: 0.375rem;
-    }
-
-    .dark .bezel-outer {
-        background: oklch(0.14 0.02 255);
-        border-color: oklch(0.22 0.02 255);
-    }
-
-    /* Double-Bezel inner core */
-    .bezel-inner {
-        background: oklch(1 0 0);
-        border-radius: calc(1.25rem - 0.375rem);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.9),
-            0 1px 3px rgba(27, 18, 48, 0.06);
-    }
-
-    .dark .bezel-inner {
-        background: oklch(0.17 0.02 255);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 1px 3px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Scroll reveal */
-    .reveal {
-        opacity: 0;
-        transform: translateY(24px);
-        transition:
-            opacity 0.8s cubic-bezier(0.32, 0.72, 0, 1),
-            transform 0.8s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .reveal.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* Card entrance — light fade-up used by data grids */
+    /* Card entrance — feedback-only motion (DESIGN.md §3.5: max 220ms) */
     @keyframes card-enter {
         from {
             opacity: 0;
-            transform: translateY(12px);
+            transform: translateY(6px);
         }
         to {
             opacity: 1;
@@ -600,26 +431,12 @@
         }
     }
 
-    .card-enter {
-        animation: card-enter 0.45s cubic-bezier(0.32, 0.72, 0, 1) backwards;
+    .card-enter,
+    .animate-card-enter {
+        animation: card-enter 200ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
     }
 
-    /* Slow pulse for ambient glow blobs */
-    @keyframes pulse-slow {
-        0%,
-        100% {
-            opacity: 0.6;
-        }
-        50% {
-            opacity: 1;
-        }
-    }
-
-    .animate-pulse-slow {
-        animation: pulse-slow 6s ease-in-out infinite;
-    }
-
-    /* Stagger delays */
+    /* Stagger delays (kept — used across screens) */
     .delay-100 {
         transition-delay: 100ms;
     }
@@ -639,54 +456,7 @@
         transition-delay: 500ms;
     }
 
-    /* Premium Sidebar Styles */
-    .sidebar-gradient-bg {
-        background: var(--sidebar-gradient);
-    }
-
-    .sidebar-divider {
-        height: 1px;
-        background: var(--sidebar-divider);
-        margin: 0.5rem;
-    }
-
-    .sidebar-glow-effect {
-        box-shadow: 0 0 20px var(--sidebar-glow);
-        border-radius: 0.5rem;
-    }
-
-    .sidebar-item-active {
-        @apply bg-sidebar-primary/10 text-sidebar-primary-foreground;
-        background: linear-gradient(
-            90deg,
-            transparent 0%,
-            var(--sidebar-primary) 4px,
-            transparent 8px
-        );
-        border-left: 3px solid var(--sidebar-primary);
-    }
-
-    .sidebar-item-hover {
-        @apply bg-sidebar-accent/5 transition-colors duration-200 hover:bg-sidebar-accent/10;
-    }
-
-    .sidebar-label {
-        @apply text-xs font-medium tracking-wider text-sidebar-accent-foreground/70 uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .sidebar-icon-gradient {
-        background: linear-gradient(
-            135deg,
-            var(--sidebar-primary),
-            var(--sidebar-accent)
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    /* Custom scrollbar for sidebar */
+    /* Sidebar scrollbar (used by app-sidebar.tsx) */
     .sidebar-scrollbar::-webkit-scrollbar {
         width: 6px;
     }
@@ -696,31 +466,16 @@
     }
 
     .sidebar-scrollbar::-webkit-scrollbar-thumb {
-        background: var(--sidebar-accent) / 30;
+        background: color-mix(in oklab, var(--border) 80%, transparent);
         border-radius: 3px;
     }
 
     .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: var(--sidebar-accent) / 50;
-    }
-    @keyframes card-enter {
-        from {
-            opacity: 0;
-            transform: translateY(16px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        background: var(--border-strong, #b9c4ce);
     }
 
-    .animate-card-enter {
-        animation: card-enter 420ms ease-out both;
-    }
-
-    /* ── Manifest Deck (halaman Aset) ──────────────────────────────
-       Kertas manifest + rel tinta ala meja manifest kargo. Barcode,
-       perforasi, dan stempel adalah kosakata fungsional dunia ini. */
+    /* ── Manifest Deck (halaman Aset) — barcode vocabulary stays,
+       scoped to cool ledger tones ───────────────────────────────── */
     .barcode-strip {
         background-image: repeating-linear-gradient(
             90deg,
@@ -735,7 +490,7 @@
 
     .manifest-scroll {
         scrollbar-width: thin;
-        scrollbar-color: rgba(120, 113, 100, 0.55) transparent;
+        scrollbar-color: rgba(90, 106, 122, 0.55) transparent;
     }
     .manifest-scroll::-webkit-scrollbar {
         width: 8px;
@@ -745,7 +500,7 @@
         background: transparent;
     }
     .manifest-scroll::-webkit-scrollbar-thumb {
-        background: rgba(120, 113, 100, 0.55);
+        background: rgba(90, 106, 122, 0.55);
         border-radius: 4px;
     }
     .dark .manifest-scroll {
@@ -756,11 +511,12 @@
     }
 
     .manifest-scope ::selection {
-        background: rgba(255, 178, 62, 0.35);
+        background: color-mix(in oklab, var(--primary) 28%, transparent);
     }
 
     @media (prefers-reduced-motion: reduce) {
         .animate-card-enter,
+        .card-enter,
         .stamp-slam {
             animation: none !important;
             transition: none !important;
@@ -768,32 +524,6 @@
     }
 }
 
-/* ── NOON scope (DESIGN.md v1.0) ───────────────────────────────────
-   Palet dark-first khusus halaman yang dibungkus `.dark.noon`.
-   Semua komponen berbasis token semantik mengikuti otomatis;
-   halaman lain tidak tersentuh. */
-.noon {
-    color-scheme: dark;
-    --background: oklch(0.2 0.04 300);
-    --foreground: oklch(0.98 0.002 250);
-    --card: oklch(0.24 0.045 300);
-    --card-foreground: oklch(0.98 0.002 250);
-    --popover: oklch(0.24 0.045 300);
-    --popover-foreground: oklch(0.98 0.002 250);
-    --primary: oklch(0.81 0.16 74);
-    --primary-foreground: oklch(0.2 0.04 300);
-    --secondary: oklch(0.72 0.14 295);
-    --secondary-foreground: oklch(0.2 0.04 300);
-    --muted: oklch(0.28 0.05 300);
-    --muted-foreground: oklch(0.71 0.04 250);
-    --accent: oklch(0.28 0.05 300);
-    --accent-foreground: oklch(0.98 0.002 250);
-    --destructive: oklch(0.65 0.2 25);
-    --destructive-foreground: oklch(0.98 0.002 250);
-    --border: oklch(1 0 0 / 0.1);
-    --input: oklch(1 0 0 / 0.12);
-    --ring: oklch(0.81 0.16 74);
-}
 @keyframes stamp-slam {
     from {
         opacity: 0;
@@ -808,7 +538,7 @@
     animation: stamp-slam 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* Mobile-first tap targets: ensure interactive elements meet 44px minimum on touch devices */
+/* Mobile-first tap targets: interactive elements meet the 44px minimum on touch devices */
 @media (pointer: coarse) {
     button,
     a,

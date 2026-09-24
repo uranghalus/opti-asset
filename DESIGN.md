@@ -1,65 +1,78 @@
 ---
-version: '1.0'
+version: '2.0'
+date: '2026-09-24'
 name: 'Opname Field Desk'
 description: 'Operational UI for Indonesian enterprise asset management — field scan first, ledger clarity second, no decorative chrome.'
+supersedes:
+  - 'v1.0 (same direction, sharpened into a full brief)'
+  - 'NOON warm glassmorphism (legacy chrome — scheduled for removal, see §Implementation notes)'
+prp_reference: 'PRD Sistem Manajemen Aset v1.3'
 colors:
+  # Core
   primary: '#0D5C56'
   primary-hover: '#0A4A45'
+  primary-active: '#083B37'
   primary-muted: '#D8EDEA'
+  primary-muted-border: '#A7D2CC'
   ink: '#15202B'
   ink-muted: '#5A6A7A'
+  ink-subtle: '#8593A2'
   paper: '#F1F4F6'
   surface: '#FFFFFF'
+  surface-sunken: '#E9EDF0'
   border: '#D5DCE3'
+  border-strong: '#B9C4CE'
   focus: '#0D5C56'
-  status-aktif: '#1B7F5A'
-  status-loan: '#1D6A9F'
-  status-rpr: '#B45309'
-  status-mut: '#0E7490'
-  status-dsp: '#9B2C2C'
-  tipe-aktiva: '#0D5C56'
-  tipe-peralatan: '#475569'
+  # Semantic actions
   destructive: '#B42318'
+  destructive-tint: '#FEECEB'
   success: '#1B7F5A'
   warning: '#B45309'
   info: '#1D6A9F'
+  # Status map (LOCKED — P1). text/bg/border recipes verified ≥ 6:1 on light.
+  status-act-text: '#166534'
+  status-act-bg: '#DCFCE7'
+  status-act-border: '#86EFAC'
+  status-loan-text: '#1E40AF'
+  status-loan-bg: '#DBEAFE'
+  status-loan-border: '#93C5FD'
+  status-rpr-text: '#92400E'
+  status-rpr-bg: '#FEF3C7'
+  status-rpr-border: '#FCD34D'
+  status-mut-text: '#155E75'
+  status-mut-bg: '#CFFAFE'
+  status-mut-border: '#67E8F9'
+  status-dsp-text: '#9F1239'
+  status-dsp-bg: '#FFE4E6'
+  status-dsp-border: '#FDA4AF'
+  # Tipe aset
+  tipe-aktiva-text: '#0D5C56'
+  tipe-aktiva-bg: '#D8EDEA'
+  tipe-peralatan-text: '#475569'
+  tipe-peralatan-bg: '#E9EDF0'
+  # Dark theme
   dark-bg: '#0B1220'
   dark-surface: '#151D2A'
+  dark-surface-raised: '#1B2534'
   dark-border: '#2A3544'
+  dark-ink: '#E8EEF2'
+  dark-ink-muted: '#9AA8B5'
   dark-primary: '#2A9B93'
-typography:
-  display:
-    fontFamily: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.75rem'
-    fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: '-0.02em'
-  headline:
-    fontFamily: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.375rem'
-    fontWeight: 650
-    lineHeight: 1.3
-  title:
-    fontFamily: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.125rem'
-    fontWeight: 600
-    lineHeight: 1.35
-  body:
-    fontFamily: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1rem'
-    fontWeight: 400
-    lineHeight: 1.5
-  label:
-    fontFamily: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '0.875rem'
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: '0.01em'
-  mono:
-    fontFamily: 'Noto Sans Mono, ui-monospace, monospace'
-    fontSize: '0.875rem'
-    fontWeight: 500
-    lineHeight: 1.4
+  dark-primary-ink: '#0B1220'
+  # Dark status recipes verified ≥ 8:1 on dark tints
+  dark-status-act-text: '#86EFAC'
+  dark-status-act-bg: '#052E16'
+  dark-status-loan-text: '#93C5FD'
+  dark-status-loan-bg: '#172554'
+  dark-status-rpr-text: '#FCD34D'
+  dark-status-rpr-bg: '#451A03'
+  dark-status-mut-text: '#67E8F9'
+  dark-status-mut-bg: '#083344'
+  dark-status-dsp-text: '#FDA4AF'
+  dark-status-dsp-bg: '#4C0519'
+fonts:
+  sans: 'Public Sans, ui-sans-serif, system-ui, sans-serif'
+  mono: 'Noto Sans Mono, ui-monospace, SFMono-Regular, monospace'
 rounded:
   sm: '4px'
   md: '8px'
@@ -75,383 +88,347 @@ spacing:
   8: '32px'
   10: '40px'
   12: '48px'
-components:
-  button-primary:
-    backgroundColor: '{colors.primary}'
-    textColor: '{colors.surface}'
-    rounded: '{rounded.md}'
-    padding: '12px 16px'
-    height: '44px'
-  button-primary-hover:
-    backgroundColor: '{colors.primary-hover}'
-    textColor: '{colors.surface}'
-  button-secondary:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.ink}'
-    rounded: '{rounded.md}'
-    padding: '12px 16px'
-    height: '44px'
-  button-destructive:
-    backgroundColor: '{colors.destructive}'
-    textColor: '{colors.surface}'
-    rounded: '{rounded.md}'
-    padding: '12px 16px'
-    height: '44px'
-  input-default:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.ink}'
-    rounded: '{rounded.md}'
-    padding: '10px 12px'
-    height: '44px'
-  card-asset:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.ink}'
-    rounded: '{rounded.lg}'
-    padding: '16px'
-  badge-status:
-    rounded: '{rounded.sm}'
-    padding: '2px 8px'
-  tabbar-mobile:
-    backgroundColor: '{colors.surface}'
-    height: '64px'
+  16: '64px'
+motion:
+  micro: '120ms'
+  standard: '180ms'
+  max: '220ms'
+  easing: 'cubic-bezier(0.32, 0.72, 0, 1)'
+breakpoints:
+  sm: '640px'
+  md: '768px'
+  lg: '1024px'
+  xl: '1280px'
+z-index:
+  base: 0
+  sticky: 100
+  overlay: 200
+  dropdown: 250
+  modal: 300
+  toast: 500
 ---
 
-# Design System: Opname Field Desk
+# Design System: Opname Field Desk (v2.0)
 
-> **Mode:** Operate (task completion over expression)
-> **Product:** Opti-Asset — multi-tenant asset management (PRD Sistem Manajemen Aset v1.3 + Mobile-First UI PRD)
-> **Replaces:** Soft UI Evolution pastels, American Express / Benton Sans, and NOON warm glassmorphism
+> **Mode:** Operate — task completion over expression.
+> **Product:** Opti-Asset — multi-tenant asset management (PRD v1.3): classification, CRUD, scan, mutasi, disposal, audit trail, tipe aset + accounting.
+> **Users:** Staff Asset (field + desk), Admin Department, Manajemen, Auditor. Indonesian-language UI, corporate OIDC/SSO.
+> **This document is normative.** If code and this file disagree, code is wrong.
 
 ---
 
 ## 1. Design principles (mandatory)
 
 ### P1 — Status is the interface
-Every asset screen must make **status** (Aktif / Dipinjamkan / Dalam Perbaikan / Dimutasi / Dihapus) and **tipe** (Aktiva Tetap / Peralatan) readable in under one second without opening a detail view. Color, badge shape, and label are locked to the status token map — never decorative accents.
+Every asset screen must make **status** (Aktif / Dipinjamkan / Dalam Perbaikan / Dimutasi / Dihapus) and **tipe** (Aktiva Tetap / Peralatan) readable in under one second, without opening a detail view. Color, badge shape, and label are locked to the status token map in §3. The five status hues may never be used decoratively — a teal chip is "Aktif", not "brand accent".
 
-**Why:** Staff Asset and Auditor success is "know the state of this thing now." Soft pastel systems and glass chrome bury that signal.
+**Why:** Staff Asset and Auditor success is "know the state of this thing now". With ≥10,000 assets (NFR-01.4) and audit targets of 95% correctly-classified assets, misread status is the most expensive failure in the product. Decorative color competes with that signal.
 
 ### P2 — Thumb-first, desk-second
-Primary actions (Scan, Simpan, Ajukan mutasi, Ajukan disposal) sit in the **thumb zone** on mobile (bottom bar / sticky footer). Dense tables are a **desktop privilege**; below `md` the same data is card + section stacks. Minimum interactive height: **44px**.
+Primary actions (Scan, Simpan, Ajukan mutasi, Ajukan disposal) live in the **thumb zone** on mobile: bottom tab bar, sticky footer, or full-bleed button. Dense tables are a **desktop privilege**; below `md` the same data renders as card stacks. Minimum interactive height 44×44px everywhere.
 
-**Why:** The Mobile-First PRD and NFR-05 require ≤3 taps to core tasks on smartphones used during opname and corridor walks.
+**Why:** Opname fisik happens standing, in one hand, often in glare. The Mobile-First requirement and NFR-05.2 (≤3 taps to core functions) both fail if primary actions sit in the top-right corner of a 6-inch screen.
 
 ### P3 — Ledger honesty over decoration
-Surfaces are **opaque**, borders are **1px**, shadows are **structural only** (modals, sticky bars, toasts). No glassmorphism, no glow, no neon. Copy is Bahasa Indonesia; asset codes and barcodes use monospace.
+Surfaces are **opaque**, borders are **1px**, shadows are **structural only** (modals, sticky bars, toasts). No glassmorphism, no glow, no gradients on chrome. Copy is Bahasa Indonesia; asset codes, barcode values, and monetary figures render in monospace with tabular numerals.
 
-**Why:** Outdoor/warehouse glare kills frosted glass; auditors need contrast and printable mental models; Indonesian-first is a PRODUCT.md brand commitment.
+**Why:** This is an instrument, not a showcase. Frosted panels lose contrast over arbitrary content behind them (the exact problem the legacy NOON glass hit), warehouse lighting kills low-contrast chrome, and auditors need a printable, quotable record — codes that copy-paste cleanly and numbers that align in columns. Opaque surfaces, thin borders, and mono codes are the cheapest possible way to look *trustworthy* rather than *trendy*.
 
 ---
 
 ## 2. Visual direction
 
-**Creative North Star: "Opname Field Desk"**
-
-The metaphor is the moment of **opname aset**: a cool-gray clipboard under fluorescent light, a teal inventory stamp, a barcode label, a stamped ledger line. Not banking luxury, not pastel SaaS, not dark cyber-ops.
+**Creative North Star: "Opname Field Desk"** — the moment of stocktake: a cool-gray clipboard under fluorescent light, a teal inventory stamp, a barcode label, a stamped ledger line. Institutional without being cold; precise without being sterile.
 
 | Axis | Choice | Rationale |
 | --- | --- | --- |
-| Mood | Calm, precise, field-ready | Long data sessions + phone in hand |
-| Density | 7/10 on desktop lists; 5/10 on mobile cards | PRD volume ≥10k assets; phone needs breathing room |
-| Motion | 3/10 — feedback only (150–220ms) | Confirm save/scan; never entertain |
-| Light | Light-first for field; dark as equal peer for desk night work | Cool paper outdoors; dark ink desk for night reviews |
-| Culture | Indonesian enterprise ops | Labels ID; codes EN |
+| Mood | Calm, precise, field-ready | Long data sessions at a desk + a phone in the other hand |
+| Density | 7/10 desktop lists, 5/10 mobile cards | ≥10k assets on desktop; thumbs need air |
+| Motion | 3/10 — feedback only (120–220ms) | Confirm save/scan/approve; never entertain |
+| Light | Light-first (field), dark as equal peer (desk night work) | Cool paper reads outdoors; dark ink for late reconciliation |
+| Culture | Indonesian enterprise ops | Labels and copy ID-first; codes and identifiers EN |
 
-**Reference feel (craft bar, not clones):** government service forms (clarity), warehouse WMS mobile (thumb reach), accounting ledgers (mono codes).
+**Reference feel (craft bar, not clones):** government service forms (clarity under obligation), warehouse WMS mobile apps (thumb-reach ergonomics), accounting ledgers (mono codes, aligned numerals). The system should feel like well-maintained public infrastructure.
 
 **Avoid (hard bans):**
-- Soft UI pastels (`#87CEEB` / `#FFB6C1` / `#90EE90`)
-- Warm cream + terracotta / serif display (AI default cluster)
-- Purple-to-indigo SaaS gradients, neon glow, multi-layer shadows
-- American Express Benton Sans / Centurion luxury cues
-- Glassmorphism / frosted panels as primary chrome
+- Glassmorphism / frosted / `backdrop-filter` on any chrome — *including the legacy glass toasts, glass sidebar, and glass header still in the codebase*
+- Soft pastels (`#87CEEB`, `#FFB6C1`, `#90EE90` — the legacy `--color-soft-*` tokens)
+- Warm cream + terracotta + serif display (the AI-default cluster); NOON amber/violet accents
+- Purple-to-indigo SaaS gradients; neon glow; multi-layer decorative shadows
+- Benton Sans or any luxury-bank face
+- Purple anywhere — not a status, not an accent, not a chart series
 - Emoji in UI chrome (Lucide icons only)
-- Pure black `#000` or pure white text on saturated fills without AA check
-
----
-
-## Overview
-
-**Creative North Star: "Opname Field Desk"**
-
-Opti-Asset is an Operate product: Staff Asset, Admin Department, Manajemen, and Auditor complete classification, CRUD, scan, mutasi, disposal, and audit trails. The UI must feel like a trustworthy field instrument — cool, mineral, slightly institutional — so status and codes dominate perception.
-
-Key characteristics:
-- Restrained palette: cool paper + mineral teal primary; status colors carry meaning
-- Public Sans for UI; Noto Sans Mono for kode aset / barcode values
-- Card lists on mobile; data tables on desktop
-- Opaque surfaces, thin borders, minimal elevation
-- Full light + dark themes with shared semantic tokens
+- Pure `#000` text or pure `#FFF` text on saturated fills without an AA check
+- Pill-shaped primary CTAs (pills are for avatars; controls are rectangles)
 
 ---
 
 ## 3. Design tokens
 
-### Colors
+### 3.1 Colors — core
 
-| Token | Hex | Role |
-| --- | --- | --- |
-| `primary` | `#0D5C56` | CTAs, links, focus ring, brand mark |
-| `primary-hover` | `#0A4A45` | Primary pressed/hover |
-| `primary-muted` | `#D8EDEA` | Selected rows, soft chips |
-| `ink` | `#15202B` | Primary text |
-| `ink-muted` | `#5A6A7A` | Secondary text, placeholders |
-| `paper` | `#F1F4F6` | App background |
-| `surface` | `#FFFFFF` | Cards, sheets, inputs |
-| `border` | `#D5DCE3` | Dividers, input stroke |
-| `destructive` | `#B42318` | Delete, reject, irreversible |
-| `success` | `#1B7F5A` | Toast success, confirm |
-| `warning` | `#B45309` | Warnings, RPR adjacency |
-| `info` | `#1D6A9F` | Informational callouts |
-
-**Status map (locked — P1):**
-
-| Status | Code | Hex | Usage |
+| Token | Hex | Role | Verified contrast |
 | --- | --- | --- | --- |
-| Aktif | ACT | `#1B7F5A` | Badge + optional left rail on cards |
-| Dipinjamkan | LOAN | `#1D6A9F` | Badge |
-| Dalam Perbaikan | RPR | `#B45309` | Badge |
-| Dimutasi | MUT | `#0E7490` | Badge (in-transit cyan, not purple) |
-| Dihapus | DSP | `#9B2C2C` | Badge; muted row treatment |
+| `primary` | `#0D5C56` | CTAs, links, focus ring, brand mark | 7.8:1 on white (AAA) |
+| `primary-hover` | `#0A4A45` | Primary hover/pressed | — |
+| `primary-active` | `#083B37` | Primary active | — |
+| `primary-muted` | `#D8EDEA` | Selected rows, active filter chips, Aktiva Tetap tint | — |
+| `primary-muted-border` | `#A7D2CC` | Border for primary-muted chips | — |
+| `ink` | `#15202B` | Primary text | 14.9:1 on paper (AAA) |
+| `ink-muted` | `#5A6A7A` | Secondary text, placeholders | 5.6:1 on surface (AA) |
+| `ink-subtle` | `#8593A2` | Timestamps, disabled text (non-essential only) | 3.5:1 — large text/meta only |
+| `paper` | `#F1F4F6` | App background | — |
+| `surface` | `#FFFFFF` | Cards, sheets, inputs, tables | — |
+| `surface-sunken` | `#E9EDF0` | Table header rows, inset panels, Peralatan tint | — |
+| `border` | `#D5DCE3` | Dividers, input strokes | — |
+| `border-strong` | `#B9C4CE` | Hovered borders, pressed inputs | — |
+| `destructive` | `#B42318` | Hapus, Tolak, irreversible confirmations | 5.9:1 on white |
+| `success` | `#1B7F5A` | Success toast accent, saved indicators | — |
+| `warning` | `#B45309` | Warning callouts (adjacent to RPR) | — |
+| `info` | `#1D6A9F` | Informational callouts | — |
 
-**Tipe aset:**
-- Aktiva Tetap → `#0D5C56` outline badge
-- Peralatan → `#475569` outline badge
+**Why mineral teal:** `#0D5C56` is deliberately *not* finance blue (trust-banking cliché), not hospital green, not SaaS purple. It reads as stewardship and inventory control — the emotional register of "this thing is accounted for". It also passes AAA on white for normal text, so it can carry links, focus rings, and small labels without a separate darker variant. Hue distance from every status color is large enough that the two layers never blur.
 
-**Dark theme:**
-- `dark-bg` `#0B1220` · `dark-surface` `#151D2A` · `dark-border` `#2A3544`
-- `dark-primary` `#2A9B93` (lighter teal for AA on dark surfaces)
-- Status hues shift +8–12% lightness; never invert meaning
+**Two reds, on purpose:** `destructive #B42318` belongs to **actions** (buttons that delete/reject). Status `DSP` uses its own red family (§3.2). Merging them would make every Dihapus row look like a live delete button, and every delete button look like a passive state.
 
-**The Status Lock Rule.** Status hexes are not free accents. Do not use `#1B7F5A` for a marketing CTA; primary CTAs use `primary` teal only.
+### 3.2 Status map (LOCKED — P1)
 
-**Contrast targets:** Body text on paper ≥ 7:1; UI text on surface ≥ 4.5:1; large text ≥ 3:1; focus ring 3:1 against adjacent colors (WCAG 2.2 AA).
+Badge recipe: `text` on `bg` with 1px `border`. Text label always present — color is never the sole channel.
 
-### Typography
+| Status | Code | Light text / bg / border | Contrast | Dark text / bg | Contrast |
+| --- | --- | --- | --- | --- | --- |
+| Aktif | ACT | `#166534` / `#DCFCE7` / `#86EFAC` | 6.6:1 | `#86EFAC` / `#052E16` | 10.5:1 |
+| Dipinjamkan | LOAN | `#1E40AF` / `#DBEAFE` / `#93C5FD` | 7.2:1 | `#93C5FD` / `#172554` | 8.2:1 |
+| Dalam Perbaikan | RPR | `#92400E` / `#FEF3C7` / `#FCD34D` | 6.4:1 | `#FCD34D` / `#451A03` | 10.4:1 |
+| Dimutasi | MUT | `#155E75` / `#CFFAFE` / `#67E8F9` | 6.6:1 | `#67E8F9` / `#083344` | 9.2:1 |
+| Dihapus | DSP | `#9F1239` / `#FFE4E6` / `#FDA4AF` | 6.6:1 | `#FDA4AF` / `#4C0519` | 8.3:1 |
 
-**UI face: Public Sans** — designed for high-stakes government forms (USWDS). It stays legible in dense Indonesian labels, resists the Inter/Jakarta AI cluster, and signals institutional trust without luxury branding.
+**The Status Lock Rule.** These hues are semantic, not free accents. Do not use the ACT green for a "Save" button or the LOAN blue for a link. Primary CTAs are always `primary` teal. Dihapus additionally gets **muted row treatment** (slightly reduced content emphasis) — it is a tombstone, not a task.
 
-**Mono face: Noto Sans Mono** — reliable digit/letter width for `kode aset` and barcode strings; Noto family aligns with Indonesian glyph coverage if copy expands.
+**Tipe aset** (independent axis from status — FR-13.1):
+
+| Tipe | Recipe |
+| --- | --- |
+| Aktiva Tetap | `#0D5C56` text on `#D8EDEA`, 1px `#A7D2CC` border |
+| Peralatan | `#475569` text on `#E9EDF0`, 1px `#B9C4CE` border |
+
+Tipe badges are **outline-tinted and quieter** than status badges (smaller dot, regular weight) so the eye reads status first, tipe second.
+
+**Chart ramp (FR-13.8, dashboard/report panels):** when charting *status*, reuse the exact status hues above. For non-status series: `#0D5C56`, `#0E7490`, `#B45309`, `#1D6A9F`, `#475569` (teal → cyan → amber → blue → slate). Charts never introduce new hues.
+
+### 3.3 Dark theme
+
+| Token | Hex |
+| --- | --- |
+| `dark-bg` | `#0B1220` |
+| `dark-surface` | `#151D2A` |
+| `dark-surface-raised` | `#1B2534` (cards, sheets) |
+| `dark-border` | `#2A3544` |
+| `dark-ink` | `#E8EEF2` (14.5:1 on dark-surface) |
+| `dark-ink-muted` | `#9AA8B5` (6.1:1 on dark-surface) |
+| `dark-primary` | `#2A9B93` (5.0:1 on dark-surface) |
+| `dark-primary-ink` | `#0B1220` — text on dark-primary buttons (5.5:1) |
+
+Rules: dark surfaces are **cool navy, never purple-plum** (the legacy NOON plum `#1B1230` family is banned). Primary buttons in dark mode use `dark-primary` bg + `dark-primary-ink` text — white-on-teal fails AA at button sizes. Status recipes shift to the dark variants in §3.2; hue meaning never changes.
+
+### 3.4 Typography
+
+**UI face: Public Sans.** Designed for US government service forms — high x-height, open apertures, unfussy numerals. It stays legible at 12px in dense Indonesian table headers, sidesteps the Inter/Plus Jakarta AI-cluster sameness, and carries institutional trust without luxury connotations. Variable weight 400/500/600/700.
+
+**Mono face: Noto Sans Mono.** Uniform advance widths make `kode aset` (`AST-2026-00001`) and barcode strings column-align and copy-paste cleanly; Noto's Indonesian Latin coverage means no fallback surprises.
 
 | Role | Size | Weight | Use |
 | --- | --- | --- | --- |
-| Display | 1.75rem (28px) | 700 | Rare page titles (Dashboard, Scan) |
-| Headline | 1.375rem (22px) | 650 | Section headers |
-| Title | 1.125rem (18px) | 600 | Card titles, dialog titles |
-| Body | 1rem (16px) | 400 | Forms, descriptions |
-| Label | 0.875rem (14px) | 500 | Field labels, table headers |
-| Caption | 0.75rem (12px) | 500 | Meta, timestamps |
-| Mono | 0.875–1rem | 500 | Kode aset, barcode, nilai buku |
+| Display | 1.75rem / 28px | 700 | Rare page titles (Dashboard, Scan) |
+| Headline | 1.375rem / 22px | 600 | Section headers, detail page titles |
+| Title | 1.125rem / 18px | 600 | Card titles, dialog titles |
+| Body | 1rem / 16px | 400 | Forms, descriptions |
+| Label | 0.875rem / 14px | 500 | Field labels, table headers, buttons |
+| Caption | 0.75rem / 12px | 500 | Meta, timestamps, table footnotes |
+| Mono | 0.875rem–1rem | 500 | Kode aset, barcode, nilai buku |
 
-**The Code Face Rule.** Never style asset codes in the UI sans; always mono.
+**The Code Face Rule.** Asset codes, barcode values, and monetary values are always mono with `font-variant-numeric: tabular-nums` — never the UI sans. Money renders Indonesian-formatted (`Rp1.250.000`).
 
-### Spacing scale
+### 3.5 Spacing, radii, shadows, motion
 
-Base unit **4px**. Common steps: 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48.
+**Spacing** — base 4px; steps 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64. Screen padding 16px mobile, 24–32px desktop. Form stack gap 16px; section gap 24–32px. Touch target ≥44×44px; icon-only buttons get a 44px hit area even when the glyph is 20px.
 
-- Screen padding mobile: 16px
-- Screen padding desktop: 24–32px
-- Stack gap in forms: 16px
-- Section gap: 24–32px
-- Touch target: min 44×44px; icon-only buttons 44px hit area even if glyph is 20px
+**Radii** — `sm` 4px badges/chips · `md` 8px buttons/inputs/menus · `lg` 12px cards/sheets/dialogs · `full` avatars only. Map explicitly in Tailwind 4 theme (`--radius-sm: 0.25rem; --radius-md: 0.5rem; --radius-lg: 0.75rem`) instead of deriving from shadcn's single `--radius`.
 
-### Corner radii
+**Shadows — structural only:**
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `sm` | 4px | Badges, tiny chips |
-| `md` | 8px | Buttons, inputs, menu items |
-| `lg` | 12px | Cards, sheets, dialogs |
-| `full` | 9999px | Avatars only — **not** pills for primary actions |
-
-### Shadows
-
-| Token | Value | Use |
-| --- | --- | --- |
-| `none` | — | Default resting surfaces |
-| `sticky` | `0 1px 0 rgba(21,32,43,0.08)` | Sticky headers / tab bars |
-| `overlay` | `0 8px 24px rgba(21,32,43,0.14)` | Dialogs, popovers |
+| `none` | — | Resting surfaces (depth = border + paper→surface shift) |
+| `sticky` | `0 1px 0 rgba(21,32,43,0.08)` | Sticky headers, tab bars, sticky footers |
+| `overlay` | `0 8px 24px rgba(21,32,43,0.14)` | Dialogs, popovers, dropdowns |
 | `toast` | `0 4px 16px rgba(21,32,43,0.12)` | Toasts |
 
-No glow (`box-shadow` with saturated color). Depth otherwise comes from `border` + background shift (`paper` → `surface`).
+**Motion** — 120ms micro (chips, badges), 180ms standard (sheets, dialogs), 220ms hard maximum (toasts). Single easing token: `cubic-bezier(0.32, 0.72, 0, 1)`. All transitions die under `prefers-reduced-motion`.
 
----
+**Z-index ladder:** base 0 · sticky 100 · overlay 200 · dropdown 250 · modal 300 · toast 500.
 
-## Colors
+### 3.6 Mapping to shadcn semantic tokens (`resources/css/app.css`)
 
-Cool mineral system: teal primary on cool gray paper. Status colors are a separate semantic layer.
+| shadcn token | Light | Dark |
+| --- | --- | --- |
+| `--background` | `paper #F1F4F6` | `#0B1220` |
+| `--card` / `--popover` | `#FFFFFF` | `#1B2534` |
+| `--foreground` | `ink #15202B` | `#E8EEF2` |
+| `--muted-foreground` | `#5A6A7A` | `#9AA8B5` |
+| `--primary` / `--ring` | `#0D5C56` | `#2A9B93` |
+| `--primary-foreground` | `#FFFFFF` | `#0B1220` |
+| `--secondary` / `--accent` | `#E9EDF0` / `#E9EDF0` | `#1B2534` |
+| `--destructive` | `#B42318` | `#F04438`-family tint, AA-checked |
+| `--border` / `--input` | `#D5DCE3` | `#2A3544` |
+| `--radius-lg/md/sm` | 12 / 8 / 4 px | same |
 
-### Primary
-- **Mineral Teal** (`#0D5C56`): CTAs, focus, brand. Reads as stewardship/inventory, not finance blue or hospital green.
-
-### Neutral
-- **Ink** (`#15202B`), **Muted Ink** (`#5A6A7A`), **Paper** (`#F1F4F6`), **Surface** (`#FFFFFF`), **Border** (`#D5DCE3`)
-
-### Semantic / Status
-See token tables above. Destructive red is reserved for irreversible actions (hapus, reject disposal) — never for soft warnings.
-
----
-
-## Typography
-
-See §3. Character: workhorse institutional grotesque + mono ledger codes. No display serif. No tracked all-caps except tiny table column headers (max 0.04em).
-
----
-
-## Layout
-
-- **Shell:** Desktop = collapsible sidebar + main. Mobile = top app bar + bottom tab bar (Beranda / Aset / Scan / Laporan / Lainnya).
-- **Content max:** 1280px for dashboards; full-bleed lists may use viewport width with internal padding.
-- **Breakpoints:** `sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280
-- **Mobile (<768):** cards, stacked filters in sheet, sticky primary CTA
-- **Tablet (768–1023):** 2-col card grids; filters may be horizontal chips
-- **Desktop (≥1024):** tables with sticky header; sidebar classification tree where relevant
-- **z-index:** base 0 · sticky 100 · overlay 200 · modal 300 · toast 500
-
----
-
-## Elevation & Depth
-
-Flat-by-default. Borders define regions. Shadows only for overlay / sticky / toast (`sticky`, `overlay`, `toast` tokens).
-
-**The No-Glass Rule.** No `backdrop-filter: blur` on primary chrome. Optional 2% tint on toasts is allowed only if contrast still meets AA.
-
----
-
-## Shapes
-
-8px controls, 12px cards, 4px badges. Prefer rectangular buttons over pill CTAs. Status badges are soft-rectangle, not capsules that compete with buttons.
+`--font-sans` becomes Public Sans; `--font-mono` becomes Noto Sans Mono. The legacy `--color-soft-blue/pink/green`, `--color-scan-red`, `--sidebar-glow`, `--sidebar-gradient`, and all `*-glass` utilities are **removed**.
 
 ---
 
 ## 4. Screen inventory
 
-| Screen | Purpose |
-| --- | --- |
-| Login / SSO callback | Authenticate via corporate OIDC |
-| Dashboard | Ringkasan jumlah aset by status, klasifikasi, lokasi, tipe (FR-10 / FR-13.8) |
-| Aset — Daftar | Search/filter/browse assets; bulk actions |
-| Aset — Detail | Full record, accounting fields if Aktiva Tetap, actions |
-| Aset — Buat / Ubah | Create/edit asset + classification + tipe |
-| Aset — Scan | Camera/scanner lookup → asset detail or not-found |
-| Aset — Label / Label Batch | Print/export barcode labels |
-| Aset — Import | Spreadsheet import + result panel |
-| Aset — Riwayat | Per-asset history timeline |
-| Klasifikasi | 4-level tree CRUD (Golongan→…→Sub-cluster) |
-| Item | Master item specs linked to classification |
-| Lokasi | Location master |
-| Mutasi — Daftar / Buat / Detail | Transfer lifecycle + approve/reject |
-| Disposal — Daftar / Buat / Ubah / Detail | Disposal lifecycle |
-| Laporan | Mutasi & disposal reports + export XLSX/PDF |
-| Audit Log | User activity search |
-| Karyawan / Departemen / Organisasi | Org structure & tenants |
-| Peran / Izin | RBAC |
-| Pengaturan — Profil / Keamanan / Appearance | User settings |
-| Pengaturan — Ambang Kapitalisasi | Threshold for Aktiva Tetap vs Peralatan |
-| Tenant switch | Change active organization |
+| # | Screen | Purpose | Primary action |
+| --- | --- | --- | --- |
+| 1 | SSO redirect / callback | OIDC authentication; no local login page | Redirect to IdP |
+| 2 | Dashboard | Ringkasan jumlah & nilai aset by status, tipe, klasifikasi, lokasi (FR-10, FR-13.8) | Scan / Tambah aset |
+| 3 | Aset — Browse/Index | Search, filter (klasifikasi/lokasi/status/tipe), bulk select & delete, remember-last-list | Tambah aset |
+| 4 | Aset — Detail | Full record; accounting block if Aktiva Tetap; approval-status surface | Edit / Ajukan mutasi |
+| 5 | Aset — Buat / Ubah | Create/edit asset: identitas → klasifikasi cascade → lokasi → tipe → accounting (conditional) → lampiran | Simpan |
+| 6 | Aset — Scan | Camera scan → lookup → detail; manual code fallback | Open camera / enter code |
+| 7 | Aset — Label / Label Batch | Print/export barcode labels (single + batch) | Cetak label |
+| 8 | Aset — Import | Spreadsheet import (office format) + result panel | Pilih file / Impor |
+| 9 | Aset — Riwayat | Per-asset timeline: changes, mutasi, disposal, nilai buku snapshots, tipe overrides | Filter riwayat |
+| 10 | Klasifikasi | 4-level tree CRUD (Golongan→Kategori→Cluster→Sub-cluster), drag reorder, CSV import/export | Tambah node |
+| 11 | Kategori / Item / Lokasi | Master data CRUD tables | Tambah |
+| 12 | Mutasi — Daftar / Buat / Detail | Transfer lifecycle; approve/reject | Ajukan / Setujui |
+| 13 | Disposal — Daftar / Buat / Ubah / Detail | Disposal lifecycle; approve/reject; bulk | Ajukan / Setujui |
+| 14 | Laporan | Mutasi & disposal reports + XLSX/PDF export (FR-10.6) | Ekspor |
+| 15 | Audit Log | Activity search: pelaku, waktu, aksi (FR-12) | Filter |
+| 16 | Organisasi / Departemen / Karyawan | Org structure + employee↔role bridge | Sinkron / Tambah |
+| 17 | Peran / Izin | RBAC management (44-gate catalogue) | Tambah peran |
+| 18 | Pengaturan — Profil / Keamanan | Profile, password, 2FA, passkeys | Simpan |
+| 19 | Pengaturan — Ambang Kapitalisasi | Threshold config + hitung ulang/backfill (FR-13.3, FR-13.11) | Simpan ambang |
+| 20 | Pengaturan — Appearance | Light/dark/system | Pilih tema |
+| 21 | Tenant switch | Change active organization (session) | Pilih organisasi |
 
 ---
 
 ## 5. User flows (key journeys)
 
-### F1 — Scan & verify (primary field journey)
-1. Tab **Scan** → camera viewfinder + manual kode fallback
-2. Successful decode → lookup ≤2s (NFR-01.2) → **Detail aset**
-3. Hierarchy: status badge → nama → kode mono → lokasi → actions (Mutasi / Riwayat)
-4. Primary action: continue scanning (sticky) · Secondary: open full detail
+### F1 — Scan & verify (the field journey)
+1. **Tab Scan** (bottom bar, center-emphasized) → camera viewfinder opens; manual kode entry visible below as fallback.
+2. Successful decode → lookup ≤2s (NFR-01.2) → **ScanResultSheet**: status badge (top, largest), nama aset, kode mono, lokasi, tipe badge.
+3. Hierarchy inside the sheet: status → identity → location → actions. Primary: **Lanjut pindai** (sticky). Secondary: **Buka detail**.
+4. Not found → sheet with "Barcode tidak ditemukan" + manual entry focused + link to search. Failure is `aria-live="assertive"`.
 
 ### F2 — Register asset
-1. Aset → **Tambah**
-2. Sections: Identitas → Klasifikasi cascade → Lokasi/Pemilik → Tipe (auto from nilai perolehan) → Accounting block **only if Aktiva Tetap** → Lampiran
-3. Primary: **Simpan** (sticky footer mobile)
+1. Aset list → **Tambah aset**.
+2. Sections in order: Identitas → Klasifikasi (4-level cascade select) → Lokasi & pemilik → Tipe (auto from nilai perolehan vs threshold; override requires alasan — FR-13.9) → **Accounting block only if Aktiva Tetap** (nilai perolehan, masa manfaat, metode penyusutan; FR-13.4/13.6) → Lampiran.
+3. Sticky footer: **Simpan** (primary) + Batal. Validation inline per field; 500 → toast + form preserved.
 
 ### F3 — Mutasi
-1. From detail or Mutasi → **Ajukan mutasi**
-2. Asal (read-only) → Tujuan → Tanggal → Catatan
-3. Approver: Detail → **Setujui** / **Tolak**
-4. On approve: lokasi updates; status reflects Dimutasi→Aktif per business rules
+1. From asset detail or Mutasi list → **Ajukan mutasi**.
+2. Form: asal (read-only, current lokasi) → tujuan (location picker) → tanggal → catatan.
+3. Approver path: Mutasi detail → **Setujui** / **Tolak** (Tolak requires alasan).
+4. On approve: lokasi updates automatically (FR-06.5); status reflects Dimutasi → Aktif; both appear in Riwayat.
 
 ### F4 — Disposal
-1. Ajukan disposal + alasan + tanggal
-2. Manajemen approve path
-3. Status → Dihapus; asset locked from active transactions
+1. **Ajukan disposal** + alasan (required) + tanggal.
+2. Manajemen approves → status **Dihapus** (DSP); asset locked from active transactions (FR-07.6); row gets muted treatment in lists.
+3. Destructive-adjacent: the *action* of requesting uses primary button; only irreversible confirmations use destructive styling.
 
 ### F5 — Opname via list
-1. Daftar → filters (klasifikasi, status, lokasi, tipe)
-2. Card/table select → bulk label / bulk delete (permissioned)
-3. Remember-last-list on return from detail/edit
+1. Daftar → FilterBar: search (nama/kode/barcode FR-04.1) + chips for klasifikasi, lokasi, status, tipe (FR-04.2, FR-13.7); overflow into bottom sheet on mobile.
+2. Select-mode → BulkToolbar: **Hapus massal** (permissioned, confirm dialog), **Cetak label batch**.
+3. Returning from detail/edit restores last list state (page + filters).
 
 ### F6 — Audit
-1. Audit Log → filter pelaku/waktu/aksi
-2. Or Aset Riwayat → chronological ledger of changes / mutasi / disposal / nilai buku
+1. Audit Log → filter pelaku/waktu/aksi → ledger table (who/when/what, FR-09.3).
+2. Or Aset → Riwayat: chronological timeline per asset including mutasi, disposal, tipe override reasons (FR-13.9), and nilai buku snapshots per period (FR-13.10).
+
+### F7 — Tenant switch & SSO
+1. `/` redirects unauthenticated users to corporate OIDC (no password form to design).
+2. Authenticated users switch organization via topbar tenant menu → confirmation → full data re-scope; tenant name always visible in the top bar.
 
 ---
 
-## 6. Layout per screen (components)
+## 6. Layout per screen
 
 | Screen | Layout building blocks |
 | --- | --- |
-| Dashboard | `PageHeader`, `MetricStrip`, `ChartPanel` / breakdown by tipe+status, `QuickActions` (Scan, Tambah aset) |
-| Aset daftar | `PageHeader`, `FilterBar` (chips + sheet), `AssetCardGrid` **or** `DataTable`, `BulkToolbar`, `Pagination`/`InfiniteScroll` |
-| Aset detail | `StatusHeader`, `DefinitionList`, `AccountingPanel` (conditional), `ActionRow`, `RelatedTabs` (Riwayat, Label) |
-| Form buat/ubah | `FormSection`s, `CascadeSelect`, `MoneyInput`, `StickyFormFooter` |
-| Scan | `ScanViewport`, `ManualCodeEntry`, `ScanResultSheet` |
-| Klasifikasi | `TreeView`, `DetailPanel`, `InlineEdit` |
-| Mutasi/Disposal lists | Same list pattern as aset; `ApprovalBadge` |
-| Reports | `ReportFilters`, `ExportButtonGroup`, `ResultTable` |
-| Settings threshold | `SettingsForm`, `ConfirmDialog` for recalculate/backfill |
-| Mobile shell | `TopAppBar`, `BottomTabBar`, `ToastRegion` (above tab bar) |
+| Dashboard | `PageHeader`, `MetricStrip` (status counts), `ChartPanel` (breakdown by tipe + status, FR-13.8), `QuickActions` (Scan, Tambah aset), `RecentActivity` |
+| Aset Browse | `PageHeader`, `FilterBar` (search + chips → sheet on mobile), `AssetCardGrid` <768 / `DataTable` ≥1024, `BulkToolbar`, `Pagination`, `ImportResultPanel` (dismissible, after import) |
+| Aset Detail | `StatusHeader` (badge + nama + kode mono + actions), `DefinitionList`, `AccountingPanel` (Aktiva Tetap only), `ApprovalStateCallout`, `RelatedTabs` (Riwayat, Label) |
+| Form buat/ubah | `FormSection` ×5, `CascadeSelect` (klasifikasi), `MoneyInput` (ID-ID), `TipeField` (auto + override with alasan), `StickyFormFooter` |
+| Scan | `ScanViewport` (full-bleed), `ManualCodeEntry`, `ScanResultSheet`, `ScanErrorSheet` |
+| Label / Batch | `LabelPreview` (pure black-on-white print sheet), `PrintControls` |
+| Import | `Dropzone`, `ImportProgress`, `ImportResultPanel` (imported/skipped/errors table) |
+| Klasifikasi | `TreeView` (4 levels, drag handles), `DetailPanel`, `InlineEdit`, `BulkActionBar` |
+| Mutasi/Disposal | List = asset list pattern + `ApprovalBadge`; Detail = `ApprovalActions` (Setujui/Tolak + alasan dialog) |
+| Laporan | `ReportFilters`, `ExportButtonGroup` (XLSX/PDF), `ResultTable` |
+| Audit Log | `FilterBar`, `LedgerTable` (actor, action, target, timestamp — tabular-nums) |
+| Org/Peran/Izin | Standard CRUD tables + `PermissionMatrix` (role × gate grid) |
+| Settings | `SettingsNav` (vertical, desktop; horizontal chips, mobile) + form panels |
+| Shell — desktop | Collapsible sidebar (`AppSidebar`, opaque `paper`) + `TopAppBar` (tenant switcher, appearance, user) |
+| Shell — mobile | `TopAppBar` + `BottomTabBar` (Beranda / Aset / **Scan** / Laporan / Lainnya) + `ToastRegion` above tab bar |
 
 ---
 
 ## 7. Component library
 
+All shadcn/ui primitives are restyled via the token mapping in §3.6 — never re-colored per page.
+
 ### Buttons
 | Variant | When | States |
 | --- | --- | --- |
-| Primary | One main action per view | default / hover / active / focus / disabled / loading |
-| Secondary | Cancel, alternative | + outline border |
-| Ghost | Tertiary / toolbar | text+icon |
-| Destructive | Hapus, Tolak irreversible | confirm dialog required for bulk |
-| Icon | Toolbar | 44px hit target |
+| Primary (teal) | One per view — the main action | default / hover / active / focus-visible / disabled / loading |
+| Secondary (outline) | Cancel, alternatives | same |
+| Ghost | Toolbars, tertiary | same |
+| Destructive | Hapus, Tolak — irreversible only; bulk requires confirm dialog | same |
+| Icon | Dense toolbars | 44px hit target, `aria-label` in Indonesian |
 
-Loading: replace label with spinner + `aria-busy`; keep width stable.
+Loading: spinner replaces icon, label persists, `aria-busy="true"`, width locked (no layout shift).
 
 ### Inputs
-Text, Textarea, Select, Combobox, Cascade classification, Date, Money (ID-ID), File. Label above. Error text below in destructive. Focus: 2px `primary` ring offset 2px.
+Text, Textarea, Select, Combobox (search), CascadeSelect (klasifikasi), Date, Money (Rp, ID-ID), File. Label above, error below in `destructive` with icon, hint in `ink-muted`. Focus: 2px `primary` ring, 2px offset. `aria-invalid` + `aria-describedby` wired.
 
-### AssetCard
-Photo/placeholder · nama · kode mono · `StatusBadge` · `TipeBadge` · lokasi caption. Pressed state; checkbox mode for bulk.
+### AssetCard — *the signature component*
+Photo/placeholder · nama (Title) · kode (mono) · `StatusBadge` · `TipeBadge` · lokasi (Caption).
+Variants: default / compact (scan result) / selectable (checkbox mode) / muted (DSP tombstone).
+States: resting / pressed (scale 0.995 + border-strong) / selected (primary-muted bg) / disabled.
+If AssetCard and StatusBadge are wrong, the product is wrong.
 
 ### StatusBadge / TipeBadge
-Locked colors (§3). Text always present (not color-only).
+Locked recipes (§3.2). Soft-rectangle (4px), never capsule. Always text + color; optional 6px leading dot for scan-distance legibility.
 
 ### FilterBar
-Search + chip filters; overflow → bottom sheet on mobile.
+Search input + filter chips; chips show active value; overflow → bottom `Sheet` on mobile. Active chip: primary-muted bg + border.
 
 ### DataTable (desktop)
-Sticky header, sortable columns, row click → detail, checkbox column.
+Sticky header on `surface-sunken`, sortable columns (arrow indicator), checkbox column for bulk, row click → detail, tabular-nums for all numeric columns, 1px row dividers. Density: 44px rows default, 36px compact with preserved hit area.
 
-### Dialog / AlertDialog
-`overlay` shadow; destructive actions use destructive button on the right (LTR).
+### Dialog / AlertDialog / Sheet
+`overlay` shadow, `lg` radius, focus-trapped. Destructive confirms: destructive button right (LTR), never auto-focused. Bottom Sheets on mobile for filters and scan results.
 
 ### Toast
-Solid surface (not glass), icon tint by semantic, stacks above mobile tab bar.
+**Solid surface** (no glass — legacy glass toasts are removed), semantic icon tint (success/warning/info/destructive), stacked above mobile tab bar, `aria-live="polite"` (scan failures `assertive`), max 3 visible.
 
-### BottomTabBar
-5 items max; Scan is center-emphasized (slightly larger icon, still 44px).
+### BottomTabBar / TopAppBar / AppSidebar
+5 tabs max, Scan center-emphasized (larger glyph, same 44px target). Sidebar: opaque, 1px border, `aria-current` nav states, permission-filtered items (`useCan()`).
 
 ### Skeleton
-Shimmer matching final layout (no generic circular spinner for page loads).
+Shimmer matching final layout geometry — never a lone circular spinner for page loads.
 
 ### EmptyState
-Icon + one sentence + primary CTA.
+Lucide icon + one Bahasa Indonesia sentence + primary CTA (e.g., "Belum ada aset" → Tambah aset / Impor).
 
----
+### Timeline (Riwayat)
+Vertical rail, event icon per type (edit/mutasi/disposal/override/nilai buku), actor + timestamp (Caption), delta values in mono.
 
-## Components (canonical summary)
-
-Buttons, inputs, cards, badges, navigation, skeletons, empty states as specified in §7. Signature component: **AssetCard + StatusBadge** — the system's most repeated object; if these two are wrong, the product is wrong.
+### ApprovalActions
+Setujui (primary) / Tolak (destructive w/ alasan dialog); disabled with tooltip when not the assigned approver.
 
 ---
 
@@ -459,90 +436,114 @@ Buttons, inputs, cards, badges, navigation, skeletons, empty states as specified
 
 | Screen | Empty | Loading | Error | Success | Offline |
 | --- | --- | --- | --- | --- | --- |
-| Aset daftar | "Belum ada aset" + CTA Tambah / Import | Skeleton cards/rows | Inline alert + Retry | Toast after bulk ops | Banner "Tidak ada koneksi"; read-only cache if available; disable writes |
-| Scan | Idle viewfinder tip | Decoding/lookup spinner on sheet | "Barcode tidak ditemukan" + manual entry | Sheet with asset summary | Block camera lookup; show manual + offline message |
-| Form aset | — | Disable submit + progress | Field errors + toast on 500 | Toast "Aset disimpan" + return-to-list | Disable Simpan; keep local draft warning |
-| Mutasi/Disposal approval | Empty queue message | Row skeletons | Toast error; leave item pending | Toast + list refresh | Banner; block approve/reject |
-| Dashboard | Zero metrics with hint to add assets | Metric skeletons | Panel-level error | — | Stale timestamp "Data terakhir: …" |
-| Import | Dropzone idle | Progress + partial results | Per-row error table | Summary panel counts | Abort with message |
+| Aset daftar | "Belum ada aset" + CTA Tambah/Impor | Skeleton cards/rows in final geometry | Inline alert panel + **Coba lagi** | Toast after bulk ops; list refreshes | Banner `role="status"` "Tidak ada koneksi"; cached list read-only; writes disabled |
+| Scan | Viewfinder + tip "Arahkan ke barcode" | Decoding indicator on sheet | "Barcode tidak ditemukan" + manual entry focused (`aria-live="assertive"`) | Sheet with asset summary | Camera works; lookup fails → explicit offline message + manual entry |
+| Form aset | — | Submit disabled + spinner | Field-level errors; 500 → toast, form preserved | Toast "Aset disimpan" → return to remembered list | Simpan disabled + local draft warning |
+| Mutasi/Disposal | Empty queue message | Row skeletons | Toast error; item stays pending | Toast + list refresh | Banner; approve/reject blocked |
+| Dashboard | Zero-state with "Tambah aset pertama" | Metric skeletons | Panel-level error with retry (other panels keep rendering) | — | "Data terakhir: <timestamp>" staleness label |
+| Import | Dropzone idle | Progress + streamed partial results | Per-row error table (capped 250, per import report) | Summary panel: imported/skipped/errors | Abort with message |
+| Laporan | "Tidak ada data pada rentang ini" | Table skeletons | Export failure toast + retry | File downloaded toast | Export disabled |
 
-Offline is **explicit and honest** (Mobile PRD open question): no silent queue in MVP unless product later validates sync; prefer clear disabled writes.
+**Offline is explicit and honest.** No silent retry queues or optimistic sync in MVP — writes are visibly disabled with a reason. Better an honest "no connection" than a silent data lie in an audit product.
 
 ---
 
 ## 9. Responsive behavior
 
-| Concern | Mobile (<768) | Tablet | Desktop (≥1024) |
+Breakpoints: `sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280.
+
+| Concern | Mobile (<768) | Tablet (768–1023) | Desktop (≥1024) |
 | --- | --- | --- | --- |
-| Nav | Bottom tabs | Bottom tabs or narrow rail | Sidebar |
-| Lists | Cards, 1 col | Cards 2 col | Table |
-| Filters | Sheet | Chips wrap | Inline FilterBar |
-| Primary CTA | Sticky footer / tab Scan | Sticky footer optional | Header button |
-| Classification | Full-screen tree | Split weak | Tree + detail split |
-| Scan | Full-bleed camera | Contained | Contained + side help |
-| Tables | Never horizontal-scroll as only option — switch to cards | Optional scroll | Sticky first col optional |
-| Touch | 44px min | 44px | 36px ok for dense table rows if padding preserves hit area |
+| Navigation | Bottom tabs + top bar | Bottom tabs or narrow rail | Collapsible sidebar |
+| Lists | Cards 1-col | Cards 2-col | DataTable, sticky header |
+| Filters | Bottom sheet | Wrapping chips | Inline FilterBar |
+| Primary CTA | Sticky footer / Scan tab | Sticky footer optional | Header button |
+| Klasifikasi | Full-screen tree | Tree + weak split | Tree + detail panel split |
+| Scan | Full-bleed camera | Contained viewport | Contained + side help panel |
+| Tables | Never scroll-only — collapse to cards | Optional horizontal scroll | Sticky first column optional |
+| Detail | Stacked sections | 2-col where natural | DefinitionList 2-col + side actions |
+| Touch target | 44px always | 44px | 36px dense rows OK (hit area preserved) |
+
+Rule of conversion: a mobile card must contain **the same** decision-relevant fields as its desktop row — responsive is a layout change, never a data downgrade.
 
 ---
 
 ## 10. Accessibility
 
-### Contrast
-- Text/icon on surfaces: WCAG 2.2 AA minimum (prefer AAA for body).
-- Status badges: text label mandatory; color never sole channel.
-- Dark theme re-checked separately for primary and status tokens.
+### Contrast (WCAG 2.2 AA, AAA preferred for body)
+| Pair | Ratio | Grade |
+| --- | --- | --- |
+| `ink` on `paper` / `surface` | 14.9:1 | AAA |
+| `ink-muted` on `surface` | 5.6:1 | AA |
+| `primary` text on `surface` | 7.8:1 | AAA |
+| White on `primary` (buttons) | 7.8:1 | AAA |
+| Status badge recipes (light) | 6.4–7.2:1 | AA+ |
+| Status badge recipes (dark) | 8.2–10.5:1 | AAA |
+| `dark-primary` on dark surfaces | 5.0:1 | AA |
+| `ink-subtle` (timestamps) | 3.5:1 | Large text / non-essential meta only |
+
+Focus ring (`primary`, 2px, 2px offset) holds ≥3:1 against both `paper` and `surface`. Dark theme verified separately — never assume light numbers transfer.
 
 ### Focus order
-1. Skip link → main
+1. Skip link → main landmark
 2. Top bar / sidebar
-3. Page header actions
+3. Page header + actions
 4. Filters → content → sticky CTA
-5. Dialogs trap focus; return focus to invoker on close
+5. Dialogs/sheets trap focus; on close, focus returns to invoker
 
-Visible focus ring: 2px `primary` / `dark-primary`, offset 2px. Never `outline: none` without replacement.
+No `outline: none` without a visible replacement. Focus ring is `primary` (dark: `dark-primary`), never removed on interactive elements.
 
 ### Keyboard
-- All actions reachable; Scan page: focus manual entry when camera unavailable
-- Tree: arrow keys; Tables: row focus + Enter
-- Dialog: Esc closes; Confirm destructive requires explicit button focus
+- All actions reachable and operable by keyboard.
+- Tree (Klasifikasi): ↑↓ move within level, ←→ collapse/expand, Enter opens detail.
+- DataTable: row focus + Enter = open; Space toggles selection; column header Enter toggles sort.
+- Scan page: when camera unavailable, focus moves to manual code entry automatically.
+- Dialogs: Esc closes (sheets too); destructive confirms require explicit button press, never Enter-by-default on the destructive action.
+- BottomTabBar: standard Tab order, not roving.
 
 ### ARIA
-- `aria-live="polite"` on toast region; `assertive` for scan failures
-- Tabs: `role="tablist"`; status badges: text content, not `aria-label` only
-- Loading buttons: `aria-busy="true"`
-- Icon-only: `aria-label` in Indonesian (`"Pindai barcode"`)
-- Forms: `aria-invalid` + `aria-describedby` error ids
-- Offline banner: `role="status"`
+- Toast region: `aria-live="polite"`; scan failures `assertive`.
+- Tabs: `role="tablist"` + `aria-selected`; Tree: `aria-expanded`/`aria-level`.
+- Loading: `aria-busy="true"` on buttons and panels; skeletons `aria-hidden` with an accessible "Memuat…" label.
+- Icon-only buttons: Indonesian `aria-label` ("Pindai barcode", "Hapus").
+- Badges: real text content — color/`aria-label`-only is banned.
+- Forms: `aria-invalid` + `aria-describedby` → error id.
+- Offline banner: `role="status"`.
+- Tenant switcher and appearance toggle: `aria-haspopup` + expanded state.
 
-### Motion
-Respect `prefers-reduced-motion`: replace transitions with instant state swaps; keep focus visibility.
+### Motion & print
+`prefers-reduced-motion` → instant state swaps (no shimmer, no slide). Label print sheets are pure black-on-white, mono codes, no brand color — print durability over branding.
 
 ---
 
 ## Do's and Don'ts
 
 ### Do
-- **Do** put Scan within one tap from any authenticated mobile screen.
-- **Do** show StatusBadge + mono kode on every asset summary.
-- **Do** hide accounting fields unless tipe = Aktiva Tetap.
-- **Do** use Bahasa Indonesia for labels, toasts, errors.
+- **Do** keep Scan one tap from any authenticated mobile screen.
+- **Do** show StatusBadge + mono kode on every asset summary — card, row, sheet, detail.
+- **Do** hide accounting fields unless tipe = Aktiva Tetap (FR-13.6).
+- **Do** write all copy in Bahasa Indonesia; keep codes and identifiers in English.
 - **Do** keep primary CTAs mineral teal; reserve red for irreversible actions.
-- **Do** test outdoor legibility on a real phone mid-day.
+- **Do** verify both themes and a real phone in daylight before shipping a screen.
 
 ### Don't
-- **Don't** revive Soft UI pastels, Amex Benton, or NOON amber/violet glass.
-- **Don't** use purple as a status or brand accent.
-- **Don't** pill-shape primary buttons or emoji status.
-- **Don't** ship tables as the only mobile list presentation.
-- **Don't** rely on color alone for status or error.
-- **Don't** animate for decoration; feedback only (≤220ms).
+- **Don't** use glass, glow, gradients, or purple — anywhere.
+- **Don't** reuse status hues for decoration or the primary color for status.
+- **Don't** pill-shape CTAs or use emoji in chrome.
+- **Don't** ship a table as the only mobile presentation of a list.
+- **Don't** rely on color alone for status, selection, or error.
+- **Don't** animate beyond 220ms or for decoration.
+- **Don't** style asset codes in the UI sans.
 
 ---
 
 ## Implementation notes for agents
 
-1. Tokens in this file are normative; update `resources/css/app.css` and shadcn theme to match before restyling features.
-2. Replace font loads: Public Sans + Noto Sans Mono (drop Benton Sans).
-3. Remove `--color-soft-blue/pink/green` and glass toast styling that violates The No-Glass Rule.
-4. Update PRODUCT.md brand commitments to **Opname Field Desk** (this document).
-5. No application feature work should start until tokens + shell (sidebar/tabbar) match this brief.
+1. **`resources/css/app.css` is the first ticket.** Replace `--font-sans` (drop Benton Sans → Public Sans via `@fontsource-variable/public-sans`), add `--font-mono` (Noto Sans Mono), apply the §3.6 token map for light + dark, delete `--color-soft-*`, `--color-scan-red`, `--sidebar-glow`, `--sidebar-gradient`, and every `*-glass` utility (sidebar-glass, glass-header, glass toasts, glass panels).
+2. Update `tailwind` theme radii explicitly (4/8/12), add motion + shadow tokens, `font-variant-numeric: tabular-nums` utility for tables and metrics.
+3. Sweep legacy NOON accents (amber/violet/plum, e.g. on roles/permissions pages) → semantic tokens.
+4. Status map lives in one shared constants module (code → recipe) — no inline hexes in components.
+5. Wayfinder imports only (`@/routes`, `@/actions/...`); no hardcoded URLs; regenerate with `--with-form` after route changes.
+6. React Compiler is active — avoid manual memoization patterns that conflict with it.
+7. PRODUCT.md brand commitments already point here; PRD §12.2/§12.3 UI-polish lines should be marked updated once tickets land.
+8. Feature screens are restyled only after tokens + shell + status layer land — sequence is in the tickets.

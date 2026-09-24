@@ -97,29 +97,19 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
     const integrityGood = score >= 95;
 
     return (
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1230] via-[#221533] to-[#1B1230] p-6 shadow-lg shadow-[#000C3D]/20 sm:p-8">
-            <div className="animate-pulse-slow pointer-events-none absolute -top-24 -right-20 size-80 rounded-full bg-[#FFB23E]/10 blur-3xl" />
-            <div
-                className="animate-pulse-slow pointer-events-none absolute -bottom-16 -left-12 size-64 rounded-full bg-[#B892FF]/10 blur-3xl"
-                style={{ animationDelay: '1s' }}
-            />
-            <div
-                className="animate-pulse-slow pointer-events-none absolute top-1/2 left-1/2 size-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5EEAD4]/5 blur-2xl"
-                style={{ animationDelay: '2s' }}
-            />
-
+        <section className="relative overflow-hidden rounded-xl border border-brand/30 bg-brand p-6 sm:p-8">
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-3">
-                    <p className="text-[11px] font-semibold tracking-[0.18em] text-[#94A3B8] uppercase">
+                    <p className="text-[11px] font-semibold tracking-[0.18em] text-brand-muted/90 uppercase">
                         {greeting}
                     </p>
-                    <h1 className="text-3xl font-bold tracking-tight text-white sm:text-[32px]">
+                    <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                         Halo, {name}
                     </h1>
-                    <p className="max-w-md text-sm leading-relaxed text-[#94A3B8]">
+                    <p className="max-w-md text-sm leading-relaxed text-brand-muted/90">
                         Ringkasan portofolio aset hari ini. Skor kelengkapan
                         klasifikasi:{' '}
-                        <span className="font-semibold text-[#FFB23E]">
+                        <span className="font-semibold text-white">
                             {score}%
                         </span>{' '}
                         (target 95%).
@@ -129,8 +119,8 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                             className={cn(
                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
                                 integrityGood
-                                    ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
-                                    : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
+                                    ? 'bg-white/15 text-white ring-white/30'
+                                    : 'bg-white/5 text-white ring-white/25',
                             )}
                         >
                             <ShieldCheck className="size-3" />
@@ -138,7 +128,7 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                                 ? 'Target Tercapai'
                                 : 'Di Bawah Target'}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#B892FF]/10 px-3 py-1 text-[11px] font-semibold text-[#B892FF] ring-1 ring-[#B892FF]/20">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
                             <TrendingUp className="size-3" />
                             Perbaruan real-time
                         </span>
@@ -148,9 +138,9 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 gap-1.5 rounded-lg border-white/20 bg-white/10 px-3 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-white/15 hover:text-white"
+                        className="h-10 gap-1.5 rounded-lg border-white/25 bg-white/10 px-3 text-[13px] font-medium text-white hover:bg-white/15 hover:text-white"
                     >
-                        <CalendarDays className="h-4 w-4 text-[#94A3B8]" />
+                        <CalendarDays className="h-4 w-4 text-white/80" />
                         {new Date().toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'short',
@@ -158,8 +148,9 @@ function GreetingHeader({ name, score }: { name: string; score: number }) {
                         })}
                     </Button>
                     <Button
+                        variant="outline"
                         size="sm"
-                        className="h-10 gap-1.5 rounded-lg bg-[#FFB23E] px-3 text-[13px] font-semibold text-[#1B1230] shadow-sm hover:bg-[#FFB23E]/90"
+                        className="h-10 gap-1.5 rounded-lg border-white bg-white px-3 text-[13px] font-semibold text-brand shadow-sm hover:bg-brand-muted"
                     >
                         <Download className="h-4 w-4" />
                         Ekspor
@@ -179,16 +170,16 @@ function AssetTypeBreakdown({ slices }: { slices: AssetTypeSlice[] }) {
 
     const total = slices.reduce((sum, s) => sum + s.count, 0);
     const COLORS: Record<string, string> = {
-        fixed_asset: '#FFB23E',
-        equipment: '#B892FF',
-        unclassified: '#5EEAD4',
+        fixed_asset: '#0d5c56',
+        equipment: '#0e7490',
+        unclassified: '#475569',
     };
 
     return (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {slices.map((s) => {
                 const pct = total > 0 ? Math.round((s.count / total) * 100) : 0;
-                const color = COLORS[s.type] ?? '#94A3B8';
+                const color = COLORS[s.type] ?? '#5a6a7a';
 
                 return (
                     <li
@@ -253,7 +244,7 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
         );
     }
 
-    const COLORS = ['#FFB23E', '#B892FF', '#5EEAD4', '#FF9A3E', '#D9A521'];
+    const COLORS = ['#0d5c56', '#0e7490', '#b45309', '#1d6a9f', '#475569'];
 
     return (
         <ul className="flex flex-col gap-3">
@@ -317,7 +308,7 @@ function LocationStack({ slices }: { slices: LocationSlice[] }) {
                         </span>
                         <div className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-muted/50 sm:block">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-[#B892FF] to-[#5EEAD4]"
+                                className="h-full rounded-full bg-primary"
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
@@ -356,7 +347,7 @@ function MiniLedger({
         );
     }
 
-    const accent = kind === 'transfer' ? '#FFB23E' : '#B892FF';
+    const accent = kind === 'transfer' ? '#0d5c56' : '#0e7490';
 
     return (
         <div className="flex flex-col">
@@ -443,8 +434,8 @@ function RecentActivity({
                         className={cn(
                             'mt-0.5 size-2 shrink-0 rounded-full',
                             item.type === 'mutasi'
-                                ? 'bg-[#FFB23E]'
-                                : 'bg-[#B892FF]',
+                                ? 'bg-primary'
+                                : 'bg-chart-2',
                         )}
                     />
                     <div className="min-w-0 flex-1">
@@ -469,8 +460,8 @@ function RecentActivity({
                         className={cn(
                             'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold',
                             item.status === 'Disetujui'
-                                ? 'bg-[#5EEAD4]/10 text-[#5EEAD4]'
-                                : 'bg-[#FFB23E]/10 text-[#FFB23E]',
+                                ? 'bg-status-act-bg text-status-act-text'
+                                : 'bg-status-rpr-bg text-status-rpr-text',
                         )}
                     >
                         {item.status}
@@ -486,7 +477,7 @@ function IntegrityRing({ score }: { score: number }) {
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (score / 100) * circumference;
     const good = score >= 95;
-    const color = good ? '#5EEAD4' : '#FFB23E';
+    const color = good ? '#0d5c56' : '#b45309';
 
     return (
         <div className="flex flex-col items-center gap-3">
@@ -526,8 +517,8 @@ function IntegrityRing({ score }: { score: number }) {
                 className={cn(
                     'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
                     good
-                        ? 'bg-[#5EEAD4]/10 text-[#5EEAD4] ring-[#5EEAD4]/20'
-                        : 'bg-rose-500/10 text-rose-400 ring-rose-500/20',
+                        ? 'bg-status-act-bg text-status-act-text ring-status-act-border'
+                        : 'bg-status-rpr-bg text-status-rpr-text ring-status-rpr-border',
                 )}
             >
                 <ShieldCheck className="size-3" />
@@ -564,14 +555,14 @@ export default function Dashboard() {
                     <section className="glass-panel relative flex min-h-[280px] flex-col gap-4 rounded-2xl p-5 lg:col-span-2">
                         <header className="flex items-start justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-10.1
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
                                     Aset per Klasifikasi
                                 </h3>
                             </div>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/10 px-2 py-1 text-[11px] font-semibold text-[#5EEAD4] ring-1 ring-[#5EEAD4]/20">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-act-bg px-2 py-1 text-[11px] font-semibold text-status-act-text ring-1 ring-status-act-border">
                                 <ShieldCheck className="size-3" />
                                 {integrity_score >= 95
                                     ? 'Target Tercapai'
@@ -583,7 +574,7 @@ export default function Dashboard() {
                     <div className="flex flex-col gap-5">
                         <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                             <header>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#5EEAD4] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-13.8
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -594,7 +585,7 @@ export default function Dashboard() {
                         </section>
                         <section className="glass-panel flex flex-col items-center gap-4 rounded-2xl p-5">
                             <header className="w-full">
-                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-10.2
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -614,7 +605,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-10.3
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -629,7 +620,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-10.6
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -649,7 +640,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     FR-10.5
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">
@@ -664,7 +655,7 @@ export default function Dashboard() {
                     <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
                         <header className="flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-[#FFB23E] uppercase">
+                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                                     Peringatan
                                 </p>
                                 <h3 className="mt-1 text-base font-semibold">

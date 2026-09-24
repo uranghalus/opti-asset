@@ -93,6 +93,51 @@ const STATUS_PRESENTATION: Record<
 const NEUTRAL_CHIP =
     'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
 
+const TIPE_PRESENTATION: Record<string, { label: string; chip: string }> = {
+    fixed_asset: {
+        label: 'Aktiva Tetap',
+        chip: 'bg-tipe-aktiva-bg text-tipe-aktiva-text ring-tipe-aktiva-border',
+    },
+    equipment: {
+        label: 'Peralatan',
+        chip: 'bg-tipe-peralatan-bg text-tipe-peralatan-text ring-tipe-peralatan-border',
+    },
+};
+
+/**
+ * TipeBadge — lebih tenang dari StatusBadge (§3.2): outline tint,
+ * tanpa ikon, font medium. Tipe adalah konteks, status adalah sinyal.
+ */
+export function TipeBadge({
+    value,
+    className,
+}: {
+    value: string | null | undefined;
+    className?: string;
+}) {
+    if (!value) {
+        return null;
+    }
+
+    const tipe = TIPE_PRESENTATION[value];
+
+    if (!tipe) {
+        return null;
+    }
+
+    return (
+        <span
+            className={cn(
+                'inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
+                tipe.chip,
+                className,
+            )}
+        >
+            {tipe.label}
+        </span>
+    );
+}
+
 export function assetStatusLabel(value: string | null | undefined): string {
     if (!value) {
         return '—';

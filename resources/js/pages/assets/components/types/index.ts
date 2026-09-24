@@ -10,6 +10,7 @@ export type Asset = {
     brand: string | null;
     model: string | null;
     status: string;
+    asset_type: string | null;
     condition: string | null;
     created_at: string;
     photo_url: string[];

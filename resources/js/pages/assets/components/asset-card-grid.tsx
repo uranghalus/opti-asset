@@ -99,11 +99,10 @@ export function AssetCardGrid({
                 aria-label="Kartu aset"
                 className="grid flex-1 grid-cols-1 content-start gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3"
             >
-                {assets.data.map((asset, i) => (
+                {assets.data.map((asset) => (
                     <AssetCard
                         key={asset.id}
                         asset={asset}
-                        index={i}
                         selected={selected.has(asset.id)}
                         onSelect={() => onToggleSelect(asset.id)}
                         onDelete={() => onDelete(asset)}

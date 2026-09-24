@@ -200,6 +200,12 @@
     --color-status-dsp-text: #fda4af;
     --color-status-dsp-bg: #4c0519;
     --color-status-dsp-border: #4c0519;
+    --color-tipe-aktiva-text: #7dd8cc;
+    --color-tipe-aktiva-bg: #123b37;
+    --color-tipe-aktiva-border: #1e5a54;
+    --color-tipe-peralatan-text: #9aa8b5;
+    --color-tipe-peralatan-bg: #1b2534;
+    --color-tipe-peralatan-border: #2a3544;
 }
 
 @layer base {

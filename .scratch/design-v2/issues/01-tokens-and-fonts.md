@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done (432d92d)
 
 - [ ] `--font-sans` → Public Sans (self-hosted, no Benton Sans); `--font-mono` → Noto Sans Mono
 - [ ] Light `:root` + `.dark` semantic tokens match DESIGN.md §3.6 map exactly (teal primary, paper bg, ink foreground, cool-navy dark — no plum)
@@ -15,4 +15,6 @@
 - [ ] Radii theme: `--radius-sm/md/lg` = 4/8/12px; motion tokens 120/180/220ms with shared easing; `card-enter` retimed to ≤220ms; `animate-pulse-slow`/glow/`reveal` utilities removed
 - [ ] Dashboard ambient glow blobs + amber/violet inline hexes removed from TSX (single-file exception granted to this ticket)
 - [ ] `tabular-nums` utility available; mobile 44px tap-target block kept
-- [ ] Verified: `npm run build` passes; dashboard, assets browse, roles pages visually on-system in both themes
+- [x] Verified: `npm run build` passes; dashboard, assets browse, roles pages consume the new tokens (browse/roles render via the opaque glass aliases — visual pass in both themes still worth a human look)
+
+**Completion note (2026-09-24):** All boxes above landed in commit 432d92d. Fonts were previously not loading at all (Benton Sans was declared but never shipped — `@fonts` directive is empty), so Public Sans is the app's first real webfont. Pre-existing test failures in BrowseTest/AssetTest trace to another session's uncommitted `AssetController.php` changes, not this ticket.

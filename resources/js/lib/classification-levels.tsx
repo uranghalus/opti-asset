@@ -1,4 +1,10 @@
-import { Folder, FolderOpen } from 'lucide-react';
+import {
+    Boxes,
+    Folder,
+    FolderOpen,
+    Library,
+    Package,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ClassificationLevel } from '@/types/classification';
 
@@ -15,27 +21,40 @@ export type LevelTint = {
     solid: string;
 };
 
+/* DESIGN.md v2.0: hierarki klasifikasi tidak memakai warna-warni
+   (warna adalah bahasa status — P1). Level dibedakan oleh ikon
+   + indentasi; chip memakai netral sunken yang tenang di kedua tema. */
 export const LEVEL_TINTS: Record<ClassificationLevel, LevelTint> = {
     group: {
-        bg: 'bg-[rgba(0,111,207,0.10)] dark:bg-[rgba(90,169,236,0.16)]',
-        fg: 'text-[#006FCF] dark:text-[#5AA9EC]',
-        solid: '#006FCF',
+        bg: 'bg-surface-sunken dark:bg-muted',
+        fg: 'text-ink-muted dark:text-muted-foreground',
+        solid: '#5a6a7a',
     },
     category: {
-        bg: 'bg-[rgba(0,135,90,0.10)] dark:bg-[rgba(47,211,160,0.14)]',
-        fg: 'text-[#00875A] dark:text-[#3ED6A5]',
-        solid: '#00875A',
+        bg: 'bg-surface-sunken dark:bg-muted',
+        fg: 'text-ink-muted dark:text-muted-foreground',
+        solid: '#5a6a7a',
     },
     cluster: {
-        bg: 'bg-[rgba(185,80,0,0.10)] dark:bg-[rgba(224,137,79,0.16)]',
-        fg: 'text-[#B95000] dark:text-[#E0894F]',
-        solid: '#B95000',
+        bg: 'bg-surface-sunken dark:bg-muted',
+        fg: 'text-ink-muted dark:text-muted-foreground',
+        solid: '#5a6a7a',
     },
     'sub-cluster': {
-        bg: 'bg-[rgba(0,23,90,0.08)] dark:bg-[rgba(157,181,232,0.14)]',
-        fg: 'text-[#00175A] dark:text-[#9DB5E8]',
-        solid: '#00175A',
+        bg: 'bg-surface-sunken dark:bg-muted',
+        fg: 'text-ink-muted dark:text-muted-foreground',
+        solid: '#5a6a7a',
     },
+};
+
+const LEVEL_GLYPHS: Record<
+    ClassificationLevel,
+    React.ComponentType<{ className?: string; strokeWidth?: number }>
+> = {
+    group: Library,
+    category: Folder,
+    cluster: Boxes,
+    'sub-cluster': Package,
 };
 
 export function LevelIcon({
@@ -45,15 +64,17 @@ export function LevelIcon({
 }: {
     level: ClassificationLevel;
     open?: boolean;
-    size?: 'sm' | 'md';
+    size?: 'md' | 'sm';
 }) {
     const tint = LEVEL_TINTS[level];
-    const Icon = open ? FolderOpen : Folder;
+    /* Kategori memakai pasangan buka/tutup; level lain ber-glifik tetap. */
+    const Icon =
+        level === 'category' ? (open ? FolderOpen : Folder) : LEVEL_GLYPHS[level];
 
     return (
         <span
             className={cn(
-                'flex shrink-0 items-center justify-center rounded-lg',
+                'flex shrink-0 items-center justify-center rounded-md',
                 size === 'md' ? 'size-7' : 'size-6',
                 tint.bg,
             )}

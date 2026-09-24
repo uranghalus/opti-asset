@@ -57,37 +57,41 @@ const STATUS_PRESENTATION: Record<
         solid: string;
     }
 > = {
+    /* Resep terkunci dari DESIGN.md §3.2 (Status Lock Rule). */
     ACT: {
         icon: CircleCheck,
-        chip: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-        dot: 'bg-emerald-500',
-        solid: 'bg-emerald-500',
+        chip: 'bg-status-act-bg text-status-act-text ring-status-act-border',
+        dot: 'bg-status-act-text',
+        solid: '#166534',
     },
     LOAN: {
         icon: PackageOpen,
-        chip: 'bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300',
-        dot: 'bg-sky-500',
-        solid: 'bg-sky-500',
+        chip: 'bg-status-loan-bg text-status-loan-text ring-status-loan-border',
+        dot: 'bg-status-loan-text',
+        solid: '#1e40af',
     },
     RPR: {
         icon: Hammer,
-        chip: 'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
-        dot: 'bg-amber-500',
-        solid: 'bg-amber-500',
+        chip: 'bg-status-rpr-bg text-status-rpr-text ring-status-rpr-border',
+        dot: 'bg-status-rpr-text',
+        solid: '#92400e',
     },
     MUT: {
         icon: MoveRight,
-        chip: 'bg-violet-500/10 text-violet-700 ring-violet-500/20 dark:text-violet-300',
-        dot: 'bg-violet-500',
-        solid: 'bg-violet-500',
+        chip: 'bg-status-mut-bg text-status-mut-text ring-status-mut-border',
+        dot: 'bg-status-mut-text',
+        solid: '#155e75',
     },
     DSP: {
         icon: Trash2,
-        chip: 'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
-        dot: 'bg-rose-500',
-        solid: 'bg-rose-500',
+        chip: 'bg-status-dsp-bg text-status-dsp-text ring-status-dsp-border',
+        dot: 'bg-status-dsp-text',
+        solid: '#9f1239',
     },
 };
+
+const NEUTRAL_CHIP =
+    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
 
 export function assetStatusLabel(value: string | null | undefined): string {
     if (!value) {
@@ -101,22 +105,19 @@ export function assetStatusLabel(value: string | null | undefined): string {
 
 export function assetStatusChip(value: string | null | undefined): string {
     if (!value) {
-        return 'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300';
+        return NEUTRAL_CHIP;
     }
 
-    return (
-        STATUS_PRESENTATION[value as AssetStatusValue]?.chip ??
-        'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300'
-    );
+    return STATUS_PRESENTATION[value as AssetStatusValue]?.chip ?? NEUTRAL_CHIP;
 }
 
 export function assetStatusDot(value: string | null | undefined): string {
     if (!value) {
-        return 'bg-slate-400';
+        return 'bg-ink-subtle';
     }
 
     return (
-        STATUS_PRESENTATION[value as AssetStatusValue]?.dot ?? 'bg-slate-400'
+        STATUS_PRESENTATION[value as AssetStatusValue]?.dot ?? 'bg-ink-subtle'
     );
 }
 
@@ -142,10 +143,12 @@ export function StatusBadge({
     const Icon = assetStatusIcon(value);
     const label = assetStatusLabel(value);
 
+    /* Soft-rectangle 4px + label sans (DESIGN.md §7) — bukan kapsul,
+       bukan stempel mono-kapsul; warna tidak pernah satu-satunya kanal. */
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs font-bold tracking-[0.14em] uppercase ring-1 ring-inset',
+                'inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
                 assetStatusChip(value),
                 className,
             )}

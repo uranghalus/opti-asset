@@ -37,21 +37,21 @@ Multi-tenant asset classification system with SSO-first authentication. Differen
 - Multi-tenancy via Spatie Multitenancy with database-level tenant isolation
 - Tenant switching via session
 - User profile, 2FA, passkeys, password management (Fortify-powered)
-- Dark mode-first interface, optimized for extended data-review sessions
-- Interactive feedback throughout: drag-and-drop lift/drop-target highlighting, skeleton loaders during data fetch, toast confirmations on save/delete, animated tree expand/collapse
+- Light-first field interface with equal dark peer for desk night review sessions
+- Interactive feedback throughout (restrained): drag-and-drop lift/drop-target highlighting, skeleton loaders during data fetch, solid toasts on save/delete, tree expand/collapse
 
 ## Brand Commitments
 
 - Indonesian language interface (all UI labels, toast messages, descriptions)
 - Corporate/enterprise visual tone — professional, clean, functional
-- Follows the "NOON" design system defined in DESIGN.md: subtle Glassmorphism, dark-mode-optimized, tuned for data density (7/10) with responsive, feedback-rich micro-interactions (motion 6/10) on every action
+- Follows the **Opname Field Desk** design system in DESIGN.md: mineral teal on cool paper, status-first color lock, opaque surfaces (no glassmorphism), Public Sans + Noto Sans Mono, light-first field UI with equal dark peer, data density 7/10 desktop / 5/10 mobile, motion 3/10 feedback-only
 
 ## Evidence on Hand
 
 - Working classification CRUD with 4-level tree hierarchy
 - OIDC SSO integration with user provisioning
 - Multi-tenant architecture with tenant switching
-- Dashboard with organizational stats, styled per NOON's data-dense SaaS layout (metric cards, sticky headers, responsive tables)
+- Dashboard with organizational stats: metric cards, sticky headers, responsive tables (Opname Field Desk)
 - shadcn/ui (New York style) component library
 
 ## Product Principles

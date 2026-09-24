@@ -5,12 +5,14 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 
 import { useIsProcessing } from '@/hooks/use-is-processing';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { rememberAssetListUrl } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/assets';
 
 import { AssetBreadcrumb } from './components/asset-breadcrumb';
 import { AssetBulkToolbar } from './components/asset-bulk-toolbar';
+import type { AssetListView } from './components/asset-card-grid';
 import { AssetCardGrid } from './components/asset-card-grid';
 import {
     AssetDeleteDialog,
@@ -67,6 +69,10 @@ export default function Browse({ pageProps }: BrowseProps) {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
+    const [listView, setListView] = useLocalStorage<AssetListView>(
+        'opti-asset.assets-list-view',
+        'table',
+    );
 
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
@@ -409,6 +415,8 @@ export default function Browse({ pageProps }: BrowseProps) {
                                 )}
                                 onClearFilters={clearFilters}
                                 goToPage={goToPage}
+                                view={listView}
+                                onViewChange={setListView}
                             />
                         </section>
                     </div>

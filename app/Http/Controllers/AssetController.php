@@ -83,7 +83,7 @@ class AssetController extends Controller
         $initialLevel = $this->initialFilterLevel($request);
         $level = $request->string('level')->trim()->toString();
         $nodeId = $request->string('node')->trim()->toString();
-        $allowedLevels = ['group', 'category', 'cluster', 'sub-cluster'];
+        $allowedLevels = ['category', 'cluster', 'sub-cluster'];
         $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
         $unclassified = $validLevel && $nodeId === self::UNCLASSIFIED_NODE;
 
@@ -187,30 +187,42 @@ class AssetController extends Controller
      */
     private function buildBrowseTree(): array
     {
-        return AssetGroup::query()
+        $user = request()->user();
+        if ($user !== null && $user->hasAnyRole(['Asset Staff', 'Accounting', 'staff-asset', 'akunting'])) {
+            return AssetCategory::query()
+                ->withCount('assets')
+                ->with([
+                    'clusters' => fn ($query) => $query
+                        ->withCount('assets')
+                        ->orderBy('sort_order')
+                        ->orderBy('code')
+                        ->with([
+                            'subClusters' => fn ($query) => $query
+                                ->withCount('assets')
+                                ->orderBy('sort_order')
+                                ->orderBy('code'),
+                        ]),
+                ])
+                ->orderBy('sort_order')
+                ->orderBy('code')
+                ->get()
+                ->map(fn (AssetCategory $category) => $this->serializeBrowseCategory($category))
+                ->values()
+                ->all();
+        }
+
+        return AssetCluster::query()
             ->withCount('assets')
             ->with([
-                'categories' => fn ($query) => $query
+                'subClusters' => fn ($query) => $query
                     ->withCount('assets')
                     ->orderBy('sort_order')
-                    ->orderBy('code')
-                    ->with([
-                        'clusters' => fn ($query) => $query
-                            ->withCount('assets')
-                            ->orderBy('sort_order')
-                            ->orderBy('code')
-                            ->with([
-                                'subClusters' => fn ($query) => $query
-                                    ->withCount('assets')
-                                    ->orderBy('sort_order')
-                                    ->orderBy('code'),
-                            ]),
-                    ]),
+                    ->orderBy('code'),
             ])
             ->orderBy('sort_order')
             ->orderBy('code')
             ->get()
-            ->map(fn (AssetGroup $group) => $this->serializeBrowseGroup($group))
+            ->map(fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster))
             ->values()
             ->all();
     }
@@ -279,14 +291,16 @@ class AssetController extends Controller
     /** @return array<int, array{id: string, level: string, code: string|null, name: string}> */
     private function buildBreadcrumb(string $level, string $nodeId): array
     {
+        $user = request()->user();
+        $isStaff = $user !== null && $user->hasAnyRole(['Asset Staff', 'Accounting', 'staff-asset', 'akunting']);
+        $rootLevel = $isStaff ? 'category' : 'cluster';
+
         $levelModels = [
-            'group' => AssetGroup::class,
             'category' => AssetCategory::class,
             'cluster' => AssetCluster::class,
             'sub-cluster' => AssetSubCluster::class,
         ];
         $parentLevels = [
-            'category' => 'group',
             'cluster' => 'category',
             'sub-cluster' => 'cluster',
         ];
@@ -294,18 +308,25 @@ class AssetController extends Controller
         $currentLevel = $level;
         $currentId = $nodeId;
         while (true) {
+            if (! isset($levelModels[$currentLevel])) {
+                break;
+            }
             $model = $levelModels[$currentLevel];
             $node = $model::query()->where('id', $currentId)->first();
             if ($node === null) {
                 break;
             }
             $crumbs[] = ['id' => $node->id, 'level' => $currentLevel, 'code' => $node->code, 'name' => $node->name];
+
+            if ($currentLevel === $rootLevel) {
+                break;
+            }
+
             $nextLevel = $parentLevels[$currentLevel] ?? null;
             if ($nextLevel === null) {
                 break;
             }
             $parentId = match ($currentLevel) {
-                'category' => $node instanceof AssetCategory ? $node->asset_group_id : null,
                 'cluster' => $node instanceof AssetCluster ? $node->asset_category_id : null,
                 'sub-cluster' => $node instanceof AssetSubCluster ? $node->asset_cluster_id : null,
                 default => null,
@@ -454,16 +475,12 @@ class AssetController extends Controller
 
     protected function initialFilterLevel(Request $request): string
     {
-        $roles = $request->user()?->getRoleNames()->toArray() ?? [];
-        $mapping = config('asset_filters.role_levels', []);
-        foreach ($roles as $role) {
-            $normalized = strtolower(str_replace('_', '-', (string) $role));
-            if (isset($mapping[$role]) || isset($mapping[$normalized])) {
-                return $mapping[$role] ?? $mapping[$normalized];
-            }
+        $user = $request->user();
+        if ($user !== null && $user->hasAnyRole(['Asset Staff', 'Accounting', 'staff-asset', 'akunting'])) {
+            return 'category';
         }
 
-        return $mapping['default'] ?? 'cluster';
+        return 'cluster';
     }
 
     private function safeReturnTo(Request $request): ?string

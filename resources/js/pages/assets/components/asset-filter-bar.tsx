@@ -44,7 +44,7 @@ export function AssetFilterBar({
     selectedNodeName: string | null;
 }) {
     return (
-        <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="relative min-w-0 flex-1">
                 <Search
                     aria-hidden
@@ -55,25 +55,18 @@ export function AssetFilterBar({
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Cari kode, serial, brand, model..."
                     aria-label="Cari aset"
-                    className="h-11 rounded-md border-white/15 bg-white/10 pr-16 pl-10 font-mono text-sm backdrop-blur-sm"
+                    className="h-11 rounded-md pr-12 pl-10 text-sm"
                 />
                 {search ? (
                     <button
                         type="button"
                         onClick={onSearchClear}
                         aria-label="Bersihkan pencarian"
-                        className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     >
                         <X className="size-4" />
                     </button>
-                ) : (
-                    <kbd
-                        aria-hidden
-                        className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 font-mono text-[13px] font-bold text-muted-foreground sm:block"
-                    >
-                        MNF
-                    </kbd>
-                )}
+                ) : null}
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -92,12 +85,11 @@ export function AssetFilterBar({
                     type="button"
                     variant="outline"
                     onClick={onClearFilters}
-                    className="rounded-md border-white/20 bg-white/10 backdrop-blur-sm"
                 >
                     <SlidersHorizontal className="size-4" />
-                    Saringan
+                    Filter
                     {activeFilterCount > 0 && (
-                        <span className="rounded-md bg-primary px-2 py-0.5 font-mono text-[13px] font-bold text-primary-foreground tabular-nums">
+                        <span className="rounded-sm bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums">
                             {activeFilterCount}
                         </span>
                     )}
@@ -135,7 +127,7 @@ export function SelectAllBar({
     selectedCount: number;
 }) {
     return (
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.05] px-4 py-2.5 text-xs sm:px-5">
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-sunken px-4 py-2.5 text-xs sm:px-5">
             <label className="flex min-w-0 cursor-pointer items-center gap-2.5 font-semibold text-foreground">
                 <Checkbox
                     id="select-all"
@@ -146,18 +138,18 @@ export function SelectAllBar({
                     className="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                 />
                 <span className="min-w-0 truncate">{label}</span>
-                <span className="shrink-0 rounded-md bg-primary px-2 py-0.5 font-mono font-bold text-primary-foreground tabular-nums">
+                <span className="shrink-0 rounded-sm bg-primary px-1.5 py-0.5 font-semibold text-primary-foreground tabular-nums">
                     {total}
                 </span>
             </label>
-            <span
-                aria-live="polite"
-                className="shrink-0 font-mono font-bold tracking-wider text-muted-foreground uppercase"
-            >
-                {selectedCount > 0
-                    ? `${selectedCount} dipilih`
-                    : 'Tanpa pilihan'}
-            </span>
+            {selectedCount > 0 && (
+                <span
+                    aria-live="polite"
+                    className="shrink-0 font-semibold text-foreground"
+                >
+                    {selectedCount} dipilih
+                </span>
+            )}
         </div>
     );
 }

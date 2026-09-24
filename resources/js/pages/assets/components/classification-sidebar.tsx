@@ -24,11 +24,11 @@ function IndexRow({
             role="treeitem"
             aria-selected={isSel}
             className={cn(
-                'flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-200',
+                'flex w-full items-center gap-2 rounded-[10px] px-2.5 py-2 text-left text-sm transition-colors duration-200',
                 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
                 isSel
-                    ? 'bg-primary/15 font-medium text-primary ring-1 ring-primary/20'
-                    : 'text-foreground hover:bg-white/20',
+                    ? 'bg-primary-muted font-medium text-primary'
+                    : 'text-foreground hover:bg-muted',
             )}
             style={{ paddingLeft: `${LEVEL_DEPTH[node.level] * 14 + 10}px` }}
         >
@@ -100,22 +100,21 @@ export function ClassificationSidebar({
         <aside
             aria-label="Indeks klasifikasi"
             className={cn(
-                'flex shrink-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl',
-                'shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
+                'flex shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card',
                 'lg:sticky lg:top-4 lg:w-[300px]',
                 drawerOpen ? 'flex' : 'hidden lg:flex',
             )}
         >
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">
                     Indeks Klasifikasi
                 </h2>
-                <span className="rounded-md bg-primary px-2 py-0.5 font-mono text-[13px] font-bold text-primary-foreground tabular-nums">
+                <span className="rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-semibold text-ink-muted tabular-nums dark:bg-muted dark:text-muted-foreground">
                     {tree.length}
                 </span>
             </div>
 
-            <div className="border-b border-white/10 p-2.5">
+            <div className="border-b border-border p-2.5">
                 <div className="relative">
                     <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -123,7 +122,7 @@ export function ClassificationSidebar({
                         value={treeSearch}
                         onChange={(e) => onTreeSearch(e.target.value)}
                         aria-label="Cari klasifikasi"
-                        className="h-9 rounded-md border-white/15 bg-white/10 pr-3 pl-9 text-sm backdrop-blur-sm"
+                        className="h-9 rounded-md pr-3 pl-9 text-sm"
                     />
                 </div>
             </div>
@@ -137,7 +136,7 @@ export function ClassificationSidebar({
                     <button
                         type="button"
                         onClick={onClear}
-                        className="mb-1.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        className="mb-1.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     >
                         <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
                         Semua Aset
@@ -167,7 +166,7 @@ export function ClassificationSidebar({
                                     onSelect={onSelect}
                                 />
                                 {isParent && (n.children ?? []).length > 0 && (
-                                    <div className="ml-3 border-l border-white/15 pl-1.5">
+                                    <div className="ml-3 border-l border-border pl-1.5">
                                         {(n.children ?? []).map(
                                             (ch: BrowseNode) => (
                                                 <IndexRow
@@ -191,11 +190,11 @@ export function ClassificationSidebar({
                         role="treeitem"
                         aria-selected={selectedId === unclassifiedNode.id}
                         className={cn(
-                            'mt-1.5 flex w-full items-center gap-2 rounded-xl border border-dashed border-white/20 px-2.5 py-2 text-left text-sm transition-colors duration-200',
+                            'mt-1.5 flex w-full items-center gap-2 rounded-lg border border-dashed border-border px-2.5 py-2 text-left text-sm transition-colors duration-200',
                             'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
                             selectedId === unclassifiedNode.id
-                                ? 'bg-primary/15 font-medium text-primary ring-1 ring-primary/20'
-                                : 'text-foreground hover:bg-white/20',
+                                ? 'bg-primary-muted font-medium text-primary'
+                                : 'text-foreground hover:bg-muted',
                         )}
                     >
                         <PackageOpen className="size-4 shrink-0 text-muted-foreground" />

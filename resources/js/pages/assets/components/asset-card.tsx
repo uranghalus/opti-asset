@@ -53,7 +53,6 @@ const FALLBACK_ART = {
 };
 
 const CHAIN_LEVELS: ClassificationLevel[] = [
-    'group',
     'category',
     'cluster',
     'sub-cluster',
@@ -93,7 +92,6 @@ function StatusStamp({ status }: { status: string }) {
     index?: number;
 }) {
     const chain = [
-        asset.asset_group,
         asset.asset_category,
         asset.asset_cluster,
         asset.asset_sub_cluster,
@@ -110,8 +108,8 @@ function StatusStamp({ status }: { status: string }) {
         <article
             aria-label={asset.kode_asset ?? 'Aset tanpa kode'}
             className={cn(
-                'animate-card-enter group relative flex flex-col overflow-hidden rounded-lg border border-white/20 bg-card/85 shadow-[0_2px_12px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-200',
-                'hover:-translate-y-1 hover:bg-card hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,0.25)]',
+                'animate-card-enter group shadow-soft relative flex flex-col overflow-hidden rounded-[10px] border border-border bg-card transition-all duration-300',
+                'hover:-translate-y-1 hover:bg-card hover:shadow-md',
                 'active:translate-y-0 active:scale-[0.99]',
                 selected &&
                     'bg-primary/[0.07] ring-2 ring-primary/50 ring-inset',

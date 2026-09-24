@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Spinner } from '@/components/ui/spinner';
-import { VibrantBackground } from '@/components/vibrant-background';
 
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { rememberAssetListUrl } from '@/lib/asset-return';
@@ -227,7 +226,7 @@ export default function Browse({ pageProps }: BrowseProps) {
             } else if (n.size < MAX_BULK) {
                 n.add(id);
             } else {
-                toast.warning(`Maksimal ${MAX_BULK} pos per perintah.`);
+                toast.warning(`Maksimal ${MAX_BULK} aset per perintah.`);
             }
 
             return n;
@@ -273,24 +272,22 @@ export default function Browse({ pageProps }: BrowseProps) {
     };
 
     const contextLabel = selectedNode
-        ? `Rute aktif — ${breadcrumb.length > 0 ? breadcrumb.map((b) => b.name).join(' / ') : selectedNode.name}`
+        ? breadcrumb.map((b) => b.name).join(' / ') || selectedNode.name
         : null;
 
     return (
         <div
             className={cn(
-                'manifest-scope noon dark relative flex min-h-[100dvh] flex-col bg-background text-foreground',
+                'relative flex min-h-[100dvh] flex-col bg-background text-foreground',
                 selected.size > 0 && 'pb-32 lg:pb-8',
                 isProcessing && 'pointer-events-none opacity-60',
             )}
         >
-            <VibrantBackground variant="default" />
-
             <div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:p-8">
                 <div className="relative transition-all duration-200">
                     {isProcessing && (
                         <div className="absolute top-1/2 left-1/2 z-[200] -translate-x-1/2 -translate-y-1/2">
-                            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-4 py-2 text-sm font-semibold text-foreground shadow-lg backdrop-blur-md">
+                            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-[var(--shadow-overlay)]">
                                 <Spinner className="size-4" />
                                 Mencatat...
                             </div>
@@ -298,7 +295,6 @@ export default function Browse({ pageProps }: BrowseProps) {
                     )}
 
                     <AssetsPageHeader
-                        initialLevel={filters.initialLevel}
                         selectedCount={selected.size}
                         total={safeAssets.total}
                         activeFilterCount={activeFilterCount}
@@ -333,8 +329,8 @@ export default function Browse({ pageProps }: BrowseProps) {
                         />
 
                         <section
-                            aria-label="Lembar manifest aset"
-                            className="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-[0_2px_12px_rgba(0,0,0,0.06)] backdrop-blur-lg"
+                            aria-label="Daftar aset"
+                            className="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card"
                         >
                             <AssetFilterBar
                                 search={search}
@@ -391,8 +387,8 @@ export default function Browse({ pageProps }: BrowseProps) {
                                 disabled={safeAssets.data.length === 0}
                                 label={
                                     selectedNode
-                                        ? `Pos di ${breadcrumb[breadcrumb.length - 1]?.name ?? selectedNode.name}`
-                                        : 'Semua Pos'
+                                        ? `Aset di ${breadcrumb[breadcrumb.length - 1]?.name ?? selectedNode.name}`
+                                        : 'Semua aset'
                                 }
                                 total={safeAssets.total}
                                 selectedCount={selected.size}

@@ -40,13 +40,11 @@ export function AssetCardGrid({
                 <EmptyState
                     icon={Inbox}
                     variant="plain"
-                    title={
-                        filtered ? 'Tidak ada hasil' : 'Manifest masih kosong'
-                    }
+                    title={filtered ? 'Tidak ada hasil' : 'Belum ada aset'}
                     description={
                         filtered
-                            ? 'Saringan atau kata kunci menutup semua pos. Longgarkan saringan untuk melihat lagi.'
-                            : 'Pilih register di indeks atau catat pos aset pertama.'
+                            ? 'Filter atau kata kunci menutup semua aset. Longgarkan filter untuk melihat lagi.'
+                            : 'Catat aset pertama atau impor dari spreadsheet.'
                     }
                     action={
                         filtered ? (
@@ -55,10 +53,10 @@ export function AssetCardGrid({
                                 variant="outline"
                                 size="sm"
                                 onClick={onClearFilters}
-                                className="rounded-md border-white/20 bg-white/10 backdrop-blur-sm"
+                                className="border-border"
                             >
                                 <X className="mr-2 size-4" />
-                                Bersihkan saringan
+                                Bersihkan filter
                             </Button>
                         ) : (
                             <Link href={withReturnTo(create.url())}>
@@ -114,7 +112,7 @@ export function AssetCardGrid({
             </div>
 
             {assets.last_page > 1 && (
-                <div className="border-t border-white/10 p-4 sm:px-5">
+                <div className="border-t border-border p-4 sm:px-5">
                     <ResourcePagination
                         links={assets.links}
                         currentPage={assets.current_page}

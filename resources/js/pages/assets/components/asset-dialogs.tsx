@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { Check, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,7 +43,7 @@ export function AssetDeleteDialog({
             onSuccess: () => {
                 setDeleting(false);
                 onClose();
-                toast.success('Aset dihapus dari manifest.');
+                toast.success('Aset dihapus.');
             },
             onError: () => {
                 setDeleting(false);
@@ -54,28 +54,28 @@ export function AssetDeleteDialog({
 
     return (
         <Dialog open={!!asset} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="rounded-lg border border-white/20 bg-white/90 p-6 shadow-2xl backdrop-blur-xl dark:bg-zinc-900/85">
+            <DialogContent className="p-6">
                 <DialogHeader>
-                    <span className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
+                    <span className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-destructive/10 text-destructive">
                         <TriangleAlert className="size-5" />
                     </span>
                     <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
-                        Batalkan pos dari manifest?
+                        Hapus aset ini?
                     </DialogTitle>
                 </DialogHeader>
                 <DialogDescription className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Pos{' '}
+                    Aset{' '}
                     <strong className="font-mono font-bold text-foreground">
                         {asset?.kode_asset}
                     </strong>{' '}
-                    akan dihapus permanen. Perintah ini tidak dapat dibatalkan.
+                    akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
                 </DialogDescription>
                 <DialogFooter className="mt-6 flex flex-row justify-end gap-2">
                     <Button
                         variant="outline"
                         onClick={onClose}
                         disabled={deleting}
-                        className="rounded-md border-white/20 bg-white/10 hover:bg-white/20"
+                        className=""
                     >
                         Batal
                     </Button>
@@ -86,7 +86,7 @@ export function AssetDeleteDialog({
                         className="rounded-md font-semibold"
                     >
                         {deleting && <Spinner className="mr-2 size-4" />}
-                        Hapus Pos
+                        Hapus
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -125,7 +125,7 @@ export function AssetBulkDeleteDialog({
                 setBulkDeleting(false);
                 onOpenChange(false);
                 onSuccess();
-                toast.success(`${count} pos dibatalkan dari manifest.`);
+                toast.success(`${count} aset dihapus.`);
             },
             onError: () => {
                 setBulkDeleting(false);
@@ -136,25 +136,25 @@ export function AssetBulkDeleteDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="rounded-lg border border-white/20 bg-white/90 p-6 shadow-2xl backdrop-blur-xl dark:bg-zinc-900/85">
+            <DialogContent className="p-6">
                 <DialogHeader>
-                    <span className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
+                    <span className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-destructive/10 text-destructive">
                         <TriangleAlert className="size-5" />
                     </span>
                     <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
-                        Batalkan {count} pos?
+                        Hapus {count} aset?
                     </DialogTitle>
                 </DialogHeader>
                 <DialogDescription className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Semua pos yang dipilih akan dihapus permanen dari manifest.
-                    Perintah ini tidak dapat dibatalkan.
+                    Semua aset yang dipilih akan dihapus permanen. Tindakan ini
+                    tidak dapat dibatalkan.
                 </DialogDescription>
                 <DialogFooter className="mt-6 flex flex-row justify-end gap-2">
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={bulkDeleting}
-                        className="rounded-md border-white/20 bg-white/10 hover:bg-white/20"
+                        className=""
                     >
                         Batal
                     </Button>
@@ -186,6 +186,14 @@ export function AssetImportDialog({
     const [itemId, setItemId] = useState('');
     const [importing, setImporting] = useState(false);
 
+    // `items` dimuat lazy (Inertia optional prop) — ambil saat dialog
+    // dibuka pertama kali lewat partial reload, bukan di setiap kunjungan.
+    useEffect(() => {
+        if (open && items.length === 0) {
+            router.reload({ only: ['items'] });
+        }
+    }, [open, items.length]);
+
     const handleImport = () => {
         if (!file || importing) {
             return;
@@ -209,7 +217,7 @@ export function AssetImportDialog({
                 onClose();
                 setFile(null);
                 setItemId('');
-                toast.success('Pos impor tercatat di manifest.');
+                toast.success('Aset berhasil diimpor.');
             },
             onError: () => {
                 setImporting(false);
@@ -223,25 +231,24 @@ export function AssetImportDialog({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-lg border border-white/20 bg-white/90 p-6 shadow-2xl backdrop-blur-xl dark:bg-zinc-900/85">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 dark:bg-background/80">
+            <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-overlay)]">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <p className="font-mono text-[13px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
-                            Lampiran manifest
+                        <p className="text-xs font-medium text-muted-foreground">
+                            Impor aset
                         </p>
                         <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-                            Impor Pos Massal
+                            Import dari spreadsheet
                         </h2>
                         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                            Unggah lembar kerja untuk mencatat banyak pos
-                            sekaligus.
+                            Unggah berkas untuk mencatat banyak aset sekaligus.
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/15 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                         aria-label="Tutup"
                     >
                         <svg
@@ -265,35 +272,35 @@ export function AssetImportDialog({
                 <div className="mt-5 space-y-4">
                     <div>
                         <label
-                            htmlFor="manifest-import-file"
+                            htmlFor="import-file"
                             className="mb-1.5 block text-sm font-medium text-foreground"
                         >
-                            Berkas lembar kerja
+                            Berkas spreadsheet
                         </label>
                         <Input
-                            id="manifest-import-file"
+                            id="import-file"
                             type="file"
                             accept=".xlsx,.xls,.csv"
                             onChange={(e) =>
                                 setFile(e.target.files?.[0] || null)
                             }
-                            className="h-10 rounded-md border-white/20 bg-white/10 text-sm backdrop-blur-sm"
+                            className="h-10 rounded-md text-sm"
                         />
                     </div>
 
                     {items.length > 0 && (
                         <div>
                             <label
-                                htmlFor="manifest-import-item"
+                                htmlFor="import-item"
                                 className="mb-1.5 block text-sm font-medium text-foreground"
                             >
                                 Item bawaan (opsional)
                             </label>
                             <select
-                                id="manifest-import-item"
+                                id="import-item"
                                 value={itemId}
                                 onChange={(e) => setItemId(e.target.value)}
-                                className="h-10 w-full rounded-md border border-white/20 bg-white/10 px-3 text-sm text-foreground backdrop-blur-sm focus:border-primary/30 focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                                className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none"
                             >
                                 <option value="">— Pilih item —</option>
                                 {items.map((i) => (
@@ -306,7 +313,7 @@ export function AssetImportDialog({
                     )}
 
                     {file && (
-                        <div className="flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-300">
+                        <div className="flex items-center gap-2 rounded-md border border-status-act-border bg-status-act-bg px-3 py-2.5 text-sm text-status-act-text">
                             <Check className="size-4 shrink-0" />
                             <span className="min-w-0 flex-1 truncate font-medium">
                                 {file.name}
@@ -321,7 +328,7 @@ export function AssetImportDialog({
                         variant="outline"
                         onClick={onClose}
                         disabled={importing}
-                        className="flex-1 rounded-md border-white/20 bg-white/10 hover:bg-white/20"
+                        className="flex-1"
                     >
                         Batal
                     </Button>
@@ -329,10 +336,10 @@ export function AssetImportDialog({
                         type="button"
                         onClick={handleImport}
                         disabled={!file || importing}
-                        className="flex-1 rounded-md bg-primary font-bold text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_24px_-6px_var(--primary)]"
+                        className="flex-1 font-semibold"
                     >
                         {importing && <Spinner className="mr-2 size-4" />}
-                        Catat ke Manifest
+                        Import
                     </Button>
                 </div>
             </div>

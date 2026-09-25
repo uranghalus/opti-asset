@@ -67,7 +67,7 @@ export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
         return (
             <div className="flex flex-col gap-4">
                 <div>
-                    <p className="text-[10px] font-semibold tracking-widest text-[#0D9488] uppercase">
+                    <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                         Garansi
                     </p>
                     <h3 className="mt-1 text-base font-semibold text-foreground">
@@ -75,8 +75,8 @@ export function WarrantyAlerts({ alerts }: { alerts: WarrantyAlerts }) {
                     </h3>
                 </div>
                 <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                    <div className="flex size-12 items-center justify-center rounded-xl bg-[#5EEAD4]/10">
-                        <ShieldAlert className="size-6 text-[#5EEAD4]" />
+                    <div className="flex size-12 items-center justify-center rounded-xl bg-status-act-bg">
+                        <ShieldAlert className="size-6 text-status-act-text" />
                     </div>
                     <p className="text-sm font-medium text-foreground">
                         Semua garansi aktif

@@ -15,14 +15,13 @@ type Stats = {
     pending_disposals: number;
 };
 
-// NOON status palette — WCAG AA against both light and dark glass surfaces.
-// No blue: teal stands in for "active/positive" per DESIGN.md's never-blue rule.
+/* Peta status terkunci (DESIGN.md §3.2) — hue yang sama dengan StatusBadge. */
 const STATUS_COLORS: Record<string, string> = {
-    ACT: '#0D9488',
-    LOAN: '#8B5CF6',
-    RPR: '#D97706',
-    MUT: '#6D28D9',
-    DSP: '#E11D48',
+    ACT: '#166534',
+    LOAN: '#1e40af',
+    RPR: '#92400e',
+    MUT: '#155e75',
+    DSP: '#9f1239',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,7 +38,7 @@ export function StatusDonut({ stats }: { stats: Stats }) {
         .map(([key, value]) => ({
             name: STATUS_LABELS[key] ?? key,
             value,
-            color: STATUS_COLORS[key] ?? '#86888C',
+            color: STATUS_COLORS[key] ?? '#5a6a7a',
         }));
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
@@ -47,7 +46,7 @@ export function StatusDonut({ stats }: { stats: Stats }) {
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <p className="text-[10px] font-semibold tracking-widest text-[#B892FF] uppercase">
+                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
                     FR-10.2
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-foreground">

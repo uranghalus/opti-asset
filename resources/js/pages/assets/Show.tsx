@@ -36,8 +36,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { VibrantBackground } from '@/components/vibrant-background';
 import { assetListUrl } from '@/lib/asset-return';
+import { TipeBadge } from '@/lib/asset-status';
 import { StatusBadge } from '@/lib/asset-status';
 import { LEVEL_TINTS } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
@@ -115,12 +115,15 @@ type PageProps = {
 };
 
 const CONDITION_STYLES: Record<string, string> = {
-    Baik: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
+    Baik: 'bg-status-act-bg text-status-act-text ring-status-act-border dark:ring-status-act-border/40',
     'Rusak Ringan':
-        'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
+        'bg-status-rpr-bg text-status-rpr-text ring-status-rpr-border dark:ring-status-rpr-border/40',
     'Rusak Berat':
-        'bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300',
+        'bg-status-dsp-bg text-status-dsp-text ring-status-dsp-border dark:ring-status-dsp-border/40',
 };
+
+const CONDITION_FALLBACK =
+    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
 
 const CHAIN_LEVELS: ClassificationLevel[] = [
     'group',
@@ -175,21 +178,23 @@ const HISTORY_ICON: Record<
 };
 
 const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
+    /* Kategori riwayat bukan status aset — memakai warna netral/aksen
+       chart (§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
     created: {
-        icon: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-        dot: 'bg-emerald-500',
+        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
+        dot: 'bg-ink-muted dark:bg-muted-foreground',
     },
     status: {
-        icon: 'bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300',
-        dot: 'bg-amber-500',
+        icon: 'bg-status-act-bg text-status-act-text ring-status-act-border dark:ring-status-act-border/40',
+        dot: 'bg-status-act-text',
     },
     placement: {
-        icon: 'bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300',
-        dot: 'bg-sky-500',
+        icon: 'bg-status-loan-bg text-status-loan-text ring-status-loan-border dark:ring-status-loan-border/40',
+        dot: 'bg-status-loan-text',
     },
     other: {
-        icon: 'bg-slate-500/10 text-slate-700 ring-slate-500/20 dark:text-slate-300',
-        dot: 'bg-slate-500',
+        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
+        dot: 'bg-ink-subtle dark:bg-muted-foreground/60',
     },
 };
 
@@ -293,7 +298,7 @@ function Section({
     children: React.ReactNode;
 }) {
     return (
-        <section className="glass-panel card-enter rounded-xl p-5 md:p-6">
+        <section className="rounded-xl border border-border bg-card p-5 md:p-6">
             <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                     <Icon className="size-4 text-primary" strokeWidth={1.75} />
@@ -375,8 +380,7 @@ export default function AssetShow() {
     };
 
     return (
-        <div className="noon dark relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
-            <VibrantBackground variant="default" />
+        <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
             <div className="mx-auto w-full max-w-5xl">
                 <Link
                     href={assetListUrl()}
@@ -386,17 +390,17 @@ export default function AssetShow() {
                     Kembali ke Daftar Aset
                 </Link>
 
-                <div className="card-enter mt-5 flex flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)] backdrop-blur-lg sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+                <header className="mt-5 rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-sticky)] sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
                         <div className="relative size-16 shrink-0">
                             {hasPhotos ? (
                                 <img
                                     src={asset.photo_url[0]}
                                     alt="Foto aset"
-                                    className="size-16 rounded-xl border border-white/20 object-cover shadow-md"
+                                    className="size-16 rounded-lg border border-border object-cover"
                                 />
                             ) : (
-                                <div className="flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-md ring-1 ring-primary/10">
+                                <div className="flex size-16 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
                                     <Boxes
                                         className="size-7"
                                         strokeWidth={1.5}
@@ -406,12 +410,12 @@ export default function AssetShow() {
                         </div>
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                                <h1 className="text-[2rem] font-bold tracking-[-0.02em] text-foreground">
+                                <h1 className="text-2xl font-bold tracking-[-0.02em] text-foreground">
                                     {asset.item?.name ?? 'Aset'}
                                 </h1>
                                 <StatusBadge value={asset.status} />
                             </div>
-                            <p className="mt-1 truncate font-mono text-sm font-bold text-primary tabular-nums">
+                            <p className="mt-1 truncate font-mono text-sm font-bold text-foreground tabular-nums">
                                 {asset.kode_asset ?? '—'}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -422,7 +426,7 @@ export default function AssetShow() {
                         </div>
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
+                    <div className="mt-4 flex shrink-0 flex-wrap gap-2">
                         <Link
                             href={labelsRoute().url}
                             data={{ ids: [asset.id] }}
@@ -457,9 +461,9 @@ export default function AssetShow() {
                             Hapus
                         </Button>
                     </div>
-                </div>
+                </header>
 
-                <div className="mt-5 flex flex-wrap items-center gap-1.5">
+                <div className="mt-4 flex flex-wrap items-center gap-1.5">
                     {chain.length > 0 ? (
                         chain.map((level, chainIndex) => {
                             const tint =
@@ -473,7 +477,7 @@ export default function AssetShow() {
                                 <span
                                     key={`${level.id}-${chainIndex}`}
                                     className={cn(
-                                        'inline-flex max-w-52 items-center gap-1.5 truncate rounded px-2.5 py-1 text-xs font-semibold ring-1',
+                                        'inline-flex max-w-52 items-center gap-1.5 truncate rounded-sm px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
                                         tint.bg,
                                         tint.fg,
                                     )}
@@ -645,17 +649,24 @@ export default function AssetShow() {
                             description="Klasifikasi akuntansi dan perhitungan nilai buku."
                         >
                             <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-                                <DetailItem
-                                    icon={Tags}
-                                    label="Tipe Aset"
-                                    value={
-                                        asset.asset_type === 'fixed_asset'
-                                            ? 'Aktiva Tetap'
-                                            : asset.asset_type === 'equipment'
-                                              ? 'Peralatan'
-                                              : '—'
-                                    }
-                                />
+                                <div className="flex items-start gap-3">
+                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/15 bg-primary/5 text-primary">
+                                        <Tags
+                                            className="size-4"
+                                            strokeWidth={1.75}
+                                        />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                            Tipe Aset
+                                        </p>
+                                        <span className="mt-1 inline-flex">
+                                            <TipeBadge
+                                                value={asset.asset_type}
+                                            />
+                                        </span>
+                                    </div>
+                                </div>
                                 <DetailItem
                                     icon={Wallet}
                                     label="Nilai Perolehan"
@@ -716,11 +727,11 @@ export default function AssetShow() {
                                 />
                             </div>
                             {asset.type_override_reason ? (
-                                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
-                                    <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                                <div className="mt-4 rounded-lg border border-status-rpr-border bg-status-rpr-bg p-3 dark:border-status-rpr-border/40">
+                                    <p className="text-xs font-semibold text-status-rpr-text">
                                         Alasan Override Manual
                                     </p>
-                                    <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                                    <p className="mt-1 text-sm text-foreground/90">
                                         {asset.type_override_reason}
                                     </p>
                                 </div>
@@ -766,7 +777,7 @@ export default function AssetShow() {
                     </div>
 
                     <div className="space-y-4">
-                        <section className="glass-panel card-enter rounded-xl p-5">
+                        <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                                     <Barcode
@@ -783,7 +794,7 @@ export default function AssetShow() {
                             <div className="mt-5">
                                 {asset.kode_asset ? (
                                     <>
-                                        <div className="rounded-lg border border-border/70 bg-card/60 p-4">
+                                        <div className="rounded-lg border border-border bg-surface-sunken/60 p-4 dark:bg-muted/40">
                                             <AssetBarcode
                                                 value={asset.kode_asset}
                                                 className="h-20"
@@ -801,7 +812,7 @@ export default function AssetShow() {
                             </div>
                         </section>
 
-                        <section className="glass-panel card-enter rounded-xl p-5">
+                        <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                                     <ClipboardList
@@ -816,7 +827,7 @@ export default function AssetShow() {
                                 </div>
                             </div>
                             <div className="mt-5 grid grid-cols-2 gap-3">
-                                <div className="rounded-lg border border-border/70 bg-card/60 p-3.5">
+                                <div className="rounded-lg border border-border bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
                                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Status
                                     </p>
@@ -824,7 +835,7 @@ export default function AssetShow() {
                                         <StatusBadge value={asset.status} />
                                     </span>
                                 </div>
-                                <div className="rounded-lg border border-border/70 bg-card/60 p-3.5">
+                                <div className="rounded-lg border border-border bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
                                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Kondisi
                                     </p>
@@ -833,8 +844,7 @@ export default function AssetShow() {
                                             'mt-2 inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold ring-1',
                                             CONDITION_STYLES[
                                                 asset.condition ?? ''
-                                            ] ??
-                                                'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
+                                            ] ?? CONDITION_FALLBACK,
                                         )}
                                     >
                                         {asset.condition ?? '—'}
@@ -843,7 +853,7 @@ export default function AssetShow() {
                             </div>
                         </section>
 
-                        <section className="glass-panel card-enter rounded-xl p-5">
+                        <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                                     <FileText
@@ -883,7 +893,7 @@ export default function AssetShow() {
                                                         href={document}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="flex items-center gap-2 rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                                                        className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
                                                     >
                                                         <FileText
                                                             className="size-3.5 shrink-0"
@@ -905,7 +915,7 @@ export default function AssetShow() {
                             </div>
                         </section>
 
-                        <section className="glass-panel card-enter rounded-xl p-5">
+                        <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                                     <UserRound
@@ -943,7 +953,7 @@ export default function AssetShow() {
                             </div>
                         </section>
 
-                        <section className="glass-panel card-enter rounded-xl p-5">
+                        <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
                                     <ClipboardList
@@ -972,7 +982,7 @@ export default function AssetShow() {
                     </div>
                 </div>
 
-                <section className="glass-panel card-enter mt-4 rounded-xl p-5 delay-200 md:p-6">
+                <section className="mt-4 rounded-xl border border-border bg-card p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
@@ -1026,7 +1036,7 @@ export default function AssetShow() {
 
                     <div className="mt-5">
                         {asset.histories.length === 0 ? (
-                            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/70 px-6 py-8 text-center">
+                            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-6 py-8 text-center">
                                 <PackagePlus
                                     className="size-6 text-muted-foreground/60"
                                     strokeWidth={1.25}
@@ -1046,7 +1056,7 @@ export default function AssetShow() {
                                         <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                             {group.date}
                                         </p>
-                                        <ol className="relative space-y-3 border-l border-border/70 pl-5">
+                                        <ol className="relative space-y-3 border-l border-border pl-5">
                                             {group.entries.map((entry) => {
                                                 const category =
                                                     historyCategory(
@@ -1067,7 +1077,7 @@ export default function AssetShow() {
                                                         <span
                                                             aria-hidden
                                                             className={cn(
-                                                                'absolute top-1/2 -left-[25px] flex size-4 -translate-y-1/2 items-center justify-center rounded-full ring-4 ring-background transition-transform duration-200 group-hover:scale-110',
+                                                                'absolute top-1/2 -left-[25px] flex size-4 -translate-y-1/2 items-center justify-center rounded-full ring-4 ring-background transition-transform duration-150 group-hover:scale-110',
                                                                 tint.icon,
                                                             )}
                                                         >
@@ -1078,7 +1088,7 @@ export default function AssetShow() {
                                                                 }
                                                             />
                                                         </span>
-                                                        <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2.5 transition-colors duration-200 hover:bg-white/15">
+                                                        <div className="rounded-lg border border-border bg-surface-sunken/50 px-3 py-2.5 transition-colors duration-200 hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60">
                                                             <div className="flex items-start justify-between gap-3">
                                                                 <p className="text-sm font-semibold text-foreground">
                                                                     {historyLabel(
@@ -1163,9 +1173,9 @@ export default function AssetShow() {
             </div>
 
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent className="rounded-xl border border-white/20 bg-white/90 p-6 shadow-2xl backdrop-blur-xl dark:bg-zinc-900/85">
+                <DialogContent className="p-6">
                     <DialogHeader>
-                        <span className="mb-3 inline-flex size-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-400">
+                        <span className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-destructive/10 text-destructive">
                             <Trash2 className="size-5" />
                         </span>
                         <DialogTitle className="text-lg font-semibold tracking-tight">
@@ -1183,7 +1193,7 @@ export default function AssetShow() {
                             variant="outline"
                             onClick={() => setDeleteOpen(false)}
                             disabled={deleting}
-                            className="rounded-md border-white/20 bg-white/10 hover:bg-white/20"
+                            className="rounded-md"
                         >
                             Batal
                         </Button>

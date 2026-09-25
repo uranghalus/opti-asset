@@ -43,7 +43,7 @@ class RoleFilterLevelTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('assets.index'));
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'group'));
+        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'cluster'));
     }
 
     public function test_staff_asset_gets_group_level(): void
@@ -53,7 +53,7 @@ class RoleFilterLevelTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('assets.index'));
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'group'));
+        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'category'));
     }
 
     public function test_akunting_gets_group_level(): void
@@ -63,7 +63,7 @@ class RoleFilterLevelTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('assets.index'));
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'group'));
+        $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'category'));
     }
 
     public function test_other_role_gets_cluster_level(): void

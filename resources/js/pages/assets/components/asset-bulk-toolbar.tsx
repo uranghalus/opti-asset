@@ -25,21 +25,17 @@ export function AssetBulkToolbar({
             aria-label="Aksi pilihan massal"
             className={cn(
                 'stamp-slam fixed inset-x-3 z-40 flex items-center justify-between gap-3',
-                'rounded-xl border border-white/20 bg-card/90 p-2.5 pl-4 backdrop-blur-xl',
-                'shadow-[0_18px_44px_-12px_rgba(0,0,0,0.35)]',
+                'rounded-xl border border-border bg-card p-2.5 pl-4',
+                'shadow-[var(--shadow-overlay)]',
                 'bottom-[calc(4rem+env(safe-area-inset-bottom))]',
                 'lg:sticky lg:bottom-6 lg:mx-auto lg:w-fit lg:min-w-[420px]',
             )}
         >
             <span className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-foreground">
-                <span
-                    aria-hidden
-                    className="barcode-strip h-6 w-10 shrink-0 text-muted-foreground/50"
-                />
-                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary font-mono text-[13px] font-bold text-primary-foreground tabular-nums">
+                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-primary text-sm font-semibold text-primary-foreground tabular-nums">
                     {selectedCount}
                 </span>
-                <span className="truncate">pos dipilih</span>
+                <span className="truncate">aset dipilih</span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
                 <Button
@@ -54,9 +50,10 @@ export function AssetBulkToolbar({
                 </Button>
                 <Button
                     type="button"
+                    variant="destructive"
                     onClick={onBulkDelete}
                     aria-label="Hapus semua yang dipilih"
-                    className="h-10 gap-2 rounded-md bg-red-500 px-4 font-semibold text-white hover:bg-red-400"
+                    className="h-10 gap-2 px-4 font-semibold"
                 >
                     <Trash2 className="size-4" />
                     Hapus

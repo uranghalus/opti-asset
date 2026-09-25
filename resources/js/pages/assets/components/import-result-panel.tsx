@@ -48,19 +48,16 @@ export function ImportResultPanel() {
             role="region"
             aria-label="Hasil impor aset"
             className={cn(
-                'rounded-xl border p-4 backdrop-blur-lg',
+                'rounded-xl border p-4',
                 hasErrors
-                    ? 'border-amber-500/30 bg-amber-500/10'
-                    : 'border-emerald-500/30 bg-emerald-500/10',
+                    ? 'border-status-rpr-border bg-status-rpr-bg'
+                    : 'border-status-act-border bg-status-act-bg',
             )}
         >
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
-                        Lampiran manifest
-                    </p>
-                    <h3 className="mt-0.5 text-sm font-semibold text-foreground">
-                        Hasil impor — {report.imported} pos tercatat
+                    <h3 className="text-sm font-semibold text-foreground">
+                        Hasil impor — {report.imported} aset tercatat
                         {report.skipped > 0 &&
                             `, ${report.skipped} baris dilewati`}
                         {hasErrors && `, ${report.total_errors} catatan`}
@@ -69,7 +66,7 @@ export function ImportResultPanel() {
                 <button
                     type="button"
                     onClick={() => setDismissedReport(report)}
-                    className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/15 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     aria-label="Tutup laporan impor"
                 >
                     <X className="size-4" />
@@ -83,7 +80,7 @@ export function ImportResultPanel() {
                             key={`${error.row}-${index}`}
                             className="flex items-start gap-2 text-xs leading-relaxed text-foreground/90"
                         >
-                            <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-status-rpr-text" />
                             <span>
                                 {error.row > 0 && (
                                     <span className="mr-1.5 font-mono font-bold text-muted-foreground">

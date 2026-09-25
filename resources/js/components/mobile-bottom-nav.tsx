@@ -4,7 +4,12 @@ import { useCan } from '@/hooks/use-can';
 import { dashboard } from '@/routes';
 
 const NAV_ITEMS = [
-    { href: dashboard(), icon: LayoutDashboard, label: 'Dashboard', permission: null },
+    {
+        href: dashboard(),
+        icon: LayoutDashboard,
+        label: 'Dashboard',
+        permission: null,
+    },
     { href: '/assets', icon: Boxes, label: 'Aset', permission: 'asset.view' },
     {
         href: '/organizations',
@@ -31,8 +36,8 @@ export function MobileBottomNav() {
         visibleItems.length === 4
             ? 'grid-cols-4'
             : visibleItems.length === 3
-                ? 'grid-cols-3'
-                : 'grid-cols-2';
+              ? 'grid-cols-3'
+              : 'grid-cols-2';
 
     return (
         <nav

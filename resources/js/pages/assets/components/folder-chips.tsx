@@ -7,11 +7,9 @@ import { LEVEL_DEPTH } from './types';
 
 function BaySlot({
     node,
-    slotNo,
     onSelect,
 }: {
     node: BrowseNode;
-    slotNo: number;
     onSelect: (n: BrowseNode) => void;
 }) {
     const tint = LEVEL_TINTS[node.level];
@@ -21,8 +19,8 @@ function BaySlot({
             type="button"
             onClick={() => onSelect(node)}
             className={cn(
-                'group flex min-w-[180px] flex-1 items-center gap-2.5 rounded-md border border-white/20 bg-card/70 px-3 py-2.5 text-left backdrop-blur-sm transition-all duration-200',
-                'hover:bg-card hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]',
+                'group flex min-w-[180px] flex-1 items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors duration-200',
+                'hover:border-border-strong hover:bg-surface-sunken/60',
                 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
             )}
             style={{ marginLeft: `${LEVEL_DEPTH[node.level] * 4}px` }}
@@ -32,14 +30,15 @@ function BaySlot({
                 <span className="block truncate text-sm font-semibold text-foreground">
                     {node.name}
                 </span>
-                <span className="mt-0.5 block font-mono text-[13px] font-bold tracking-wider text-muted-foreground">
-                    BAY-{String(slotNo).padStart(2, '0')}
-                    {node.code ? ` · ${node.code}` : ''}
-                </span>
+                {node.code && (
+                    <span className="mt-0.5 block font-mono text-xs text-muted-foreground">
+                        {node.code}
+                    </span>
+                )}
             </span>
             <span
                 className={cn(
-                    'shrink-0 rounded-md px-2 py-0.5 font-mono text-[13px] font-bold tabular-nums',
+                    'shrink-0 rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums',
                     tint.bg,
                     tint.fg,
                 )}
@@ -68,24 +67,19 @@ export function FolderChips({
     }
 
     return (
-        <div className="border-b border-white/10 bg-white/[0.04] px-4 py-3 sm:px-5">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+        <div className="border-b border-border bg-surface-sunken px-4 py-3 sm:px-5">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
                 {CHILD_LABELS[
                     selectedNode.level as Exclude<
                         ClassificationLevel,
                         'sub-cluster'
                     >
                 ] ?? 'Sub'}{' '}
-                di {selectedNode.name} — pilih teluk untuk masuk
+                di {selectedNode.name}
             </p>
             <div className="flex flex-wrap gap-2">
-                {childFolders.map((f, i) => (
-                    <BaySlot
-                        key={f.id}
-                        node={f}
-                        slotNo={i + 1}
-                        onSelect={onSelect}
-                    />
+                {childFolders.map((f) => (
+                    <BaySlot key={f.id} node={f} onSelect={onSelect} />
                 ))}
             </div>
         </div>

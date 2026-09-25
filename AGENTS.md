@@ -88,7 +88,7 @@ resources/js/
 - **Route::inertia()** used for pages with no controller logic (e.g., `welcome`, `appearance`). Use controllers for pages needing data/validation.
 - **Tests use in-memory SQLite** (`phpunit.xml`). Factories required for models. `RefreshDatabase` trait used. Base `TestCase` has `skipUnlessFortifyHas()` helper.
 - **Fortify features enabled**: registration, password reset, email verification, 2FA, passkeys. Config in `config/fortify.php`.
-- **DESIGN.md** defines American Express visual identity — colors, typography, spacing. Reference when building UI.
+- **DESIGN.md** defines **Opname Field Desk** visual identity — mineral teal, status tokens, Public Sans, mobile-first Operate UI. Reference when building UI.
 - **Generated files are gitignored**: `resources/js/actions/`, `resources/js/routes/`, `resources/js/wayfinder/`, `resources/js/components/ui/`. Never edit these directly.
 - **ESLint ignores**: `resources/js/actions/**`, `resources/js/components/ui/*`, `resources/js/routes/**`, `resources/js/wayfinder/**` — these are generated.
 - **Prettier ignores**: `resources/js/components/ui/*`, `resources/views/mail/*`
@@ -338,3 +338,17 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Agent skills
+
+### Issue tracker
+
+GitHub (issues live in the repo's GitHub Issues). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+single-context. See `docs/agents/domain.md`.

@@ -1,5 +1,4 @@
-import { ChevronRight, Route } from 'lucide-react';
-import { LEVEL_TINTS } from '@/lib/classification-levels';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ClassificationLevel } from '@/types/classification';
 import type { BrowseNode } from './types';
@@ -28,17 +27,13 @@ export function AssetBreadcrumb({
 
     return (
         <nav
-            aria-label="Rute klasifikasi"
-            className="mt-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm shadow-[0_2px_12px_rgba(0,0,0,0.06)] backdrop-blur-lg"
+            aria-label="Lokasi dalam klasifikasi"
+            className="mt-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm"
         >
-            <span className="mr-1 inline-flex items-center gap-1.5 font-medium text-muted-foreground">
-                <Route className="size-3.5" />
-                Rute
-            </span>
             <button
                 type="button"
                 onClick={onClear}
-                className="rounded-md px-2 py-1 font-medium text-muted-foreground transition-colors hover:bg-white/20 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                className="rounded-md px-2 py-1 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             >
                 Semua
             </button>
@@ -66,15 +61,15 @@ export function AssetBreadcrumb({
                                 } as BrowseNode)
                             }
                             className={cn(
-                                'rounded-md border border-dashed border-transparent px-2 py-1 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
-                                LEVEL_TINTS[c.level].bg,
-                                LEVEL_TINTS[c.level].fg,
-                                last && 'font-semibold ring-1 ring-primary/30',
+                                'rounded-md px-2 py-1 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                                last
+                                    ? 'bg-primary-muted font-semibold text-primary'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                             )}
                         >
                             {c.name}
                             {c.code && (
-                                <span className="ml-1.5 font-mono text-[13px] font-bold tracking-wider opacity-70">
+                                <span className="ml-1.5 font-mono text-xs opacity-70">
                                     {c.code}
                                 </span>
                             )}

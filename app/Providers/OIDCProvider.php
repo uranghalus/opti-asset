@@ -9,6 +9,36 @@ use SocialiteProviders\OIDC\Provider as BaseProvider;
 
 class OIDCProvider extends BaseProvider
 {
+    public static function additionalConfigKeys(): array
+    {
+        return array_merge(parent::additionalConfigKeys(), [
+            'authorization_url',
+            'token_url',
+            'userinfo_url',
+        ]);
+    }
+
+    /**
+     * Use explicit OAuth endpoints when the provider does not expose OIDC discovery.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getOpenIdConfig(): array
+    {
+        $authorizationUrl = $this->getConfig('authorization_url');
+        $tokenUrl = $this->getConfig('token_url');
+
+        if ($authorizationUrl && $tokenUrl) {
+            return [
+                'authorization_endpoint' => $authorizationUrl,
+                'token_endpoint' => $tokenUrl,
+                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
+            ];
+        }
+
+        return parent::getOpenIdConfig();
+    }
+
     /**
      * Disable nonce verification.
      * Beberapa server SSO tidak mengirimkan 'nonce' di dalam ID Token mereka.

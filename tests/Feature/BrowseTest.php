@@ -80,7 +80,8 @@ class BrowseTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/Index')
                 ->has('tree')
-                ->where('assets', null)
+                // FR-04.1: daftar tidak lagi null di root — semua aset tampil.
+                ->has('assets.data')
                 ->where('selected', null)
                 ->where('breadcrumb', [])
             );
@@ -95,15 +96,13 @@ class BrowseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/Index')
+                // Pohon role non-staf berakar cluster (ADR 0001) —
+                // kategori/golongan hidup di level induknya.
                 ->has('tree', 1)
-                ->where('tree.0.level', 'group')
-                ->where('tree.0.id', $group->id)
-                ->where('tree.0.children.0.level', 'category')
-                ->where('tree.0.children.0.id', $category->id)
-                ->where('tree.0.children.0.children.0.level', 'cluster')
-                ->where('tree.0.children.0.children.0.id', $cluster->id)
-                ->where('tree.0.children.0.children.0.children.0.level', 'sub-cluster')
-                ->where('tree.0.children.0.children.0.children.0.id', $subCluster->id)
+                ->where('tree.0.level', 'cluster')
+                ->where('tree.0.id', $cluster->id)
+                ->where('tree.0.children.0.level', 'sub-cluster')
+                ->where('tree.0.children.0.id', $subCluster->id)
                 ->where('selected', null)
                 ->where('breadcrumb', []));
     }
@@ -132,18 +131,15 @@ class BrowseTest extends TestCase
                 ->where('selected.level', 'sub-cluster')
                 ->where('selected.id', $subCluster->id)
                 ->has('assets.data', 1)
-                ->has('breadcrumb', 4)
-                ->where('breadcrumb.0.level', 'group')
-                ->where('breadcrumb.0.name', 'Elektronik')
-                ->where('breadcrumb.1.level', 'category')
-                ->where('breadcrumb.1.name', 'Komputer')
-                ->where('breadcrumb.2.level', 'cluster')
-                ->where('breadcrumb.2.name', 'Laptop')
-                ->where('breadcrumb.3.level', 'sub-cluster')
-                ->where('breadcrumb.3.name', 'Business Laptop'));
+                // Breadcrumb berhenti di akar pohon role (cluster).
+                ->has('breadcrumb', 2)
+                ->where('breadcrumb.0.level', 'cluster')
+                ->where('breadcrumb.0.name', 'Laptop')
+                ->where('breadcrumb.1.level', 'sub-cluster')
+                ->where('breadcrumb.1.name', 'Business Laptop'));
     }
 
-    public function test_browse_selected_group_node_shows_assets_with_short_breadcrumb(): void
+    public function test_browse_selected_cluster_node_shows_assets_with_short_breadcrumb(): void
     {
         [$group, $category, $cluster, $subCluster] = $this->buildFullChain();
 
@@ -157,20 +153,20 @@ class BrowseTest extends TestCase
 
         $this->actingAs($this->user)
             ->get(route('assets.browse', [
-                'level' => 'group',
-                'node' => $group->id,
+                'level' => 'cluster',
+                'node' => $cluster->id,
             ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('selected.level', 'group')
-                ->where('selected.id', $group->id)
+                ->where('selected.level', 'cluster')
+                ->where('selected.id', $cluster->id)
                 ->has('assets.data', 3)
                 ->has('breadcrumb', 1)
-                ->where('breadcrumb.0.name', 'Elektronik')
-                ->where('breadcrumb.0.code', '01'));
+                ->where('breadcrumb.0.name', 'Laptop')
+                ->where('breadcrumb.0.code', '01.01.01'));
     }
 
-    public function test_browse_without_node_returns_null_assets(): void
+    public function test_browse_without_node_returns_all_assets(): void
     {
         $this->buildFullChain();
 
@@ -179,17 +175,19 @@ class BrowseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected', null)
-                ->where('assets', null)
+                ->has('assets.data')
                 ->where('breadcrumb', []));
     }
 
     public function test_browse_tree_carries_asset_counts(): void
     {
-        $group = AssetGroup::factory()->create();
+        [$group, $category, $cluster] = $this->buildFullChain();
         $item = Item::factory()->create();
 
         Asset::factory()->create([
             'asset_group_id' => $group->id,
+            'asset_category_id' => $category->id,
+            'asset_cluster_id' => $cluster->id,
             'item_id' => $item->id,
         ]);
 
@@ -291,7 +289,7 @@ class BrowseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('tree', 1)
-                ->where('tree.0.code', '01'));
+                ->where('tree.0.code', '01.01.01'));
     }
 
     public function test_browse_invalid_level_falls_through(): void
@@ -303,7 +301,7 @@ class BrowseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected', null)
-                ->where('assets', null)
+                ->has('assets.data')
                 ->where('breadcrumb', []));
     }
 

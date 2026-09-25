@@ -276,7 +276,7 @@ export function AssetForm({
                             >
                                 <SelectTrigger
                                     id="item"
-                                    className="mt-1.5 h-10 bg-background/70"
+                                    className="mt-1.5 h-10"
                                 >
                                     <SelectValue placeholder="Pilih Item" />
                                 </SelectTrigger>
@@ -305,8 +305,8 @@ export function AssetForm({
                         className={cn(
                             'mt-4 flex items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors',
                             previewCode
-                                ? 'border-primary/30 bg-primary/5'
-                                : 'border-dashed border-border bg-background/40',
+                                ? 'border-primary-muted-border bg-primary-muted/50'
+                                : 'border-dashed border-border bg-surface-sunken/50 dark:bg-muted/40',
                         )}
                     >
                         <div
@@ -314,7 +314,7 @@ export function AssetForm({
                                 'flex size-8 shrink-0 items-center justify-center rounded-md border',
                                 previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
-                                    : 'border-border bg-background text-muted-foreground',
+                                    : 'border-border bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground',
                             )}
                         >
                             <Tags className="size-4" strokeWidth={1.75} />
@@ -982,7 +982,7 @@ export function AssetForm({
                 </div>
             </section>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end">
                 <Button
                     type="button"
                     variant="outline"
@@ -993,7 +993,7 @@ export function AssetForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="h-10 gap-2 hover:shadow-[0_0_24px_-6px_var(--primary)]"
+                    className="h-10 gap-2 font-semibold"
                     disabled={form.processing || mediaBusy}
                 >
                     {form.processing && <Spinner className="size-4" />}

@@ -1599,10 +1599,10 @@ class AssetTest extends TestCase
 
     public function test_index_exposes_unclassified_count(): void
     {
-        [$group] = $this->classificationChain();
+        [$group, $category, $cluster] = $this->classificationChain();
         $item = Item::factory()->create();
-        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
-        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+        Asset::factory()->create(['item_id' => $item->id, 'asset_cluster_id' => $cluster->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_cluster_id' => null]);
 
         $this->actingAs($this->user)
             ->get(route('assets.index'))
@@ -1610,22 +1610,77 @@ class AssetTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
                 ->where('unclassifiedCount', 2)
-                ->where('assets', null));
+                ->has('assets.data', 3));
+    }
+
+    public function test_index_searches_without_a_selected_node(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create(['name' => 'Laptop Pro']);
+        $matching = Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+        $other = Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => null, 'kode_asset' => '99.99.99.99']);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index', ['search' => 'Laptop Pro']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('assets.data', 2)
+                ->where('assets.data.0.item.name', 'Laptop Pro')
+                ->where('filters.search', 'Laptop Pro')
+                ->etc());
+    }
+
+    public function test_index_ignores_invalid_asset_type_filter_value(): void
+    {
+        [$group] = $this->classificationChain();
+        $item = Item::factory()->create();
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index', ['asset_type' => 'all']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('assets.data', 2)
+                ->where('filters.asset_type', ''));
+    }
+
+    public function test_index_empty_node_falls_back_to_descendants(): void
+    {
+        [$group, $category, $cluster, $subCluster] = $this->classificationChain();
+        $item = Item::factory()->create();
+        // Aset hanya di sub-cluster (rantai parsial, kolom cluster kosong):
+        // cluster tanpa aset langsung tidak boleh menjadi dead-end.
+        Asset::factory()->create([
+            'item_id' => $item->id,
+            'asset_sub_cluster_id' => $subCluster->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('assets.index', ['level' => 'cluster', 'node' => $cluster->id]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('assets/Index')
+                ->has('assets.data', 1)
+                ->where('selected.level', 'cluster')
+                ->where('selected.id', $cluster->id)
+                ->where('filters.descendantFallback', true));
     }
 
     public function test_index_unclassified_node_lists_orphaned_assets(): void
     {
-        [$group] = $this->classificationChain();
+        [$group, $category, $cluster] = $this->classificationChain();
         $item = Item::factory()->create();
-        Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
-        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => null]);
+        Asset::factory()->create(['item_id' => $item->id, 'asset_cluster_id' => $cluster->id]);
+        Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_cluster_id' => null]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index', ['level' => 'group', 'node' => 'unclassified']))
+            ->get(route('assets.index', ['level' => 'cluster', 'node' => 'unclassified']))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
-                ->where('selected.level', 'group')
+                ->where('selected.level', 'cluster')
                 ->where('selected.id', 'unclassified')
                 ->has('assets.data', 2)
                 ->has('breadcrumb', 1)

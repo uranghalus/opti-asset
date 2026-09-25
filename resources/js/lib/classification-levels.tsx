@@ -1,10 +1,4 @@
-import {
-    Boxes,
-    Folder,
-    FolderOpen,
-    Library,
-    Package,
-} from 'lucide-react';
+import { Boxes, Folder, FolderOpen, Library, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ClassificationLevel } from '@/types/classification';
 
@@ -69,7 +63,11 @@ export function LevelIcon({
     const tint = LEVEL_TINTS[level];
     /* Kategori memakai pasangan buka/tutup; level lain ber-glifik tetap. */
     const Icon =
-        level === 'category' ? (open ? FolderOpen : Folder) : LEVEL_GLYPHS[level];
+        level === 'category'
+            ? open
+                ? FolderOpen
+                : Folder
+            : LEVEL_GLYPHS[level];
 
     return (
         <span

@@ -2,6 +2,7 @@ import { FolderOpen, PackageOpen, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { LEVEL_TINTS, LevelIcon } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
+import type { ClassificationLevel } from '@/types/classification';
 import { LEVEL_DEPTH } from './types';
 import type { BrowseNode } from './types';
 
@@ -64,6 +65,7 @@ export function ClassificationSidebar({
     treeSearch,
     totalAssets,
     unclassifiedCount,
+    unclassifiedLevel,
     drawerOpen,
     onTreeSearch,
     onSelect,
@@ -76,6 +78,8 @@ export function ClassificationSidebar({
     treeSearch: string;
     totalAssets: number;
     unclassifiedCount: number;
+    /** Level akar pohon role aktif — scope "Tanpa Klasifikasi" harus cocok. */
+    unclassifiedLevel: ClassificationLevel;
     drawerOpen: boolean;
     onTreeSearch: (v: string) => void;
     onSelect: (n: BrowseNode) => void;
@@ -83,7 +87,7 @@ export function ClassificationSidebar({
 }) {
     const unclassifiedNode: BrowseNode = {
         id: 'unclassified',
-        level: 'group',
+        level: unclassifiedLevel,
         code: null,
         name: 'Tanpa Klasifikasi',
         description: null,

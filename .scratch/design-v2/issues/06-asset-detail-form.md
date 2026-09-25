@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (status layer), 04 (shell).
 
-**Status:** ready-for-agent
+**Status:** in-progress — 2026-09-25: `.noon dark` wrapper + VibrantBackground removed from Show/Create/Edit (design-restyle pass, ticket 06 partial: visual migration done; StatusHeader reorder, sticky footer, offline/draft states still open)
 
 - [ ] Detail: StatusHeader hierarchy (badge → nama → kode mono → lokasi → actions); DefinitionList 2-col desktop; RelatedTabs (Riwayat, Label)
 - [ ] AccountingPanel (nilai perolehan, masa manfaat, metode & akumulasi penyusutan, nilai buku) renders only for Aktiva Tetap; hidden for Peralatan (FR-13.6)

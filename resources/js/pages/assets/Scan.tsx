@@ -9,7 +9,6 @@ import {
     MapPin,
     Package,
     ScanLine,
-    ShieldCheck,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { VibrantBackground } from '@/components/vibrant-background';
+import { TipeBadge } from '@/lib/asset-status';
 import { StatusBadge } from '@/lib/asset-status';
 import { cn } from '@/lib/utils';
 import {
@@ -44,6 +43,7 @@ type ScannedAsset = {
     condition: string | null;
     serial_number: string | null;
     photo_url: string[];
+    asset_type: string | null;
     item: { id: string; name: string; code: string } | null;
     location: { id: string; name: string } | null;
     department: { id_department: string; nama_department: string } | null;
@@ -182,8 +182,7 @@ export default function AssetScan() {
         : '';
 
     return (
-        <div className="noon dark relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
-            <VibrantBackground variant="default" />
+        <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
             <div className="mx-auto w-full max-w-3xl">
                 <button
                     type="button"
@@ -194,12 +193,12 @@ export default function AssetScan() {
                     Kembali ke Daftar Aset
                 </button>
 
-                <div className="card-enter mt-5 flex items-center gap-4">
-                    <div className="glass-card flex size-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary shadow-md ring-1 ring-primary/10">
+                <div className="mt-5 flex items-center gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
                         <ScanLine className="size-6" strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h1 className="text-[2rem] font-bold tracking-[-0.02em] text-foreground">
+                        <h1 className="text-2xl font-bold tracking-[-0.02em] text-foreground">
                             Scan Aset
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -209,8 +208,8 @@ export default function AssetScan() {
                     </div>
                 </div>
 
-                <div className="card-enter mt-6 space-y-4">
-                    <div className="glass-panel relative overflow-hidden rounded-xl p-4">
+                <div className="mt-6 space-y-4">
+                    <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4">
                         <div
                             id={SCANNER_ID}
                             className={cn(
@@ -232,7 +231,7 @@ export default function AssetScan() {
                                 </p>
                                 <Button
                                     onClick={startCamera}
-                                    className="gap-2 rounded-md hover:shadow-[0_0_24px_-6px_var(--primary)]"
+                                    className="gap-2 font-semibold"
                                 >
                                     <Camera className="size-4" />
                                     Mulai Kamera
@@ -247,8 +246,13 @@ export default function AssetScan() {
                         )}
 
                         {cameraActive && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="pointer-events-none size-[260px] rounded-xl border-2 border-primary/60" />
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                <div className="relative size-[260px]">
+                                    <span className="absolute top-0 left-0 size-8 rounded-tl-lg border-t-2 border-l-2 border-primary" />
+                                    <span className="absolute top-0 right-0 size-8 rounded-tr-lg border-t-2 border-r-2 border-primary" />
+                                    <span className="absolute bottom-0 left-0 size-8 rounded-bl-lg border-b-2 border-l-2 border-primary" />
+                                    <span className="absolute right-0 bottom-0 size-8 rounded-br-lg border-r-2 border-b-2 border-primary" />
+                                </div>
                             </div>
                         )}
 
@@ -262,7 +266,7 @@ export default function AssetScan() {
 
                     <form
                         onSubmit={handleManualSubmit}
-                        className="glass-panel flex flex-col gap-3 rounded-xl p-4 sm:flex-row"
+                        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row"
                     >
                         <div className="relative min-w-0 flex-1">
                             <Package className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -278,7 +282,7 @@ export default function AssetScan() {
                         <Button
                             type="submit"
                             disabled={searching || !manualCode.trim()}
-                            className="h-11! gap-2 rounded-md hover:shadow-[0_0_24px_-6px_var(--primary)]"
+                            className="h-11! gap-2 font-semibold"
                         >
                             {searching ? (
                                 <Loader2 className="size-4 animate-spin" />
@@ -299,7 +303,7 @@ export default function AssetScan() {
             </div>
 
             <Dialog open={resultOpen} onOpenChange={setResultOpen}>
-                <DialogContent className="rounded-xl border border-white/20 bg-white/90 shadow-2xl backdrop-blur-xl sm:max-w-md dark:bg-zinc-900/85">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Aset Ditemukan</DialogTitle>
                         <DialogDescription>
@@ -309,50 +313,55 @@ export default function AssetScan() {
 
                     {result && (
                         <div className="grid gap-4">
-                            <button
-                                type="button"
-                                onClick={openDetail}
-                                className="flex items-center gap-3.5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10"
-                            >
-                                {result.photo_url?.[0] ? (
-                                    <img
-                                        src={result.photo_url[0]}
-                                        alt="Foto aset"
-                                        className="size-12 shrink-0 rounded-md border border-border/70 object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                                        <Boxes
-                                            className="size-5"
-                                            strokeWidth={1.5}
+                            {/* Hierarki baca F1: status terbesar → identitas → lokasi → tipe */}
+                            <div className="flex flex-col gap-3">
+                                <StatusBadge value={result.status} />
+                                <button
+                                    type="button"
+                                    onClick={openDetail}
+                                    className="flex items-center gap-3.5 rounded-lg border border-border bg-surface-sunken/50 p-4 text-left transition-colors hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60"
+                                >
+                                    {result.photo_url?.[0] ? (
+                                        <img
+                                            src={result.photo_url[0]}
+                                            alt="Foto aset"
+                                            className="size-12 shrink-0 rounded-md border border-border object-cover"
                                         />
-                                    </div>
-                                )}
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold text-foreground">
-                                        {result.item?.name ?? 'Aset'}
-                                    </p>
-                                    <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-primary tabular-nums">
-                                        {result.kode_asset ?? '—'}
-                                    </p>
-                                    {chain ? (
-                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                            {chain}
+                                    ) : (
+                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                            <Boxes
+                                                className="size-5"
+                                                strokeWidth={1.5}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <p className="truncate text-base font-semibold text-foreground">
+                                            {result.item?.name ?? 'Aset'}
                                         </p>
-                                    ) : null}
-                                </div>
-                            </button>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-lg border border-border/70 bg-card/60 p-3">
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Status
+                                        <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-foreground tabular-nums">
+                                            {result.kode_asset ?? '—'}
+                                        </p>
+                                        {chain ? (
+                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {chain}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                </button>
+                                <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
+                                    <MapPin className="size-4 shrink-0 text-muted-foreground" />
+                                    <p className="min-w-0 truncate text-sm font-medium text-foreground">
+                                        {result.location?.name ?? 'Lokasi —'}
                                     </p>
-                                    <span className="mt-2 inline-flex">
-                                        <StatusBadge value={result.status} />
+                                    <span className="ml-auto shrink-0">
+                                        <TipeBadge value={result.asset_type} />
                                     </span>
                                 </div>
-                                <div className="rounded-lg border border-border/70 bg-card/60 p-3">
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
                                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Kondisi
                                     </p>
@@ -360,27 +369,13 @@ export default function AssetScan() {
                                         {result.condition ?? '—'}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card/60 p-3">
-                                    <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                            Lokasi
-                                        </p>
-                                        <p className="truncate text-sm font-semibold text-foreground">
-                                            {result.location?.name ?? '—'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card/60 p-3">
-                                    <ShieldCheck className="size-4 shrink-0 text-muted-foreground" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                            Serial
-                                        </p>
-                                        <p className="truncate font-mono text-sm font-semibold text-foreground">
-                                            {result.serial_number ?? '—'}
-                                        </p>
-                                    </div>
+                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Serial
+                                    </p>
+                                    <p className="mt-2 truncate font-mono text-sm font-semibold text-foreground tabular-nums">
+                                        {result.serial_number ?? '—'}
+                                    </p>
                                 </div>
                             </div>
                         </div>

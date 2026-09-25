@@ -11,46 +11,105 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCan } from '@/hooks/use-can';
 import { withReturnTo } from '@/lib/asset-return';
-import { cn } from '@/lib/utils';
-import { create, importTemplate, labelsBatch, scan } from '@/routes/assets';
+import { LEVEL_SHORT } from '@/lib/classification-levels';
+import {
+    create,
+    importTemplate,
+    labels,
+    labelsBatch,
+    scan,
+} from '@/routes/assets';
+import type { ClassificationLevel } from '@/types/classification';
+
+type Crumb = {
+    id: string;
+    level: ClassificationLevel;
+    code: string | null;
+    name: string;
+};
 
 /**
- * Header halaman Aset — satu baris identitas + hitungan, satu baris aksi.
- * Semua handler tidak berubah.
+ * Kepala halaman Aset — identitas scope sekali di sini (ADR 0001):
+ * induk scope sebagai eyebrow, node aktif sebagai H1 (+ kode mono + label
+ * level). Baris kedua = hitungan hasil, bukan pengulangan scope.
+ * Navigasi/import tidak berubah.
  */
 export function AssetsPageHeader({
     selectedCount,
+    selectedIds,
     total,
     activeFilterCount,
-    contextLabel,
+    breadcrumb,
+    scopeNode,
+    descendantFallback,
     onToggleDrawer,
     onOpenImport,
 }: {
     selectedCount: number;
+    selectedIds: string[];
     total: number;
     activeFilterCount: number;
-    contextLabel: string | null;
+    breadcrumb: Crumb[];
+    scopeNode: {
+        level: ClassificationLevel;
+        name: string;
+        code: string | null;
+    } | null;
+    descendantFallback: boolean;
     onToggleDrawer: () => void;
     onOpenImport: () => void;
 }) {
     const { can } = useCan();
     const canCreate = can('asset.create');
+    const parents = breadcrumb.slice(0, -1);
+    const scopeCode = scopeNode?.code ?? null;
+    const scopeLevelLabel = scopeNode ? LEVEL_SHORT[scopeNode.level] : null;
 
     return (
         <header
             aria-label="Kendali aset"
-            className={cn(
-                'rounded-xl border border-border bg-card',
-                'shadow-[var(--shadow-sticky)]',
-            )}
+            className="rounded-xl border border-border bg-card shadow-[var(--shadow-sticky)]"
         >
             <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground">
-                        {contextLabel ?? 'Semua aset'}
-                    </p>
-                    <h1 className="mt-0.5 text-2xl font-bold tracking-[-0.02em] text-foreground">
-                        Aset
+                    {parents.length > 0 ? (
+                        <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs font-medium tracking-wide text-muted-foreground">
+                            {parents.map((c, i) => (
+                                <span
+                                    key={c.id}
+                                    className="inline-flex min-w-0 items-center gap-1.5"
+                                >
+                                    {i > 0 && (
+                                        <span
+                                            aria-hidden
+                                            className="text-muted-foreground/50"
+                                        >
+                                            /
+                                        </span>
+                                    )}
+                                    <span className="truncate">{c.name}</span>
+                                </span>
+                            ))}
+                        </p>
+                    ) : (
+                        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+                            Semua aset
+                        </p>
+                    )}
+                    <h1 className="mt-0.5 flex min-w-0 items-baseline gap-2 text-2xl font-bold tracking-[-0.02em] text-foreground">
+                        <span className="truncate">
+                            {scopeNode?.name ?? 'Aset'}
+                        </span>
+                        {scopeCode && (
+                            <span className="shrink-0 rounded-md bg-surface-sunken px-1.5 py-0.5 font-mono text-sm font-semibold text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                {scopeCode}
+                            </span>
+                        )}
+                        {scopeLevelLabel && (
+                            <span className="shrink-0 text-sm font-medium text-muted-foreground">
+                                {scopeLevelLabel}
+                            </span>
+                        )}
                     </h1>
                     <p
                         aria-live="polite"
@@ -60,6 +119,11 @@ export function AssetsPageHeader({
                             {total}
                         </span>{' '}
                         aset
+                        {descendantFallback && (
+                            <span className="ml-2 rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-medium text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                termasuk aset di sub-scope
+                            </span>
+                        )}
                         {activeFilterCount > 0 &&
                             ` · ${activeFilterCount} filter aktif`}
                         {selectedCount > 0 && ` · ${selectedCount} dipilih`}
@@ -122,14 +186,24 @@ export function AssetsPageHeader({
                                 </DropdownMenuLabel>
                                 <DropdownMenuItem
                                     disabled={selectedCount === 0}
+                                    asChild
                                 >
-                                    Cetak yang dipilih
+                                    <Link
+                                        href={
+                                            selectedCount > 0
+                                                ? labels.url({
+                                                      query: {
+                                                          ids: selectedIds,
+                                                      },
+                                                  })
+                                                : '#'
+                                        }
+                                    >
+                                        Cetak yang dipilih
+                                    </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link
-                                        href={labelsBatch.url()}
-                                        className="flex items-center gap-2"
-                                    >
+                                    <Link href={labelsBatch.url()}>
                                         Cetak massal
                                     </Link>
                                 </DropdownMenuItem>

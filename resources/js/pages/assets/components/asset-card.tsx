@@ -11,34 +11,61 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { withReturnTo } from '@/lib/asset-return';
 import { StatusBadge, TipeBadge } from '@/lib/asset-status';
+import { LEVEL_SHORT } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
 import { edit, show } from '@/routes/assets';
+import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
 
 /**
  * Kartu aset — komponen tanda tangan sistem (DESIGN.md §7).
  * Hierarki baca: status → nama → kode (mono) → lokasi/departemen.
- * Klasifikasi menjadi satu baris teks tenang; tinta warna hanya
- * untuk status (P1) dan tipe.
+ * Chain klasifikasi scope-relative (ADR 0002): hanya level di bawah
+ * scope, kode mono-first, wrap dua baris — truncation tidak pernah
+ * mengenai kode.
  */
 export function AssetCard({
     asset,
     selected,
+    scopeLevel,
     onSelect,
     onDelete,
 }: {
     asset: Asset;
     selected: boolean;
+    scopeLevel: ClassificationLevel | null;
     onSelect: () => void;
     onDelete: () => void;
 }) {
-    const chain = [
-        asset.asset_category?.name,
-        asset.asset_cluster?.name,
-        asset.asset_sub_cluster?.name,
-    ]
-        .filter(Boolean)
-        .join(' · ');
+    const byLevel = {
+        group: asset.asset_group,
+        category: asset.asset_category,
+        cluster: asset.asset_cluster,
+        'sub-cluster': asset.asset_sub_cluster,
+    };
+    const order: ClassificationLevel[] = [
+        'group',
+        'category',
+        'cluster',
+        'sub-cluster',
+    ];
+    const chainLevels = scopeLevel
+        ? order.slice(order.indexOf(scopeLevel) + 1)
+        : order;
+    const chainParts = chainLevels
+        .map((level) => {
+            const node = byLevel[level];
+
+            return node
+                ? {
+                      key: level,
+                      code: node.code,
+                      name: node.name,
+                      label: LEVEL_SHORT[level],
+                  }
+                : null;
+        })
+        .filter((p) => p !== null);
 
     const photoUrl = asset.photo_url?.[0] ?? null;
     const isDisposed = asset.status === 'DSP';
@@ -113,12 +140,27 @@ export function AssetCard({
                     {asset.serial_number && ` · SN ${asset.serial_number}`}
                 </p>
 
-                {chain && (
+                {chainParts.length > 0 && (
                     <p
                         aria-label="Klasifikasi"
-                        className="truncate text-xs text-ink-subtle dark:text-muted-foreground/70"
+                        className="line-clamp-2 text-xs leading-relaxed break-words text-ink-subtle dark:text-muted-foreground/70"
                     >
-                        {chain}
+                        {chainParts.map((part) => (
+                            <span
+                                key={part.key}
+                                className="mr-2 inline-flex items-baseline gap-1"
+                            >
+                                {part.code && (
+                                    <span className="font-mono font-semibold text-foreground/80">
+                                        {part.code}
+                                    </span>
+                                )}
+                                <span>{part.name}</span>
+                                <span className="text-muted-foreground/50">
+                                    {part.label}
+                                </span>
+                            </span>
+                        ))}
                     </p>
                 )}
 

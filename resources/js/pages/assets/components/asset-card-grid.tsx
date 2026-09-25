@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { withReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
 import { create } from '@/routes/assets';
+import type { ClassificationLevel } from '@/types/classification';
 import { AssetCard } from './asset-card';
 import { AssetLedgerTable } from './asset-ledger-table';
 import type { Asset, PaginatedData } from './types';
@@ -28,6 +29,7 @@ const VIEW_OPTIONS: {
 export function AssetCardGrid({
     assets,
     selected,
+    scopeLevel,
     onToggleSelect,
     onDelete,
     search,
@@ -39,6 +41,7 @@ export function AssetCardGrid({
 }: {
     assets: PaginatedData<Asset>;
     selected: Set<string>;
+    scopeLevel: ClassificationLevel | null;
     onToggleSelect: (id: string) => void;
     onDelete: (asset: Asset) => void;
     search: string;
@@ -133,6 +136,7 @@ export function AssetCardGrid({
                     <AssetLedgerTable
                         assets={assets.data}
                         selected={selected}
+                        scopeLevel={scopeLevel}
                         onToggleSelect={onToggleSelect}
                         onDelete={onDelete}
                     />
@@ -148,6 +152,7 @@ export function AssetCardGrid({
                             key={asset.id}
                             asset={asset}
                             selected={selected.has(asset.id)}
+                            scopeLevel={scopeLevel}
                             onSelect={() => onToggleSelect(asset.id)}
                             onDelete={() => onDelete(asset)}
                         />

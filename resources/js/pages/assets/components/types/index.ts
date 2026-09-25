@@ -48,6 +48,8 @@ export type PageProps = {
     }>;
     assets: PaginatedData<Asset> | null;
     unclassifiedCount: number;
+    /** Node scope yang menampilkan semua aset turunannya (tidak ada dead-end). */
+    descendantFallback: boolean;
     groups: Array<{ id: string; code: string | null; name: string }>;
     categories: Array<{
         id: string;
@@ -55,7 +57,8 @@ export type PageProps = {
         name: string;
         asset_group_id: string;
     }>;
-    items: Array<{
+    /** Lazy (Inertia::optional) — undefined sampai dialog impor memintanya. */
+    items?: Array<{
         id: string;
         code: string;
         name: string;
@@ -73,6 +76,7 @@ export type PageProps = {
         level: string;
         node: string;
         initialLevel: string;
+        descendantFallback: boolean;
     };
 };
 

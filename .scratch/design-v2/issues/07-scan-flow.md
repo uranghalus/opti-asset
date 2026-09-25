@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] `.noon` wrapper removed from Scan page; page renders on standard tokens
+- [x] `.noon` wrapper removed from Scan page; page renders on standard tokens (2026-09-25; ScanResultSheet restyled status-first + TipeBadge; real-phone verification still open)
 - [ ] Full-bleed camera viewport with viewfinder framing; manual entry visible below
 - [ ] ScanResultSheet: status badge (largest element) → nama → mono kode → lokasi → tipe badge
 - [ ] Primary Lanjut pindai sticky; secondary Buka detail

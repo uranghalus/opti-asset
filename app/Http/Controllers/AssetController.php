@@ -83,13 +83,16 @@ class AssetController extends Controller
         $initialLevel = $this->initialFilterLevel($request);
         $level = $request->string('level')->trim()->toString();
         $nodeId = $request->string('node')->trim()->toString();
-        $allowedLevels = ['category', 'cluster', 'sub-cluster'];
+        $allowedLevels = $this->allowedBrowseLevels();
         $validLevel = $level !== '' && in_array($level, $allowedLevels, true) && $nodeId !== '';
         $unclassified = $validLevel && $nodeId === self::UNCLASSIFIED_NODE;
 
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
         $assetType = $request->string('asset_type')->trim()->toString();
+        // 'all' dikirim oleh kontrol filter lama — treat sebagai tanpa filter,
+        // bukan nilai kolom (pernah menolkan seluruh hasil).
+        $assetType = in_array($assetType, ['fixed_asset', 'equipment'], true) ? $assetType : '';
         $department = $request->string('department')->trim()->toString();
         $condition = $request->string('condition')->trim()->toString();
         $location = $request->string('location')->trim()->toString();
@@ -97,7 +100,20 @@ class AssetController extends Controller
         $tree = $this->buildBrowseTree();
         $breadcrumb = [];
         $selected = null;
-        $assets = null;
+        $descendantFallback = false;
+
+        // Pencarian & filter bekerja juga tanpa memilih node (FR-04.1):
+        // daftar tidak lagi null di root, hanya kandidat query yang beda.
+        $assetsQuery = Asset::query()
+            ->with([
+                'item:id,name,code',
+                'location:id,name',
+                'department:id_department,nama_department',
+                'assetGroup:id,code,name',
+                'assetCategory:id,code,name',
+                'assetCluster:id,code,name',
+                'assetSubCluster:id,code,name',
+            ]);
 
         if ($validLevel) {
             $breadcrumb = $unclassified
@@ -110,44 +126,62 @@ class AssetController extends Controller
                 'cluster' => 'asset_cluster_id',
                 'sub-cluster' => 'asset_sub_cluster_id',
             };
-            $assets = Asset::query()
-                ->with([
-                    'item:id,name,code',
-                    'location:id,name',
-                    'department:id_department,nama_department',
-                    'assetGroup:id,code,name',
-                    'assetCategory:id,code,name',
-                    'assetCluster:id,code,name',
-                    'assetSubCluster:id,code,name',
-                ])
-                ->when($unclassified, fn ($query) => $query->whereNull($field), fn ($query) => $query->where($field, $nodeId))
-                ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
-                    ->where('kode_asset', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%")
-                    ->orWhere('brand', 'like', "%{$search}%")
-                    ->orWhere('model', 'like', "%{$search}%")
-                    // FR-04.1 — pencarian juga mencocokkan nama item.
-                    ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%"))))
-                ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->when($assetType !== '', fn ($query) => $query->where('asset_type', $assetType))
-                ->when($department !== '', fn ($query) => $query->where('department_id', $department))
-                ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
-                // FR-04.2 — filter lokasi pada halaman daftar aset.
-                ->when($location !== '', fn ($query) => $query->where('location_id', $location))
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage)
-                ->withQueryString();
+
+            if ($unclassified) {
+                $assetsQuery->whereNull($field);
+            } else {
+                $directCount = Asset::query()->where($field, $nodeId)->count();
+
+                if ($directCount === 0) {
+                    // Fallback turunan: node tanpa aset langsung tidak boleh
+                    // menjadi dead-end — tampilkan semua aset di bawahnya.
+                    $descendantIds = $this->descendantScopeIds($level, $nodeId);
+                    $assetsQuery->where(function ($query) use ($field, $nodeId, $descendantIds): void {
+                        $query->where($field, $nodeId);
+
+                        foreach ($descendantIds as $descendantField => $ids) {
+                            $query->orWhereIn($descendantField, $ids);
+                        }
+                    });
+                    $descendantFallback = true;
+                } else {
+                    $assetsQuery->where($field, $nodeId);
+                }
+            }
         }
+
+        $assets = $assetsQuery
+            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                ->where('kode_asset', 'like', "%{$search}%")
+                ->orWhere('serial_number', 'like', "%{$search}%")
+                ->orWhere('brand', 'like', "%{$search}%")
+                ->orWhere('model', 'like', "%{$search}%")
+                // FR-04.1 — pencarian juga mencocokkan nama item.
+                ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%"))))
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($assetType !== '', fn ($query) => $query->where('asset_type', $assetType))
+            ->when($department !== '', fn ($query) => $query->where('department_id', $department))
+            ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
+            // FR-04.2 — filter lokasi pada halaman daftar aset.
+            ->when($location !== '', fn ($query) => $query->where('location_id', $location))
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return [
             'tree' => $tree,
             'selected' => $selected,
             'breadcrumb' => $breadcrumb,
             'assets' => $assets,
-            'unclassifiedCount' => Asset::query()->whereNull('asset_group_id')->count(),
+            'descendantFallback' => $descendantFallback,
+            'unclassifiedCount' => Asset::query()
+                ->whereNull($this->unclassifiedColumnForRoot($initialLevel))
+                ->count(),
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
             'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
-            'items' => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id']),
+            // Daftar item hanya dibutuhkan dialog impor — partial reload
+            // tidak memintanya, jadi muat optional untuk memangkas payload browse.
+            'items' => Inertia::optional(fn () => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id'])),
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
             'departments' => Department::query()->orderBy('nama_department')->get(['id_department', 'nama_department']),
             'filters' => [
@@ -160,6 +194,7 @@ class AssetController extends Controller
                 'level' => $validLevel ? $level : '',
                 'node' => $validLevel ? $nodeId : '',
                 'initialLevel' => $initialLevel,
+                'descendantFallback' => $descendantFallback,
             ],
         ];
     }
@@ -174,6 +209,7 @@ class AssetController extends Controller
                 'selected' => $payload['selected'],
                 'breadcrumb' => $payload['breadcrumb'],
                 'assets' => $payload['assets'],
+                'descendantFallback' => $payload['descendantFallback'],
                 'unclassifiedCount' => $payload['unclassifiedCount'],
                 'filters' => $payload['filters'],
             ]);
@@ -285,6 +321,69 @@ class AssetController extends Controller
             'asset_count' => $subCluster->assets_count,
             'level' => 'sub-cluster',
             'children' => [],
+        ];
+    }
+
+    /**
+     * Browse levels permitted for the current user: staff see the deeper
+     * category root; other roles start at cluster. Mirrors the tree root.
+     *
+     * @return array<int, string>
+     */
+    private function allowedBrowseLevels(): array
+    {
+        $user = request()->user();
+        $isStaff = $user !== null && $user->hasAnyRole(['Asset Staff', 'Accounting', 'staff-asset', 'akunting']);
+
+        return $isStaff
+            ? ['category', 'cluster', 'sub-cluster']
+            : ['cluster', 'sub-cluster'];
+    }
+
+    /**
+     * Kolom "Tanpa Klasifikasi" mengikuti akar pohon peran: staf melihat
+     * pohon kategori, role lain pohon cluster — hitungan orphan harus
+     * cocok dengan simpul yang benar-benar dirender.
+     */
+    private function unclassifiedColumnForRoot(string $initialLevel): string
+    {
+        return $initialLevel === 'category' ? 'asset_category_id' : 'asset_cluster_id';
+    }
+
+    /**
+     * Descendant classification ids per asset column, used by the
+     * no-dead-end fallback: a scope with zero direct assets lists every
+     * asset below it instead of an empty page.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function descendantScopeIds(string $level, string $nodeId): array
+    {
+        if ($level === 'sub-cluster') {
+            return [];
+        }
+
+        if ($level === 'cluster') {
+            return [
+                'asset_sub_cluster_id' => AssetSubCluster::query()
+                    ->where('asset_cluster_id', $nodeId)
+                    ->pluck('id')
+                    ->all(),
+            ];
+        }
+
+        // category level: ids of descendant clusters and sub-clusters.
+        $clusterIds = AssetCluster::query()
+            ->where('asset_category_id', $nodeId)
+            ->pluck('id')
+            ->all();
+
+        return [
+            'asset_cluster_id' => $clusterIds,
+            'asset_sub_cluster_id' => AssetSubCluster::query()
+                ->whereIn('asset_cluster_id', $clusterIds)
+                ->pluck('id')
+                ->all(),
         ];
     }
 

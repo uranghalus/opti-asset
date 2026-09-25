@@ -10,6 +10,7 @@ import { rememberAssetListUrl } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/assets';
 
+import type { ClassificationLevel } from '@/types/classification';
 import { AssetBreadcrumb } from './components/asset-breadcrumb';
 import { AssetBulkToolbar } from './components/asset-bulk-toolbar';
 import type { AssetListView } from './components/asset-card-grid';
@@ -43,7 +44,8 @@ export default function Browse({ pageProps }: BrowseProps) {
         breadcrumb,
         assets,
         unclassifiedCount,
-        items,
+        descendantFallback,
+        items = [],
         locations,
         filters,
     } = pageProps;
@@ -149,6 +151,7 @@ export default function Browse({ pageProps }: BrowseProps) {
                     'breadcrumb',
                     'assets',
                     'unclassifiedCount',
+                    'descendantFallback',
                     'items',
                     'filters',
                 ],
@@ -277,10 +280,6 @@ export default function Browse({ pageProps }: BrowseProps) {
         searchTimer.current = setTimeout(() => reload({ search: value }), 350);
     };
 
-    const contextLabel = selectedNode
-        ? breadcrumb.map((b) => b.name).join(' / ') || selectedNode.name
-        : null;
-
     return (
         <div
             className={cn(
@@ -302,18 +301,23 @@ export default function Browse({ pageProps }: BrowseProps) {
 
                     <AssetsPageHeader
                         selectedCount={selected.size}
+                        selectedIds={Array.from(selected)}
                         total={safeAssets.total}
                         activeFilterCount={activeFilterCount}
-                        contextLabel={contextLabel}
+                        breadcrumb={breadcrumb}
+                        scopeNode={selectedNode}
+                        descendantFallback={descendantFallback}
                         onToggleDrawer={() => setDrawerOpen((v) => !v)}
                         onOpenImport={() => setImportOpen(true)}
                     />
 
-                    <AssetBreadcrumb
-                        breadcrumb={breadcrumb}
-                        onClear={clearNode}
-                        onNavigate={handleNodeSelect}
-                    />
+                    {breadcrumb.length > 0 && (
+                        <AssetBreadcrumb
+                            breadcrumb={breadcrumb.slice(0, -1)}
+                            onClear={clearNode}
+                            onNavigate={handleNodeSelect}
+                        />
+                    )}
 
                     <div className="mt-4">
                         <ImportResultPanel />
@@ -328,6 +332,10 @@ export default function Browse({ pageProps }: BrowseProps) {
                             treeSearch={treeSearch}
                             totalAssets={safeAssets.total}
                             unclassifiedCount={unclassifiedCount ?? 0}
+                            unclassifiedLevel={
+                                (filters.initialLevel as ClassificationLevel) ||
+                                'cluster'
+                            }
                             drawerOpen={drawerOpen}
                             onTreeSearch={setTreeSearch}
                             onSelect={handleNodeSelect}
@@ -372,11 +380,7 @@ export default function Browse({ pageProps }: BrowseProps) {
                                         v ? { location: v } : { location: '' },
                                     );
                                 }}
-                                allSelected={allSelected}
-                                onToggleSelectAll={toggleSelectAll}
                                 hasAssets={safeAssets.data.length > 0}
-                                selectedCount={selected.size}
-                                selectedNodeName={selectedNode?.name ?? null}
                             />
 
                             {selectedNode && childFolders.length > 0 && (
@@ -403,6 +407,10 @@ export default function Browse({ pageProps }: BrowseProps) {
                             <AssetCardGrid
                                 assets={safeAssets}
                                 selected={selected}
+                                scopeLevel={
+                                    (selectedNode?.level as
+                                        ClassificationLevel | undefined) ?? null
+                                }
                                 onToggleSelect={toggleSelect}
                                 onDelete={setDeleting}
                                 search={search}
@@ -436,7 +444,7 @@ export default function Browse({ pageProps }: BrowseProps) {
             />
             <AssetImportDialog
                 open={importOpen}
-                items={items}
+                items={items ?? []}
                 onClose={() => setImportOpen(false)}
             />
 

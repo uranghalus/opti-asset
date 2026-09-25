@@ -4,9 +4,84 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { withReturnTo } from '@/lib/asset-return';
 import { StatusBadge, TipeBadge } from '@/lib/asset-status';
+import { LEVEL_SHORT } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
 import { edit, show } from '@/routes/assets';
+import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
+
+/**
+ * Cakupan aktif (ADR 0002): baris hanya merender level DI BAWAH scope —
+ * node scope sendiri tidak diulang di setiap baris. Kolom menyusut jadi
+ * satu; kode klasifikasi mono-first, wrap dua baris — truncation tidak
+ * pernah mengenai kode.
+ */
+export function scopeColumns(
+    scopeLevel: ClassificationLevel | null,
+): ClassificationLevel[] {
+    const order: ClassificationLevel[] = [
+        'group',
+        'category',
+        'cluster',
+        'sub-cluster',
+    ];
+
+    if (!scopeLevel) {
+        return order;
+    }
+
+    return order.slice(order.indexOf(scopeLevel) + 1);
+}
+
+function ScopeCells({
+    asset,
+    columns,
+}: {
+    asset: Asset;
+    columns: ClassificationLevel[];
+}) {
+    const byLevel = {
+        group: asset.asset_group,
+        category: asset.asset_category,
+        cluster: asset.asset_cluster,
+        'sub-cluster': asset.asset_sub_cluster,
+    };
+
+    if (columns.length === 0) {
+        return <td className="px-3 py-2.5 text-xs text-muted-foreground">—</td>;
+    }
+
+    return (
+        <td className="max-w-[220px] px-3 py-2.5 text-xs">
+            <span className="line-clamp-2 break-words text-ink-subtle dark:text-muted-foreground/70">
+                {columns.map((level) => {
+                    const node = byLevel[level];
+
+                    if (!node) {
+                        return null;
+                    }
+
+                    return (
+                        <span
+                            key={level}
+                            className="mr-2 inline-flex items-baseline gap-1"
+                        >
+                            {node.code && (
+                                <span className="font-mono font-semibold text-foreground/80">
+                                    {node.code}
+                                </span>
+                            )}
+                            <span>{node.name}</span>
+                            <span className="text-muted-foreground/50">
+                                {LEVEL_SHORT[level]}
+                            </span>
+                        </span>
+                    );
+                })}
+            </span>
+        </td>
+    );
+}
 
 /**
  * Tabel ledger desktop (≥1280px, DESIGN.md §9): kepala kolom sunken,
@@ -16,14 +91,18 @@ import type { Asset } from './types';
 export function AssetLedgerTable({
     assets,
     selected,
+    scopeLevel,
     onToggleSelect,
     onDelete,
 }: {
     assets: Asset[];
     selected: Set<string>;
+    scopeLevel: ClassificationLevel | null;
     onToggleSelect: (id: string) => void;
     onDelete: (asset: Asset) => void;
 }) {
+    const scopeCols = scopeColumns(scopeLevel);
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
@@ -46,6 +125,15 @@ export function AssetLedgerTable({
                         </th>
                         <th scope="col" className="px-3 py-2.5">
                             Klasifikasi
+                            {scopeCols.length > 0 && (
+                                <span className="ml-1.5 font-normal normal-case opacity-70">
+                                    (
+                                    {scopeCols
+                                        .map((l) => LEVEL_SHORT[l])
+                                        .join(' › ')}
+                                    )
+                                </span>
+                            )}
                         </th>
                         <th scope="col" className="px-3 py-2.5">
                             Lokasi
@@ -120,17 +208,7 @@ export function AssetLedgerTable({
                                 <td className="px-3 py-2.5">
                                     <TipeBadge value={asset.asset_type} />
                                 </td>
-                                <td className="max-w-[200px] px-3 py-2.5 text-xs text-ink-subtle dark:text-muted-foreground/70">
-                                    <span className="block truncate">
-                                        {[
-                                            asset.asset_category?.name,
-                                            asset.asset_cluster?.name,
-                                            asset.asset_sub_cluster?.name,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ') || '—'}
-                                    </span>
-                                </td>
+                                <ScopeCells asset={asset} columns={scopeCols} />
                                 <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
                                         {asset.location?.name ?? '—'}

@@ -16,6 +16,9 @@ export function useLocalStorage<T extends string>(
     const set = useCallback(
         (next: T) => {
             setValue(next);
+            // Cache dibawa juga, kalau tidak render membaca nilai lama
+            // sampai reload (bug toggle Tabel/Kartu yang pernah dilaporkan).
+            setCached(next);
 
             try {
                 window.localStorage.setItem(key, next);

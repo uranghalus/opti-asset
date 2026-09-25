@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { Check, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -185,6 +185,14 @@ export function AssetImportDialog({
     const [file, setFile] = useState<File | null>(null);
     const [itemId, setItemId] = useState('');
     const [importing, setImporting] = useState(false);
+
+    // `items` dimuat lazy (Inertia optional prop) — ambil saat dialog
+    // dibuka pertama kali lewat partial reload, bukan di setiap kunjungan.
+    useEffect(() => {
+        if (open && items.length === 0) {
+            router.reload({ only: ['items'] });
+        }
+    }, [open, items.length]);
 
     const handleImport = () => {
         if (!file || importing) {

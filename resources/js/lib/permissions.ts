@@ -19,7 +19,7 @@ export function canSeeNavItem(
 ): boolean {
     const meta = item.permission;
 
-    if (! meta) {
+    if (!meta) {
         return true;
     }
 
@@ -32,10 +32,9 @@ export function canSeeNavItem(
  * Filter nav groups, dropping items the user cannot see and groups left
  * empty by that filtering.
  */
-export function filterNavGroups<T extends { items: Array<{ permission?: PermissionMeta }> }>(
-    groups: T[],
-    checker: PermissionChecker,
-): T[] {
+export function filterNavGroups<
+    T extends { items: Array<{ permission?: PermissionMeta }> },
+>(groups: T[], checker: PermissionChecker): T[] {
     return groups
         .map((group) => ({
             ...group,

@@ -42,7 +42,7 @@ export default function AppSidebarLayout({
             )}
             <AppContent
                 variant="sidebar"
-                className="overflow-x-hidden bg-transparent pb-[56px] lg:pb-0"
+                className="overflow-x-hidden bg-transparent pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0"
             >
                 <AppSidebarHeader onMenuClick={() => setSidebarOpen(true)} />
                 {children}

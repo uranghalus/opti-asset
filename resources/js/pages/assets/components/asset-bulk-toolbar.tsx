@@ -27,7 +27,7 @@ export function AssetBulkToolbar({
                 'stamp-slam fixed inset-x-3 z-40 flex items-center justify-between gap-3',
                 'rounded-xl border border-border bg-card p-2.5 pl-4',
                 'shadow-[var(--shadow-overlay)]',
-                'bottom-[calc(4rem+env(safe-area-inset-bottom))]',
+                'bottom-[calc(56px+env(safe-area-inset-bottom))]',
                 'lg:sticky lg:bottom-6 lg:mx-auto lg:w-fit lg:min-w-[420px]',
             )}
         >

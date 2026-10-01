@@ -1,5 +1,58 @@
 # AGENTS.md — Opti-Asset (Laravel + Inertia + React)
 
+# Worklog Protocol — WAJIB sebelum pekerjaan apa pun
+
+Setiap pekerjaan harus punya rencana task di `.worklog.yml` (root repo) SEBELUM ada kode yang ditulis, file yang diubah, atau commit yang dibuat. Progress laporan harian dihitung otomatis dari rencana ini, jadi tanpa rencana pekerjaan tidak akan tercatat.
+
+Urutan sesi: (1) baca memori (lihat Memory Protocol) → (2) buat/pilih task di `.worklog.yml` → (3) baru mulai bekerja.
+
+## Aturan
+
+1. Sebelum mulai, cek `.worklog.yml`. Jika sudah ada task aktif yang cocok dengan pekerjaan ini, lanjutkan task itu. Jika belum ada, buat entri baru dulu. Jika file belum ada, buat file dengan skema di bawah.
+2. Berlaku untuk SEMUA pekerjaan, sekecil apa pun (bugfix, refactor, perbaikan lint). Pekerjaan kecil cukup 1–2 langkah, tetapi tetap harus punya entri.
+3. Tampilkan rencana (key, judul, langkah) kepada user dan tunggu persetujuan singkat sebelum mengubah kode. Jika user sudah menyebut langkah-langkahnya, pakai itu apa adanya.
+4. Setiap commit yang dibuat WAJIB memakai trailer `Task` dan `Done` (lihat Format Commit). Commit tanpa trailer `Task` tidak boleh dibuat.
+5. Tandai langkah di `Done` hanya jika langkah itu benar-benar selesai dan terverifikasi (tes terkait lulus, format/lint bersih). Jangan menandai langkah di depan hanya karena mengerjakannya sekilas.
+6. Jangan menulis progress (persen), `tanggal_mulai`, atau `tanggal_selesai` di mana pun. Semuanya dihitung otomatis dari trailer commit dan tanggal commit.
+7. Perubahan rencana di tengah jalan: langkah baru boleh ditambahkan di akhir, dan teks langkah yang belum selesai boleh diperbaiki. Langkah yang sudah pernah ditandai `Done` tidak boleh dihapus, digeser, atau diganti hurufnya. Beri tahu user bahwa menambah langkah menurunkan persentase progress.
+8. Jika satu pekerjaan ternyata mencakup beberapa fitur yang berbeda, pecah menjadi beberapa task, masing-masing dengan key sendiri. Satu commit hanya boleh milik satu `Task`.
+9. Catat key task aktif dan langkah yang sudah selesai di log sesi (`Memory/logs/YYYY-MM-DD.md`) supaya sesi berikutnya bisa melanjutkan.
+10. `.worklog.yml` adalah file operasional, bukan file dokumentasi, dan berada di root repo (bukan folder baru). Aturan "dokumentasi hanya jika diminta" dan "jangan buat folder dasar baru" tidak berlaku untuknya.
+
+## Skema `.worklog.yml`
+
+```yaml
+tasks:
+    extend-wo: # key: kebab-case, unik, stabil (dipakai di trailer commit)
+        title: 'Extend Work Order: Approval Berjenjang TL - HOD (FR-10)' # gaya judul laporan, Bahasa Indonesia
+        steps: # 1–8 langkah, huruf kecil berurutan a, b, c, ...
+            a: Migrasi & model
+            b: Service approval
+            c: Controller & policy
+            d: UI React
+            e: Test
+```
+
+- Setiap langkah adalah satu hasil yang bisa diverifikasi, bukan aktivitas kabur seperti "mengerjakan fitur".
+- Opsional per langkah untuk bobot berbeda: `d: { text: "UI React", weight: 2 }`. Tanpa `weight`, semua langkah berbobot sama.
+- Judul mengikuti gaya laporan yang sudah dipakai: `Sprint N - Judul Fitur (FR-xx)` bila relevan.
+
+## Format Commit
+
+Subject mengikuti gaya yang sudah dipakai repo, lalu trailer di bagian akhir (dipisah satu baris kosong dari body):
+
+```
+feat(extend-wo): tambah UI approval berjenjang
+
+Task: extend-wo
+Done: c,d
+```
+
+- `Task`: key dari `.worklog.yml`. Wajib di setiap commit.
+- `Done`: huruf langkah yang selesai oleh commit ini, dipisah koma. `Done: d` hanya menandai langkah d, bukan a sampai d. Boleh dikosongkan atau dihilangkan jika commit hanya kemajuan parsial tanpa langkah yang tuntas.
+- Progress = langkah selesai (kumulatif lintas commit dan hari) ÷ total langkah (berbobot) × 100.
+- Jika menandai langkah yang melompati langkah sebelumnya yang belum selesai (misalnya `Done: d` padahal `b` belum), jelaskan alasannya di body commit.
+
 # Memory Protocol — Vault: Opti-Asset
 
 OpenCode punya akses ke vault Obsidian bernama "Opti-Asset" lewat MCP tool `obsidian`.
@@ -333,6 +386,7 @@ This project has a knowledge graph at graphify-out/ with god nodes, community st
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
 
 Rules:
+
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.

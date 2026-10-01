@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ClassificationType;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\FlushesClassificationCache;
 use Database\Factories\AssetSubClusterFactory;
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string|null $notes
  * @property string $type
+ * @property ClassificationType|null $classification_type
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -38,7 +40,15 @@ class AssetSubCluster extends Model
         'description',
         'notes',
         'type',
+        'classification_type',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'classification_type' => ClassificationType::class,
+        ];
+    }
 
     /** @return BelongsTo<AssetCluster, $this> */
     public function assetCluster(): BelongsTo

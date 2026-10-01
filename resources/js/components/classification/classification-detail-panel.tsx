@@ -80,6 +80,7 @@ export function ClassificationDetailPanel({
         name: node.name,
         description: node.description ?? '',
         notes: node.notes ?? '',
+        classification_type: '',
     });
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

@@ -93,6 +93,7 @@ class AssetClassificationTest extends TestCase
     public function test_group_can_be_created(): void
     {
         $this->actingAs($this->user)->post(route('asset-classification.groups.store'), [
+            'classification_type' => 'peralatan',
             'code' => '02',
             'name' => 'Mesin',
             'description' => 'Peralatan produksi',
@@ -103,6 +104,7 @@ class AssetClassificationTest extends TestCase
         $this->assertNotNull($group);
         $this->assertSame($this->tenant->id, $group->tenant_id);
         $this->assertSame('Mesin', $group->name);
+        $this->assertSame('peralatan', $group->classification_type?->value);
     }
 
     public function test_group_name_is_required(): void
@@ -120,10 +122,19 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->from(route('asset-classification.index'))
             ->post(route('asset-classification.groups.store'), [
+                'classification_type' => 'aktiva_tetap',
                 'code' => '01',
                 'name' => 'Duplikat',
             ])
             ->assertSessionHasErrors('code');
+    }
+
+    public function test_group_classification_type_is_required(): void
+    {
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.groups.store'), ['code' => '03', 'name' => 'Tanpa Tipe'])
+            ->assertSessionHasErrors('classification_type');
     }
 
     public function test_same_group_code_allowed_in_another_tenant(): void
@@ -136,6 +147,7 @@ class AssetClassificationTest extends TestCase
 
         $this->actingAs($this->user)
             ->post(route('asset-classification.groups.store'), [
+                'classification_type' => 'aktiva_tetap',
                 'code' => '01',
                 'name' => 'Golongan',
             ])
@@ -188,6 +200,7 @@ class AssetClassificationTest extends TestCase
 
         $this->actingAs($this->user)->post(route('asset-classification.categories.store'), [
             'asset_group_id' => $group->id,
+            'classification_type' => 'aktiva_tetap',
             'code' => '01.01',
             'name' => 'Komputer',
         ])->assertRedirect();
@@ -197,6 +210,20 @@ class AssetClassificationTest extends TestCase
         $this->assertNotNull($category);
         $this->assertSame($group->id, $category->asset_group_id);
         $this->assertSame($this->tenant->id, $category->tenant_id);
+    }
+
+    public function test_category_type_must_match_its_group(): void
+    {
+        $group = AssetGroup::factory()->peralatan()->create();
+
+        $this->actingAs($this->user)
+            ->from(route('asset-classification.index'))
+            ->post(route('asset-classification.categories.store'), [
+                'asset_group_id' => $group->id,
+                'classification_type' => 'aktiva_tetap',
+                'name' => 'Kategori Salah Tipe',
+            ])
+            ->assertSessionHasErrors('classification_type');
     }
 
     public function test_category_cannot_be_created_under_another_tenants_group(): void
@@ -209,6 +236,7 @@ class AssetClassificationTest extends TestCase
             ->from(route('asset-classification.index'))
             ->post(route('asset-classification.categories.store'), [
                 'asset_group_id' => $foreignGroup->id,
+                'classification_type' => 'aktiva_tetap',
                 'name' => 'Kategori Asing',
             ])
             ->assertNotFound();
@@ -344,10 +372,10 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('asset-classification.import'), [
                 'rows' => [
-                    ['level' => 'group', 'code' => '01', 'name' => 'Elektronik'],
-                    ['level' => 'category', 'code' => '01.01', 'name' => 'Komputer', 'parent_code' => '01'],
-                    ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Desktop', 'parent_code' => '01.01'],
-                    ['level' => 'sub-cluster', 'name' => 'Workstation', 'parent_code' => '01.01.01'],
+                    ['level' => 'group', 'tipe' => 'peralatan', 'code' => '01', 'name' => 'Elektronik'],
+                    ['level' => 'category', 'tipe' => 'peralatan', 'code' => '01.01', 'name' => 'Komputer', 'parent_code' => '01'],
+                    ['level' => 'cluster', 'tipe' => 'peralatan', 'code' => '01.01.01', 'name' => 'Desktop', 'parent_code' => '01.01'],
+                    ['level' => 'sub-cluster', 'tipe' => 'peralatan', 'name' => 'Workstation', 'parent_code' => '01.01.01'],
                 ],
             ])
             ->assertRedirect();
@@ -372,7 +400,7 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('asset-classification.import'), [
                 'rows' => [
-                    ['level' => 'category', 'code' => '99', 'name' => 'Yatim', 'parent_code' => 'tidak-ada'],
+                    ['level' => 'category', 'tipe' => 'peralatan', 'code' => '99', 'name' => 'Yatim', 'parent_code' => 'tidak-ada'],
                 ],
             ])
             ->assertRedirect();
@@ -385,11 +413,11 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('asset-classification.import'), [
                 'rows' => [
-                    ['level' => 'group', 'code' => '01', 'name' => 'Tanah'],
-                    ['level' => 'category', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
-                    ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Fire Cabinet', 'parent_code' => '01.01.01'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Fire Cabinet (Baru)', 'parent_code' => '01.01.01'],
+                    ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Tanah'],
+                    ['level' => 'category', 'tipe' => 'aktiva_tetap', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
+                    ['level' => 'cluster', 'tipe' => 'aktiva_tetap', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+                    ['level' => 'sub-cluster', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Fire Cabinet', 'parent_code' => '01.01.01'],
+                    ['level' => 'sub-cluster', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Fire Cabinet (Baru)', 'parent_code' => '01.01.01'],
                 ],
             ])
             ->assertRedirect();
@@ -401,10 +429,10 @@ class AssetClassificationTest extends TestCase
     public function test_import_can_be_repeated_without_duplicating(): void
     {
         $rows = [
-            ['level' => 'group', 'code' => '01', 'name' => 'Tanah'],
-            ['level' => 'category', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
-            ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
-            ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
+            ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Tanah'],
+            ['level' => 'category', 'tipe' => 'aktiva_tetap', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
+            ['level' => 'cluster', 'tipe' => 'aktiva_tetap', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+            ['level' => 'sub-cluster', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
         ];
 
         $this->actingAs($this->user)
@@ -426,14 +454,14 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('asset-classification.import'), [
                 'rows' => [
-                    ['level' => 'group', 'code' => '01', 'name' => 'Golongan Tanah'],
-                    ['level' => 'group', 'code' => '02', 'name' => 'Golongan Bangunan'],
-                    ['level' => 'category', 'code' => '01.01', 'name' => 'Tanah', 'parent_code' => '01'],
-                    ['level' => 'category', 'code' => '02.01', 'name' => 'Tanah', 'parent_code' => '02'],
-                    ['level' => 'cluster', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
-                    ['level' => 'cluster', 'code' => '02.01.01', 'name' => 'Standar', 'parent_code' => '02.01'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Kavling 100m2', 'parent_code' => '02.01.01'],
+                    ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Golongan Tanah'],
+                    ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '02', 'name' => 'Golongan Bangunan'],
+                    ['level' => 'category', 'tipe' => 'aktiva_tetap', 'code' => '01.01', 'name' => 'Tanah', 'parent_code' => '01'],
+                    ['level' => 'category', 'tipe' => 'aktiva_tetap', 'code' => '02.01', 'name' => 'Tanah', 'parent_code' => '02'],
+                    ['level' => 'cluster', 'tipe' => 'aktiva_tetap', 'code' => '01.01.01', 'name' => 'Standar', 'parent_code' => '01.01'],
+                    ['level' => 'cluster', 'tipe' => 'aktiva_tetap', 'code' => '02.01.01', 'name' => 'Standar', 'parent_code' => '02.01'],
+                    ['level' => 'sub-cluster', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Kavling 60m2', 'parent_code' => '01.01.01'],
+                    ['level' => 'sub-cluster', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Kavling 100m2', 'parent_code' => '02.01.01'],
                 ],
             ])
             ->assertRedirect();
@@ -467,13 +495,13 @@ class AssetClassificationTest extends TestCase
         $this->actingAs($this->user)
             ->post(route('asset-classification.import'), [
                 'rows' => [
-                    ['level' => 'group',       'code' => '03', 'name' => 'Layanan Peralatan & Mesin', 'parent_code' => ''],
-                    ['level' => 'category',    'code' => '03', 'name' => 'Alat MEP',                  'parent_code' => '03'],
-                    ['level' => 'cluster',     'code' => '11', 'name' => 'Mechanical',                'parent_code' => '03.03'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Travelator',                'parent_code' => '03.03.11'],
-                    ['level' => 'sub-cluster', 'code' => '02', 'name' => 'Escalator',                 'parent_code' => '03.03.11'],
-                    ['level' => 'cluster',     'code' => '12', 'name' => 'Pendingin',                 'parent_code' => '03.03'],
-                    ['level' => 'sub-cluster', 'code' => '01', 'name' => 'Chiller',                   'parent_code' => '03.03.12'],
+                    ['level' => 'group',       'tipe' => 'peralatan', 'code' => '03', 'name' => 'Layanan Peralatan & Mesin', 'parent_code' => ''],
+                    ['level' => 'category',    'tipe' => 'peralatan', 'code' => '03', 'name' => 'Alat MEP',                  'parent_code' => '03'],
+                    ['level' => 'cluster',     'tipe' => 'peralatan', 'code' => '11', 'name' => 'Mechanical',                'parent_code' => '03.03'],
+                    ['level' => 'sub-cluster', 'tipe' => 'peralatan', 'code' => '01', 'name' => 'Travelator',                'parent_code' => '03.03.11'],
+                    ['level' => 'sub-cluster', 'tipe' => 'peralatan', 'code' => '02', 'name' => 'Escalator',                 'parent_code' => '03.03.11'],
+                    ['level' => 'cluster',     'tipe' => 'peralatan', 'code' => '12', 'name' => 'Pendingin',                 'parent_code' => '03.03'],
+                    ['level' => 'sub-cluster', 'tipe' => 'peralatan', 'code' => '01', 'name' => 'Chiller',                   'parent_code' => '03.03.12'],
                 ],
             ])
             ->assertRedirect();
@@ -621,10 +649,10 @@ class AssetClassificationTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'klas').'.xlsx';
         $writer = new Writer;
         $writer->openToFile($path);
-        $writer->addRow(Row::fromValues(['Golongan Aset', 'Bidang/Kategori Aset', 'Kelompok Aset', 'Sub Kelompok Aset', 'Uraian', 'Keterangan']));
-        $writer->addRow(Row::fromValues(['05', '', '', '', 'Golongan Percobaan', '']));
-        $writer->addRow(Row::fromValues(['05', '01', '', '', 'Kategori Percobaan', '']));
-        $writer->addRow(Row::fromValues(['05', '01', '02', '', 'Cluster Percobaan', '']));
+        $writer->addRow(Row::fromValues(['Golongan Aset', 'Bidang/Kategori Aset', 'Kelompok Aset', 'Sub Kelompok Aset', 'Uraian', 'Keterangan', 'Tipe']));
+        $writer->addRow(Row::fromValues(['05', '', '', '', 'Golongan Percobaan', '', 'aktiva_tetap']));
+        $writer->addRow(Row::fromValues(['05', '01', '', '', 'Kategori Percobaan', '', 'aktiva_tetap']));
+        $writer->addRow(Row::fromValues(['05', '01', '02', '', 'Cluster Percobaan', '', 'aktiva_tetap']));
         $writer->close();
 
         $file = new UploadedFile($path, 'hierarki.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);

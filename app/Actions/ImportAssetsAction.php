@@ -516,8 +516,18 @@ class ImportAssetsAction
             return ['classification' => null, 'errors' => $errors];
         }
 
-        // Level 1 — Group (by code)
-        $group = AssetGroup::query()->where('code', $parts[0])->first(['id', 'code']);
+        // Level 1 — Group (by code). With per-type trees the same code can
+        // exist in both types — an ambiguous code must be reported per row,
+        // not guessed.
+        $groups = AssetGroup::query()->where('code', $parts[0])->get(['id', 'code']);
+
+        if ($groups->count() > 1) {
+            $errors[] = "Golongan '{$parts[0]}' ambigu: kode sama ada di lebih dari satu tipe klasifikasi";
+
+            return ['classification' => null, 'errors' => $errors];
+        }
+
+        $group = $groups->first();
 
         if ($group === null) {
             $errors[] = "Golongan '{$parts[0]}' tidak ditemukan di master data";

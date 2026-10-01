@@ -6,6 +6,7 @@ export type ClassificationNode = {
     code: string | null;
     name: string;
     description: string | null;
+    classification_type?: string | null;
     notes?: string | null;
     child_count: number;
     asset_count?: number;
@@ -19,6 +20,7 @@ export type ClassificationFormValues = {
     name: string;
     description: string;
     notes: string;
+    classification_type: string;
 };
 
 export const LEVEL_LABELS: Record<ClassificationLevel, string> = {
@@ -26,6 +28,11 @@ export const LEVEL_LABELS: Record<ClassificationLevel, string> = {
     category: 'Kategori Asset',
     cluster: 'Cluster Asset',
     'sub-cluster': 'Sub Cluster Asset',
+};
+
+export const TIPE_LABELS: Record<string, string> = {
+    peralatan: 'Peralatan',
+    aktiva_tetap: 'Aktiva Tetap',
 };
 
 export const CHILD_LABELS: Record<

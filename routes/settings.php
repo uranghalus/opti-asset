@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\CapitalizationThresholdController;
+use App\Http\Controllers\Settings\DepreciationController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 
     // FR-13.3 — Ambang batas kapitalisasi (Super User / setting.edit)
+    Route::get('settings/depreciation', [DepreciationController::class, 'index'])
+        ->name('settings.depreciation.index');
+
+    Route::post('settings/depreciation/run', [DepreciationController::class, 'run'])
+        ->name('settings.depreciation.run');
+
     Route::get('settings/capitalization-threshold', [CapitalizationThresholdController::class, 'index'])
         ->name('settings.capitalization-threshold.index');
 

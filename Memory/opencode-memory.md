@@ -90,6 +90,39 @@ architectural state. Session-by-session detail lives in the logs; check here fir
 
 ## Key Decisions (chronological)
 
+- 2026-10-01: **Classification v2 Fase 1 shipped** — dimensi tipe klasifikasi tingkat atas
+  (`peralatan`/`aktiva_tetap`) membagi pohon klasifikasi. Enum `App\Enums\ClassificationType`
+  dengan `toAssetType()` sebagai SATU titik mapping ke `asset_type` (jangan mapping tersebar).
+  `classification_type` di 4 tabel klasifikasi + composite FK `(parent_id, classification_type)`
+  → parent unique `(id, classification_type)` (terbukti jalan di SQLite & MySQL; SQLite bisa
+  menambah FK via Schema::table). Backfill via command `app:backfill-classification-type`
+  (bukan migration — DML terpisah, idempotent, `--dry-run` report): unmapped mewarisi tipe
+  parent, root default `aktiva_tetap` pending review, konflik tipe TIDAK ditulis (daftar
+  conflicts). Gotcha: node sudah bertipe dari run parsial "invisible" → parentTypeFor fallback
+  ke tipe DB parent. NOT NULL ditunda ke Fase 2 setelah review bisnis. Plan:
+  `PLAN_asset_classification_v2.md`.
+- 2026-10-01: **Classification v2 Fase 2 shipped** — validasi + kode + import. Migration unik
+  per Q8 (Group `(tenant_id, classification_type, code)`, child `+parent_id`). Controller:
+  `classification_type` required di store, immutable di update, unique rules per tipe,
+  `assertChildTypeMatches`/`assertReparentTypeMatches`. Import klasifikasi: kolom `tipe`
+  WAJIB (template lama DITOLAK per-row — keputusan terdokumentasi), lookup group
+  type-aware `code|tipe`, `parentTypeMismatch` helper. Import asset: TIDAK pakai kolom tipe
+  (alias header `tipe` = field `model`!), kode ambigu lintas tipe → per-row error, aset tetap
+  dibuat tanpa klasifikasi (konsisten perilaku existing). AssetTypeAssigner: chain root type
+  → `toAssetType()`; threshold capitalization juga via enum (satu titik mapping);
+  `manualOverride()` dead code dihapus. Keputusan review: GenerateAssetCodeAction TIDAK
+  diubah — sequencing berbagi menjaga kode unik global; per-tipe akan duplikat label tercetak.
+  Mixed nodes: tipe dominan ditulis + ditandai di report; split = aksi bisnis.
+- 2026-10-01: **Classification v2 Fase 3 shipped** — UI & dashboard. Flag `classification_v2`
+  di `config/features.php` (`FEATURE_CLASSIFICATION_V2` env, default false; hapus flag
+  setelah stabil). Tree per tipe (Aktiva Tetap / Peralatan / Belum Bertipe) saat flag on;
+  serialized group membawa `classification_type`; prop `classification_v2` ke page. Form:
+  create group = picker tipe radio (token tipe DESIGN.md §3.2), create child = tipe terkunci
+  dari induk (rootTypeOf walks to root), update = immutable. Ekspor Excel klasifikasi kini
+  membawa kolom `tipe` (re-import aman); preview import menampilkan tipe + penanda "wajib".
+  Dashboard assetByClassification membawa label tipe (badge tint). Detector impeccable 0
+  temuan. Flag hanya mengatur tampilan — validasi/constraint/kode selalu aktif.
+
 - 2026-09-19: Asset import matches Department by kode_department OR nama_department
   (trimmed, case-insensitive) via `ImportAssetsAction::departmentLookup()`; departments are
   master data and are never auto-created by import (unmatched → warning, department_id null).
@@ -110,11 +143,13 @@ architectural state. Session-by-session detail lives in the logs; check here fir
 
 ## Pending Work
 **Next Sprint Priorities (Confirmed)**
-1. **FR-13.8** — Dashboard breakdown by asset type (count + value)
-2. **FR-11.3** — `Gate::authorize` in `AssetController` (asset CRUD ungated)
-3. **Auto depreciation** — Calculate `accumulated_depreciation` from `depreciation_method`
+1. **FR-13.8** — Dashboard breakdown by asset type (count + value) — **DONE 2026-10-01**
+2. **FR-11.3** — `Gate::authorize` in `AssetController` (asset CRUD ungated) — **DONE 2026-10-01**
+3. **Auto depreciation** — Calculate `accumulated_depreciation` from `depreciation_method` — **DONE 2026-10-01**
+   - Command `app:run-depreciation` + schedule monthly 1 02:00
+   - Settings UI `settings/depreciation` with manual run
 4. **PHPStan Fixes** — Resolve 93 pre-existing errors for green CI
-5. **UI polish** — Apply NOON warm glass design system (glassmorphism)
+5. **UI polish** — Apply Opname Field Desk v2.0 design system
 
 **Other leftovers**
 - `AssetHistory`: record `asset_type`/override changes in `fromUpdate()`

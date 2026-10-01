@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\AssetStatus;
 use App\Models\Asset;
+use App\Models\AssetGroup;
 use App\Models\AssetTransfer;
 use App\Models\CapitalizationThreshold;
 use App\Models\Tenant;
@@ -116,6 +117,21 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('stats.pending_transfers', 3));
+    }
+
+    public function test_dashboard_classification_slices_carry_tipe_label(): void
+    {
+        AssetGroup::factory()->peralatan()->create(['name' => 'Mesin']);
+        AssetGroup::factory()->create(['name' => 'Tanah']);
+
+        $this->actingAs($this->user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('asset_by_classification.0.name', 'Tanah')
+                ->where('asset_by_classification.0.tipe', 'Aktiva Tetap')
+                ->where('asset_by_classification.1.name', 'Mesin')
+                ->where('asset_by_classification.1.tipe', 'Peralatan'));
     }
 
     public function test_dashboard_includes_warranty_alerts(): void

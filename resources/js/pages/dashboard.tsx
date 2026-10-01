@@ -36,7 +36,11 @@ type Stats = {
     pending_disposals: number;
 };
 
-type ClassificationSlice = { name: string; count: number };
+type ClassificationSlice = {
+    name: string;
+    count: number;
+    tipe?: string | null;
+};
 type AssetTypeSlice = {
     type: string;
     label: string;
@@ -260,6 +264,18 @@ function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
                         <span className="w-28 shrink-0 truncate font-medium text-foreground">
                             {s.name}
                         </span>
+                        {s.tipe && (
+                            <span
+                                className={cn(
+                                    'hidden shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-medium sm:inline',
+                                    s.tipe === 'Aktiva Tetap'
+                                        ? 'border-primary-muted-border bg-primary-muted text-primary'
+                                        : 'border-border-strong bg-surface-sunken text-ink-muted',
+                                )}
+                            >
+                                {s.tipe}
+                            </span>
+                        )}
                         <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted/50">
                             <div
                                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"

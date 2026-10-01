@@ -9,11 +9,13 @@ use App\Models\AssetTransfer;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): \Inertia\Response
+    public function __invoke(Request $request): Response
     {
         $assetCounts = Asset::query()
             ->selectRaw('status, count(*) as total')
@@ -33,7 +35,7 @@ class DashboardController extends Controller
 
         // FR-13.8 — ringkasan jumlah & nilai aset per Tipe Aset (Aktiva Tetap / Peralatan).
         /**
-         * @var \Illuminate\Support\Collection<int, object{asset_type: string|null, total: int|string, total_value: int|string, total_book_value: int|string}> $typeRows
+         * @var Collection<int, object{asset_type: string|null, total: int|string, total_value: int|string, total_book_value: int|string}> $typeRows
          */
         $typeRows = Asset::query()
             ->selectRaw("asset_type, count(*) as total, coalesce(sum(acquisition_cost), 0) as total_value, coalesce(sum(case when asset_type = 'fixed_asset' then coalesce(acquisition_cost, 0) - coalesce(accumulated_depreciation, 0) else acquisition_cost end), 0) as total_book_value")
@@ -59,15 +61,16 @@ class DashboardController extends Controller
             ->withCount('assets')
             ->orderByDesc('assets_count')
             ->take(8)
-            ->get(['id', 'code', 'name', 'assets_count'])
+            ->get(['id', 'code', 'name', 'assets_count', 'classification_type'])
             ->map(fn (AssetGroup $group): array => [
                 'name' => $group->name,
                 'count' => $group->assets_count,
+                'tipe' => $group->classification_type?->label(),
             ])
             ->toArray();
 
         /**
-         * @var \Illuminate\Support\Collection<int, object{location_id: string, total: int|string}> $locationRows
+         * @var Collection<int, object{location_id: string, total: int|string}> $locationRows
          */
         $locationRows = Asset::query()
             ->selectRaw('location_id, count(*) as total')

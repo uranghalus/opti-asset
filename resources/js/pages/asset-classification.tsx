@@ -78,6 +78,7 @@ import { LEVEL_LABELS } from '@/types/classification';
 
 type PageProps = {
     groups: ClassificationNode[];
+    classification_v2: boolean;
 };
 
 type FormState = {
@@ -162,6 +163,19 @@ function ancestorsOf(
     return walk(nodes, []) ?? [];
 }
 
+function rootTypeOf(
+    nodes: ClassificationNode[],
+    id: string,
+): string | null {
+    let current = findInfo(nodes, id);
+
+    while (current?.parent) {
+        current = findInfo(nodes, current.parent.id);
+    }
+
+    return current?.node.classification_type ?? null;
+}
+
 function filterNodes(
     nodes: ClassificationNode[],
     query: string,
@@ -217,7 +231,8 @@ function descendantBreakdown(item: ClassificationNode) {
 }
 
 export default function AssetClassification() {
-    const { groups } = usePage().props as unknown as PageProps;
+    const { groups, classification_v2: groupedByType } =
+        usePage().props as unknown as PageProps;
 
     const [query, setQuery] = useState('');
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -241,6 +256,31 @@ export default function AssetClassification() {
         () => filterNodes(groups, query),
         [groups, query],
     );
+
+    const typeSections = useMemo(() => {
+        if (!groupedByType) {
+            return null;
+        }
+
+        const section = (type: string | null, label: string) => ({
+            type,
+            label,
+            nodes: filterNodes(
+                groups.filter((group) =>
+                    type === null
+                        ? (group.classification_type ?? null) === null
+                        : group.classification_type === type,
+                ),
+                query,
+            ),
+        });
+
+        return [
+            section('aktiva_tetap', 'Aktiva Tetap'),
+            section('peralatan', 'Peralatan'),
+            section(null, 'Belum Bertipe'),
+        ].filter((item) => item.nodes.length > 0);
+    }, [groups, query, groupedByType]);
 
     const selectedInfo = useMemo(
         () => (selectedId ? findInfo(groups, selectedId) : null),
@@ -424,6 +464,7 @@ export default function AssetClassification() {
                 code: null,
                 name: `${node.name} (salinan)`,
                 description: node.description ?? null,
+                classification_type: rootTypeOf(groups, node.id),
             };
             const parentField = PARENT_FIELD[level];
 
@@ -562,7 +603,7 @@ export default function AssetClassification() {
 
     const handleExport = useCallback(() => {
         const lines: string[][] = [
-            ['level', 'code', 'name', 'description', 'parent_code'],
+            ['level', 'tipe', 'code', 'name', 'description', 'parent_code'],
         ];
 
         const walk = (
@@ -579,6 +620,7 @@ export default function AssetClassification() {
 
                 lines.push([
                     level,
+                    node.classification_type ?? '',
                     fullCode,
                     node.name,
                     node.description ?? '',
@@ -710,6 +752,93 @@ export default function AssetClassification() {
                           `${count} ${LEVEL_LABELS[levelKey]}`,
                   )
             : [];
+
+    const renderRows = (nodes: ClassificationNode[]) =>
+        nodes.map((node) => (
+            <TreeNodeRow
+                key={node.id}
+                node={node}
+                depth={0}
+                query={query}
+                queryActive={queryActive}
+                expandedIds={expandedIds}
+                selectedId={selectedId}
+                multiSelect={multiSelect}
+                selectedIds={selectedIds}
+                dragId={dragId}
+                over={over}
+                deletingId={deletingId}
+                onSelect={(id) =>
+                    multiSelect ? toggleMultiSelectItem(id) : setSelectedId(id)
+                }
+                onToggleExpand={toggleExpand}
+                onEdit={(target) => {
+                    setSelectedId(target.node.id);
+                    setFormState({
+                        level: target.level,
+                        item: target.node,
+                    });
+                }}
+                onDelete={(target) =>
+                    setDeleteState({
+                        level: target.level,
+                        item: target.node,
+                    })
+                }
+                onDuplicate={handleDuplicate}
+                onAddChild={(target) =>
+                    openCreate(childLevel(target.level), target.node.id)
+                }
+                onDragStart={(id) => setDragId(id)}
+                onDragEnd={() => {
+                    setDragId(null);
+                    setOver(null);
+                }}
+                onDragOver={(node, pos) => {
+                    if (pos === null) {
+                        setOver(null);
+
+                        return;
+                    }
+
+                    const sourceId = dragId ?? '';
+
+                    if (validDrop(sourceId, node, pos)) {
+                        setOver({
+                            id: node.node.id,
+                            pos,
+                        });
+
+                        return;
+                    }
+
+                    if (validDrop(sourceId, node, 'before')) {
+                        setOver({
+                            id: node.node.id,
+                            pos: 'before',
+                        });
+
+                        return;
+                    }
+
+                    if (validDrop(sourceId, node, 'after')) {
+                        setOver({
+                            id: node.node.id,
+                            pos: 'after',
+                        });
+
+                        return;
+                    }
+
+                    setOver(null);
+                }}
+                onDrop={(target, pos) => {
+                    if (dragId) {
+                        performDrop(dragId, target, pos);
+                    }
+                }}
+            />
+        ));
 
     return (
         <>
@@ -1054,135 +1183,32 @@ export default function AssetClassification() {
                                                     Hapus filter
                                                 </Button>
                                             </div>
-                                        ) : (
-                                            visibleTree.map((node) => (
-                                                <TreeNodeRow
-                                                    key={node.id}
-                                                    node={node}
-                                                    depth={0}
-                                                    query={query}
-                                                    queryActive={queryActive}
-                                                    expandedIds={expandedIds}
-                                                    selectedId={selectedId}
-                                                    multiSelect={multiSelect}
-                                                    selectedIds={selectedIds}
-                                                    dragId={dragId}
-                                                    over={over}
-                                                    deletingId={deletingId}
-                                                    onSelect={(id) =>
-                                                        multiSelect
-                                                            ? toggleMultiSelectItem(
-                                                                  id,
-                                                              )
-                                                            : setSelectedId(id)
+                                        ) : typeSections ? (
+                                            typeSections.map((section) => (
+                                                <div
+                                                    key={
+                                                        section.type ??
+                                                        'untyped'
                                                     }
-                                                    onToggleExpand={
-                                                        toggleExpand
-                                                    }
-                                                    onEdit={(target) => {
-                                                        setSelectedId(
-                                                            target.node.id,
-                                                        );
-                                                        setFormState({
-                                                            level: target.level,
-                                                            item: target.node,
-                                                        });
-                                                    }}
-                                                    onDelete={(target) =>
-                                                        setDeleteState({
-                                                            level: target.level,
-                                                            item: target.node,
-                                                        })
-                                                    }
-                                                    onDuplicate={
-                                                        handleDuplicate
-                                                    }
-                                                    onAddChild={(target) =>
-                                                        openCreate(
-                                                            childLevel(
-                                                                target.level,
-                                                            ),
-                                                            target.node.id,
-                                                        )
-                                                    }
-                                                    onDragStart={(id) =>
-                                                        setDragId(id)
-                                                    }
-                                                    onDragEnd={() => {
-                                                        setDragId(null);
-                                                        setOver(null);
-                                                    }}
-                                                    onDragOver={(node, pos) => {
-                                                        if (pos === null) {
-                                                            setOver(null);
-
-                                                            return;
-                                                        }
-
-                                                        const sourceId =
-                                                            dragId ?? '';
-
-                                                        if (
-                                                            validDrop(
-                                                                sourceId,
-                                                                node,
-                                                                pos,
-                                                            )
-                                                        ) {
-                                                            setOver({
-                                                                id: node.node
-                                                                    .id,
-                                                                pos,
-                                                            });
-
-                                                            return;
-                                                        }
-
-                                                        if (
-                                                            validDrop(
-                                                                sourceId,
-                                                                node,
-                                                                'before',
-                                                            )
-                                                        ) {
-                                                            setOver({
-                                                                id: node.node
-                                                                    .id,
-                                                                pos: 'before',
-                                                            });
-
-                                                            return;
-                                                        }
-
-                                                        if (
-                                                            validDrop(
-                                                                sourceId,
-                                                                node,
-                                                                'after',
-                                                            )
-                                                        ) {
-                                                            setOver({
-                                                                id: node.node
-                                                                    .id,
-                                                                pos: 'after',
-                                                            });
-
-                                                            return;
-                                                        }
-
-                                                        setOver(null);
-                                                    }}
-                                                    onDrop={(target, pos) => {
-                                                        if (dragId) {
-                                                            performDrop(
-                                                                dragId,
-                                                                target,
-                                                                pos,
-                                                            );
-                                                        }
-                                                    }}
-                                                />
+                                                    className="pb-2"
+                                                >
+                                                    <div className="flex items-center justify-between px-2 py-1.5">
+                                                        <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                                            {section.label}
+                                                        </span>
+                                                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                                                            {
+                                                                section.nodes
+                                                                    .length
+                                                            }{' '}
+                                                            golongan
+                                                        </span>
+                                                    </div>
+                                                    {renderRows(section.nodes)}
+                                                </div>
                                             ))
+                                        ) : (
+                                            renderRows(visibleTree)
                                         )}
                                     </div>
                                 </div>
@@ -1266,6 +1292,15 @@ export default function AssetClassification() {
                               ? (selectedInfo?.parent?.name ?? null)
                               : (selectedInfo?.node.name ?? null)
                     }
+                    parentType={
+                        formState.item
+                            ? rootTypeOf(
+                                  groups,
+                                  selectedInfo?.parent?.id ??
+                                      formState.item.id,
+                              )
+                            : rootTypeOf(groups, selectedInfo?.node.id ?? '')
+                    }
                     item={formState.item}
                     onClose={() => setFormState(null)}
                 />
@@ -1344,6 +1379,9 @@ export default function AssetClassification() {
                                             Level
                                         </th>
                                         <th className="px-3 py-2 font-medium">
+                                            Tipe
+                                        </th>
+                                        <th className="px-3 py-2 font-medium">
                                             Kode
                                         </th>
                                         <th className="px-3 py-2 font-medium">
@@ -1365,6 +1403,13 @@ export default function AssetClassification() {
                                                 <td className="px-3 py-2 text-muted-foreground">
                                                     {row.level}
                                                 </td>
+                                                <td className="px-3 py-2 text-muted-foreground">
+                                                    {row.tipe || (
+                                                        <span className="text-destructive">
+                                                            wajib
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="px-3 py-2 font-mono text-xs">
                                                     {row.code}
                                                 </td>
@@ -1379,7 +1424,7 @@ export default function AssetClassification() {
                                     {importRows.length > 8 && (
                                         <tr className="border-t border-border">
                                             <td
-                                                colSpan={4}
+                                                colSpan={5}
                                                 className="px-3 py-2 text-center text-xs text-muted-foreground"
                                             >
                                                 +{importRows.length - 8} baris

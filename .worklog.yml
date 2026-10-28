@@ -1,0 +1,13 @@
+tasks:
+    saml-login:
+        title: 'Implementasi Login SAML 2.0 (dari opt-work) ke opti-asset'
+        steps:
+            a: Instal paket socialiteproviders/saml2 + LightSaml via composer
+            b: Tambah config services.saml2 dan auth.super_admin_email
+            c: Buat SamlController, LoginProvisioningService, LoginLanding, SamlTenantResolver, SamlTenantResolution
+            d: Tambah routes SAML (redirect, acs, denied, slo, sls, logout, metadata)
+            e: Update bootstrap/app.php redirectGuestsTo ke saml.redirect + middleware
+            f: Perbarui model User (is_super_admin, is_hod) dan frontend SAML (denied.tsx, logout.ts, types/auth.ts)
+            g: Salin test + FakeIdentityProvider + fixtures SAML
+            h: Regenerate Wayfinder types
+            i: Jalankan tes SAML dan perbaiki error

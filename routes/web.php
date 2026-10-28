@@ -6,17 +6,18 @@ use App\Http\Controllers\AssetDisposalController;
 use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\AssetTransferController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Auth\SamlController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\OIDCController;
 use App\Http\Controllers\Org\DepartmentController;
 use App\Http\Controllers\Org\EmployeeController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SuperAdminGrantController;
 use App\Http\Controllers\TenantSwitchController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +27,7 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return redirect()->route('authsso');
+    return redirect()->route('saml.login');
 })->name('home');
 
 Route::middleware('auth')->group(function () {
@@ -132,10 +133,19 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
-    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
-    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');
+    Route::get('saml/login', [SamlController::class, 'redirect'])->name('saml.login');
+    Route::post('saml/opti-saml-acs', [SamlController::class, 'acs'])->name('saml.acs');
+    Route::get('saml/opti-saml-metadata', [SamlController::class, 'metadata'])->name('saml.metadata');
+    Route::get('saml/opti-saml-logout', [SamlController::class, 'logout'])->name('saml.logout');
 });
+
+Route::get('auth/error', function () {
+    $message = session('error', 'Terjadi kesalahan saat login SSO.');
+
+    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 500)
+        ->header('Content-Type', 'text/html');
+})->name('auth.error');
+
 Route::middleware('auth')->group(function () {
     Route::get('asset-disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
     Route::get('asset-disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
@@ -151,6 +161,12 @@ Route::middleware('auth')->group(function () {
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/export/transfers', [ReportController::class, 'exportTransfers'])->name('reports.export.transfers');
     Route::get('reports/export/disposals', [ReportController::class, 'exportDisposals'])->name('reports.export.disposals');
+
+    Route::prefix('super-admin')->name('super-admin.')->group(function () {
+        Route::get('grants', [SuperAdminGrantController::class, 'index'])->name('grants.index');
+        Route::post('grants', [SuperAdminGrantController::class, 'store'])->name('grants.store');
+        Route::delete('grants', [SuperAdminGrantController::class, 'destroy'])->name('grants.destroy');
+    });
 });
 
 require __DIR__.'/settings.php';

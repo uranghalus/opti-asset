@@ -14,6 +14,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/auth/redirect', $response->headers->get('Location'));
+        $this->assertStringContainsString('/saml/login', $response->headers->get('Location'));
     }
 }

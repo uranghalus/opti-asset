@@ -42,3 +42,21 @@ export function filterNavGroups<
         }))
         .filter((group) => group.items.length > 0);
 }
+
+/**
+ * Super-admin grant permission resources and actions.
+ * Used for gate-based visibility on super-admin grants page.
+ */
+export const SUPER_ADMIN_PERMISSIONS = {
+    resource: 'super-admin',
+    actions: ['view', 'grant', 'revoke'],
+} as const;
+
+export type SuperAdminAction = 'view' | 'grant' | 'revoke';
+
+/**
+ * Build super-admin permission names (e.g. 'super-admin.view').
+ */
+export function superAdminPermission(action: SuperAdminAction): string {
+    return `super-admin.${action}`;
+}

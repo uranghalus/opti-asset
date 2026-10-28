@@ -106,6 +106,8 @@ const ACTION_STYLES: Record<string, string> = {
     adjust: 'bg-[#5EEAD4]/15 text-teal-600 dark:text-teal-300',
     export: 'bg-[#B892FF]/10 text-violet-600 dark:text-violet-300',
     import: 'bg-[#FFB23E]/10 text-amber-600 dark:text-amber-300',
+    grant: 'bg-rose-500/10 text-rose-600 dark:text-rose-300',
+    revoke: 'bg-rose-500/10 text-rose-600 dark:text-rose-300',
 };
 
 const DEFAULT_ACTION_STYLE = 'bg-muted/60 text-muted-foreground';
@@ -660,6 +662,14 @@ export default function PermissionsIndex() {
                                                                         search
                                                                     }
                                                                 />
+                                                                {permission.name.startsWith(
+                                                                    'super-admin.',
+                                                                ) && (
+                                                                    <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
+                                                                        <Shield className="size-3" />
+                                                                        SuperAdmin
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         </div>
                                                     </TableCell>

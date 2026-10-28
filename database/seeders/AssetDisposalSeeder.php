@@ -17,6 +17,7 @@ class AssetDisposalSeeder extends Seeder
 
         if ($assets->isEmpty() || $users->isEmpty()) {
             $this->command->warn('Tidak ada aset aktif atau user untuk seeding disposal. Lewati...');
+
             return;
         }
 

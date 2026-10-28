@@ -1,166 +1,223 @@
-# AGENTS.md — Opti-Asset (Laravel + Inertia + React)
+# AGENTS.md — Konfigurasi Project & Memory
 
-# Worklog Protocol — WAJIB sebelum pekerjaan apa pun
+## Identitas Project
 
-Setiap pekerjaan harus punya rencana task di `.worklog.yml` (root repo) SEBELUM ada kode yang ditulis, file yang diubah, atau commit yang dibuat. Progress laporan harian dihitung otomatis dari rencana ini, jadi tanpa rencana pekerjaan tidak akan tercatat.
+- **Nama:** opti-asset (folder/slug: `opti-asset`)
+- **Memory:** SecondBrain (vault Obsidian) + Supermemory (plugin `opencode-supermemory`). Keduanya WAJIB selalu sinkron.
 
-Urutan sesi: (1) baca memori (lihat Memory Protocol) → (2) buat/pilih task di `.worklog.yml` → (3) baru mulai bekerja.
+---
 
-## Aturan
+## Aturan Utama
 
-1. Sebelum mulai, cek `.worklog.yml`. Jika sudah ada task aktif yang cocok dengan pekerjaan ini, lanjutkan task itu. Jika belum ada, buat entri baru dulu. Jika file belum ada, buat file dengan skema di bawah.
-2. Berlaku untuk SEMUA pekerjaan, sekecil apa pun (bugfix, refactor, perbaikan lint). Pekerjaan kecil cukup 1–2 langkah, tetapi tetap harus punya entri.
-3. Tampilkan rencana (key, judul, langkah) kepada user dan tunggu persetujuan singkat sebelum mengubah kode. Jika user sudah menyebut langkah-langkahnya, pakai itu apa adanya.
-4. Setiap commit yang dibuat WAJIB memakai trailer `Task` dan `Done` (lihat Format Commit). Commit tanpa trailer `Task` tidak boleh dibuat.
-5. Tandai langkah di `Done` hanya jika langkah itu benar-benar selesai dan terverifikasi (tes terkait lulus, format/lint bersih). Jangan menandai langkah di depan hanya karena mengerjakannya sekilas.
-6. Jangan menulis progress (persen), `tanggal_mulai`, atau `tanggal_selesai` di mana pun. Semuanya dihitung otomatis dari trailer commit dan tanggal commit.
-7. Perubahan rencana di tengah jalan: langkah baru boleh ditambahkan di akhir, dan teks langkah yang belum selesai boleh diperbaiki. Langkah yang sudah pernah ditandai `Done` tidak boleh dihapus, digeser, atau diganti hurufnya. Beri tahu user bahwa menambah langkah menurunkan persentase progress.
-8. Jika satu pekerjaan ternyata mencakup beberapa fitur yang berbeda, pecah menjadi beberapa task, masing-masing dengan key sendiri. Satu commit hanya boleh milik satu `Task`.
-9. Catat key task aktif dan langkah yang sudah selesai di log sesi (`Memory/logs/YYYY-MM-DD.md`) supaya sesi berikutnya bisa melanjutkan.
-10. `.worklog.yml` adalah file operasional, bukan file dokumentasi, dan berada di root repo (bukan folder baru). Aturan "dokumentasi hanya jika diminta" dan "jangan buat folder dasar baru" tidak berlaku untuknya.
+1. **JANGAN berasumsi.** Kalau ada yang tidak jelas (kebutuhan, scope, gaya kode, nama, lokasi file), TANYA user dulu sebelum mengerjakan.
+2. **Wajib baca memory sebelum mengerjakan APA PUN** (lihat bagian _Protokol Setiap Pekerjaan_). Jangan mengandalkan ingatan sesi — baca dari Supermemory dan vault.
+3. **Gaya coding dan struktur kode user TIDAK boleh berubah-ubah.** Ikuti `Patterns/` di vault dan memory bertipe `preference` / `learned-pattern` di Supermemory. Jangan memperkenalkan gaya, struktur folder, atau penamaan baru tanpa persetujuan user.
+4. **Vault dan Supermemory harus sama.** Setiap catatan yang ditulis ke salah satunya wajib ditulis juga ke yang lain pada sesi yang sama.
+5. **Jangan pernah menyimpan** `.env`, kredensial, API key, token, atau data pribadi ke vault maupun Supermemory. Konten di dalam `<private>...</private>` tidak disimpan.
 
-## Skema `.worklog.yml`
+---
+
+## Supermemory (opencode-supermemory)
+
+### Konfigurasi
+
+Plugin terdaftar di config OpenCode (`opencode.jsonc`):
+
+```jsonc
+{
+    "plugin": ["opencode-supermemory"],
+}
+```
+
+Container tag project dikunci ke `opti-asset` lewat `supermemory.jsonc` (agar memory sama di semua mesin dan tidak berubah mengikuti hash path/remote):
+
+```jsonc
+{
+    "projectContainerTag": "opti-asset",
+}
+```
+
+Cek koneksi kapan saja: `bunx opencode-supermemory@latest status`. Log: `~/.opencode-supermemory.log`.
+
+### Tool `supermemory`
+
+| Mode      | Args                         | Fungsi            |
+| --------- | ---------------------------- | ----------------- |
+| `add`     | `content`, `type?`, `scope?` | Simpan memory     |
+| `search`  | `query`, `scope?`            | Cari memory       |
+| `profile` | `query?`                     | Lihat profil user |
+| `list`    | `scope?`, `limit?`           | Daftar memory     |
+| `forget`  | `memoryId`, `scope?`         | Hapus memory      |
+
+- **Scope:** `project` (default) dan `user`.
+- **Type:** `project-config`, `architecture`, `error-solution`, `preference`, `learned-pattern`, `conversation`.
+- `forget` hanya boleh dipakai atas permintaan eksplisit user.
+
+### Pemetaan vault → type Supermemory
+
+| Folder vault    | Type Supermemory                                         |
+| --------------- | -------------------------------------------------------- |
+| `Context/`      | `project-config`                                         |
+| `Architecture/` | `architecture`                                           |
+| `Decisions/`    | `architecture`                                           |
+| `Patterns/`     | `learned-pattern`; gaya/preferensi coding → `preference` |
+| `Mistakes/`     | `error-solution`                                         |
+| `Planning/`     | `project-config`                                         |
+| `Sessions/`     | `conversation` (ringkasan sesi saja, bukan log mentah)   |
+
+---
+
+## Protokol Setiap Pekerjaan (WAJIB)
+
+### Sebelum mengerjakan
+
+1. `supermemory` mode `profile` — baca profil dan preferensi user.
+2. `supermemory` mode `search` (scope `project`) dengan kata kunci sesuai tugas. Lakukan lebih dari satu pencarian bila tugas menyentuh beberapa area.
+3. Baca vault: `Context/`, `Decisions/`, `Patterns/`, `Planning/`, dan `Architecture/` / `Mistakes/` yang relevan.
+4. Cek issue/PRD yang sedang berjalan bila ada.
+5. Jika isi Supermemory dan vault **bertentangan** atau salah satunya kosong untuk hal yang seharusnya ada, **laporkan ke user dan tanya** — jangan memilih sendiri.
+
+### Selama mengerjakan
+
+- Ikuti `Patterns/` dan memory `preference` / `learned-pattern`. Baca kode di sekitar sebelum menulis kode baru.
+- Jika menemukan pola/gaya yang belum tercatat, tanya user lalu catat (vault + Supermemory).
+
+### Setelah mengerjakan
+
+1. Tulis log sesi di vault (lihat _Development Log_).
+2. Untuk hal signifikan (keputusan, pola baru, bug + solusinya, perubahan arsitektur, preferensi gaya coding): tulis/update catatan di folder vault yang sesuai, **lalu** `supermemory add` dengan isi yang sama dan `type` sesuai tabel pemetaan. Sertakan path catatan vault di `content`.
+3. Verifikasi sinkron: `supermemory search` isi yang baru disimpan harus ketemu, dan file vault-nya ada. Jika salah satu gagal, beri tahu user.
+4. Jika tool `supermemory` tidak tersedia atau error, beri tahu user dan tanya cara melanjutkan — jangan diam-diam lanjut hanya dengan vault.
+
+---
+
+## SecondBrain (Vault Obsidian)
+
+Simpan seluruh catatan penting project ini di path berikut. **JANGAN tanya ulang lokasi vault di tiap sesi baru.**
+
+```text
+C:\Users\Administrator\OneDrive\SecondBrain\01 Projects\opti-asset
+├── Context\       ← konteks project: stack, konvensi, constraint, glossary
+├── Decisions\     ← keputusan teknis + alasannya
+├── Patterns\      ← pola/konvensi kode yang berulang (gaya coding user)
+├── Mistakes\      ← histori bug/kesalahan dan solusinya
+├── Sessions\      ← development log tiap sesi kerja
+├── Planning\      ← rencana ke depan: apa yang mau dikerjakan selanjutnya
+└── Architecture\  ← dokumentasi arsitektur & desain sistem
+```
+
+Buat folder yang belum ada secara otomatis saat pertama kali dibutuhkan.
+
+> Catatan: aturan "Documentation Files" di bagian Laravel Boost (di bawah) berlaku untuk dokumentasi di dalam repo. Catatan di vault Obsidian dan memory Supermemory dikecualikan, karena memang diwajibkan oleh file ini. `record-rule` tetap dipakai untuk aturan tim di `.ai/rules`; vault/Supermemory tidak menggantikannya.
+
+### Kapan pakai folder yang mana
+
+- **Context/** — fakta dasar project yang jarang berubah: stack, constraint, glossary.
+- **Decisions/** — keputusan teknis ("kenapa X bukan Y") + alasannya.
+- **Patterns/** — konvensi kode berulang: penamaan, struktur controller/komponen, gaya penulisan.
+- **Mistakes/** — bug/kesalahan yang pernah terjadi dan cara menghindarinya.
+- **Sessions/** — log tiap sesi kerja.
+- **Planning/** — hal yang MASIH AKAN dikerjakan. Tandai/pindahkan ke Sessions/ begitu selesai.
+- **Architecture/** — desain sistem: struktur folder, alur data/request, diagram (boleh Mermaid), dependency antar modul.
+
+### Cek duplikat sebelum membuat catatan
+
+Sebelum bikin file baru di folder manapun (kecuali Sessions/), cari dulu catatan dengan topik serupa — di vault **dan** di Supermemory:
+
+- Ada yang serupa → update catatan itu, jangan bikin file baru.
+- Cukup beda untuk dipisah → buat baru, hubungkan `[[wikilink]]` ke yang lama.
+- Ragu → tanya user dulu.
+
+### Konvensi penamaan file
+
+- Format: `kebab-case-huruf-kecil.md` (contoh: `fix-qr-scan-bug.md`), kecuali Sessions/ yang pakai format tanggal.
+- Hindari nama generik (`catatan.md`, `note1.md`).
+
+### Development Log
+
+Pola: **bulan → tanggal → file per waktu kejadian**.
+
+```text
+Sessions/
+├── 2026-10/
+│   ├── 03/
+│   │   ├── 1120-setup-xxx.md
+│   │   └── ...
+│   └── changelog.md   ← ringkasan seluruh sesi BULAN INI
+```
+
+- Satu file per sesi di `Sessions/YYYY-MM/DD/`, nama `HHmm-topik-singkat.md`, jam WITA (UTC+8).
+- Isi: jam, apa yang dilakukan, folder/file yang diubah lengkap.
+- `changelog.md` per bulan, struktur:
+
+```markdown
+## Ringkasan
+
+- (diisi saat rollup bulanan: 3-5 poin highlight)
+
+## Log
+
+- 03, 11:20 — Setup xxx → [[Sessions/2026-10/03/1120-setup-xxx]]
+```
+
+- Tiap sesi baru: tambahkan SATU baris di paling atas `## Log` (terbaru di atas).
+- Rollup bulanan: setiap awal bulan / saat diminta "rapikan log bulan lalu", ringkas `## Log` jadi 3-5 poin di `## Ringkasan`. File detail TIDAK dihapus.
+- Item Planning/ yang selesai: tandai selesai dan sebutkan di changelog sesi.
+
+### Relasi Sessions → Decisions
+
+Sessions/ = log mentah. Decisions/ = rangkuman KEPUTUSAN/HASIL. Setelah menyelesaikan hal signifikan (bukan fix kecil harian):
+
+1. Buat/update catatan di Decisions/ — APA yang diputuskan dan MENGAPA.
+2. Tambahkan `[[wikilink]]` ke Sessions sumber.
+3. Di Sessions terkait, tambahkan bagian `Terkait:` yang menyebut balik Decisions-nya.
+4. Sinkronkan ke Supermemory (lihat _Protokol Setiap Pekerjaan_).
+
+### Memory Linking (Obsidian wikilink)
+
+Format: `[[folder/nama-tanpa-md]]` (tanpa `.md`).
+
+- Setiap file vault baru wajib di header: link balik `[[Index]]` dan minimal satu link ke file terkait.
+- Setiap sesi selesai, update `Index.md`: tambah baris link + ubah `Last updated`.
+- Setiap session log wajib punya bagian `Terkait:`.
+- Jangan biarkan file yatim (tanpa link masuk/keluar).
+
+### Format Frontmatter
+
+Tag diisi otomatis oleh AI sesuai isi catatan.
 
 ```yaml
-tasks:
-    extend-wo: # key: kebab-case, unik, stabil (dipakai di trailer commit)
-        title: 'Extend Work Order: Approval Berjenjang TL - HOD (FR-10)' # gaya judul laporan, Bahasa Indonesia
-        steps: # 1–8 langkah, huruf kecil berurutan a, b, c, ...
-            a: Migrasi & model
-            b: Service approval
-            c: Controller & policy
-            d: UI React
-            e: Test
+---
+created: <tanggal>
+tags: [<tag relevan>]
+status: <active|done|archived>
+---
 ```
 
-- Setiap langkah adalah satu hasil yang bisa diverifikasi, bukan aktivitas kabur seperti "mengerjakan fitur".
-- Opsional per langkah untuk bobot berbeda: `d: { text: "UI React", weight: 2 }`. Tanpa `weight`, semua langkah berbobot sama.
-- Judul mengikuti gaya laporan yang sudah dipakai: `Sprint N - Judul Fitur (FR-xx)` bila relevan.
+---
 
-## Format Commit
+## Di Awal Sesi Baru
 
-Subject mengikuti gaya yang sudah dipakai repo, lalu trailer di bagian akhir (dipisah satu baris kosong dari body):
+1. Jalankan _Protokol Setiap Pekerjaan → Sebelum mengerjakan_ (Supermemory `profile` + `search`).
+2. Baca `Context/`, `Decisions/`, `Patterns/`, `Planning/` di vault.
+3. Bandingkan hasilnya; laporkan jika ada yang tidak sinkron.
 
-```
-feat(extend-wo): tambah UI approval berjenjang
+---
 
-Task: extend-wo
-Done: c,d
-```
+## Coding Philosophy
 
-- `Task`: key dari `.worklog.yml`. Wajib di setiap commit.
-- `Done`: huruf langkah yang selesai oleh commit ini, dipisah koma. `Done: d` hanya menandai langkah d, bukan a sampai d. Boleh dikosongkan atau dihilangkan jika commit hanya kemajuan parsial tanpa langkah yang tuntas.
-- Progress = langkah selesai (kumulatif lintas commit dan hari) ÷ total langkah (berbobot) × 100.
-- Jika menandai langkah yang melompati langkah sebelumnya yang belum selesai (misalnya `Done: d` padahal `b` belum), jelaskan alasannya di body commit.
+- Baca kode yang ada sebelum menulis kode baru; ikuti pola project.
+- Perubahan minimal: hanya yang diminta. Jangan refactor di luar scope.
+- Perbaiki akar masalah, bukan gejalanya.
 
-# Memory Protocol — Vault: Opti-Asset
+## Safety
 
-OpenCode punya akses ke vault Obsidian bernama "Opti-Asset" lewat MCP tool `obsidian`.
+- Konfirmasi dulu sebelum: `git push --force`, `rm -rf`, `DROP TABLE`, hapus branch.
+- Jangan pernah commit: `.env`, file kredensial, API key, secrets.
+- Jangan bypass `--no-verify` atau force tanpa izin eksplisit.
+- Jangan pernah force-push ke branch `main`/`master`.
 
-## Struktur memori
-
-- `Memory/opencode-memory.md` — ringkasan konteks proyek, keputusan arsitektur, dan preferensi yang berlaku terus-menerus.
-- `Memory/logs/YYYY-MM-DD.md` — catatan progres per sesi (opsional, buat kalau relevan).
-
-## Aturan
-
-1. Di awal sesi, sebelum mulai kerja, baca isi "Memory/opencode-memory.md" via tool obsidian (get_file_contents) untuk memahami konteks sebelumnya.
-2. Setiap kali ada keputusan penting, konvensi baru, perubahan arsitektur, atau progres signifikan — tambahkan ringkasannya ke "Memory/opencode-memory.md" via append_content atau patch_content.
-3. Jangan pernah menyimpan kredensial, API key, token, atau data sensitif lain ke catatan ini.
-4. Tulis ringkas dan terstruktur (poin-poin), bukan transkrip percakapan mentah.
-
-## Stack
-
-- **PHP 8.4** / Laravel 13 / Fortify 1 / Inertia v3 / React 19 / Tailwind 4 / Vite 8
-- **Wayfinder** generates typed TS route functions → `resources/js/actions/`, `resources/js/routes/`, `resources/js/wayfinder/` (gitignored, generated)
-- **shadcn/ui** (New York style, `components.json`) — UI components in `resources/js/components/ui/` (gitignored by ESLint/Prettier)
-- **React Compiler** enabled via `babel-plugin-react-compiler` in `vite.config.ts`
-- **PHPStan** level 7 (larastan), **Pint** (laravel preset), **ESLint** 9 + **Prettier** 3
-
-## Commands
-
-```bash
-# Dev server (runs PHP server + queue + Vite concurrently)
-composer dev
-
-# CI check order (must run in this order)
-npm run lint:check        # ESLint
-npm run format:check      # Prettier
-npm run types:check       # tsc --noEmit
-php artisan test --compact # PHPUnit (in-memory SQLite)
-
-# Single test file
-php artisan test --compact tests/Feature/DashboardTest.php
-
-# Single test by name
-php artisan test --compact --filter=test_guests_are_redirected
-
-# Format PHP (run after any PHP edit)
-vendor/bin/pint --dirty --format agent
-
-# Format TS/React
-npm run format
-
-# Lint TS/React (auto-fix)
-npm run lint
-
-# Type check
-npm run types:check
-
-# Full CI (all checks)
-composer ci:check
-```
-
-## Architecture
-
-```
-app/
-├── Actions/Fortify/          # Auth actions (CreateNewUser, ResetUserPassword)
-├── Http/Controllers/Settings # ProfileController, SecurityController
-├── Models/User.php           # Only model currently
-├── Providers/                # AppServiceProvider, FortifyServiceProvider
-routes/
-├── web.php                   # /, /dashboard (auth+verified)
-├── settings.php              # /settings/* routes
-resources/js/
-├── pages/                    # Inertia page components (welcome, dashboard, auth/, settings/)
-├── layouts/                  # app-layout, auth-layout, settings/
-├── components/               # Shared React components + ui/ (shadcn)
-├── hooks/                    # Custom hooks (use-appearance, use-mobile, etc.)
-├── lib/utils.ts              # cn() helper, toUrl()
-├── types/                    # TypeScript types (auth, navigation, ui)
-├── actions/                  # Wayfinder: controller action types (generated, gitignored)
-├── routes/                   # Wayfinder: named route functions (generated, gitignored)
-└── wayfinder/                # Wayfinder internals (generated, gitignored)
-```
-
-## Key Conventions
-
-- **Inertia pages** live in `resources/js/pages/`. Page name = file path (e.g., `settings/profile` → `SettingsProfile`). Layout is auto-selected in `app.tsx` based on page name prefix.
-- **Wayfinder imports**: `import { dashboard } from '@/routes'` for named routes, `import { edit } from '@/actions/Settings/ProfileController'` for controller actions. Never hardcode URLs.
-- **Route::inertia()** used for pages with no controller logic (e.g., `welcome`, `appearance`). Use controllers for pages needing data/validation.
-- **Tests use in-memory SQLite** (`phpunit.xml`). Factories required for models. `RefreshDatabase` trait used. Base `TestCase` has `skipUnlessFortifyHas()` helper.
-- **Fortify features enabled**: registration, password reset, email verification, 2FA, passkeys. Config in `config/fortify.php`.
-- **DESIGN.md** defines **Opname Field Desk** visual identity — mineral teal, status tokens, Public Sans, mobile-first Operate UI. Reference when building UI.
-- **Generated files are gitignored**: `resources/js/actions/`, `resources/js/routes/`, `resources/js/wayfinder/`, `resources/js/components/ui/`. Never edit these directly.
-- **ESLint ignores**: `resources/js/actions/**`, `resources/js/components/ui/*`, `resources/js/routes/**`, `resources/js/wayfinder/**` — these are generated.
-- **Prettier ignores**: `resources/js/components/ui/*`, `resources/views/mail/*`
-- **`@/*` path alias** maps to `resources/js/*` (tsconfig + vite).
-- **PHP 8 constructor property promotion** required. Curly braces always. Explicit return types.
-- **`composer test`** runs config:clear → lint:check → types:check → artisan test (full pipeline).
-- **`composer setup`** does install + env + key + migrate + npm install + build.
-- **SSR enabled** in `config/inertia.php` (dev server on port 13714). Build SSR with `npm run build:ssr`.
-
-## Gotchas
-
-- If `ViteException: Unable to locate file in Vite manifest` → run `npm run build` or `composer dev`
-- Wayfinder types must be regenerated after route/controller changes: `php artisan wayfinder:generate --with-form` (the `--with-form` flag is required to match `formVariants: true` in `vite.config.ts`; without it generated routes lose `.form` variants and auth components break in `tsc`)
-- `resources/js/components/ui/*` are shadcn-generated — don't manually edit, use `npx shadcn@latest add [component]`
-- Tests enforce SQLite in-memory — no external DB needed for test suite
-- `bootstrap/ssr/` is gitignored — SSR bundle is regenerated on build
-- React Compiler is active — avoid patterns that conflict with automatic memoization
-
-===
+---
 
 <laravel-boost-guidelines>
 === foundation rules ===
@@ -261,7 +318,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 
@@ -279,13 +336,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
-
-=== tests rules ===
-
-# Test Enforcement
-
-- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
 
 === inertia-laravel/core rules ===
 
@@ -379,30 +429,17 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 </laravel-boost-guidelines>
 
-## graphify
+<!-- context7 -->
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+Use Context7 MCP to fetch current documentation whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service — even well-known ones like React, Next.js, Prisma, Express, Tailwind, Django, or Spring Boot. This includes API syntax, configuration, version migration, library-specific debugging, setup instructions, and CLI tool usage. Use even when you think you know the answer — your training data may not reflect recent changes. Prefer this over web search for library docs.
 
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+Do not use for: refactoring, writing scripts from scratch, debugging business logic, code review, or general programming concepts.
 
-Rules:
+## Steps
 
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+1. Always start with `resolve-library-id` using the library name and what to look up in the library's documentation, unless the user provides an exact library ID in `/org/project` format
+2. Pick the best match (ID format: `/org/project`) by: exact name match, description relevance, code snippet count, source reputation (High/Medium preferred), and benchmark score (higher is better). If results don't look right, try alternate names or queries (e.g., "next.js" not "nextjs", or rephrase the question). Use version-specific IDs when the user mentions a version
+3. `query-docs` with the selected library ID and what to look up in the library's documentation (not single words), scoped to a single concept. If the question spans multiple distinct concepts (e.g. routing and auth and caching), make a separate `query-docs` call per concept with the same library ID, unless the question is about how the concepts interact — combined queries dilute ranking and return shallow results for each topic
+4. Answer using the fetched docs
 
-## Agent skills
-
-### Issue tracker
-
-GitHub (issues live in the repo's GitHub Issues). See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-single-context. See `docs/agents/domain.md`.
+<!-- context7 -->

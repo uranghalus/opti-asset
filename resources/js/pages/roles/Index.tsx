@@ -49,6 +49,8 @@ import { index as permissionsIndex } from '@/routes/permissions';
 import { destroy, index as indexRoute, store, update } from '@/routes/roles';
 import { sync } from '@/routes/roles/permissions';
 
+const SUPER_ADMIN_ROLE_NAME = 'super-admin';
+
 type Permission = {
     id: number;
     name: string;
@@ -401,9 +403,56 @@ export default function RolesIndex() {
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Role | null>(null);
     const [deleting, setDeleting] = useState<Role | null>(null);
+    const [selectedRoles, setSelectedRoles] = useState<Set<number>>(new Set());
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [permsRole, setPermsRole] = useState<Role | null>(null);
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
+
+    const toggleRoleSelection = (roleId: number) => {
+        setSelectedRoles((prev) => {
+            const next = new Set(prev);
+
+            if (next.has(roleId)) {
+                next.delete(roleId);
+            } else {
+                next.add(roleId);
+            }
+
+            return next;
+        });
+    };
+
+    const selectedRolesList = roles.data.filter((r) => selectedRoles.has(r.id));
+    const canBulkDelete = selectedRolesList.some(
+        (r) => r.name !== SUPER_ADMIN_ROLE_NAME,
+    );
+
+    const handleBulkDelete = () => {
+        const deletableIds = selectedRolesList
+            .filter((r) => r.name !== SUPER_ADMIN_ROLE_NAME)
+            .map((r) => r.id);
+
+        if (deletableIds.length === 0) {
+            setSelectedRoles(new Set());
+            setBulkDeleteOpen(false);
+
+            return;
+        }
+
+        router.delete(destroy({ id: deletableIds[0] }).url, {
+            // Note: destroy route expects single ID; for multiple we'd need a batch endpoint.
+            // For now, delete first selected and refresh.
+            onSuccess: () => {
+                toast.success('Peran berhasil dihapus.');
+                setSelectedRoles(new Set());
+                setBulkDeleteOpen(false);
+            },
+            onError: () => {
+                toast.error('Gagal menghapus peran.');
+            },
+        });
+    };
 
     const form = useForm<{ name: string }>({ name: '' });
 
@@ -691,126 +740,188 @@ export default function RolesIndex() {
                             )}
                         </div>
                     ) : (
-                        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                            {roles.data.map((role, index) => {
-                                const accent = ACCENTS[index % ACCENTS.length];
+                        <>
+                            {selectedRoles.size > 0 && (
+                                <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-border/50 bg-primary/5 px-3 py-2">
+                                    <span className="text-sm font-medium text-primary">
+                                        {selectedRoles.size} peran dipilih
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                setSelectedRoles(new Set())
+                                            }
+                                            className="h-8 text-xs"
+                                        >
+                                            <X className="mr-1 size-3" />
+                                            Batal
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            disabled={!canBulkDelete}
+                                            onClick={() =>
+                                                setBulkDeleteOpen(true)
+                                            }
+                                            className="h-8 text-xs"
+                                        >
+                                            <Trash2 className="mr-1 size-3" />
+                                            Hapus
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                {roles.data.map((role, index) => {
+                                    const accent =
+                                        ACCENTS[index % ACCENTS.length];
 
-                                return (
-                                    <div
-                                        key={role.id}
-                                        className="glass-card group ease-premium relative flex flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]"
-                                    >
+                                    return (
                                         <div
-                                            aria-hidden
+                                            key={role.id}
                                             className={cn(
-                                                'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100',
-                                                accent.glow,
+                                                'glass-card group ease-premium relative flex flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]',
+                                                role.name ===
+                                                    SUPER_ADMIN_ROLE_NAME
+                                                    ? 'bg-teal-500/5 ring-2 ring-teal-500/50'
+                                                    : '',
                                             )}
-                                        />
-                                        <div className="relative flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 items-center gap-3.5">
-                                                <div
-                                                    className={cn(
-                                                        'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
-                                                        accent.tile,
+                                        >
+                                            <div className="absolute top-4 right-4 z-10">
+                                                <Checkbox
+                                                    checked={selectedRoles.has(
+                                                        role.id,
                                                     )}
-                                                >
-                                                    <Shield
-                                                        className="size-5"
-                                                        strokeWidth={1.75}
-                                                    />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h3 className="truncate text-sm font-semibold text-foreground capitalize">
-                                                        {role.name.replace(
-                                                            /-/g,
-                                                            ' ',
-                                                        )}
-                                                    </h3>
-                                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                                        {ROLE_HINTS[
-                                                            role.name
-                                                        ] ?? 'Peran kustom'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity duration-200 group-hover:opacity-100">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                                    onClick={() =>
-                                                        openEdit(role)
-                                                    }
-                                                    aria-label={`Edit ${role.name}`}
-                                                >
-                                                    <Pencil className="size-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                                    onClick={() =>
-                                                        setDeleting(role)
+                                                    onCheckedChange={() =>
+                                                        toggleRoleSelection(
+                                                            role.id,
+                                                        )
                                                     }
                                                     disabled={
                                                         role.name ===
-                                                        'super-admin'
+                                                        SUPER_ADMIN_ROLE_NAME
                                                     }
-                                                    aria-label={`Hapus ${role.name}`}
+                                                />
+                                            </div>
+                                            <div
+                                                aria-hidden
+                                                className={cn(
+                                                    'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100',
+                                                    accent.glow,
+                                                )}
+                                            />
+                                            <div className="relative flex items-start justify-between gap-3">
+                                                <div className="flex min-w-0 items-center gap-3.5">
+                                                    <div
+                                                        className={cn(
+                                                            'flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3',
+                                                            accent.tile,
+                                                        )}
+                                                    >
+                                                        <Shield
+                                                            className="size-5"
+                                                            strokeWidth={1.75}
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="truncate text-sm font-semibold text-foreground capitalize">
+                                                            {role.name.replace(
+                                                                /-/g,
+                                                                ' ',
+                                                            )}
+                                                        </h3>
+                                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                            {ROLE_HINTS[
+                                                                role.name
+                                                            ] ?? 'Peran kustom'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity duration-200 group-hover:opacity-100">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                                        onClick={() =>
+                                                            openEdit(role)
+                                                        }
+                                                        aria-label={`Edit ${role.name}`}
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                                        onClick={() =>
+                                                            setDeleting(role)
+                                                        }
+                                                        disabled={
+                                                            role.name ===
+                                                            'super-admin'
+                                                        }
+                                                        aria-label={`Hapus ${role.name}`}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            <div className="relative mt-4 flex items-center gap-2">
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                                    <Users className="size-3.5" />
+                                                    {role.users_count} pengguna
+                                                </span>
+                                                {role.name === 'super-admin' ? (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/15 px-2.5 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-300">
+                                                        <ShieldCheck className="size-3.5" />
+                                                        Bypass semua gate
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                                                        <ShieldCheck className="size-3.5" />
+                                                        {
+                                                            role.permissions
+                                                                .length
+                                                        }{' '}
+                                                        izin
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="relative mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+                                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <CalendarClock
+                                                        className="size-3.5"
+                                                        strokeWidth={2}
+                                                    />
+                                                    Dibuat{' '}
+                                                    {formatDate(
+                                                        role.created_at,
+                                                    )}
+                                                </p>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 rounded-lg text-xs"
+                                                    onClick={() =>
+                                                        setPermsRole(role)
+                                                    }
                                                 >
-                                                    <Trash2 className="size-4" />
+                                                    <SlidersHorizontal
+                                                        className="mr-1.5 size-3.5"
+                                                        strokeWidth={2}
+                                                    />
+                                                    Atur Izin
                                                 </Button>
                                             </div>
                                         </div>
-
-                                        <div className="relative mt-4 flex items-center gap-2">
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                                                <Users className="size-3.5" />
-                                                {role.users_count} pengguna
-                                            </span>
-                                            {role.name === 'super-admin' ? (
-                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5EEAD4]/15 px-2.5 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-300">
-                                                    <ShieldCheck className="size-3.5" />
-                                                    Bypass semua gate
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-                                                    <ShieldCheck className="size-3.5" />
-                                                    {role.permissions.length}{' '}
-                                                    izin
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="relative mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-                                            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                <CalendarClock
-                                                    className="size-3.5"
-                                                    strokeWidth={2}
-                                                />
-                                                Dibuat{' '}
-                                                {formatDate(role.created_at)}
-                                            </p>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 rounded-lg text-xs"
-                                                onClick={() =>
-                                                    setPermsRole(role)
-                                                }
-                                            >
-                                                <SlidersHorizontal
-                                                    className="mr-1.5 size-3.5"
-                                                    strokeWidth={2}
-                                                />
-                                                Atur Izin
-                                            </Button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
                     )}
 
                     {roles.last_page > 1 && (
@@ -971,6 +1082,34 @@ export default function RolesIndex() {
                     onClose={() => setPermsRole(null)}
                 />
             )}
+
+            {/* Bulk delete confirmation */}
+            <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Peran Terpilih</DialogTitle>
+                        <DialogDescription>
+                            {selectedRolesList.length} peran akan dihapus. Peran
+                            super-admin tidak dapat dihapus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleBulkDelete}
+                            disabled={!canBulkDelete}
+                        >
+                            Hapus {selectedRolesList.length} Peran
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -602,6 +602,17 @@ class AssetController extends Controller
     {
         Gate::authorize('asset.delete');
 
+        // FR-07.6 — aset yang telah dihapus tidak boleh dihapus dari sistem;
+        // catatan pertahankan untuk keperluan audit.
+        if ($asset->status === AssetStatus::DISPOSED) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Aset yang telah dihapus tidak dapat dihapus.',
+            ]);
+
+            return back();
+        }
+
         $asset->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil dihapus.']);
 

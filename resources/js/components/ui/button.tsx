@@ -5,7 +5,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow,transform] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
@@ -19,6 +19,11 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        /* Evolved Soft UI variants */
+        "soft-primary":
+          "bg-gradient-to-br from-brand via-brand-2 to-brand-2 text-white shadow-[0_6px_18px_-4px_rgba(45,130,183,0.35)] hover:bg-gradient-to-br hover:from-brand-hover hover:via-brand-2 hover:to-brand-2 hover:translate-y-[-1px] hover:shadow-[0_9px_24px_-2px_rgba(45,130,183,0.5)] active:translate-y-[1px] active:shadow-[0_1px_3px_rgba(148,163,184,0.1)]",
+        "soft-secondary":
+          "bg-card-2 border border-border-subtle text-text-primary shadow-[0_2px_12px_rgba(0,0,0,0.28)] hover:bg-surface-hover hover:translate-y-[-1px] hover:border-border-highlight active:translate-y-[1px]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3 sm:min-h-[36px] min-h-[44px]",

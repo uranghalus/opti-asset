@@ -43,9 +43,14 @@ export function TenantSwitcher() {
     const [open, setOpen] = useState(false);
 
     const handleSwitch = (tenantId: string) => {
+        if (currentTenant?.id === tenantId) return;
         setOpen(false);
         router.post(tenant.switch().url, { tenant_id: tenantId });
     };
+
+    const sortedTenants = [...availableTenants].sort((a, b) =>
+        a.name.localeCompare(b.name, 'id'),
+    );
 
     /* ------------------------------------------------------------------ */
     /* Static label — no Popover, no chevron, no click                    */
@@ -111,7 +116,7 @@ export function TenantSwitcher() {
                     )}
                 >
                     {/* Icon container — decorative icon, aria-hidden */}
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-[13px] bg-brand-subtle text-primary ring-1 ring-brand/20 transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-[13px] bg-brand-subtle text-primary ring-1 ring-brand/20 transition-transform duration-300 motion-reduce:transform-none motion-reduce:transition-none">
                         <Building2 className="size-3.5" aria-hidden="true" />
                     </div>
 
@@ -132,64 +137,79 @@ export function TenantSwitcher() {
             </PopoverTrigger>
 
             <PopoverContent
-                className="w-(--radix-popover-trigger-width) min-w-56 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.04)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/95 dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6)]"
+                aria-label="Pilih tenant"
+                className={cn(
+                    'w-(--radix-popover-trigger-width) min-w-56 overflow-hidden rounded-2xl p-1.5',
+                    'border border-border-subtle bg-card shadow-glow-primary',
+                    'dark:border-border-subtle dark:bg-card dark:shadow-glow-primary',
+                )}
                 align="start"
                 side="bottom"
                 sideOffset={8}
             >
-                <Command className="bg-transparent">
+                <Command label="Ganti tenant" className="bg-transparent">
                     <div className="px-1 pt-1 pb-1.5">
                         <CommandInput
                             placeholder="Cari tenant..."
-                            className="h-9 rounded-xl border-none bg-slate-100/70 text-xs shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] focus:ring-0 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500"
+                            className="h-9 rounded-xl border-none bg-surface-sunken text-xs shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] focus:ring-0 text-text-primary placeholder:text-text-tertiary dark:text-text-primary dark:placeholder:text-text-tertiary"
                         />
                     </div>
-                    <CommandList className="max-h-56 p-1">
-                        <CommandEmpty className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                    <CommandList label="Daftar tenant" className="max-h-56 p-1">
+                        <CommandEmpty className="py-4 text-center text-xs text-text-secondary dark:text-text-tertiary">
                             Tidak ada tenant.
                         </CommandEmpty>
                         <CommandGroup
                             heading={
-                                <span className="px-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
+                                <span className="px-2 text-[10px] font-bold tracking-wider text-text-secondary uppercase dark:text-text-tertiary">
                                     Ganti Tenant
                                 </span>
                             }
                         >
                             {isSuperAdmin ? (
-                                availableTenants.map((t) => {
+                                sortedTenants.map((t) => {
                                     const isSelected =
                                         currentTenant?.id === t.id;
 
                                     return (
                                         <CommandItem
                                             key={t.id}
-                                            value={t.name}
+                                            value={t.id}
+                                            keywords={[t.name]}
+                                            aria-current={isSelected ? 'true' : undefined}
                                             onSelect={() => handleSwitch(t.id)}
                                             className={cn(
-                                                'my-0.5 flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold transition-all duration-200',
+                                                'my-0.5 flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold',
+                                                'transition-[color,background-color,border-color] duration-200 motion-reduce:transition-none',
+                                                'data-[selected=true]:bg-surface-hover data-[selected=true]:text-text-primary',
                                                 isSelected
-                                                    ? 'bg-gradient-to-r from-[#2D82B7] to-[#2571A1] text-white shadow-[0_4px_12px_rgba(45,130,183,0.35)]'
-                                                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/80',
+                                                    ? 'bg-brand-subtle text-text-primary'
+                                                    : 'text-text-secondary hover:bg-surface-hover dark:text-text-secondary dark:hover:bg-surface-hover',
                                             )}
                                         >
                                             <div className="flex items-center gap-2.5 truncate">
                                                 <div
                                                     className={cn(
-                                                        'flex size-6 shrink-0 items-center justify-center rounded-lg transition-colors',
+                                                        'flex size-6 shrink-0 items-center justify-center rounded-lg transition-colors motion-reduce:transition-none',
                                                         isSelected
-                                                            ? 'bg-white/20 text-white'
-                                                            : 'bg-slate-200/60 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400',
+                                                            ? 'bg-brand-subtle text-primary'
+                                                            : 'bg-surface-sunken text-text-secondary dark:bg-surface-sunken dark:text-text-secondary',
                                                     )}
                                                 >
-                                                    <Building2 className="size-3" />
+                                                    <Building2 className="size-3" aria-hidden="true" />
                                                 </div>
                                                 <span className="truncate">
                                                     {t.name}
                                                 </span>
+
+                                                {isSelected && (
+                                                    <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-subtle px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                                        Aktif
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {isSelected && (
-                                                <Check className="size-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]" />
+                                                <Check className="size-4 text-primary" aria-hidden="true" />
                                             )}
                                         </CommandItem>
                                     );
@@ -197,19 +217,23 @@ export function TenantSwitcher() {
                             ) : currentTenant ? (
                                 <CommandItem
                                     key={currentTenant.id}
-                                    value={currentTenant.name}
+                                    value={currentTenant.id}
                                     disabled
-                                    className="my-0.5 flex items-center justify-between rounded-xl bg-[#2D82B7]/10 px-2.5 py-2 text-xs font-bold text-[#2D82B7] opacity-80 dark:bg-[#2D82B7]/20 dark:text-sky-300"
+                                    className={cn(
+                                        'my-0.5 flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-bold',
+                                        'bg-brand-subtle text-primary opacity-80',
+                                        'dark:bg-brand-subtle dark:text-primary',
+                                    )}
                                 >
                                     <div className="flex items-center gap-2.5 truncate">
-                                        <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#2D82B7]/20">
-                                            <Building2 className="size-3 text-[#2D82B7] dark:text-sky-300" />
+                                        <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-subtle">
+                                            <Building2 className="size-3 text-primary" aria-hidden="true" />
                                         </div>
                                         <span className="truncate">
                                             {currentTenant.name}
                                         </span>
                                     </div>
-                                    <Check className="size-4 text-[#2D82B7] dark:text-sky-300" />
+                                    <Check className="size-4 text-primary" aria-hidden="true" />
                                 </CommandItem>
                             ) : null}
                         </CommandGroup>

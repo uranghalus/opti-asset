@@ -17,12 +17,17 @@ use App\Observers\AssetObserver;
 use App\Observers\RecordsActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Testing\TestResponse;
 use Illuminate\Validation\Rules\Password;
 use OneLogin\Saml2\Auth as SamlAuth;
 
@@ -55,6 +60,17 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAssetObservers();
         $this->grantSuperAdmin();
         $this->syncUserRolesOnLogin();
+
+        Authenticate::redirectUsing(fn () => route('saml.login'));
+
+        TestResponse::macro('session', function ($key = null, $default = null) {
+            $session = app('session.store');
+            if (! $session->isStarted()) {
+                $session->start();
+            }
+
+            return $key !== null ? $session->get($key, $default) : $session;
+        });
     }
 
     /**
@@ -110,6 +126,14 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('super-admin.revoke', function ($user): bool {
             return $user?->hasPermissionTo('super-admin.revoke') ?? false;
+        });
+
+        Gate::define('tenant.switch', function ($user): bool {
+            return $user?->hasPermissionTo('tenant.switch') ?? false;
+        });
+
+        RateLimiter::for('tenant.switch', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
     }
 

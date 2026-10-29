@@ -20,7 +20,7 @@ class TenantSwitchController extends Controller
 
         // 5. Scope/pivot — unless super-admin
         if (! $user->hasRole('super-admin') && ! $user->tenants()->where('tenants.id', $tenant->id)->exists()) {
-            return redirect()->back()->withErrors(['tenant_id' => 'Anda tidak memiliki akses ke tenant ini.']);
+            abort(403, 'Anda tidak memiliki akses ke tenant ini.');
         }
 
         // 6. Session (capture previous before put)
@@ -49,7 +49,9 @@ class TenantSwitchController extends Controller
             ? 'Tenant "'.$tenant->name.'" sudah aktif.'
             : 'Berhasil beralih ke tenant "'.$tenant->name.'".';
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
+        $toast = ['type' => 'success', 'message' => $message];
+
+        Inertia::flash('toast', $toast);
 
         return redirect()->route('dashboard');
     }

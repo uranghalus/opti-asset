@@ -43,7 +43,10 @@ export function TenantSwitcher() {
     const [open, setOpen] = useState(false);
 
     const handleSwitch = (tenantId: string) => {
-        if (currentTenant?.id === tenantId) return;
+        if (currentTenant?.id === tenantId) {
+            return;
+        }
+
         setOpen(false);
         router.post(tenant.switch().url, { tenant_id: tenantId });
     };
@@ -116,7 +119,7 @@ export function TenantSwitcher() {
                     )}
                 >
                     {/* Icon container — decorative icon, aria-hidden */}
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-[13px] bg-brand-subtle text-primary ring-1 ring-brand/20 transition-transform duration-300 motion-reduce:transform-none motion-reduce:transition-none">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-[13px] bg-brand-subtle text-primary ring-1 ring-brand/20">
                         <Building2 className="size-3.5" aria-hidden="true" />
                     </div>
 
@@ -130,7 +133,7 @@ export function TenantSwitcher() {
                     </div>
 
                     <ChevronDown
-                        className="ml-auto size-3.5 shrink-0 text-text-tertiary transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transform-none motion-reduce:transition-none"
+                        className="ml-auto size-3.5 shrink-0 text-text-tertiary"
                         aria-hidden="true"
                     />
                 </Button>
@@ -151,7 +154,7 @@ export function TenantSwitcher() {
                     <div className="px-1 pt-1 pb-1.5">
                         <CommandInput
                             placeholder="Cari tenant..."
-                            className="h-9 rounded-xl border-none bg-surface-sunken text-xs shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] focus:ring-0 text-text-primary placeholder:text-text-tertiary dark:text-text-primary dark:placeholder:text-text-tertiary"
+                            className="h-9 rounded-xl border-none bg-surface-sunken text-xs text-text-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] placeholder:text-text-tertiary focus:ring-0 dark:text-text-primary dark:placeholder:text-text-tertiary"
                         />
                     </div>
                     <CommandList label="Daftar tenant" className="max-h-56 p-1">
@@ -175,11 +178,13 @@ export function TenantSwitcher() {
                                             key={t.id}
                                             value={t.id}
                                             keywords={[t.name]}
-                                            aria-current={isSelected ? 'true' : undefined}
+                                            aria-current={
+                                                isSelected ? 'true' : undefined
+                                            }
                                             onSelect={() => handleSwitch(t.id)}
                                             className={cn(
-                                                'my-0.5 flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold',
-                                                'transition-[color,background-color,border-color] duration-200 motion-reduce:transition-none',
+                                                'my-0.5 flex min-h-11 cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold',
+                                                'transition-[color,background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
                                                 'data-[selected=true]:bg-surface-hover data-[selected=true]:text-text-primary',
                                                 isSelected
                                                     ? 'bg-brand-subtle text-text-primary'
@@ -189,13 +194,16 @@ export function TenantSwitcher() {
                                             <div className="flex items-center gap-2.5 truncate">
                                                 <div
                                                     className={cn(
-                                                        'flex size-6 shrink-0 items-center justify-center rounded-lg transition-colors motion-reduce:transition-none',
+                                                        'flex size-6 shrink-0 items-center justify-center rounded-lg transition-[color,background-color,border-color,box-shadow] motion-reduce:transition-none',
                                                         isSelected
                                                             ? 'bg-brand-subtle text-primary'
                                                             : 'bg-surface-sunken text-text-secondary dark:bg-surface-sunken dark:text-text-secondary',
                                                     )}
                                                 >
-                                                    <Building2 className="size-3" aria-hidden="true" />
+                                                    <Building2
+                                                        className="size-3"
+                                                        aria-hidden="true"
+                                                    />
                                                 </div>
                                                 <span className="truncate">
                                                     {t.name}
@@ -209,7 +217,10 @@ export function TenantSwitcher() {
                                             </div>
 
                                             {isSelected && (
-                                                <Check className="size-4 text-primary" aria-hidden="true" />
+                                                <Check
+                                                    className="size-4 text-primary"
+                                                    aria-hidden="true"
+                                                />
                                             )}
                                         </CommandItem>
                                     );
@@ -220,20 +231,26 @@ export function TenantSwitcher() {
                                     value={currentTenant.id}
                                     disabled
                                     className={cn(
-                                        'my-0.5 flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-bold',
+                                        'my-0.5 flex min-h-11 items-center justify-between rounded-xl px-2.5 py-2 text-xs font-bold',
                                         'bg-brand-subtle text-primary opacity-80',
                                         'dark:bg-brand-subtle dark:text-primary',
                                     )}
                                 >
                                     <div className="flex items-center gap-2.5 truncate">
                                         <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-subtle">
-                                            <Building2 className="size-3 text-primary" aria-hidden="true" />
+                                            <Building2
+                                                className="size-3 text-primary"
+                                                aria-hidden="true"
+                                            />
                                         </div>
                                         <span className="truncate">
                                             {currentTenant.name}
                                         </span>
                                     </div>
-                                    <Check className="size-4 text-primary" aria-hidden="true" />
+                                    <Check
+                                        className="size-4 text-primary"
+                                        aria-hidden="true"
+                                    />
                                 </CommandItem>
                             ) : null}
                         </CommandGroup>

@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
-    Route::post('tenant/switch', [TenantSwitchController::class, 'switch'])->name('tenant.switch');
+    Route::post('tenant/switch', [TenantSwitchController::class, 'switch'])->middleware('throttle:tenant.switch')->name('tenant.switch');
 
     Route::get('asset-classification', [AssetClassificationController::class, 'index'])->name('asset-classification.index');
 

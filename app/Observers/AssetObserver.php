@@ -79,22 +79,16 @@ class AssetObserver
             return;
         }
 
-        $existing = AssetBookValue::query()
-            ->where('asset_id', $asset->id)
-            ->whereYear('period_ends_at', today()->year)
-            ->whereMonth('period_ends_at', today()->month)
-            ->exists();
-
-        if ($existing) {
-            return;
-        }
-
-        AssetBookValue::create([
-            'asset_id' => $asset->id,
-            'period_ends_at' => today(),
-            'book_value' => $bookValue,
-            'accumulated_depreciation' => $asset->accumulated_depreciation ?? '0',
-            'recorded_by' => auth()->id(),
-        ]);
+        AssetBookValue::firstOrCreate(
+            [
+                'asset_id' => $asset->id,
+                'period_ends_at' => today(),
+            ],
+            [
+                'book_value' => $bookValue,
+                'accumulated_depreciation' => $asset->accumulated_depreciation ?? '0',
+                'recorded_by' => auth()->id(),
+            ]
+        );
     }
 }

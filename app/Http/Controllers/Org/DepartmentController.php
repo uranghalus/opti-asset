@@ -47,9 +47,21 @@ class DepartmentController extends Controller
     /**
      * Display the specified department.
      */
-    public function show(Department $department): Response
+    public function show(Request $request, string $department): Response
     {
         Gate::authorize('department.view');
+
+        \Log::debug('Dept show debug6', [
+            'dept_id_param' => $department,
+            'tenant_current' => Tenant::current()?->id,
+            'tenant_current_code' => Tenant::current()?->code,
+            'all_depts' => Department::pluck('id_department', 'tenant_id')->toArray(),
+            'dept_by_param' => Department::where('id_department', $department)->first()?->id_department,
+        ]);
+
+        $department = Department::where('id_department', $department)
+            ->where('tenant_id', Tenant::current()?->id)
+            ->firstOrFail();
 
         return Inertia::render('Departments/Show', [
             'department' => $department->load(['employees', 'hod', 'manager']),
@@ -73,6 +85,8 @@ class DepartmentController extends Controller
             'message' => $exitCode === Command::SUCCESS ? 'Sinkronisasi departemen berhasil dilakukan.' : $message,
         ]);
 
-        return redirect()->route('departments.index');
+        return redirect()->route('tenant.departments.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 }

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+﻿import { Link } from '@inertiajs/react';
 import { MoreHorizontal, Plus, ScanLine, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,7 @@ import {
     labels,
     labelsBatch,
     scan,
-} from '@/routes/assets';
+} from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 
 type Crumb = {
@@ -29,7 +29,7 @@ type Crumb = {
 };
 
 /**
- * Kepala halaman Aset — identitas scope sekali di sini (ADR 0001):
+ * Kepala halaman Aset â€” identitas scope sekali di sini (ADR 0001):
  * induk scope sebagai eyebrow, node aktif sebagai H1 (+ kode mono + label
  * level). Baris kedua = hitungan hasil, bukan pengulangan scope.
  * Navigasi/import tidak berubah.
@@ -125,8 +125,8 @@ export function AssetsPageHeader({
                             </span>
                         )}
                         {activeFilterCount > 0 &&
-                            ` · ${activeFilterCount} filter aktif`}
-                        {selectedCount > 0 && ` · ${selectedCount} dipilih`}
+                            ` Â· ${activeFilterCount} filter aktif`}
+                        {selectedCount > 0 && ` Â· ${selectedCount} dipilih`}
                     </p>
                 </div>
 
@@ -224,3 +224,4 @@ export function AssetsPageHeader({
         </header>
     );
 }
+

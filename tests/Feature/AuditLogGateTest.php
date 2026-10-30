@@ -25,7 +25,7 @@ class AuditLogGateTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         Permission::findOrCreate('audit.view', 'web');
@@ -39,14 +39,14 @@ class AuditLogGateTest extends TestCase
         $this->user->revokePermissionTo('audit.view');
 
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index'))
+            ->get(route('tenant.audit-logs.index', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
     }
 
     public function test_index_ok_with_audit_view(): void
     {
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index'))
+            ->get(route('tenant.audit-logs.index', ['tenant' => $this->tenant->code]))
             ->assertOk();
     }
 }

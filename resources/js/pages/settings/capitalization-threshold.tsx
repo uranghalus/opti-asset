@@ -105,10 +105,10 @@ export default function CapitalizationThreshold({
                     description="Menentukan batas nilai perolehan antara Aktiva Tetap dan Peralatan. Aset dengan nilai perolehan ≥ ambang batas otomatis menjadi Aktiva Tetap."
                 />
 
-                <Card>
+                <Card className="soft-card">
                     <CardHeader>
                         <CardTitle>Ambang Batas Aktif</CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-text-tertiary">
                             {activeThreshold
                                 ? `Saat ini ${formatAmount(activeThreshold.amount)} (${activeThreshold.currency})`
                                 : 'Belum ada ambang batas aktif — semua aset baru dikategorikan sebagai Peralatan.'}
@@ -124,7 +124,7 @@ export default function CapitalizationThreshold({
                                 <>
                                     <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="amount">
+                                            <Label htmlFor="amount" className="text-text-secondary">
                                                 Nilai Ambang Batas
                                             </Label>
                                             <Input
@@ -147,7 +147,7 @@ export default function CapitalizationThreshold({
                                             )}
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label htmlFor="currency">
+                                            <Label htmlFor="currency" className="text-text-secondary">
                                                 Mata Uang
                                             </Label>
                                             <input
@@ -181,7 +181,11 @@ export default function CapitalizationThreshold({
                                             )}
                                         </div>
                                     </div>
-                                    <Button type="submit" disabled={processing}>
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        variant="soft-primary"
+                                    >
                                         {processing && (
                                             <Spinner className="mr-2 size-4" />
                                         )}
@@ -193,10 +197,10 @@ export default function CapitalizationThreshold({
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="soft-card">
                     <CardHeader>
                         <CardTitle>Riwayat Ambang Batas</CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-text-tertiary">
                             Perubahan tidak berlaku surut — gunakan tombol
                             hitung ulang untuk menerapkan ke aset yang sudah
                             ada.
@@ -204,24 +208,24 @@ export default function CapitalizationThreshold({
                     </CardHeader>
                     <CardContent>
                         {thresholds.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-text-tertiary">
                                 Belum ada riwayat ambang batas.
                             </p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b text-left text-muted-foreground">
-                                            <th className="py-2 pr-4 font-medium">
+                                        <tr className="border-b border-border-subtle text-left text-xs font-medium text-text-tertiary">
+                                            <th className="py-2 pr-4">
                                                 Nilai
                                             </th>
-                                            <th className="py-2 pr-4 font-medium">
+                                            <th className="py-2 pr-4">
                                                 Ditetapkan
                                             </th>
-                                            <th className="py-2 pr-4 font-medium">
+                                            <th className="py-2 pr-4">
                                                 Oleh
                                             </th>
-                                            <th className="py-2 pr-4 font-medium">
+                                            <th className="py-2 pr-4">
                                                 Status
                                             </th>
                                             <th className="py-2" />
@@ -231,27 +235,32 @@ export default function CapitalizationThreshold({
                                         {thresholds.map((threshold) => (
                                             <tr
                                                 key={threshold.id}
-                                                className="border-b last:border-b-0"
+                                                className="border-b border-border-subtle/70 last:border-b-0"
                                             >
-                                                <td className="py-2.5 pr-4 font-medium">
+                                                <td className="py-2.5 pr-4 font-medium text-text-primary">
                                                     {formatAmount(
                                                         threshold.amount,
                                                     )}
                                                 </td>
-                                                <td className="py-2.5 pr-4 text-muted-foreground">
+                                                <td className="py-2.5 pr-4 text-text-tertiary">
                                                     {formatDate(
                                                         threshold.activated_at,
                                                     )}
                                                 </td>
-                                                <td className="py-2.5 pr-4 text-muted-foreground">
+                                                <td className="py-2.5 pr-4 text-text-tertiary">
                                                     {threshold.creator?.name ??
                                                         '—'}
                                                 </td>
                                                 <td className="py-2.5 pr-4">
                                                     {threshold.is_active ? (
-                                                        <Badge>Aktif</Badge>
+                                                        <Badge variant="soft">
+                                                            Aktif
+                                                        </Badge>
                                                     ) : (
-                                                        <Badge variant="secondary">
+                                                        <Badge
+                                                            variant="soft-pill"
+                                                            className="border border-border-subtle bg-surface-card text-text-tertiary shadow-flat"
+                                                        >
                                                             Nonaktif
                                                         </Badge>
                                                     )}
@@ -259,7 +268,7 @@ export default function CapitalizationThreshold({
                                                 <td className="py-2.5 text-right">
                                                     {!threshold.is_active && (
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="soft-secondary"
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive"
                                                             disabled={
@@ -290,17 +299,17 @@ export default function CapitalizationThreshold({
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="soft-card">
                     <CardHeader>
                         <CardTitle>Hitung Ulang Tipe Aset</CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-text-tertiary">
                             Terapkan ambang batas aktif ke seluruh aset yang
                             tidak di-override manual.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button
-                            variant="outline"
+                            variant="soft-secondary"
                             onClick={handleReassign}
                             disabled={reassigning}
                         >

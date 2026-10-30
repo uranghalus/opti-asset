@@ -33,7 +33,7 @@ class ReportTest extends TestCase
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $permission = Permission::create(['name' => 'asset.view', 'guard_name' => 'web']);
@@ -50,7 +50,7 @@ class ReportTest extends TestCase
         AssetDisposal::factory()->count(2)->create();
 
         $this->actingAs($this->user)
-            ->get(route('reports.index'))
+            ->get(route('tenant.reports.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('reports/Index')
@@ -65,7 +65,7 @@ class ReportTest extends TestCase
         AssetTransfer::factory()->count(1)->create(['status' => 'approved']);
 
         $this->actingAs($this->user)
-            ->get(route('reports.index', ['transfer_status' => 'approved']))
+            ->get(route('tenant.reports.index', array_merge(['tenant' => $this->tenant->code], ['transfer_status' => 'approved'])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1));
@@ -77,7 +77,7 @@ class ReportTest extends TestCase
         AssetDisposal::factory()->count(1)->approved()->create();
 
         $this->actingAs($this->user)
-            ->get(route('reports.index', ['disposal_status' => 'approved']))
+            ->get(route('tenant.reports.index', array_merge(['tenant' => $this->tenant->code], ['disposal_status' => 'approved'])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1));
@@ -90,7 +90,7 @@ class ReportTest extends TestCase
         AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('reports.index', ['transfer_search' => 'AST-001']))
+            ->get(route('tenant.reports.index', array_merge(['tenant' => $this->tenant->code], ['transfer_search' => 'AST-001'])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1));
@@ -99,20 +99,20 @@ class ReportTest extends TestCase
     public function test_index_rejects_invalid_status_values(): void
     {
         $this->actingAs($this->user)
-            ->get(route('reports.index', ['transfer_status' => 'invalid']))
+            ->get(route('tenant.reports.index', array_merge(['tenant' => $this->tenant->code], ['transfer_status' => 'invalid'])))
             ->assertInvalid(['transfer_status']);
     }
 
     public function test_index_rejects_invalid_per_page(): void
     {
         $this->actingAs($this->user)
-            ->get(route('reports.index', ['per_page' => 200]))
+            ->get(route('tenant.reports.index', array_merge(['tenant' => $this->tenant->code], ['per_page' => 200])))
             ->assertInvalid(['per_page']);
     }
 
     public function test_unauthenticated_user_is_redirected(): void
     {
-        $this->get(route('reports.index'))
+        $this->get(route('tenant.reports.index', ['tenant' => $this->tenant->code]))
             ->assertRedirect();
     }
 
@@ -121,7 +121,7 @@ class ReportTest extends TestCase
         AssetTransfer::factory()->count(2)->create();
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.transfers', ['format' => 'xlsx']))
+            ->get(route('tenant.reports.export.transfers', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -133,7 +133,7 @@ class ReportTest extends TestCase
         AssetDisposal::factory()->count(2)->create();
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.disposals', ['format' => 'xlsx']))
+            ->get(route('tenant.reports.export.disposals', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -145,7 +145,7 @@ class ReportTest extends TestCase
         AssetTransfer::factory()->count(2)->create();
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.transfers', ['format' => 'pdf']))
+            ->get(route('tenant.reports.export.transfers', array_merge(['tenant' => $this->tenant->code], ['format' => 'pdf'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -158,7 +158,7 @@ class ReportTest extends TestCase
         AssetDisposal::factory()->count(2)->create();
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.disposals', ['format' => 'pdf']))
+            ->get(route('tenant.reports.export.disposals', array_merge(['tenant' => $this->tenant->code], ['format' => 'pdf'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -172,7 +172,7 @@ class ReportTest extends TestCase
         AssetTransfer::factory()->count(1)->create(['status' => 'approved']);
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.transfers', ['format' => 'xlsx', 'transfer_status' => 'approved']))
+            ->get(route('tenant.reports.export.transfers', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx', 'transfer_status' => 'approved'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -185,7 +185,7 @@ class ReportTest extends TestCase
         AssetDisposal::factory()->count(1)->approved()->create();
 
         $response = $this->actingAs($this->user)
-            ->get(route('reports.export.disposals', ['format' => 'xlsx', 'disposal_status' => 'approved']))
+            ->get(route('tenant.reports.export.disposals', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx', 'disposal_status' => 'approved'])))
             ->assertOk();
 
         $disposition = $response->headers->get('Content-Disposition');
@@ -194,10 +194,10 @@ class ReportTest extends TestCase
 
     public function test_unauthenticated_user_cannot_export(): void
     {
-        $this->get(route('reports.export.transfers', ['format' => 'xlsx']))
+        $this->get(route('tenant.reports.export.transfers', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx'])))
             ->assertRedirect();
 
-        $this->get(route('reports.export.disposals', ['format' => 'xlsx']))
+        $this->get(route('tenant.reports.export.disposals', array_merge(['tenant' => $this->tenant->code], ['format' => 'xlsx'])))
             ->assertRedirect();
     }
 }

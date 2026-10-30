@@ -28,7 +28,7 @@ class BrowseFiltersTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         Permission::findOrCreate('asset.view', 'web');
@@ -47,7 +47,7 @@ class BrowseFiltersTest extends TestCase
         Asset::factory()->create(['location_id' => null]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', ['location' => $locationA->id]))
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], ['location' => $locationA->id])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('assets.total', 3)
@@ -65,7 +65,7 @@ class BrowseFiltersTest extends TestCase
         Asset::factory()->create(['item_id' => $itemMouse->id]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', ['search' => 'Dell XPS']))
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], ['search' => 'Dell XPS'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('assets.total', 2));
@@ -95,10 +95,10 @@ class BrowseFiltersTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'location' => $locationA->id,
                 'search' => 'Dell XPS',
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('assets.total', 2));

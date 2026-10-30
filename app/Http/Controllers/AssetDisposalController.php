@@ -107,7 +107,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dibuat.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -134,7 +136,9 @@ class AssetDisposalController extends Controller
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diedit.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $disposal->load(['asset:id,kode_asset,item_id', 'asset.item:id,name,code']);
@@ -165,7 +169,9 @@ class AssetDisposalController extends Controller
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diperbarui.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $validated = $request->validated();
@@ -204,7 +210,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil diperbarui.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -217,7 +225,9 @@ class AssetDisposalController extends Controller
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat dihapus.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $assetId = $disposal->asset_id;
@@ -235,7 +245,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dihapus.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -269,7 +281,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan disetujui; aset ditandai dihapus.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -295,7 +309,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan ditolak.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -345,6 +361,8 @@ class AssetDisposalController extends Controller
             'message' => $pendingIds->count().' pengajuan penghapusan berhasil dihapus.',
         ]);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 }

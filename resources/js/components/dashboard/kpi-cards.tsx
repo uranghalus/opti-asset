@@ -69,35 +69,35 @@ const KPIS = [
         label: 'Total Aset',
         icon: CircleCheck,
         sparkline: [30, 35, 28, 42, 38, 50, 45, 55, 48, 62, 58, 65],
-        color: '#FFB23E',
+        color: '#2D82B7',
         getValue: (s: Stats) => s.total_assets,
     },
     {
         label: 'Aktif',
         icon: CircleCheck,
         sparkline: [20, 25, 22, 28, 25, 30, 28, 32, 30, 35, 33, 38],
-        color: '#5EEAD4',
+        color: '#10B981',
         getValue: (s: Stats) => s.asset_by_status.ACT,
     },
     {
         label: 'Perbaikan',
         icon: Hammer,
         sparkline: [5, 3, 4, 6, 8, 7, 9, 8, 10, 9, 11, 10],
-        color: '#B892FF',
+        color: '#F59E0B',
         getValue: (s: Stats) => s.asset_by_status.RPR,
     },
     {
         label: 'Menunggu Mutasi',
         icon: MoveRight,
         sparkline: [8, 10, 12, 9, 11, 13, 15, 14, 16, 18, 17, 20],
-        color: '#FF9A3E',
+        color: '#0EA5E9',
         getValue: (s: Stats) => s.pending_transfers,
     },
     {
         label: 'Menunggu Disposal',
         icon: Trash2,
         sparkline: [3, 5, 4, 6, 5, 7, 8, 6, 9, 7, 10, 8],
-        color: '#E11D48',
+        color: '#EF4444',
         getValue: (s: Stats) => s.pending_disposals,
     },
 ];
@@ -112,7 +112,7 @@ export function KpiCards({ stats }: { stats: Stats }) {
                 return (
                     <div
                         key={kpi.label}
-                        className="group glass-panel relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#000C3D]/20"
+                        className="soft-card relative overflow-hidden rounded-xl p-4 sm:p-5 transition-[box-shadow,transform] hover:shadow-elevated hover:-translate-y-[2px]"
                     >
                         <span
                             className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
@@ -129,16 +129,16 @@ export function KpiCards({ stats }: { stats: Stats }) {
                                 />
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                        <div className="mt-3">
+                            <p className="text-[11px] font-semibold tracking-wide text-text-tertiary uppercase">
                                 {kpi.label}
                             </p>
-                            <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                            <p className="mt-1 text-2xl font-bold tracking-tight text-text-primary">
                                 {value.toLocaleString('id-ID')}
                             </p>
                         </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3">
-                            <span className="text-[10px] text-muted-foreground">
+                        <div className="mt-3 flex items-center justify-between border-t border-border-subtle/60 pt-3">
+                            <span className="text-[10px] text-text-tertiary">
                                 Terbaru
                             </span>
                             <MiniSparkline

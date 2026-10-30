@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+﻿import { router } from '@inertiajs/react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
     ArrowLeft,
@@ -28,7 +28,7 @@ import {
     index as indexRoute,
     scanLookup,
     show as showRoute,
-} from '@/routes/assets';
+} from '@/routes/tenant/assets';
 
 type Classification = {
     id: string;
@@ -178,30 +178,30 @@ export default function AssetScan() {
           ]
               .filter(Boolean)
               .map((level) => level?.name)
-              .join(' ▸ ')
+              .join(' â–¸ ')
         : '';
 
     return (
-        <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
+        <div className="relative flex min-h-[100dvh] flex-col bg-surface-base text-text-primary p-4 md:p-8">
             <div className="mx-auto w-full max-w-3xl">
                 <button
                     type="button"
                     onClick={() => router.visit(indexRoute().url)}
-                    className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-text-tertiary transition-colors hover:text-text-primary"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
                     Kembali ke Daftar Aset
                 </button>
 
                 <div className="mt-5 flex items-center gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-text-tertiary">
                         <ScanLine className="size-6" strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-[-0.02em] text-foreground">
+                        <h1 className="text-2xl font-bold tracking-[-0.02em] text-text-primary">
                             Scan Aset
                         </h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm text-text-tertiary">
                             Arahkan kamera ke barcode aset, atau masukkan kode
                             aset secara manual.
                         </p>
@@ -209,7 +209,7 @@ export default function AssetScan() {
                 </div>
 
                 <div className="mt-6 space-y-4">
-                    <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4">
+                    <div className="relative overflow-hidden rounded-xl border border-border-subtle-subtle bg-surface-card p-4">
                         <div
                             id={SCANNER_ID}
                             className={cn(
@@ -220,16 +220,17 @@ export default function AssetScan() {
 
                         {!cameraActive && !startingCamera && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                                <div className="flex size-14 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                <div className="flex size-14 items-center justify-center rounded-md bg-brand-subtle text-brand">
                                     <Camera
                                         className="size-6"
                                         strokeWidth={1.5}
                                     />
                                 </div>
-                                <p className="text-sm font-medium text-muted-foreground">
+                                <p className="text-sm font-medium text-text-tertiary">
                                     Kamera belum aktif
                                 </p>
                                 <Button
+                                    variant="soft-primary"
                                     onClick={startCamera}
                                     className="gap-2 font-semibold"
                                 >
@@ -241,17 +242,17 @@ export default function AssetScan() {
 
                         {startingCamera && (
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Loader2 className="size-6 animate-spin text-primary" />
+                                <Loader2 className="size-6 animate-spin text-brand" />
                             </div>
                         )}
 
                         {cameraActive && (
                             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                                 <div className="relative size-[260px]">
-                                    <span className="absolute top-0 left-0 size-8 rounded-tl-lg border-t-2 border-l-2 border-primary" />
-                                    <span className="absolute top-0 right-0 size-8 rounded-tr-lg border-t-2 border-r-2 border-primary" />
-                                    <span className="absolute bottom-0 left-0 size-8 rounded-bl-lg border-b-2 border-l-2 border-primary" />
-                                    <span className="absolute right-0 bottom-0 size-8 rounded-br-lg border-r-2 border-b-2 border-primary" />
+                                    <span className="absolute top-0 left-0 size-8 rounded-tl-lg border-t-2 border-l-2 border-brand" />
+                                    <span className="absolute top-0 right-0 size-8 rounded-tr-lg border-t-2 border-r-2 border-brand" />
+                                    <span className="absolute bottom-0 left-0 size-8 rounded-bl-lg border-b-2 border-l-2 border-brand" />
+                                    <span className="absolute right-0 bottom-0 size-8 rounded-br-lg border-r-2 border-b-2 border-brand" />
                                 </div>
                             </div>
                         )}
@@ -266,10 +267,10 @@ export default function AssetScan() {
 
                     <form
                         onSubmit={handleManualSubmit}
-                        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row"
+                        className="flex flex-col gap-3 rounded-xl border border-border-subtle bg-surface-card p-4 sm:flex-row"
                     >
                         <div className="relative min-w-0 flex-1">
-                            <Package className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Package className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-text-tertiary" />
                             <Input
                                 value={manualCode}
                                 onChange={(event) =>
@@ -313,22 +314,22 @@ export default function AssetScan() {
 
                     {result && (
                         <div className="grid gap-4">
-                            {/* Hierarki baca F1: status terbesar → identitas → lokasi → tipe */}
+                            {/* Hierarki baca F1: status terbesar â†’ identitas â†’ lokasi â†’ tipe */}
                             <div className="flex flex-col gap-3">
                                 <StatusBadge value={result.status} />
                                 <button
                                     type="button"
                                     onClick={openDetail}
-                                    className="flex items-center gap-3.5 rounded-lg border border-border bg-surface-sunken/50 p-4 text-left transition-colors hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60"
+                                    className="flex items-center gap-3.5 rounded-lg border border-border-subtle bg-surface-sunken/50 p-4 text-left transition-colors hover:bg-surface-sunken dark:bg-surface-sunken/30 dark:hover:bg-muted/60"
                                 >
                                     {result.photo_url?.[0] ? (
                                         <img
                                             src={result.photo_url[0]}
                                             alt="Foto aset"
-                                            className="size-12 shrink-0 rounded-md border border-border object-cover"
+                                            className="size-12 shrink-0 rounded-md border border-border-subtle object-cover"
                                         />
                                     ) : (
-                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-text-tertiary dark:bg-surface-sunken dark:text-text-tertiary">
                                             <Boxes
                                                 className="size-5"
                                                 strokeWidth={1.5}
@@ -336,23 +337,23 @@ export default function AssetScan() {
                                         </div>
                                     )}
                                     <div className="min-w-0">
-                                        <p className="truncate text-base font-semibold text-foreground">
+                                        <p className="truncate text-base font-semibold text-text-primary">
                                             {result.item?.name ?? 'Aset'}
                                         </p>
-                                        <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-foreground tabular-nums">
-                                            {result.kode_asset ?? '—'}
+                                        <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-text-primary tabular-nums">
+                                            {result.kode_asset ?? 'â€”'}
                                         </p>
                                         {chain ? (
-                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                            <p className="mt-0.5 truncate text-xs text-text-tertiary">
                                                 {chain}
                                             </p>
                                         ) : null}
                                     </div>
                                 </button>
-                                <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
-                                    <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                                    <p className="min-w-0 truncate text-sm font-medium text-foreground">
-                                        {result.location?.name ?? 'Lokasi —'}
+                                <div className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
+                                    <MapPin className="size-4 shrink-0 text-text-tertiary" />
+                                    <p className="min-w-0 truncate text-sm font-medium text-text-primary">
+                                        {result.location?.name ?? 'Lokasi â€”'}
                                     </p>
                                     <span className="ml-auto shrink-0">
                                         <TipeBadge value={result.asset_type} />
@@ -361,20 +362,20 @@ export default function AssetScan() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                <div className="rounded-lg border border-border-subtle bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
+                                    <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                         Kondisi
                                     </p>
-                                    <p className="mt-2 text-sm font-semibold text-foreground">
-                                        {result.condition ?? '—'}
+                                    <p className="mt-2 text-sm font-semibold text-text-primary">
+                                        {result.condition ?? 'â€”'}
                                     </p>
                                 </div>
-                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                <div className="rounded-lg border border-border-subtle bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
+                                    <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                         Serial
                                     </p>
-                                    <p className="mt-2 truncate font-mono text-sm font-semibold text-foreground tabular-nums">
-                                        {result.serial_number ?? '—'}
+                                    <p className="mt-2 truncate font-mono text-sm font-semibold text-text-primary tabular-nums">
+                                        {result.serial_number ?? 'â€”'}
                                     </p>
                                 </div>
                             </div>
@@ -403,3 +404,4 @@ export default function AssetScan() {
         </div>
     );
 }
+

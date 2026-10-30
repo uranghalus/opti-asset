@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+﻿import { router, usePage } from '@inertiajs/react';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, FileDown, Printer } from 'lucide-react';
 import { useState } from 'react';
@@ -11,7 +11,7 @@ import {
 import type { LabelAsset } from '@/components/assets/label-sticker';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { index as indexRoute } from '@/routes/assets';
+import { index as indexRoute } from '@/routes/tenant/assets';
 
 type PageProps = {
     assets: LabelAsset[];
@@ -102,11 +102,11 @@ export default function AssetLabels() {
 
                 const meta = [
                     asset.serial_number ? `SN: ${asset.serial_number}` : null,
-                    [asset.brand, asset.model].filter(Boolean).join(' · ') ||
+                    [asset.brand, asset.model].filter(Boolean).join(' Â· ') ||
                         null,
                 ]
                     .filter(Boolean)
-                    .join(' · ');
+                    .join(' Â· ');
 
                 if (meta) {
                     pdf.setFontSize(5.5);
@@ -188,3 +188,4 @@ export default function AssetLabels() {
         </div>
     );
 }
+

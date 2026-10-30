@@ -30,7 +30,7 @@ class DashboardTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
@@ -43,7 +43,7 @@ class DashboardTest extends TestCase
         Asset::factory()->count(1)->create(['status' => AssetStatus::REPAIR]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard')
@@ -91,7 +91,7 @@ class DashboardTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard')
@@ -113,7 +113,7 @@ class DashboardTest extends TestCase
         AssetTransfer::factory()->count(1)->create(['status' => 'approved']);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('stats.pending_transfers', 3));
@@ -125,7 +125,7 @@ class DashboardTest extends TestCase
         AssetGroup::factory()->create(['name' => 'Tanah']);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('asset_by_classification.0.name', 'Tanah')
@@ -147,7 +147,7 @@ class DashboardTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('warranty_alerts.expired', 1)
@@ -159,7 +159,7 @@ class DashboardTest extends TestCase
     public function test_dashboard_returns_empty_stats_when_no_assets(): void
     {
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('stats.total_assets', 0)
@@ -175,7 +175,7 @@ class DashboardTest extends TestCase
         Asset::factory()->create(['warranty_expire' => Carbon::now()->addDays(10)]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('warranty_alerts.assets.0.days_until', 2)

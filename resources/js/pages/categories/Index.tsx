@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+﻿import { router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowUpDown,
     CalendarClock,
@@ -44,7 +44,7 @@ import {
     index as indexRoute,
     store,
     update,
-} from '@/routes/categories';
+} from '@/routes/tenant/categories';
 
 type ClassificationOption = {
     id: string;
@@ -107,10 +107,10 @@ type PageProps = {
 
 const SORT_OPTIONS = [
     { value: '', label: 'Terbaru' },
-    { value: 'name', label: 'Nama (A–Z)' },
-    { value: '-name', label: 'Nama (Z–A)' },
-    { value: 'code', label: 'Kode (A–Z)' },
-    { value: '-code', label: 'Kode (Z–A)' },
+    { value: 'name', label: 'Nama (Aâ€“Z)' },
+    { value: '-name', label: 'Nama (Zâ€“A)' },
+    { value: 'code', label: 'Kode (Aâ€“Z)' },
+    { value: '-code', label: 'Kode (Zâ€“A)' },
 ];
 
 const ACCENTS = [
@@ -739,7 +739,7 @@ export default function CategoriesIndex() {
                                                                     ),
                                                                 )
                                                             ) : (
-                                                                <span>—</span>
+                                                                <span>â€”</span>
                                                             )}
                                                         </p>
                                                     </div>
@@ -787,7 +787,7 @@ export default function CategoriesIndex() {
                                                           category
                                                               .classification_type
                                                       ]
-                                                    : '—'}
+                                                    : 'â€”'}
                                             </span>
                                             <p
                                                 className={cn(
@@ -817,7 +817,7 @@ export default function CategoriesIndex() {
                                                     className="size-3"
                                                     strokeWidth={2.25}
                                                 />
-                                                {category.code ?? '—'}
+                                                {category.code ?? 'â€”'}
                                             </span>
                                         </div>
                                     </div>
@@ -863,7 +863,7 @@ export default function CategoriesIndex() {
                     {categories.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {categories.from}–{categories.to}{' '}
+                                Menampilkan {categories.from}â€“{categories.to}{' '}
                                 dari {categories.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -977,7 +977,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} — `
+                                                        ? `${item.code} â€” `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1019,7 +1019,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} — `
+                                                        ? `${item.code} â€” `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1056,7 +1056,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} — `
+                                                        ? `${item.code} â€” `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1093,7 +1093,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} — `
+                                                        ? `${item.code} â€” `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1117,7 +1117,7 @@ export default function CategoriesIndex() {
                                         Kode Kategori Otomatis
                                     </p>
                                     <p className="truncate font-mono text-sm font-bold text-primary tabular-nums">
-                                        {selectedCode || '—'}
+                                        {selectedCode || 'â€”'}
                                     </p>
                                 </div>
                             </div>
@@ -1249,3 +1249,4 @@ CategoriesIndex.layout = {
         },
     ],
 };
+

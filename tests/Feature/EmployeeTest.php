@@ -31,7 +31,7 @@ class EmployeeTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);

@@ -30,7 +30,7 @@ class DisposedAssetGuardTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -65,8 +65,8 @@ class DisposedAssetGuardTest extends TestCase
         $originalBrand = $asset->brand;
 
         $this->actingAs($this->user)
-            ->from(route('assets.edit', $asset))
-            ->patch(route('assets.update', $asset), ['brand' => 'Diubah Paksa'])
+            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Diubah Paksa'])
             ->assertRedirect()
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
@@ -79,8 +79,8 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->activeAsset(['brand' => 'Brand Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), ['brand' => 'Brand Baru'])
-            ->assertRedirect(route('assets.index'));
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Brand Baru'])
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('Brand Baru', $asset->refresh()->brand);
     }
@@ -92,8 +92,8 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->disposedAsset();
 
         $this->actingAs($this->user)
-            ->from(route('assets.edit', $asset))
-            ->delete(route('assets.destroy', $asset))
+            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertRedirect()
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
@@ -105,8 +105,8 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->activeAsset();
 
         $this->actingAs($this->user)
-            ->delete(route('assets.destroy', $asset))
-            ->assertRedirect(route('assets.index'));
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
     }
@@ -119,8 +119,8 @@ class DisposedAssetGuardTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'to_location_id' => $location->id,
                 'quantity' => 1,
@@ -138,15 +138,15 @@ class DisposedAssetGuardTest extends TestCase
         $toDepartment = Department::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'to_location_id' => $toLocation->id,
                 'to_department_id' => $toDepartment->id_department,
                 'quantity' => 1,
                 'notes' => 'Uji guard disposed aset',
             ])
-            ->assertRedirect(route('asset-transfers.index'));
+            ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('asset_transfers', [
             'asset_id' => $asset->id,

@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ArchiveX, Calendar, FileText, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
-import { index as indexRoute, store as storeRoute } from '@/routes/disposals';
+import { index as indexRoute, store as storeRoute } from '@/routes/tenant/disposals';
 
 type AssetOption = {
     id: string;
@@ -127,7 +127,7 @@ export default function AssetDisposalsCreate() {
                                                     <span className="text-xs text-muted-foreground">
                                                         {asset.kode_asset ??
                                                             asset.item?.code ??
-                                                            '—'}
+                                                            'â€”'}
                                                     </span>
                                                 </div>
                                             </SelectItem>
@@ -247,3 +247,4 @@ AssetDisposalsCreate.layout = {
         },
     ],
 };
+

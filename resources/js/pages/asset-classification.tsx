@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+﻿import { Head, router, usePage } from '@inertiajs/react';
 import {
     ChevronsDownUp,
     ChevronsUpDown,
@@ -69,7 +69,7 @@ import {
     LEVEL_TINTS,
 } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
-import { index } from '@/routes/asset-classification';
+import { index } from '@/routes/tenant/asset-classification';
 import type {
     ClassificationLevel,
     ClassificationNode,
@@ -877,8 +877,8 @@ export default function AssetClassification() {
                                         Klasifikasi Asset
                                     </h1>
                                     <p className="mt-0.5 text-sm text-muted-foreground">
-                                        Kelola hierarki master data: Golongan →
-                                        Kategori → Cluster → Sub Cluster.
+                                        Kelola hierarki master data: Golongan â†’
+                                        Kategori â†’ Cluster â†’ Sub Cluster.
                                     </p>
                                 </div>
                             </div>
@@ -1473,3 +1473,4 @@ AssetClassification.layout = {
         },
     ],
 };
+

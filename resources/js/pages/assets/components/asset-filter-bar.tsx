@@ -85,12 +85,12 @@ export function AssetFilterBar({
     }
 
     return (
-        <div className="border-b border-border px-4 py-3 sm:px-5">
+        <div className="border-b border-border-subtle px-4 py-3 sm:px-5">
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                 <div className="relative min-w-0 flex-1">
                     <Search
                         aria-hidden
-                        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-text-tertiary"
                     />
                     <Input
                         value={search}
@@ -104,7 +104,7 @@ export function AssetFilterBar({
                             type="button"
                             onClick={onSearchClear}
                             aria-label="Bersihkan pencarian"
-                            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                         >
                             <X className="size-4" />
                         </button>
@@ -198,7 +198,7 @@ export function AssetFilterBar({
                         <button
                             type="button"
                             onClick={onClearFilters}
-                            className="inline-flex h-7 items-center rounded-sm px-2 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="inline-flex h-7 items-center rounded-sm px-2 text-xs font-medium text-text-secondary underline-offset-2 transition-colors hover:text-text-primary hover:underline focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                         >
                             Bersihkan semua
                         </button>
@@ -231,25 +231,25 @@ function FilterPanelButton({
         <details className="group relative">
             <summary
                 className={cn(
-                    'inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors',
-                    'hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                    'inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-border-subtle bg-surface-card px-3 text-sm font-medium text-text-primary transition-colors',
+                    'hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none',
                     'marker:hidden [&::-webkit-details-marker]:hidden',
                 )}
             >
                 Filter
                 {activeFilterCount > 0 && (
-                    <span className="rounded-sm bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums">
+                    <span className="rounded-sm bg-brand px-1.5 py-0.5 text-xs font-semibold text-text-primary tabular-nums">
                         {activeFilterCount}
                     </span>
                 )}
             </summary>
-            <div className="absolute right-0 z-30 mt-2 w-72 rounded-lg border border-border bg-card p-4 shadow-[var(--shadow-overlay)]">
-                <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <div className="absolute right-0 z-30 mt-2 w-72 rounded-lg border border-border-subtle bg-surface-card p-4 shadow-soft">
+                <p className="mb-3 text-xs font-semibold tracking-wide text-text-tertiary uppercase">
                     Filter
                 </p>
                 <div className="flex flex-col gap-3">
                     <label className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-foreground">
+                        <span className="text-xs font-medium text-text-primary">
                             Status
                         </span>
                         <Select
@@ -277,7 +277,7 @@ function FilterPanelButton({
                         </Select>
                     </label>
                     <label className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-foreground">
+                        <span className="text-xs font-medium text-text-primary">
                             Lokasi
                         </span>
                         <Select
@@ -340,25 +340,25 @@ export function SelectAllBar({
     selectedCount: number;
 }) {
     return (
-        <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-sunken px-4 py-2.5 text-xs sm:px-5">
-            <label className="flex min-w-0 cursor-pointer items-center gap-2.5 font-semibold text-foreground">
+        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-surface-sunken px-4 py-2.5 text-xs sm:px-5">
+            <label className="flex min-w-0 cursor-pointer items-center gap-2.5 font-semibold text-text-primary">
                 <Checkbox
                     id="select-all"
                     checked={allSelected}
                     onCheckedChange={onToggleSelectAll}
                     disabled={disabled}
                     aria-label="Pilih semua di halaman ini"
-                    className="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    className="data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=checked]:text-text-primary"
                 />
                 <span className="min-w-0 truncate">{label}</span>
-                <span className="shrink-0 rounded-sm bg-primary px-1.5 py-0.5 font-semibold text-primary-foreground tabular-nums">
+                <span className="shrink-0 rounded-sm bg-brand px-1.5 py-0.5 font-semibold text-text-primary tabular-nums">
                     {total}
                 </span>
             </label>
             {selectedCount > 0 && (
                 <span
                     aria-live="polite"
-                    className="shrink-0 font-semibold text-foreground"
+                    className="shrink-0 font-semibold text-text-primary"
                 >
                     {selectedCount} dipilih
                 </span>

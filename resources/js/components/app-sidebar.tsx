@@ -1,6 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 
@@ -23,7 +23,7 @@ import { sidebarData } from '@/data/sidebar';
 
 import { cn } from '@/lib/utils';
 
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/tenant';
 
 type Props = {
     isMobile?: boolean;
@@ -33,7 +33,30 @@ type Props = {
     onClose?: () => void;
 };
 
-export function AppSidebar({ isMobile = false, open = false }: Props) {
+export function AppSidebar({
+    isMobile = false,
+    open = false,
+    onClose: _onClose,
+}: Props) {
+    const { setOpen } = useSidebar();
+    const isMounted = useRef(false);
+    const page = usePage().props as { tenant?: { code?: string } | null };
+    const tenantCode = page.tenant?.code;
+
+    // Sync the controlled `open` prop with the sidebar context so toggling
+    // from the header actually expands / collapses the desktop sidebar.
+    // Skip the initial sync so `SidebarProvider`'s default open state is
+    // respected and we don't collapse the sidebar on first render.
+    useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+
+            return;
+        }
+
+        setOpen(open);
+    }, [open, setOpen]);
+
     const sidebarClassName = cn(
         'sidebar-glass border-r border-border-subtle transition-all duration-300',
 
@@ -62,7 +85,7 @@ export function AppSidebar({ isMobile = false, open = false }: Props) {
                             className="group/logo h-14 gap-3.5 rounded-2xl px-3 transition-all duration-300 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! hover:bg-slate-200/50 hover:shadow-[inset_0_1px_2px_rgba(255,255,255,0.6),0_4px_12px_rgba(0,0,0,0.03)] data-[state=open]:bg-transparent dark:hover:bg-slate-800/40 dark:hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_4px_12px_rgba(0,0,0,0.2)]"
                         >
                             <Link
-                                href={dashboard()}
+                                href={dashboard({ tenant: tenantCode }).url}
                                 className="flex w-full items-center"
                             >
                                 {/* Soft UI Logo Container with Inset Highlight & Soft Ambient Shadow */}

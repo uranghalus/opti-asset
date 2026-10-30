@@ -43,7 +43,7 @@ class AssetTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -63,7 +63,7 @@ class AssetTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('assets.index'))
+            ->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
     }
 
@@ -72,7 +72,7 @@ class AssetTest extends TestCase
         $this->user->revokePermissionTo('asset.create');
 
         $this->actingAs($this->user)
-            ->get(route('assets.create'))
+            ->get(route('tenant.assets.create', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
     }
 
@@ -83,7 +83,7 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->post(route('assets.store'), [
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-NO-PERM',
             ])
@@ -99,7 +99,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('assets.edit', $asset))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertForbidden();
     }
 
@@ -110,7 +110,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), ['brand' => 'Tidak Boleh'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Tidak Boleh'])
             ->assertForbidden();
 
         $this->assertSame($asset->refresh()->brand, $asset->brand);
@@ -123,7 +123,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('assets.destroy', $asset))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
@@ -134,7 +134,7 @@ class AssetTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->getJson(route('assets.scan-lookup', ['code' => 'X']))
+            ->getJson(route('tenant.assets.scan-lookup', array_merge(['tenant' => $this->tenant->code], ['code' => 'X'])))
             ->assertForbidden();
     }
 
@@ -144,7 +144,7 @@ class AssetTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('assets.history', $asset))
+            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertForbidden();
     }
 
@@ -158,8 +158,8 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), ['brand' => 'Brand Baru'])
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Brand Baru'])
             ->assertRedirect();
 
         $this->assertSame('Brand Asli', $asset->refresh()->brand);
@@ -170,11 +170,11 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk();
 
         $this->actingAs($this->user)
-            ->delete(route('assets.destroy', $asset))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
@@ -299,7 +299,7 @@ class AssetTest extends TestCase
         $item = Item::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('assets.index'))
+            ->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -311,7 +311,7 @@ class AssetTest extends TestCase
         [$group, $category, $cluster, $subCluster] = $this->classificationChain();
 
         $this->actingAs($this->user)
-            ->get(route('assets.grouped', ['level' => $group->id, 'node' => $subCluster->id]))
+            ->get(route('tenant.assets.grouped', array_merge(['tenant' => $this->tenant->code], ['level' => $group->id, 'node' => $subCluster->id])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -335,7 +335,7 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -355,14 +355,14 @@ class AssetTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $foreign))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$foreign' => $foreign]))
             ->assertNotFound();
     }
 
     public function test_scan_page_renders(): void
     {
         $this->actingAs($this->user)
-            ->get(route('assets.scan'))
+            ->get(route('tenant.assets.scan', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('assets/Scan'));
     }
@@ -399,7 +399,7 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -413,7 +413,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['kode_asset' => '01.01.01.01.001']);
 
         $this->actingAs($this->user)
-            ->getJson(route('assets.scan-lookup', ['code' => '01.01.01.01.001']))
+            ->getJson(route('tenant.assets.scan-lookup', array_merge(['tenant' => $this->tenant->code], ['code' => '01.01.01.01.001'])))
             ->assertOk()
             ->assertJsonPath('asset.id', $asset->id)
             ->assertJsonPath('asset.kode_asset', '01.01.01.01.001');
@@ -422,7 +422,7 @@ class AssetTest extends TestCase
     public function test_scan_lookup_returns_404_when_not_found(): void
     {
         $this->actingAs($this->user)
-            ->getJson(route('assets.scan-lookup', ['code' => 'TIDAK-ADA']))
+            ->getJson(route('tenant.assets.scan-lookup', array_merge(['tenant' => $this->tenant->code], ['code' => 'TIDAK-ADA'])))
             ->assertNotFound()
             ->assertJsonPath('message', 'Aset tidak ditemukan.');
     }
@@ -430,8 +430,8 @@ class AssetTest extends TestCase
     public function test_scan_lookup_requires_code(): void
     {
         $this->actingAs($this->user)
-            ->from(route('assets.scan'))
-            ->get(route('assets.scan-lookup'))
+            ->from(route('tenant.assets.scan', ['tenant' => $this->tenant->code]))
+            ->get(route('tenant.assets.scan-lookup', ['tenant' => $this->tenant->code]))
             ->assertSessionHasErrors(['code']);
     }
 
@@ -452,8 +452,8 @@ class AssetTest extends TestCase
     public function test_labels_page_requires_ids(): void
     {
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->get(route('assets.labels'))
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->get(route('tenant.assets.labels', ['tenant' => $this->tenant->code]))
             ->assertSessionHasErrors(['ids']);
     }
 
@@ -475,7 +475,7 @@ class AssetTest extends TestCase
     public function test_create_page_renders(): void
     {
         $this->actingAs($this->user)
-            ->get(route('assets.create'))
+            ->get(route('tenant.assets.create', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Create')
@@ -490,7 +490,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('assets.edit', $asset))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Edit')
@@ -502,12 +502,12 @@ class AssetTest extends TestCase
         [$group, $category, $cluster, $subCluster, $cat, $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-TEST-001',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'kode_asset' => '01.01.01.01.001',
@@ -528,12 +528,12 @@ class AssetTest extends TestCase
 
         foreach (['SN-A-001', 'SN-A-002'] as $serial) {
             $this->actingAs($this->user)
-                ->from(route('assets.index'))
-                ->post(route('assets.store'), [
+                ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+                ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                     'item_id' => $item->id,
                     'serial_number' => $serial,
                 ])
-                ->assertRedirect(route('assets.index'));
+                ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
         }
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-A-001', 'kode_asset' => '01.01.01.01.001']);
@@ -546,20 +546,20 @@ class AssetTest extends TestCase
         [, , , , , $itemB] = $this->itemWithCategory('02');
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $itemA->id,
                 'serial_number' => 'SN-C1-001',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $itemB->id,
                 'serial_number' => 'SN-C2-001',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C1-001', 'kode_asset' => '01.01.01.01.001']);
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-C2-001', 'kode_asset' => '02.02.02.02.001']);
@@ -583,12 +583,12 @@ class AssetTest extends TestCase
         $first->delete();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-DEL-003',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-DEL-003', 'kode_asset' => '01.01.01.01.003']);
     }
@@ -598,14 +598,14 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-MEDIA-001',
                 'photo_url' => ['/storage/photos/a.jpg', '/storage/photos/b.jpg'],
                 'document_url' => ['/storage/docs/faktur.pdf'],
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('serial_number', 'SN-MEDIA-001')->first();
 
@@ -618,7 +618,7 @@ class AssetTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs($this->user)
-            ->post(route('assets.upload'), [
+            ->post(route('tenant.assets.upload', ['tenant' => $this->tenant->code]), [
                 'file' => UploadedFile::fake()->image('asset-photo.jpg', 100, 100),
             ])
             ->assertOk()
@@ -632,8 +632,8 @@ class AssetTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs($this->user)
-            ->from(route('assets.create'))
-            ->post(route('assets.upload'), [
+            ->from(route('tenant.assets.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.upload', ['tenant' => $this->tenant->code]), [
                 'file' => UploadedFile::fake()->create('large.pdf', 2048),
             ])
             ->assertSessionHasErrors(['file']);
@@ -644,8 +644,8 @@ class AssetTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs($this->user)
-            ->from(route('assets.create'))
-            ->post(route('assets.upload'), [
+            ->from(route('tenant.assets.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.upload', ['tenant' => $this->tenant->code]), [
                 'file' => UploadedFile::fake()->create('malware.exe', 10),
             ])
             ->assertSessionHasErrors(['file']);
@@ -656,13 +656,13 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-PIC-001',
                 'pic' => ['Budi', 'Siti'],
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('serial_number', 'SN-PIC-001')->first();
 
@@ -672,8 +672,8 @@ class AssetTest extends TestCase
     public function test_store_requires_item(): void
     {
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'serial_number' => 'SN-NO-ITEM',
             ])
             ->assertSessionHasErrors(['item_id']);
@@ -694,12 +694,12 @@ class AssetTest extends TestCase
         $item = Item::factory()->create(['category_id' => $cat->id]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-GROUP-ONLY',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-GROUP-ONLY',
@@ -724,12 +724,12 @@ class AssetTest extends TestCase
         $item = Item::factory()->create(['category_id' => $cat->id]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-UPTO-CAT',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-UPTO-CAT',
@@ -744,12 +744,12 @@ class AssetTest extends TestCase
         $item = Item::factory()->create(['category_id' => null]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'serial_number' => 'SN-NO-CAT',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-NO-CAT',
@@ -769,12 +769,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'item_id' => $itemB->id,
                 'serial_number' => 'SN-BARU-001',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'id' => $asset->id,
@@ -789,12 +789,12 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'ACT', 'condition' => 'Baik']);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'status' => 'LOAN',
                 'condition' => 'Rusak Ringan',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
@@ -816,8 +816,8 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'status' => 'BOGUS',
             ])
@@ -836,12 +836,12 @@ class AssetTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('assets.csv', $csv);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-STATUS-001',
@@ -860,11 +860,11 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'item_id' => $itemB->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,
@@ -879,11 +879,11 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['notes' => 'Awal']);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'notes' => 'Diperbarui',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(0, AssetHistory::count());
     }
@@ -894,7 +894,7 @@ class AssetTest extends TestCase
         AssetHistory::factory()->count(3)->create(['asset_id' => $asset->id]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertInertia(fn ($page) => $page
                 ->has('asset.histories', 3));
     }
@@ -904,9 +904,9 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->delete(route('assets.destroy', $asset))
-            ->assertRedirect(route('assets.index'));
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(0, Asset::count());
     }
@@ -916,12 +916,12 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.store'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.store', ['tenant' => $this->tenant->code]), [
                 'item_id' => $item->id,
                 'brand' => 'Brand Baru',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::first();
 
@@ -938,7 +938,7 @@ class AssetTest extends TestCase
     public function test_import_template_downloads_xlsx(): void
     {
         $this->actingAs($this->user)
-            ->get(route('assets.import-template'))
+            ->get(route('tenant.assets.import-template', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertDownload('template-import-aset.xlsx');
     }
@@ -956,12 +956,12 @@ class AssetTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('assets.csv', $csv);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-IMPORT-001']);
         $this->assertSame(1, Asset::count());
@@ -981,12 +981,12 @@ class AssetTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('assets.csv', $csv);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('assets', [
             'serial_number' => 'SN-IMPORT-ITEM',
@@ -1003,11 +1003,11 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('serial_number', 'SN-DEFAULT-ITEM')->first();
         $this->assertNotNull($asset);
@@ -1020,8 +1020,8 @@ class AssetTest extends TestCase
         [, , , , , $item] = $this->itemWithCategory();
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => UploadedFile::fake()->create('assets.txt'),
                 'item_id' => $item->id,
             ])
@@ -1047,12 +1047,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(3, Asset::count());
         $this->assertSame(4, Item::count());
@@ -1090,12 +1090,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(1, Asset::count());
         $this->assertDatabaseHas('assets', ['serial_number' => 'SN-KODE-A']);
@@ -1116,12 +1116,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(2, Asset::count());
         $this->assertDatabaseMissing('assets', ['serial_number' => 'SN-BARU-A']);
@@ -1137,11 +1137,11 @@ class AssetTest extends TestCase
         $targets = Asset::factory()->count(3)->create(['item_id' => $item->id]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->delete(route('assets.destroy-bulk'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.assets.destroy-bulk', ['tenant' => $this->tenant->code]), [
                 'ids' => $targets->pluck('id')->all(),
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(1, Asset::count());
         $this->assertTrue($keep->refresh()->exists);
@@ -1153,8 +1153,8 @@ class AssetTest extends TestCase
     public function test_bulk_destroy_requires_ids(): void
     {
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->delete(route('assets.destroy-bulk'), [])
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.assets.destroy-bulk', ['tenant' => $this->tenant->code]), [])
             ->assertSessionHasErrors(['ids']);
     }
 
@@ -1170,8 +1170,8 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->delete(route('assets.destroy-bulk'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.assets.destroy-bulk', ['tenant' => $this->tenant->code]), [
                 'ids' => [$otherAsset->id],
             ])
             ->assertSessionHasErrors(['ids.*']);
@@ -1203,7 +1203,7 @@ class AssetTest extends TestCase
 
             $this->actingAs($this->user)
                 ->patch($url, ['notes' => 'Coba'])
-                ->assertRedirect(route('assets.index'));
+                ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
         }
     }
 
@@ -1211,7 +1211,7 @@ class AssetTest extends TestCase
     {
         [, , , , , $item] = $this->itemWithCategory();
 
-        $url = route('assets.store').'?return_to='.urlencode('/assets?page=3&status=ACT');
+        $url = route('tenant.assets.store', ['tenant' => $this->tenant->code]).'?return_to='.urlencode('/assets?page=3&status=ACT');
 
         $this->actingAs($this->user)
             ->post($url, ['item_id' => $item->id])
@@ -1225,8 +1225,8 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['item_id' => $item->id]);
 
         $this->actingAs($this->user)
-            ->delete(route('assets.destroy', $asset))
-            ->assertRedirect(route('assets.index'));
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
     }
@@ -1241,12 +1241,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('kode_asset', 'X.001')->first();
         $this->assertNotNull($asset);
@@ -1274,12 +1274,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $byCode = Asset::query()->where('kode_asset', 'X.001')->first();
         $byCodeUpper = Asset::query()->where('kode_asset', 'X.002')->first();
@@ -1308,12 +1308,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('kode_asset', 'X.001')->first();
         $this->assertNotNull($asset);
@@ -1334,12 +1334,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1371,12 +1371,12 @@ class AssetTest extends TestCase
         $file = $this->xlsxFile($rows);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1399,12 +1399,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1474,12 +1474,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('kode_asset', '03.08.11.07')->first();
 
@@ -1512,12 +1512,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $asset = Asset::query()->where('kode_asset', '03.08.02.02')->first();
 
@@ -1536,12 +1536,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1559,12 +1559,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1585,12 +1585,12 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('assets.index'))
-            ->post(route('assets.import'), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), [
                 'file' => $file,
                 'item_id' => $item->id,
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $flash = session('inertia.flash_data');
         $this->assertIsArray($flash);
@@ -1605,7 +1605,7 @@ class AssetTest extends TestCase
         Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_cluster_id' => null]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index'))
+            ->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -1621,7 +1621,7 @@ class AssetTest extends TestCase
         $other = Asset::factory()->create(['item_id' => $item->id, 'asset_group_id' => null, 'kode_asset' => '99.99.99.99']);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index', ['search' => 'Laptop Pro']))
+            ->get(route('tenant.assets.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Laptop Pro'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -1638,7 +1638,7 @@ class AssetTest extends TestCase
         Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_group_id' => $group->id]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index', ['asset_type' => 'all']))
+            ->get(route('tenant.assets.index', array_merge(['tenant' => $this->tenant->code], ['asset_type' => 'all'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -1658,7 +1658,7 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index', ['level' => 'cluster', 'node' => $cluster->id]))
+            ->get(route('tenant.assets.index', array_merge(['tenant' => $this->tenant->code], ['level' => 'cluster', 'node' => $cluster->id])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -1676,7 +1676,7 @@ class AssetTest extends TestCase
         Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_cluster_id' => null]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.index', ['level' => 'cluster', 'node' => 'unclassified']))
+            ->get(route('tenant.assets.index', array_merge(['tenant' => $this->tenant->code], ['level' => 'cluster', 'node' => 'unclassified'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')
@@ -1690,7 +1690,7 @@ class AssetTest extends TestCase
     public function test_browse_route_renders_index_view(): void
     {
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Index')

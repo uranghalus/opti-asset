@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+﻿import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArchiveX,
@@ -29,7 +29,7 @@ import {
     edit as editRoute,
     index as indexRoute,
     reject as rejectRoute,
-} from '@/routes/disposals';
+} from '@/routes/tenant/disposals';
 
 type Disposal = {
     id: number;
@@ -67,7 +67,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return '—';
+        return 'â€”';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -212,7 +212,7 @@ export default function DisposalShow() {
                                         {disposal.asset?.nama_asset ?? 'Aset'}
                                     </h2>
                                     <p className="mt-0.5 font-mono text-sm text-muted-foreground">
-                                        {disposal.asset?.kode_asset ?? '—'}
+                                        {disposal.asset?.kode_asset ?? 'â€”'}
                                     </p>
                                     {disposal.asset?.serial_number && (
                                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -259,7 +259,7 @@ export default function DisposalShow() {
                                     Diajukan Oleh
                                 </p>
                                 <p className="text-sm text-foreground">
-                                    {disposal.disposedBy?.name ?? '—'}
+                                    {disposal.disposedBy?.name ?? 'â€”'}
                                 </p>
                             </div>
 
@@ -345,3 +345,4 @@ DisposalShow.layout = (props: { disposal: Disposal }) => ({
         },
     ],
 });
+

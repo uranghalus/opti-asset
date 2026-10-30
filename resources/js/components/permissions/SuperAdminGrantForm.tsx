@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { store as grantStore } from '@/routes/super-admin-grants';
+import { store as grantStore } from '@/routes/super-admin/grants';
 
 type UserOption = {
     id: number;

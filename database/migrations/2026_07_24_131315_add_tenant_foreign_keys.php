@@ -8,10 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('user_tenants', function (Blueprint $table) {
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
-        });
-
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('tenant_id')->references('id')->on('tenants')->nullOnDelete();
         });
@@ -20,10 +16,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('user_tenants', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
         });
     }

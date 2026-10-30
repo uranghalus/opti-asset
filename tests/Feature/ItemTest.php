@@ -29,7 +29,7 @@ class ItemTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -47,7 +47,7 @@ class ItemTest extends TestCase
         $this->user->revokePermissionTo('asset.item.create');
 
         $this->actingAs($this->user)
-            ->post(route('items.store'), ['name' => 'Baru', 'code' => 'ITM-BARU'])
+            ->post(route('tenant.items.store', ['tenant' => $this->tenant->code]), ['name' => 'Baru', 'code' => 'ITM-BARU'])
             ->assertForbidden();
 
         $this->assertDatabaseMissing('items', ['code' => 'ITM-BARU']);
@@ -58,7 +58,7 @@ class ItemTest extends TestCase
         Item::factory()->count(20)->create();
 
         $this->actingAs($this->user)
-            ->get(route('items.index'))
+            ->get(route('tenant.items.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('items/Index')
@@ -74,7 +74,7 @@ class ItemTest extends TestCase
         Item::factory()->create(['name' => 'Printer', 'code' => 'ITM-002']);
 
         $this->actingAs($this->user)
-            ->get(route('items.index', ['search' => 'ITM-001']))
+            ->get(route('tenant.items.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'ITM-001'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('items.total', 1)
                 ->where('items.data.0.name', 'Notebook')
@@ -90,7 +90,7 @@ class ItemTest extends TestCase
         Item::factory()->create(['name' => 'Kategori Dua', 'category_id' => $other->id]);
 
         $this->actingAs($this->user)
-            ->get(route('items.index', ['category' => $category->id]))
+            ->get(route('tenant.items.index', array_merge(['tenant' => $this->tenant->code], ['category' => $category->id])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('items.total', 1)
                 ->where('items.data.0.name', 'Kategori Satu'));
@@ -102,7 +102,7 @@ class ItemTest extends TestCase
         Item::factory()->create(['name' => 'Alpha']);
 
         $this->actingAs($this->user)
-            ->get(route('items.index', ['sort' => 'name']))
+            ->get(route('tenant.items.index', array_merge(['tenant' => $this->tenant->code], ['sort' => 'name'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('items.data.0.name', 'Alpha')
                 ->where('items.data.1.name', 'Zulu'));
@@ -116,13 +116,13 @@ class ItemTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('items.index'))
+            ->get(route('tenant.items.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->where('items.total', 1));
     }
 
     public function test_item_can_be_created(): void
     {
-        $this->actingAs($this->user)->post(route('items.store'), [
+        $this->actingAs($this->user)->post(route('tenant.items.store', ['tenant' => $this->tenant->code]), [
             'code' => 'ITM-100',
             'name' => 'Notebook Dell',
         ])->assertRedirect();
@@ -139,8 +139,8 @@ class ItemTest extends TestCase
         Item::factory()->create(['code' => 'ITM-001']);
 
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.store'), [
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.store', ['tenant' => $this->tenant->code]), [
                 'code' => 'ITM-001',
                 'name' => 'Duplikat',
             ])
@@ -150,8 +150,8 @@ class ItemTest extends TestCase
     public function test_item_requires_name(): void
     {
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.store'), ['code' => 'ITM-101'])
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.store', ['tenant' => $this->tenant->code]), ['code' => 'ITM-101'])
             ->assertSessionHasErrors('name');
     }
 
@@ -160,7 +160,7 @@ class ItemTest extends TestCase
         $item = Item::factory()->create(['name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->patch(route('items.update', $item->id), [
+            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, 'item' => $item->id]), [
                 'code' => $item->code,
                 'name' => 'Baru',
             ])
@@ -176,7 +176,7 @@ class ItemTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->patch(route('items.update', $foreign->id), [
+            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, 'item' => $foreign->id]), [
                 'code' => 'X',
                 'name' => 'X',
             ])
@@ -188,7 +188,7 @@ class ItemTest extends TestCase
         $item = Item::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('items.destroy', $item->id))
+            ->delete(route('tenant.items.destroy', ['tenant' => $this->tenant->code, 'item' => $item->id]))
             ->assertRedirect();
 
         $this->assertSame(0, Item::withoutGlobalScopes()->count());
@@ -200,8 +200,8 @@ class ItemTest extends TestCase
         $items = Item::factory()->count(3)->create(['category_id' => null]);
 
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.batch-category'), [
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.batch-category', ['tenant' => $this->tenant->code]), [
                 'ids' => $items->pluck('id')->all(),
                 'category_id' => $category->id,
             ])
@@ -218,8 +218,8 @@ class ItemTest extends TestCase
         $untouched = Item::factory()->create(['category_id' => $other->id]);
 
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.batch-category'), [
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.batch-category', ['tenant' => $this->tenant->code]), [
                 'ids' => [$target->id],
                 'category_id' => $category->id,
             ])
@@ -232,8 +232,8 @@ class ItemTest extends TestCase
     public function test_batch_assign_category_requires_ids(): void
     {
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.batch-category'), [])
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.batch-category', ['tenant' => $this->tenant->code]), [])
             ->assertSessionHasErrors(['ids']);
     }
 
@@ -243,8 +243,8 @@ class ItemTest extends TestCase
         $items = Item::factory()->count(2)->create(['category_id' => $category->id]);
 
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.batch-category'), [
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.batch-category', ['tenant' => $this->tenant->code]), [
                 'ids' => $items->pluck('id')->all(),
                 'category_id' => '',
             ])
@@ -261,8 +261,8 @@ class ItemTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->from(route('items.index'))
-            ->post(route('items.batch-category'), [
+            ->from(route('tenant.items.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.items.batch-category', ['tenant' => $this->tenant->code]), [
                 'ids' => [$foreign->id],
                 'category_id' => $category->id,
             ])

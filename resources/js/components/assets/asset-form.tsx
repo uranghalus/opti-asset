@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+﻿import { useForm } from '@inertiajs/react';
 import {
     Boxes,
     Building2,
@@ -33,7 +33,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { currentReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
-import { store, update } from '@/routes/assets';
+import { store, update } from '@/routes/tenant/assets';
 
 export type AssetOption = {
     id: string;
@@ -291,7 +291,7 @@ export function AssetForm({
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code} — {item.name}
+                                                {item.code} â€” {item.name}
                                             </SelectItem>
                                         ))
                                     )}
@@ -331,7 +331,7 @@ export function AssetForm({
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {previewCode || '—'}
+                                {previewCode || 'â€”'}
                             </p>
                             {previewCode ? (
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1007,3 +1007,4 @@ export function AssetForm({
         </form>
     );
 }
+

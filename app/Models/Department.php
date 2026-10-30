@@ -24,6 +24,7 @@ class Department extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'id_department',
         'tenant_id',
         'kode_department',
         'nama_department',
@@ -31,9 +32,7 @@ class Department extends Model
         'manager_user_id',
     ];
 
-    protected $guarded = [
-        'id_department',
-    ];
+    protected $guarded = [];
 
     /** @return HasMany<Employee, $this> */
     public function employees(): HasMany

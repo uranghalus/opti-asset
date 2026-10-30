@@ -26,7 +26,7 @@ class AssetTypeOverrideHistoryTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         foreach (['asset.view', 'asset.edit'] as $permission) {
@@ -47,10 +47,10 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'asset_type' => 'equipment',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('equipment', $asset->refresh()->asset_type);
 
@@ -69,10 +69,10 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'type_override_reason' => 'Kebijakan internal perusahaan',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('Kebijakan internal perusahaan', $asset->refresh()->type_override_reason);
 
@@ -91,11 +91,11 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'asset_type' => 'equipment',
                 'type_override_reason' => 'Alasan baru',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $typeEntry = $asset->histories()->where('field', 'asset_type')->first();
         $this->assertNotNull($typeEntry);
@@ -116,10 +116,10 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('assets.update', $asset), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'asset_type' => 'fixed_asset',
             ])
-            ->assertRedirect(route('assets.index'));
+            ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(0, $asset->histories()->count());
     }

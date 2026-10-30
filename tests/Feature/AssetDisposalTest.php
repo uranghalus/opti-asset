@@ -30,7 +30,7 @@ class AssetDisposalTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -50,7 +50,7 @@ class AssetDisposalTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('disposals.store'), [
+            ->post(route('tenant.disposals.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'reason' => 'Rusak',
                 'disposal_date' => now()->toDateString(),
@@ -67,7 +67,7 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('disposals.approve', $disposal))
+            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertForbidden();
 
         $this->assertNotSame(AssetStatus::DISPOSED, $disposal->asset->refresh()->status);
@@ -80,7 +80,7 @@ class AssetDisposalTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->post(route('disposals.store'), [
+            ->post(route('tenant.disposals.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'reason' => 'Sudah dihapus sebelumnya',
                 'disposal_date' => now()->toDateString(),
@@ -95,7 +95,7 @@ class AssetDisposalTest extends TestCase
         AssetDisposal::factory()->count(20)->create();
 
         $this->actingAs($this->user)
-            ->get(route('disposals.index'))
+            ->get(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-disposals/Index')
@@ -117,7 +117,7 @@ class AssetDisposalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.index', ['search' => 'Rusak']))
+            ->get(route('tenant.disposals.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Rusak'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1)
                 ->where('disposals.data.0.id', $target->id)
@@ -134,14 +134,14 @@ class AssetDisposalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.index', ['status' => 'pending']))
+            ->get(route('tenant.disposals.index', array_merge(['tenant' => $this->tenant->code], ['status' => 'pending'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1)
                 ->where('disposals.data.0.id', $pending->id)
                 ->where('filters.status', 'pending'));
 
         $this->actingAs($this->user)
-            ->get(route('disposals.index', ['status' => 'approved']))
+            ->get(route('tenant.disposals.index', array_merge(['tenant' => $this->tenant->code], ['status' => 'approved'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1)
                 ->where('disposals.data.0.id', $approved->id));
@@ -164,7 +164,7 @@ class AssetDisposalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.index'))
+            ->get(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('disposals.total', 1));
 
@@ -177,7 +177,7 @@ class AssetDisposalTest extends TestCase
         Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.create'))
+            ->get(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-disposals/Create')
@@ -191,7 +191,7 @@ class AssetDisposalTest extends TestCase
         Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.create'))
+            ->get(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('assets', fn ($assets) => count($assets) === 1));
     }
@@ -204,13 +204,13 @@ class AssetDisposalTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.create'))
-            ->post(route('disposals.store'), [
+            ->from(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'reason' => 'Aset sudah rusak total',
                 'disposal_date' => now()->toDateString(),
             ])
-            ->assertRedirect(route('disposals.index'));
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $disposal = AssetDisposal::first();
 
@@ -224,8 +224,8 @@ class AssetDisposalTest extends TestCase
     public function test_disposal_creation_requires_asset_id(): void
     {
         $this->actingAs($this->user)
-            ->from(route('disposals.create'))
-            ->post(route('disposals.store'), [
+            ->from(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.store', ['tenant' => $this->tenant->code]), [
                 'reason' => 'Aset rusak',
                 'disposal_date' => now()->toDateString(),
             ])
@@ -237,8 +237,8 @@ class AssetDisposalTest extends TestCase
     public function test_disposal_creation_validates_asset_exists(): void
     {
         $this->actingAs($this->user)
-            ->from(route('disposals.create'))
-            ->post(route('disposals.store'), [
+            ->from(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => '01942f1e-766a-7d2a-bb89-47a88e91f1aa',
                 'reason' => 'Aset rusak',
                 'disposal_date' => now()->toDateString(),
@@ -253,7 +253,7 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('disposals.show', $disposal))
+            ->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-disposals/Show')
@@ -269,7 +269,7 @@ class AssetDisposalTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'ACT']);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.edit', $disposal))
+            ->get(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-disposals/Edit')
@@ -282,8 +282,8 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'approved']);
 
         $this->actingAs($this->user)
-            ->get(route('disposals.edit', $disposal))
-            ->assertRedirect(route('disposals.index'))
+            ->get(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
     }
 
@@ -293,13 +293,13 @@ class AssetDisposalTest extends TestCase
         $newAsset = Asset::factory()->create(['status' => 'ACT']);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.edit', $disposal))
-            ->patch(route('disposals.update', $disposal), [
+            ->from(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, '$disposal' => $disposal]), [
                 'asset_id' => $newAsset->id,
                 'reason' => 'Alasan diperbarui',
                 'disposal_date' => now()->addDays(5)->toDateString(),
             ])
-            ->assertRedirect(route('disposals.index'));
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $disposal->refresh();
 
@@ -313,12 +313,12 @@ class AssetDisposalTest extends TestCase
         $newAsset = Asset::factory()->create(['status' => 'ACT']);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.edit', $disposal))
-            ->patch(route('disposals.update', $disposal), [
+            ->from(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, '$disposal' => $disposal]), [
                 'asset_id' => $newAsset->id,
                 'reason' => 'Alasan diperbarui',
             ])
-            ->assertRedirect(route('disposals.index'))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
     }
 
@@ -327,8 +327,8 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->delete(route('disposals.destroy', $disposal))
-            ->assertRedirect(route('disposals.index'));
+            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('asset_disposals', ['id' => $disposal->id]);
     }
@@ -338,8 +338,8 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'approved']);
 
         $this->actingAs($this->user)
-            ->delete(route('disposals.destroy', $disposal))
-            ->assertRedirect(route('disposals.index'))
+            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
         $this->assertDatabaseHas('asset_disposals', ['id' => $disposal->id]);
@@ -352,8 +352,8 @@ class AssetDisposalTest extends TestCase
         $originalStatus = $asset->status;
 
         $this->actingAs($this->user)
-            ->post(route('disposals.approve', $disposal))
-            ->assertRedirect(route('disposals.index'))
+            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $disposal->refresh();
@@ -375,8 +375,8 @@ class AssetDisposalTest extends TestCase
         $originalStatus = $asset->status;
 
         $this->actingAs($this->user)
-            ->post(route('disposals.reject', $disposal))
-            ->assertRedirect(route('disposals.index'))
+            ->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $disposal->refresh();
@@ -396,9 +396,9 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'rejected']);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.index'))
-            ->post(route('disposals.approve', $disposal))
-            ->assertRedirect(route('disposals.index'))
+            ->from(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
         $this->assertSame('rejected', $disposal->fresh()->status->value);
@@ -411,11 +411,11 @@ class AssetDisposalTest extends TestCase
         $approved = AssetDisposal::factory()->create(['status' => 'approved']);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.index'))
-            ->post(route('disposals.bulk'), [
+            ->from(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.bulk', ['tenant' => $this->tenant->code]), [
                 'ids' => [$pending1->id, $pending2->id, $approved->id],
             ])
-            ->assertRedirect(route('disposals.index'))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
         $this->assertDatabaseMissing('asset_disposals', ['id' => $pending1->id]);
@@ -429,11 +429,11 @@ class AssetDisposalTest extends TestCase
         $rejected = AssetDisposal::factory()->create(['status' => 'rejected']);
 
         $this->actingAs($this->user)
-            ->from(route('disposals.index'))
-            ->post(route('disposals.bulk'), [
+            ->from(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.disposals.bulk', ['tenant' => $this->tenant->code]), [
                 'ids' => [$approved->id, $rejected->id],
             ])
-            ->assertRedirect(route('disposals.index'))
+            ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
         $this->assertDatabaseHas('asset_disposals', ['id' => $approved->id]);
@@ -442,13 +442,13 @@ class AssetDisposalTest extends TestCase
 
     public function test_guests_are_redirected_from_index(): void
     {
-        $this->get(route('disposals.index'))
+        $this->get(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
             ->assertRedirect(route('home'));
     }
 
     public function test_guests_are_redirected_from_create(): void
     {
-        $this->get(route('disposals.create'))
+        $this->get(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
             ->assertRedirect(route('home'));
     }
 
@@ -456,7 +456,7 @@ class AssetDisposalTest extends TestCase
     {
         $disposal = AssetDisposal::factory()->create();
 
-        $this->get(route('disposals.show', $disposal))
+        $this->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertRedirect(route('home'));
     }
 
@@ -464,10 +464,10 @@ class AssetDisposalTest extends TestCase
     {
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
-        $this->post(route('disposals.approve', $disposal))
+        $this->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertRedirect(route('home'));
 
-        $this->post(route('disposals.reject', $disposal))
+        $this->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
             ->assertRedirect(route('home'));
     }
 }

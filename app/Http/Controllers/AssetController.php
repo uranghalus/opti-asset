@@ -525,7 +525,9 @@ class AssetController extends Controller
         $this->recordHistory->record($asset, [['created', null, $asset->kode_asset ?? $asset->item_id ?? $asset->id]], $request->user());
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil ditambahkan.']);
 
-        return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
+        return redirect()->to($this->safeReturnTo($request) ?? route('tenant.assets.index', [
+            'tenant' => Tenant::current()?->code,
+        ]));
     }
 
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
@@ -569,7 +571,9 @@ class AssetController extends Controller
         $asset->update($data);
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil diperbarui.']);
 
-        return redirect()->to($this->safeReturnTo($request) ?? route('assets.index'));
+        return redirect()->to($this->safeReturnTo($request) ?? route('tenant.assets.index', [
+            'tenant' => Tenant::current()?->code,
+        ]));
     }
 
     protected function initialFilterLevel(Request $request): string
@@ -616,7 +620,9 @@ class AssetController extends Controller
         $asset->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Aset berhasil dihapus.']);
 
-        return back(302, [], route('assets.index'));
+        return back(302, [], route('tenant.assets.index', [
+            'tenant' => Tenant::current()?->code,
+        ]));
     }
 
     public function destroyBulk(Request $request): RedirectResponse
@@ -630,7 +636,9 @@ class AssetController extends Controller
         }
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$assets->count()} aset berhasil dihapus."]);
 
-        return back(302, [], route('assets.index'));
+        return back(302, [], route('tenant.assets.index', [
+            'tenant' => Tenant::current()?->code,
+        ]));
     }
 
     public function upload(UploadAssetMediaRequest $request): JsonResponse
@@ -686,7 +694,9 @@ class AssetController extends Controller
             'errors' => collect($result['errors'])->take(250)->all(),
         ]);
 
-        return redirect()->route('assets.index');
+        return redirect()->route('tenant.assets.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /** @return array<int, string> */

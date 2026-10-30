@@ -28,7 +28,7 @@ class LocationTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -46,7 +46,7 @@ class LocationTest extends TestCase
         Location::factory()->count(20)->create();
 
         $this->actingAs($this->user)
-            ->get(route('locations.index'))
+            ->get(route('tenant.locations.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('locations/Index')
@@ -62,7 +62,7 @@ class LocationTest extends TestCase
         Location::factory()->create(['name' => 'Kantor Cabang']);
 
         $this->actingAs($this->user)
-            ->get(route('locations.index', ['search' => 'Gudang']))
+            ->get(route('tenant.locations.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Gudang'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('locations.total', 1)
                 ->where('locations.data.0.name', 'Gudang Pusat')
@@ -75,13 +75,13 @@ class LocationTest extends TestCase
         Location::factory()->create(['name' => 'Alpha']);
 
         $this->actingAs($this->user)
-            ->get(route('locations.index', ['sort' => 'name']))
+            ->get(route('tenant.locations.index', array_merge(['tenant' => $this->tenant->code], ['sort' => 'name'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('locations.data.0.name', 'Alpha')
                 ->where('locations.data.1.name', 'Zulu'));
 
         $this->actingAs($this->user)
-            ->get(route('locations.index', ['sort' => '-name']))
+            ->get(route('tenant.locations.index', array_merge(['tenant' => $this->tenant->code], ['sort' => '-name'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('locations.data.0.name', 'Zulu')
                 ->where('locations.data.1.name', 'Alpha'));
@@ -95,13 +95,13 @@ class LocationTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('locations.index'))
+            ->get(route('tenant.locations.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->where('locations.total', 1));
     }
 
     public function test_location_can_be_created(): void
     {
-        $this->actingAs($this->user)->post(route('locations.store'), [
+        $this->actingAs($this->user)->post(route('tenant.locations.store', ['tenant' => $this->tenant->code]), [
             'name' => 'Gudang Utara',
         ])->assertRedirect();
 
@@ -115,8 +115,8 @@ class LocationTest extends TestCase
     public function test_location_name_is_required(): void
     {
         $this->actingAs($this->user)
-            ->from(route('locations.index'))
-            ->post(route('locations.store'), ['name' => ''])
+            ->from(route('tenant.locations.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.locations.store', ['tenant' => $this->tenant->code]), ['name' => ''])
             ->assertSessionHasErrors('name');
     }
 
@@ -125,7 +125,7 @@ class LocationTest extends TestCase
         $location = Location::factory()->create(['name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->patch(route('locations.update', $location->id), [
+            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, 'location' => $location->id]), [
                 'name' => 'Baru',
             ])
             ->assertRedirect();
@@ -140,7 +140,7 @@ class LocationTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->patch(route('locations.update', $foreign->id), ['name' => 'X'])
+            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, 'location' => $foreign->id]), ['name' => 'X'])
             ->assertNotFound();
     }
 
@@ -149,7 +149,7 @@ class LocationTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('locations.destroy', $location->id))
+            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, 'location' => $location->id]))
             ->assertRedirect();
 
         $this->assertSame(0, Location::withoutGlobalScopes()->count());
@@ -162,7 +162,7 @@ class LocationTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->delete(route('locations.destroy', $foreign->id))
+            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, 'location' => $foreign->id]))
             ->assertNotFound();
 
         $this->assertSame(1, Location::withoutGlobalScopes()->count());

@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { destroy as destroyGrant } from '@/routes/super-admin-grants';
+import { destroy as destroyGrant } from '@/routes/super-admin/grants';
 
 type GrantAudit = {
     id: number;

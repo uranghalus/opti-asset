@@ -32,7 +32,7 @@ class SuperAdminGrantTest extends TestCase
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);

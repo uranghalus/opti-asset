@@ -35,7 +35,7 @@ class CapitalizationThresholdTest extends TestCase
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         Permission::findOrCreate('setting.edit', 'web');
@@ -390,8 +390,8 @@ class CapitalizationThresholdTest extends TestCase
         $this->assertSame('fixed_asset', $asset->refresh()->asset_type);
 
         $this->actingAs($this->superAdmin)
-            ->from(route('assets.index'))
-            ->patch(route('assets.update', $asset), [
+            ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
                 'asset_type' => 'equipment',
                 'type_override_reason' => 'Kebijakan internal perusahaan',
             ])

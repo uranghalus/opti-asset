@@ -4,6 +4,8 @@ import {
     BarChart3,
     Building2,
     CalendarDays,
+    Check,
+    Clock,
     Download,
     Inbox,
     Layers,
@@ -12,14 +14,13 @@ import {
     ShieldCheck,
     Trash2,
     TrendingUp,
+    Users,
 } from 'lucide-react';
-import { KpiCards } from '@/components/dashboard/kpi-cards';
-import { StatusDonut } from '@/components/dashboard/status-donut';
-import { WarrantyAlerts } from '@/components/dashboard/warranty-alerts';
-import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/tenant';
 
 type AssetByStatus = {
     ACT: number;
@@ -90,337 +91,369 @@ type PageProps = {
     warranty_alerts: WarrantyAlerts;
 };
 
-function GreetingHeader({ name, score }: { name: string; score: number }) {
-    const hour = new Date().getHours();
-    const greeting =
-        hour < 12
-            ? 'Selamat pagi'
-            : hour < 18
-              ? 'Selamat siang'
-              : 'Selamat malam';
-    const integrityGood = score >= 95;
-
-    return (
-        <section className="relative overflow-hidden rounded-xl border border-brand/30 bg-brand p-6 sm:p-8">
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-3">
-                    <p className="text-[11px] font-semibold tracking-[0.18em] text-brand-muted/90 uppercase">
-                        {greeting}
-                    </p>
-                    <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                        Halo, {name}
-                    </h1>
-                    <p className="max-w-md text-sm leading-relaxed text-brand-muted/90">
-                        Ringkasan portofolio aset hari ini. Skor kelengkapan
-                        klasifikasi:{' '}
-                        <span className="font-semibold text-white">
-                            {score}%
-                        </span>{' '}
-                        (target 95%).
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                        <span
-                            className={cn(
-                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
-                                integrityGood
-                                    ? 'bg-white/15 text-white ring-white/30'
-                                    : 'bg-white/5 text-white ring-white/25',
-                            )}
-                        >
-                            <ShieldCheck className="size-3" />
-                            {integrityGood
-                                ? 'Target Tercapai'
-                                : 'Di Bawah Target'}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
-                            <TrendingUp className="size-3" />
-                            Perbaruan real-time
-                        </span>
-                    </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-10 gap-1.5 rounded-lg border-white/25 bg-white/10 px-3 text-[13px] font-medium text-white hover:bg-white/15 hover:text-white"
-                    >
-                        <CalendarDays className="h-4 w-4 text-white/80" />
-                        {new Date().toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                        })}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-10 gap-1.5 rounded-lg border-white bg-white px-3 text-[13px] font-semibold text-brand shadow-sm hover:bg-brand-muted"
-                    >
-                        <Download className="h-4 w-4" />
-                        Ekspor
-                    </Button>
-                </div>
-            </div>
-        </section>
-    );
+const BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const fd = (iso: string) => {
+    if (!iso) {
+return '—';
 }
 
-function AssetTypeBreakdown({ slices }: { slices: AssetTypeSlice[] }) {
-    const formatter = new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 2,
-    });
+    const p = iso.split('-');
 
-    const total = slices.reduce((sum, s) => sum + s.count, 0);
-    const COLORS: Record<string, string> = {
-        fixed_asset: '#0d5c56',
-        equipment: '#0e7490',
-        unclassified: '#475569',
-    };
+    return `${+p[2]} ${BLN[+p[1] - 1]} ${p[0]}`;
+};
 
-    return (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {slices.map((s) => {
-                const pct = total > 0 ? Math.round((s.count / total) * 100) : 0;
-                const color = COLORS[s.type] ?? '#5a6a7a';
+const num = (n: number) => Math.round(n).toLocaleString('id-ID');
 
-                return (
-                    <li
-                        key={s.type}
-                        className="group relative overflow-hidden rounded-xl border border-border/60 bg-background/40 p-4 transition-colors duration-150 hover:border-primary/30"
-                    >
-                        <div
-                            className="absolute inset-x-0 top-0 h-0.5"
-                            style={{ backgroundColor: color }}
-                        />
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-foreground">
-                                    {s.label}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                    {pct}% dari total aset
-                                </p>
-                            </div>
-                            <span
-                                className="font-mono text-lg font-bold tabular-nums"
-                                style={{ color }}
-                            >
-                                {s.count}
-                            </span>
-                        </div>
-                        <dl className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
-                            <div className="flex items-center justify-between gap-2">
-                                <dt className="text-[11px] text-muted-foreground">
-                                    Nilai Perolehan
-                                </dt>
-                                <dd className="font-mono text-xs font-semibold text-foreground tabular-nums">
-                                    {formatter.format(parseFloat(s.value))}
-                                </dd>
-                            </div>
-                            <div className="flex items-center justify-between gap-2">
-                                <dt className="text-[11px] text-muted-foreground">
-                                    Nilai Buku
-                                </dt>
-                                <dd className="font-mono text-xs font-semibold text-foreground tabular-nums">
-                                    {formatter.format(parseFloat(s.book_value))}
-                                </dd>
-                            </div>
-                        </dl>
-                    </li>
-                );
-            })}
-        </ul>
-    );
-}
+const STATUS_BADGE: Record<string, { color: string; bg: string }> = {
+    Aktif: { color: 'text-status-act-text', bg: 'bg-status-act-bg' },
+    Dipinjamkan: { color: 'text-text-primary', bg: 'bg-brand-subtle' },
+    'Dalam Perbaikan': { color: 'text-text-primary', bg: 'bg-status-rpr-bg' },
+    Dimutasi: { color: 'text-text-primary', bg: 'bg-brand-subtle' },
+    Dihapus: { color: 'text-text-primary', bg: 'bg-destructive/10' },
+};
 
-function ClassificationBars({ slices }: { slices: ClassificationSlice[] }) {
-    const max = Math.max(1, ...slices.map((s) => s.count));
+const STATUS_ICON: Record<string, typeof Check> = {
+    Aktif: Check,
+    Dipinjamkan: Inbox,
+    'Dalam Perbaikan': Clock,
+    Dimutasi: MoveRight,
+    Dihapus: Trash2,
+};
 
-    if (slices.length === 0) {
-        return (
-            <EmptyState
-                icon={Layers}
-                title="Belum ada klasifikasi"
-                description="Buat Golongan untuk mulai mengelompokkan aset."
-            />
-        );
-    }
-
-    const COLORS = ['#0d5c56', '#0e7490', '#b45309', '#1d6a9f', '#475569'];
-
-    return (
-        <ul className="flex flex-col gap-3">
-            {slices.map((s, i) => {
-                const pct = Math.round((s.count / max) * 100);
-                const color = COLORS[i % COLORS.length];
-
-                return (
-                    <li
-                        key={s.name}
-                        className="group flex items-center gap-3 text-sm"
-                    >
-                        <span className="w-28 shrink-0 truncate font-medium text-foreground">
-                            {s.name}
-                        </span>
-                        {s.tipe && (
-                            <span
-                                className={cn(
-                                    'hidden shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-medium sm:inline',
-                                    s.tipe === 'Aktiva Tetap'
-                                        ? 'border-primary-muted-border bg-primary-muted text-primary'
-                                        : 'border-border-strong bg-surface-sunken text-ink-muted',
-                                )}
-                            >
-                                {s.tipe}
-                            </span>
-                        )}
-                        <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted/50">
-                            <div
-                                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                                style={{
-                                    width: `${pct}%`,
-                                    backgroundColor: color,
-                                }}
-                            />
-                        </div>
-                        <span className="w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                            {s.count} ({pct}%)
-                        </span>
-                    </li>
-                );
-            })}
-        </ul>
-    );
-}
-
-function LocationStack({ slices }: { slices: LocationSlice[] }) {
-    const max = Math.max(1, ...slices.map((s) => s.count));
-
-    if (slices.length === 0) {
-        return (
-            <EmptyState
-                icon={MapPin}
-                title="Belum ada lokasi"
-                description="Tetapkan lokasi pada aset untuk melihat distribusinya."
-            />
-        );
-    }
-
-    return (
-        <ul className="flex flex-col divide-y divide-border/40">
-            {slices.map((s) => {
-                const pct = Math.round((s.count / max) * 100);
-
-                return (
-                    <li
-                        key={s.name}
-                        className="flex items-center gap-3 py-2.5 text-sm"
-                    >
-                        <Building2 className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                            {s.name}
-                        </span>
-                        <div className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-muted/50 sm:block">
-                            <div
-                                className="h-full rounded-full bg-primary"
-                                style={{ width: `${pct}%` }}
-                            />
-                        </div>
-                        <span className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                            {s.count}
-                        </span>
-                    </li>
-                );
-            })}
-        </ul>
-    );
-}
-
-function MiniLedger({
-    rows,
-    kind,
+function KpiCard({
+    label,
+    value,
+    sub,
+    icon: Icon,
+    tone,
 }: {
-    rows: RecentTransfer[] | RecentDisposal[];
-    kind: 'transfer' | 'disposal';
+    label: string;
+    value: number | string;
+    sub: string;
+    icon: typeof Check;
+    tone: string;
 }) {
-    if (rows.length === 0) {
-        return (
-            <EmptyState
-                icon={Inbox}
-                title={
-                    kind === 'transfer'
-                        ? 'Belum ada mutasi'
-                        : 'Belum ada disposal'
-                }
-                description={
-                    kind === 'transfer'
-                        ? 'Mutasi yang disetujui akan muncul di sini.'
-                        : 'Pengajuan disposal akan muncul di sini.'
-                }
-            />
-        );
-    }
+    return (
+        <div className="rounded-[16px] border border-border-subtle bg-card p-4 shadow-[0_2px_12px_rgba(0,0,0,0.28)] transition-all duration-200 hover:-translate-y-[2] hover:shadow-[0_16px_40px_rgba(0,0,0,0.42)]">
+            <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold tracking-[0.09em] uppercase text-text-tertiary">
+                    {label}
+                </p>
+                <div className={`size-8 rounded-[10px] flex items-center justify-center ${tone}`}>
+                    <Icon className="size-5" />
+                </div>
+            </div>
+            <div className="mt-2">
+                <p className="text-[27px] font-bold leading-none text-text-primary font-heading">
+                    {num(typeof value === 'number' ? value : 0)}
+                </p>
+                <p className="text-[11.5px] text-text-tertiary">{sub}</p>
+            </div>
+        </div>
+    );
+}
 
-    const accent = kind === 'transfer' ? '#0d5c56' : '#0e7490';
+function StatusBadge({ status }: { status: string }) {
+    const style = STATUS_BADGE[status] ?? { color: 'text-text-tertiary', bg: 'bg-card-2' };
+    const Icon = STATUS_ICON[status] ?? Check;
 
     return (
-        <div className="flex flex-col">
-            <div className="hidden grid-cols-12 gap-2 border-b border-border/60 px-2 pb-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase sm:grid">
-                <span className="col-span-4">Kode</span>
-                <span className="col-span-4">
-                    {kind === 'transfer' ? 'Dari → Ke' : 'Alasan'}
-                </span>
-                <span className="col-span-2">Status</span>
-                <span className="col-span-2 text-right">Tanggal</span>
-            </div>
-            {rows.map((r) => (
-                <div
-                    key={r.id}
-                    className="grid grid-cols-1 gap-1 border-b border-border/40 px-2 py-2 text-sm last:border-b-0 sm:grid-cols-12 sm:items-center sm:gap-2"
-                >
-                    <span
-                        className="font-mono text-xs font-semibold sm:col-span-4"
-                        style={{ color: accent }}
-                    >
-                        {r.asset_kode}
-                    </span>
-                    <span className="text-xs text-muted-foreground sm:col-span-4">
-                        {kind === 'transfer'
-                            ? `${(r as RecentTransfer).from} → ${(r as RecentTransfer).to}`
-                            : (r as RecentDisposal).reason}
-                    </span>
-                    <span className="sm:col-span-2">
-                        <span
-                            className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1"
-                            style={{
-                                backgroundColor: `${accent}15`,
-                                color: accent,
-                                borderColor: `${accent}30`,
-                            }}
-                        >
-                            {r.status}
-                        </span>
-                    </span>
-                    <span className="text-xs text-muted-foreground tabular-nums sm:col-span-2 sm:text-right">
-                        {new Date(r.date).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                        })}
-                    </span>
-                </div>
+        <Badge variant="outline" className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${style.color} ${style.bg} ring-1 ring-border-subtle`}>
+            <Icon className="size-3 mr-1.5" />
+            {status}
+        </Badge>
+    );
+}
+
+function KpiRow({ stats }: { stats: Stats }) {
+    const cnt = (s: keyof AssetByStatus) => stats.asset_by_status[s];
+    const kpis = [
+        {
+            label: 'Total Aset',
+            value: stats.total_assets,
+            sub: 'Seluruh aset tercatat',
+            icon: Building2,
+            tone: 'bg-brand/10 text-brand border border-brand/20',
+        },
+        {
+            label: 'Aset Aktif',
+            value: cnt('ACT'),
+            sub: `${Math.round((cnt('ACT') / stats.total_assets) * 100)}% dari total`,
+            icon: Check,
+            tone: 'bg-status-act-bg/20 text-status-act-text border border-status-act-border/40',
+        },
+        {
+            label: 'Dipinjamkan',
+            value: cnt('LOAN'),
+            sub: 'di 2 departemen',
+            icon: Inbox,
+            tone: 'bg-brand-subtle/20 text-text-primary border border-brand/30',
+        },
+        {
+            label: 'Dalam Perbaikan',
+            value: cnt('RPR'),
+            sub: '1 unit proyektor',
+            icon: Clock,
+            tone: 'bg-status-rpr-bg/20 text-text-primary border border-status-rpr-border/40',
+        },
+        {
+            label: 'Disposal Diajukan',
+            value: stats.pending_disposals,
+            sub: `${stats.pending_disposals > 0 ? stats.pending_disposals : 0} disetujui (YTD)`,
+            icon: Trash2,
+            tone: 'bg-destructive/10 text-destructive border border-destructive/30',
+        },
+    ];
+
+    return (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {kpis.map((k) => (
+                <KpiCard key={k.label} {...k} />
             ))}
         </div>
     );
 }
 
-function RecentActivity({
+function TypeBreakdownCard({ slices }: { slices: AssetTypeSlice[] }) {
+    const at = slices.filter((s) => s.type === 'Aktiva Tetap');
+    const pr = slices.filter((s) => s.type === 'Peralatan');
+    const sumAt = at.reduce((acc, s) => acc + Number(s.value.replace(/[^0-9]/g, '')), 0);
+    const sumPr = pr.reduce((acc, s) => acc + Number(s.value.replace(/[^0-9]/g, '')), 0);
+    const sumBook = at.reduce(
+        (acc, s) => acc + Number(s.book_value.replace(/[^0-9]/g, '')),
+        0,
+    );
+    const pctAt = Math.round((at.reduce((a, s) => a + s.count, 0) / slices.reduce((a, s) => a + s.count, 0)) * 100);
+
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader>
+                <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                    Breakdown Tipe Aset
+                </CardTitle>
+                <CardDescription className="text-[11px] text-text-tertiary">
+                    FR-13.8 · Ambang batas: <span className="text-brand font-heading">Rp10.000.000</span>
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="flex gap-2 h-2 rounded-full overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] mb-4">
+                    <div
+                        className="h-full bg-gradient-to-br from-brand to-brand-2"
+                        style={{ width: `${pctAt}%` }}
+                    />
+                    <div className="h-full bg-border-highlight" />
+                </div>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="size-6 rounded-[10px] bg-brand/10 text-brand flex items-center justify-center">
+                            <Building2 className="size-4" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-xs font-bold text-text-primary">Aktiva Tetap</p>
+                            <p className="text-[11px] text-text-tertiary">
+                                {at.reduce((a, s) => a + s.count, 0)} unit ({pctAt}%)
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-[11px] text-text-tertiary space-y-1">
+                        <div className="flex justify-between">
+                            <span>Nilai perolehan</span>
+                            <span className="font-mono text-[11px]">{num(sumAt)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Total nilai buku</span>
+                            <span className="font-mono text-[11px] text-brand">{num(sumBook)}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                        <div className="size-6 rounded-[10px] bg-card-2 text-text-tertiary flex items-center justify-center border border-border-subtle">
+                            <Layers className="size-4" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-xs font-bold text-text-primary">Peralatan</p>
+                            <p className="text-[11px] text-text-tertiary">
+                                {pr.reduce((a, s) => a + s.count, 0)} unit
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-[11px] text-text-tertiary space-y-1">
+                        <div className="flex justify-between">
+                            <span>Total nilai perolehan</span>
+                            <span className="font-mono text-[11px]">{num(sumPr)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Data akuntansi</span>
+                            <span className="font-mono text-[11px] text-text-tertiary">tidak berlaku</span>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function StatusDonutCard({ stats }: { stats: Stats }) {
+    const data = Object.entries(stats.asset_by_status)
+        .filter(([, value]) => value > 0)
+        .map(([key, value]) => ({
+            key,
+            name: key,
+            value,
+        }));
+
+    const total = data.reduce((sum, d) => sum + d.value, 0);
+    const C = 2 * Math.PI * 54;
+    let offset = 0;
+
+    const STATUS_COLORS: Record<string, string> = {
+        Aktif: '#34D399',
+        Dipinjamkan: '#60A5FA',
+        'Dalam Perbaikan': '#FBBF24',
+        Dimutasi: '#A78BFA',
+        Dihapus: '#F87171',
+    };
+
+    const SEGMENTS = [
+        { key: 'Aktif', color: '#34D399' },
+        { key: 'Dipinjamkan', color: '#60A5FA' },
+        { key: 'Dalam Perbaikan', color: '#FBBF24' },
+        { key: 'Dimutasi', color: '#A78BFA' },
+        { key: 'Dihapus', color: '#F87171' },
+    ];
+
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader>
+                <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                    Distribusi Status
+                </CardTitle>
+                <CardDescription className="text-[11px] text-text-tertiary">
+                    Siklus hidup aset (ACT · LOAN · RPR · MUT · DSP)
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="flex items-center gap-4">
+                    <div className="relative size-32 shrink-0">
+                        <svg width="150" height="150" viewBox="0 0 150 150">
+                            {SEGMENTS.map((seg) => {
+                                const d = data.find((x) => x.key === seg.key);
+                                const n = d?.value ?? 0;
+
+                                if (n === 0) {
+return null;
+}
+
+                                const f = n / total;
+                                const dash = `${Math.max(f * C - 2, 0.5)} ${C}`;
+                                offset += f;
+
+                                return (
+                                    <circle
+                                        key={seg.key}
+                                        cx="75"
+                                        cy="75"
+                                        r="54"
+                                        fill="none"
+                                        stroke={seg.color}
+                                        strokeWidth="15"
+                                        strokeDasharray={dash}
+                                        transform={`rotate(${-90 + (offset - f) * 360} 75 75)`}
+                                    />
+                                );
+                            })}
+                            <text
+                                x="75"
+                                y="72"
+                                textAnchor="middle"
+                                className="text-[24px] font-bold fill-text-primary font-heading"
+                            >
+                                {total}
+                            </text>
+                            <text
+                                x="75"
+                                y="92"
+                                textAnchor="middle"
+                                className="text-[10px] fill-text-tertiary"
+                            >
+                                aset tercatat
+                            </text>
+                        </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        {data.map((d) => (
+                            <div
+                                key={d.key}
+                                className="flex items-center gap-2 text-[12px]"
+                            >
+                                <i
+                                    className="size-1.5 rounded-[3px] shrink-0"
+                                    style={{ backgroundColor: STATUS_COLORS[d.key] }}
+                                />
+                                <span className="text-text-secondary">{d.name}</span>
+                                <span className="ml-auto font-mono text-[12px]">{d.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ClassificationBarsCard({
+    slices,
+    className,
+}: {
+    slices: ClassificationSlice[];
+    className?: string;
+}) {
+    const gc: Record<string, number> = {};
+    slices.forEach((s) => {
+        gc[s.name] = (gc[s.name] ?? 0) + s.count;
+    });
+    const entries = Object.entries(gc).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(...entries.map(([, c]) => c), 1);
+
+    return (
+        <Card className={cn("overflow-hidden", className)}>
+            <CardHeader>
+                <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                    Aset per Klasifikasi
+                </CardTitle>
+                <CardDescription className="text-[11px] text-text-tertiary">
+                    Struktur Group › Category › Cluster › Sub-cluster
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="space-y-3">
+                    {entries.map(([group, count]) => (
+                        <div key={group} className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-[12px]">
+                                <span className="text-text-secondary">{group}</span>
+                                <span className="font-mono font-bold">{count} aset</span>
+                            </div>
+                            <div className="h-[9px] rounded-full bg-card-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-brand to-brand-2"
+                                    style={{ width: `${(count / max) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ActivityTimeline({
     transfers,
     disposals,
+    className,
 }: {
     transfers: RecentTransfer[];
     disposals: RecentDisposal[];
+    className?: string;
 }) {
     const items = [
         ...transfers.map((t) => ({ ...t, type: 'mutasi' as const })),
@@ -431,116 +464,177 @@ function RecentActivity({
 
     if (items.length === 0) {
         return (
-            <EmptyState
-                icon={MoveRight}
-                title="Belum ada aktivitas"
-                description="Mutasi dan disposal terbaru akan muncul di sini."
-            />
+            <Card className={cn("overflow-hidden", className)}>
+                <CardHeader>
+                    <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                        Aktivitas Terbaru
+                    </CardTitle>
+                    <CardDescription className="text-[11px] text-text-tertiary">
+                        Audit trail — siapa, kapan, apa yang berubah
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <div className="flex flex-col items-center justify-center py-8 text-text-tertiary text-sm">
+                        Belum ada aktivitas terbaru
+                    </div>
+                </CardContent>
+            </Card>
         );
     }
 
     return (
-        <div className="flex flex-col">
-            {items.map((item) => (
-                <div
-                    key={item.id}
-                    className="flex items-start gap-3 border-b border-border/40 py-2.5 text-sm last:border-b-0"
-                >
-                    <div
-                        className={cn(
-                            'mt-0.5 size-2 shrink-0 rounded-full',
-                            item.type === 'mutasi'
-                                ? 'bg-primary'
-                                : 'bg-chart-2',
-                        )}
-                    />
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-foreground">
-                            {item.asset_kode}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                            {item.type === 'mutasi'
-                                ? `${(item as RecentTransfer).from} → ${(item as RecentTransfer).to}`
-                                : (item as RecentDisposal).reason}
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground/60 tabular-nums">
-                            {new Date(item.date).toLocaleDateString('id-ID', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            })}
-                        </p>
-                    </div>
-                    <span
-                        className={cn(
-                            'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold',
-                            item.status === 'Disetujui'
-                                ? 'bg-status-act-bg text-status-act-text'
-                                : 'bg-status-rpr-bg text-status-rpr-text',
-                        )}
-                    >
-                        {item.status}
-                    </span>
+        <Card className={cn("overflow-hidden", className)}>
+            <CardHeader>
+                <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                    Aktivitas Terbaru
+                </CardTitle>
+                <CardDescription className="text-[11px] text-text-tertiary">
+                    Audit trail — siapa, kapan, apa yang berubah
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="relative pl-2">
+                    <div className="absolute left-1 top-32 bottom-0 w-[1.5px] bg-border-subtle" />
+                    {items.map((item, idx) => (
+                        <div
+                            key={item.id}
+                            className="flex gap-3 relative pb-6 last:pb-0"
+                        >
+                            <div
+                                className={`size-7 rounded-full flex items-center justify-center shrink-0 z-10 ${
+                                    item.status === 'Disetujui'
+                                        ? 'bg-status-act-bg text-status-act-text border border-status-act-border'
+                                        : 'bg-card-2 text-text-tertiary border border-border-subtle'
+                                }`}
+                            >
+                                <Check className="size-3.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-text-primary">
+                                    {item.asset_kode} — {item.type === 'mutasi' ? 'Mutasi diajukan' : 'Disposal diajukan'}
+                                </p>
+                                <p className="text-[12px] text-text-tertiary">
+                                    {item.type === 'mutasi'
+                                        ? `${item.from} → ${item.to}`
+                                        : item.reason}
+                                </p>
+                            </div>
+                            <span className="text-[11px] text-text-tertiary whitespace-nowrap pt-1">
+                                {new Date(item.date).toLocaleDateString('id-ID', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                })}
+                            </span>
+                        </div>
+                    ))}
                 </div>
-            ))}
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
-function IntegrityRing({ score }: { score: number }) {
-    const radius = 52;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (score / 100) * circumference;
-    const good = score >= 95;
-    const color = good ? '#0d5c56' : '#b45309';
+function PendingMutasiTable({ transfers }: { transfers: RecentTransfer[] }) {
+    const pending = transfers.filter((m) => m.status === 'Menunggu');
 
     return (
-        <div className="flex flex-col items-center gap-3">
-            <div className="relative size-32">
-                <svg className="size-full -rotate-90" viewBox="0 0 120 120">
-                    <circle
-                        cx="60"
-                        cy="60"
-                        r={radius}
-                        fill="none"
-                        className="stroke-muted-foreground/20"
-                        strokeWidth="8"
-                    />
-                    <circle
-                        cx="60"
-                        cy="60"
-                        r={radius}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        className="transition-all duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                    />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-foreground">
-                        {score}%
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                        Kelengkapan
-                    </span>
+        <Card className="overflow-hidden">
+            <CardHeader>
+                <CardTitle className="text-sm font-heading font-bold text-text-primary">
+                    Pengajuan Mutasi Menunggu Persetujuan
+                </CardTitle>
+                <CardDescription className="text-[11px] text-text-tertiary">
+                    Lokasi aset diperbarui otomatis setelah disetujui (FR-06.5)
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                        <thead>
+                            <tr className="text-left">
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 pl-4">
+                                    ID
+                                </th>
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 pl-4">
+                                    Aset
+                                </th>
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 pl-4">
+                                    Asal → Tujuan
+                                </th>
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 pl-4">
+                                    Tanggal
+                                </th>
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 pl-4">
+                                    Diajukan
+                                </th>
+                                <th className="text-[10px] font-bold tracking-[0.09em] uppercase text-text-tertiary pb-2 text-right pr-4">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pending.length > 0 ? (
+                                pending.map((m) => (
+                                    <tr key={m.id} className="border-b border-border-subtle">
+                                        <td className="py-3 pl-4 font-mono text-xs">
+                                            {m.id}
+                                        </td>
+                                        <td className="py-3 pl-4">
+                                            <p className="font-medium text-text-primary">{m.asset_kode}</p>
+                                        </td>
+                                        <td className="py-3 pl-4">
+                                            <p className="text-sm text-text-secondary">
+                                                {m.from}
+                                                <span className="text-brand mx-1">→</span>
+                                                {m.to}
+                                            </p>
+                                        </td>
+                                        <td className="py-3 pl-4 text-xs text-text-tertiary">
+                                            {fd(m.date)}
+                                        </td>
+                                        <td className="py-3 pl-4 text-xs text-text-secondary">
+                                            {m.id.includes('MUT') ? 'Staff Asset' : 'System'}
+                                        </td>
+                                        <td className="py-3 pl-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-7 rounded-[8px] text-brand-2 hover:text-brand border-transparent"
+                                                    onClick={() => {
+                                                        // approve
+                                                    }}
+                                                >
+                                                    <Check className="size-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="size-7 rounded-[8px] text-destructive hover:text-red/90 border-transparent"
+                                                    onClick={() => {
+                                                        // reject
+                                                    }}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={6}
+                                        className="py-6 text-center text-text-tertiary text-sm"
+                                    >
+                                        Tidak ada pengajuan menunggu ✓
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <span
-                className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1',
-                    good
-                        ? 'bg-status-act-bg text-status-act-text ring-status-act-border'
-                        : 'bg-status-rpr-bg text-status-rpr-text ring-status-rpr-border',
-                )}
-            >
-                <ShieldCheck className="size-3" />
-                {good ? 'Target Tercapai' : 'Di Bawah Target'}
-            </span>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -561,127 +655,25 @@ export default function Dashboard() {
     return (
         <>
             <Head title="Dashboard" />
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-                <GreetingHeader name={name} score={integrity_score} />
+            <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
+                {/* KPI Row */}
+                <KpiRow stats={stats} />
 
-                <KpiCards stats={stats} />
-
-                {/* Row 2: Classification + Donut + Integrity */}
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                    <section className="glass-panel relative flex min-h-[280px] flex-col gap-4 rounded-2xl p-5 lg:col-span-2">
-                        <header className="flex items-start justify-between">
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-10.1
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Aset per Klasifikasi
-                                </h3>
-                            </div>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-act-bg px-2 py-1 text-[11px] font-semibold text-status-act-text ring-1 ring-status-act-border">
-                                <ShieldCheck className="size-3" />
-                                {integrity_score >= 95
-                                    ? 'Target Tercapai'
-                                    : 'Di Bawah Target'}
-                            </span>
-                        </header>
-                        <ClassificationBars slices={asset_by_classification} />
-                    </section>
-                    <div className="flex flex-col gap-5">
-                        <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                            <header>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-13.8
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Aset per Tipe
-                                </h3>
-                            </header>
-                            <AssetTypeBreakdown slices={asset_by_type} />
-                        </section>
-                        <section className="glass-panel flex flex-col items-center gap-4 rounded-2xl p-5">
-                            <header className="w-full">
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-10.2
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Skor Integritas
-                                </h3>
-                            </header>
-                            <IntegrityRing score={integrity_score} />
-                        </section>
-                        <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                            <StatusDonut stats={stats} />
-                        </section>
-                    </div>
+                {/* Row 2: 3-column grid */}
+                <div className="grid gap-5 md:grid-cols-3">
+                    <TypeBreakdownCard slices={asset_by_type} />
+                    <StatusDonutCard stats={stats} />
+                    <ClassificationBarsCard slices={asset_by_classification} className="md:col-span-2" />
                 </div>
 
-                {/* Row 3: Location + Activity + Warranty */}
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                    <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                        <header className="flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-10.3
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Aset per Lokasi
-                                </h3>
-                            </div>
-                            <BarChart3 className="size-4 text-muted-foreground" />
-                        </header>
-                        <LocationStack slices={asset_by_location} />
-                    </section>
-
-                    <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                        <header className="flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-10.6
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Aktivitas Terkini
-                                </h3>
-                            </div>
-                            <MoveRight className="size-4 text-muted-foreground" />
-                        </header>
-                        <RecentActivity
-                            transfers={recent_transfers}
-                            disposals={recent_disposals}
-                        />
-                    </section>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                    <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                        <header className="flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    FR-10.5
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Disposal Terkini
-                                </h3>
-                            </div>
-                            <Trash2 className="size-4 text-muted-foreground" />
-                        </header>
-                        <MiniLedger rows={recent_disposals} kind="disposal" />
-                    </section>
-
-                    <section className="glass-panel flex flex-col gap-4 rounded-2xl p-5">
-                        <header className="flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-semibold tracking-widest text-primary uppercase">
-                                    Peringatan
-                                </p>
-                                <h3 className="mt-1 text-base font-semibold">
-                                    Garansi & Risiko
-                                </h3>
-                            </div>
-                            <AlertTriangle className="size-4 text-muted-foreground" />
-                        </header>
-                        <WarrantyAlerts alerts={warranty_alerts} />
-                    </section>
+                {/* Row 3: Timeline (span2) + Pending Mutasi */}
+                <div className="grid gap-5 md:grid-cols-3">
+                    <ActivityTimeline
+                        transfers={recent_transfers}
+                        disposals={recent_disposals}
+                        className="md:col-span-2"
+                    />
+                    <PendingMutasiTable transfers={recent_transfers} />
                 </div>
             </div>
         </>

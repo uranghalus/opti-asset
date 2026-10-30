@@ -11,6 +11,7 @@ use App\Models\AssetTransfer;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Location;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -108,7 +109,9 @@ class AssetTransferController extends Controller
             'message' => 'Permohonan mutasi aset berhasil diajukan.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     public function show(AssetTransfer $assetTransfer): Response
@@ -168,7 +171,9 @@ class AssetTransferController extends Controller
             'message' => 'Mutasi aset berhasil disetujui.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     public function reject(Request $request, AssetTransfer $assetTransfer): RedirectResponse
@@ -191,6 +196,8 @@ class AssetTransferController extends Controller
             'message' => 'Permohonan mutasi aset ditolak.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 }

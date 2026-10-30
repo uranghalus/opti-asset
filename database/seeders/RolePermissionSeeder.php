@@ -35,6 +35,7 @@ class RolePermissionSeeder extends Seeder
         'permission.view', 'permission.create', 'permission.edit', 'permission.delete',
         'setting.edit',
         'super-admin.view', 'super-admin.grant', 'super-admin.revoke',
+        'tenant.manage',
         'tenant.switch',
     ];
 

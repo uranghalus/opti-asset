@@ -27,7 +27,7 @@ class DashboardAssetTypeBreakdownTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         Permission::findOrCreate('asset.view', 'web');
@@ -52,7 +52,7 @@ class DashboardAssetTypeBreakdownTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard')
@@ -85,7 +85,7 @@ class DashboardAssetTypeBreakdownTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard')
@@ -103,7 +103,7 @@ class DashboardAssetTypeBreakdownTest extends TestCase
     public function test_dashboard_asset_type_breakdown_is_empty_when_no_assets(): void
     {
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tenant.dashboard', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard')

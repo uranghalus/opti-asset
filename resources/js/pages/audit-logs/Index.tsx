@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+﻿import { router, usePage } from '@inertiajs/react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { cn } from '@/lib/utils';
-import { index as indexRoute } from '@/routes/audit-logs';
+import { index as indexRoute } from '@/routes/tenant/audit-logs';
 
 type ActivityLogEntry = {
     id: string;
@@ -80,7 +80,7 @@ function formatDateTime(value: string): string {
 
 function formatValue(value: unknown): string {
     if (value === null || value === undefined || value === '') {
-        return '—';
+        return 'â€”';
     }
 
     if (typeof value === 'boolean') {
@@ -89,7 +89,7 @@ function formatValue(value: unknown): string {
 
     const text = String(value);
 
-    return text.length > 40 ? `${text.slice(0, 40)}…` : text;
+    return text.length > 40 ? `${text.slice(0, 40)}â€¦` : text;
 }
 
 export default function AuditLogsIndex() {
@@ -338,7 +338,7 @@ export default function AuditLogsIndex() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <p className="font-medium text-foreground">
-                                                    {log.subject_label ?? '—'}
+                                                    {log.subject_label ?? 'â€”'}
                                                 </p>
                                                 <p className="text-[11px] text-muted-foreground">
                                                     {log.subject_type}
@@ -367,7 +367,7 @@ export default function AuditLogsIndex() {
                                                     log.subject_type}
                                             </p>
                                             <p className="text-[11px] text-muted-foreground">
-                                                {log.user_name ?? 'Sistem'} ·{' '}
+                                                {log.user_name ?? 'Sistem'} Â·{' '}
                                                 {log.subject_type}
                                             </p>
                                         </div>
@@ -395,7 +395,7 @@ export default function AuditLogsIndex() {
                 {logs.last_page > 1 && (
                     <div className="card-enter mt-6 flex items-center justify-between gap-3 pb-2 delay-200">
                         <p className="text-xs text-muted-foreground tabular-nums">
-                            {logs.from}–{logs.to}
+                            {logs.from}â€“{logs.to}
                             <span className="hidden sm:inline"> dari </span>
                             <span className="sm:hidden"> / </span>
                             {logs.total}
@@ -471,7 +471,7 @@ function PropertyList({
                 )}
                 {!['created', 'updated'].includes(log.action) &&
                     log.action !== 'deleted' &&
-                    '—'}
+                    'â€”'}
             </span>
         );
     }
@@ -490,7 +490,7 @@ function PropertyList({
                     <span className="truncate line-through opacity-70">
                         {formatValue(change.old)}
                     </span>
-                    <span>→</span>
+                    <span>â†’</span>
                     <span className="truncate text-foreground">
                         {formatValue(change.new)}
                     </span>
@@ -513,3 +513,4 @@ AuditLogsIndex.layout = {
         },
     ],
 };
+

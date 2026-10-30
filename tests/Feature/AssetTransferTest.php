@@ -33,7 +33,7 @@ class AssetTransferTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -54,7 +54,7 @@ class AssetTransferTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('asset-transfers.store'), [
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'to_location_id' => $location->id,
                 'quantity' => 1,
@@ -71,7 +71,7 @@ class AssetTransferTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('asset-transfers.approve', $transfer))
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
             ->assertForbidden();
 
         $this->assertSame(AssetTransferStatus::Pending, $transfer->refresh()->status);
@@ -85,7 +85,7 @@ class AssetTransferTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('asset-transfers.store'), [
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'to_location_id' => $location->id,
                 'quantity' => 1,
@@ -100,7 +100,7 @@ class AssetTransferTest extends TestCase
         AssetTransfer::factory()->count(20)->create();
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.index'))
+            ->get(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-transfers/Index')
@@ -122,7 +122,7 @@ class AssetTransferTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.index', ['search' => 'Rusak']))
+            ->get(route('tenant.asset-transfers.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Rusak'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1)
                 ->where('transfers.data.0.id', $target->id)
@@ -139,14 +139,14 @@ class AssetTransferTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.index', ['status' => 'pending']))
+            ->get(route('tenant.asset-transfers.index', array_merge(['tenant' => $this->tenant->code], ['status' => 'pending'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1)
                 ->where('transfers.data.0.id', $pending->id)
                 ->where('filters.status', 'pending'));
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.index', ['status' => 'approved']))
+            ->get(route('tenant.asset-transfers.index', array_merge(['tenant' => $this->tenant->code], ['status' => 'approved'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1)
                 ->where('transfers.data.0.id', $approved->id));
@@ -170,7 +170,7 @@ class AssetTransferTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.index'))
+            ->get(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transfers.total', 1));
 
@@ -184,7 +184,7 @@ class AssetTransferTest extends TestCase
         $employee = Employee::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.create'))
+            ->get(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-transfers/Create')
@@ -201,7 +201,7 @@ class AssetTransferTest extends TestCase
         Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->get(route('asset-transfers.create'))
+            ->get(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('assets', fn ($assets) => count($assets) === 1));
     }
@@ -216,15 +216,15 @@ class AssetTransferTest extends TestCase
         $toDepartment = Department::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'to_location_id' => $toLocation->id,
                 'to_department_id' => $toDepartment->id_department,
                 'quantity' => 1,
                 'notes' => 'Pindah ke gudang baru',
             ])
-            ->assertRedirect(route('asset-transfers.index'));
+            ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $transfer = AssetTransfer::first();
 
@@ -243,8 +243,8 @@ class AssetTransferTest extends TestCase
         $toDepartment = Department::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'to_location_id' => $toLocation->id,
                 'to_department_id' => $toDepartment->id_department,
                 'quantity' => 1,
@@ -259,8 +259,8 @@ class AssetTransferTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'ACT']);
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'quantity' => null,
             ])
@@ -274,8 +274,8 @@ class AssetTransferTest extends TestCase
         $asset = Asset::factory()->create(['status' => 'ACT']);
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => $asset->id,
                 'quantity' => 0,
             ])
@@ -290,8 +290,8 @@ class AssetTransferTest extends TestCase
         $toDepartment = Department::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-transfers.create'))
-            ->post(route('asset-transfers.store'), [
+            ->from(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-transfers.store', ['tenant' => $this->tenant->code]), [
                 'asset_id' => '01942f1e-766a-7d2a-bb89-47a88e91f1aa',
                 'to_location_id' => $toLocation->id,
                 'to_department_id' => $toDepartment->id_department,
@@ -304,13 +304,13 @@ class AssetTransferTest extends TestCase
 
     public function test_guests_are_redirected_from_index(): void
     {
-        $this->get(route('asset-transfers.index'))
+        $this->get(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]))
             ->assertRedirect(route('home'));
     }
 
     public function test_guests_are_redirected_from_create(): void
     {
-        $this->get(route('asset-transfers.create'))
+        $this->get(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
             ->assertRedirect(route('home'));
     }
 
@@ -329,8 +329,8 @@ class AssetTransferTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('asset-transfers.approve', $transfer))
-            ->assertRedirect(route('asset-transfers.index'));
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('asset_histories', [
             'asset_id' => $asset->id,

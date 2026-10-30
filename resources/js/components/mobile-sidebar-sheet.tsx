@@ -4,7 +4,6 @@ import { Link, router } from '@inertiajs/react';
 import { UserCircle, LayoutDashboard } from 'lucide-react';
 import { useEffect } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { TenantSwitcher } from '@/components/tenant-switcher';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -22,7 +21,8 @@ import {
 } from '@/components/ui/sidebar';
 import { sidebarData } from '@/data/sidebar';
 import { useCan } from '@/hooks/use-can';
-import { dashboard, logout } from '@/routes';
+import { dashboard } from '@/routes/tenant';
+import { logout } from '@/routes';
 
 type Props = {
     isOpen: boolean;
@@ -90,11 +90,6 @@ export function MobileSidebarSheet({ isOpen, onClose }: Props) {
                             </span>
                         </div>
                     </Link>
-
-                    {/* Tenant Switcher */}
-                    <div className="mb-4">
-                        <TenantSwitcher />
-                    </div>
 
                     {/* Navigation Groups */}
                     <div className="flex w-full flex-col">

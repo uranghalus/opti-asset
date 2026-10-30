@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\PreventRequestForgery;
+use App\Http\Middleware\TenantAccessMiddleware;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             StartSession::class,
             ShareErrorsFromSession::class,
             PreventRequestForgery::class,
-            IdentifyTenant::class,
+            TenantAccessMiddleware::class,
             SubstituteBindings::class,
             HandleInertiaRequests::class,
         ]);

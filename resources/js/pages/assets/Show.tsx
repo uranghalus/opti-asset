@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+﻿import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     ArrowLeft,
@@ -46,7 +46,7 @@ import {
     edit as editRoute,
     index as indexRoute,
     labels as labelsRoute,
-} from '@/routes/assets';
+} from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 
 type Classification = {
@@ -123,7 +123,7 @@ const CONDITION_STYLES: Record<string, string> = {
 };
 
 const CONDITION_FALLBACK =
-    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
+    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-text-tertiary dark:ring-border';
 
 const CHAIN_LEVELS: ClassificationLevel[] = [
     'group',
@@ -134,7 +134,7 @@ const CHAIN_LEVELS: ClassificationLevel[] = [
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return '—';
+        return 'â€”';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -178,10 +178,10 @@ const HISTORY_ICON: Record<
 };
 
 const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
-    /* Kategori riwayat bukan status aset — memakai warna netral/aksen
-       chart (§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
+    /* Kategori riwayat bukan status aset â€” memakai warna netral/aksen
+       chart (Â§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
     created: {
-        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
+        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-text-tertiary',
         dot: 'bg-ink-muted dark:bg-muted-foreground',
     },
     status: {
@@ -193,7 +193,7 @@ const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
         dot: 'bg-status-loan-text',
     },
     other: {
-        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
+        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-text-tertiary',
         dot: 'bg-ink-subtle dark:bg-muted-foreground/60',
     },
 };
@@ -243,7 +243,7 @@ function formatHistoryDate(value: string): string {
 
 function formatPrice(value: string | null): string {
     if (value === null || value === '') {
-        return '—';
+        return 'â€”';
     }
 
     return new Intl.NumberFormat('id-ID', {
@@ -266,16 +266,16 @@ function DetailItem({
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/15 bg-primary/5 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle text-primary">
                 <Icon className="size-4" strokeWidth={1.75} />
             </div>
             <div className="min-w-0">
-                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                     {label}
                 </p>
                 <p
                     className={cn(
-                        'mt-0.5 truncate text-sm font-semibold text-foreground',
+                        'mt-0.5 truncate text-sm font-semibold text-text-primary',
                         mono && 'font-mono tabular-nums',
                     )}
                 >
@@ -298,17 +298,17 @@ function Section({
     children: React.ReactNode;
 }) {
     return (
-        <section className="rounded-xl border border-border bg-card p-5 md:p-6">
+        <section className="rounded-xl border border-border-subtle bg-surface-card p-5 md:p-6">
             <div className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                     <Icon className="size-4 text-primary" strokeWidth={1.75} />
                 </div>
                 <div>
-                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                         {title}
                     </h2>
                     {description ? (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-text-tertiary">
                             {description}
                         </p>
                     ) : null}
@@ -380,27 +380,27 @@ export default function AssetShow() {
     };
 
     return (
-        <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
+        <div className="relative flex min-h-[100dvh] flex-col bg-surface-base p-4 text-text-primary md:p-8">
             <div className="mx-auto w-full max-w-5xl">
                 <Link
                     href={assetListUrl()}
-                    className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-text-tertiary transition-colors hover:text-text-primary"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
                     Kembali ke Daftar Aset
                 </Link>
 
-                <header className="mt-5 rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-sticky)] sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+                <header className="mt-5 rounded-xl border border-border-subtle bg-surface-card p-4 shadow-soft sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
                         <div className="relative size-16 shrink-0">
                             {hasPhotos ? (
                                 <img
                                     src={asset.photo_url[0]}
                                     alt="Foto aset"
-                                    className="size-16 rounded-lg border border-border object-cover"
+                                    className="size-16 rounded-lg border border-border-subtle object-cover"
                                 />
                             ) : (
-                                <div className="flex size-16 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                <div className="flex size-16 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-text-tertiary">
                                     <Boxes
                                         className="size-7"
                                         strokeWidth={1.5}
@@ -410,18 +410,18 @@ export default function AssetShow() {
                         </div>
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                                <h1 className="text-2xl font-bold tracking-[-0.02em] text-foreground">
+                                <h1 className="text-2xl font-bold tracking-[-0.02em] text-text-primary">
                                     {asset.item?.name ?? 'Aset'}
                                 </h1>
                                 <StatusBadge value={asset.status} />
                             </div>
-                            <p className="mt-1 truncate font-mono text-sm font-bold text-foreground tabular-nums">
-                                {asset.kode_asset ?? '—'}
+                            <p className="mt-1 truncate font-mono text-sm font-bold text-text-primary tabular-nums">
+                                {asset.kode_asset ?? 'â€”'}
                             </p>
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            <p className="mt-0.5 truncate text-xs text-text-tertiary">
                                 {[asset.brand, asset.model]
                                     .filter(Boolean)
-                                    .join(' · ') || '—'}
+                                    .join(' Â· ') || 'â€”'}
                             </p>
                         </div>
                     </div>
@@ -489,13 +489,13 @@ export default function AssetShow() {
                                     <span className="truncate">
                                         {[level.code, level.name]
                                             .filter(Boolean)
-                                            .join(' — ')}
+                                            .join(' â€” ')}
                                     </span>
                                 </span>
                             );
                         })
                     ) : (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-text-tertiary">
                             Belum ada klasifikasi
                         </span>
                     )}
@@ -514,7 +514,7 @@ export default function AssetShow() {
                         >
                             {hasPhotos ? (
                                 <div className="space-y-3">
-                                    <div className="overflow-hidden rounded-xl border border-border/70 bg-card/60 shadow-sm">
+                                    <div className="overflow-hidden rounded-xl border border-border-subtle/70 bg-surface-card/60 shadow-flat">
                                         <img
                                             src={asset.photo_url[photoIndex]}
                                             alt="Foto aset"
@@ -534,7 +534,7 @@ export default function AssetShow() {
                                                         className={cn(
                                                             'relative h-16 w-24 shrink-0 overflow-hidden rounded-md border transition-all duration-200',
                                                             index === photoIndex
-                                                                ? 'border-primary/60 ring-2 ring-primary/30'
+                                                                ? 'border-brand ring-2 ring-brand/30'
                                                                 : 'border-border/70 opacity-70 hover:opacity-100',
                                                         )}
                                                         aria-label={`Lihat foto ${index + 1}`}
@@ -551,14 +551,14 @@ export default function AssetShow() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-background/40 py-12 text-center">
-                                    <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-surface-base/40 py-12 text-center">
+                                    <div className="flex size-12 items-center justify-center rounded-xl bg-brand-subtle text-brand">
                                         <Camera
                                             className="size-5"
                                             strokeWidth={1.75}
                                         />
                                     </div>
-                                    <p className="text-sm font-medium text-muted-foreground">
+                                    <p className="text-sm font-medium text-text-tertiary">
                                         Belum ada foto aset
                                     </p>
                                 </div>
@@ -574,35 +574,35 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={Tags}
                                     label="Item"
-                                    value={asset.item?.name ?? '—'}
+                                    value={asset.item?.name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={Hash}
                                     label="Kode Aset"
-                                    value={asset.kode_asset ?? '—'}
+                                    value={asset.kode_asset ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Serial Number"
-                                    value={asset.serial_number ?? '—'}
+                                    value={asset.serial_number ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Part Number"
-                                    value={asset.part_number ?? '—'}
+                                    value={asset.part_number ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Brand"
-                                    value={asset.brand ?? '—'}
+                                    value={asset.brand ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Model"
-                                    value={asset.model ?? '—'}
+                                    value={asset.model ?? 'â€”'}
                                 />
                             </div>
                         </Section>
@@ -626,18 +626,18 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={UserRound}
                                     label="Vendor"
-                                    value={asset.vendor_name ?? '—'}
+                                    value={asset.vendor_name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={MapPin}
                                     label="Lokasi"
-                                    value={asset.location?.name ?? '—'}
+                                    value={asset.location?.name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={Building2}
                                     label="Department"
                                     value={
-                                        asset.department?.nama_department ?? '—'
+                                        asset.department?.nama_department ?? 'â€”'
                                     }
                                 />
                             </div>
@@ -650,14 +650,14 @@ export default function AssetShow() {
                         >
                             <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                                 <div className="flex items-start gap-3">
-                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/15 bg-primary/5 text-primary">
+                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle text-primary">
                                         <Tags
                                             className="size-4"
                                             strokeWidth={1.75}
                                         />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                             Tipe Aset
                                         </p>
                                         <span className="mt-1 inline-flex">
@@ -678,7 +678,7 @@ export default function AssetShow() {
                                     value={
                                         asset.useful_life_years
                                             ? `${asset.useful_life_years} Tahun`
-                                            : '—'
+                                            : 'â€”'
                                     }
                                 />
                                 <DetailItem
@@ -694,7 +694,7 @@ export default function AssetShow() {
                                               : asset.depreciation_method ===
                                                   'none'
                                                 ? 'Tidak Disusutkan'
-                                                : '—'
+                                                : 'â€”'
                                     }
                                 />
                                 <DetailItem
@@ -721,7 +721,7 @@ export default function AssetShow() {
                                                           ),
                                                   ),
                                               )
-                                            : '—'
+                                            : 'â€”'
                                     }
                                     mono
                                 />
@@ -731,7 +731,7 @@ export default function AssetShow() {
                                     <p className="text-xs font-semibold text-status-rpr-text">
                                         Alasan Override Manual
                                     </p>
-                                    <p className="mt-1 text-sm text-foreground/90">
+                                    <p className="mt-1 text-sm text-text-primary/90">
                                         {asset.type_override_reason}
                                     </p>
                                 </div>
@@ -777,16 +777,16 @@ export default function AssetShow() {
                     </div>
 
                     <div className="space-y-4">
-                        <section className="rounded-xl border border-border bg-card p-5">
+                        <section className="rounded-xl border border-border-subtle bg-surface-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                     <Barcode
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                         Barcode Aset
                                     </h2>
                                 </div>
@@ -794,49 +794,49 @@ export default function AssetShow() {
                             <div className="mt-5">
                                 {asset.kode_asset ? (
                                     <>
-                                        <div className="rounded-lg border border-border bg-surface-sunken/60 p-4 dark:bg-muted/40">
+                                        <div className="rounded-lg border border-border-subtle bg-surface-sunken/60 p-4 dark:bg-muted/40">
                                             <AssetBarcode
                                                 value={asset.kode_asset}
                                                 className="h-20"
                                             />
-                                            <p className="mt-2 text-center font-mono text-sm font-bold text-foreground tabular-nums">
+                                            <p className="mt-2 text-center font-mono text-sm font-bold text-text-primary tabular-nums">
                                                 {asset.kode_asset}
                                             </p>
                                         </div>
                                     </>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-text-tertiary">
                                         Belum ada kode aset.
                                     </p>
                                 )}
                             </div>
                         </section>
 
-                        <section className="rounded-xl border border-border bg-card p-5">
+                        <section className="rounded-xl border border-border-subtle bg-surface-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                         Status & Kondisi
                                     </h2>
                                 </div>
                             </div>
                             <div className="mt-5 grid grid-cols-2 gap-3">
-                                <div className="rounded-lg border border-border bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                <div className="rounded-lg border border-border-subtle bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
+                                    <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                         Status
                                     </p>
                                     <span className="mt-2 inline-flex">
                                         <StatusBadge value={asset.status} />
                                     </span>
                                 </div>
-                                <div className="rounded-lg border border-border bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                <div className="rounded-lg border border-border-subtle bg-surface-sunken/60 p-3.5 dark:bg-muted/40">
+                                    <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                         Kondisi
                                     </p>
                                     <span
@@ -847,22 +847,22 @@ export default function AssetShow() {
                                             ] ?? CONDITION_FALLBACK,
                                         )}
                                     >
-                                        {asset.condition ?? '—'}
+                                        {asset.condition ?? 'â€”'}
                                     </span>
                                 </div>
                             </div>
                         </section>
 
-                        <section className="rounded-xl border border-border bg-card p-5">
+                        <section className="rounded-xl border border-border-subtle bg-surface-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                     <FileText
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                         Dokumen & Referensi
                                     </h2>
                                 </div>
@@ -871,17 +871,17 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={FileText}
                                     label="No. SPB"
-                                    value={asset.no_spb ?? '—'}
+                                    value={asset.no_spb ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={FileText}
                                     label="Nomor Dokumen"
-                                    value={asset.document_number ?? '—'}
+                                    value={asset.document_number ?? 'â€”'}
                                     mono
                                 />
                                 <div>
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                    <p className="text-xs font-semibold tracking-wider text-text-tertiary uppercase">
                                         Dokumen Pendukung
                                     </p>
                                     {hasDocuments ? (
@@ -893,7 +893,7 @@ export default function AssetShow() {
                                                         href={document}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                                                        className="flex items-center gap-2 rounded-md border border-border-subtle bg-surface-card px-3 py-2 text-xs font-medium text-brand transition-colors hover:bg-brand-subtle"
                                                     >
                                                         <FileText
                                                             className="size-3.5 shrink-0"
@@ -907,7 +907,7 @@ export default function AssetShow() {
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="mt-2 text-sm text-muted-foreground">
+                                        <p className="mt-2 text-sm text-text-tertiary">
                                             Tidak ada
                                         </p>
                                     )}
@@ -915,16 +915,16 @@ export default function AssetShow() {
                             </div>
                         </section>
 
-                        <section className="rounded-xl border border-border bg-card p-5">
+                        <section className="rounded-xl border border-border-subtle bg-surface-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                     <UserRound
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                         Penanggung Jawab
                                     </h2>
                                 </div>
@@ -935,7 +935,7 @@ export default function AssetShow() {
                                         {asset.pic?.map((person) => (
                                             <span
                                                 key={person}
-                                                className="inline-flex items-center gap-1.5 rounded bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                                                className="inline-flex items-center gap-1.5 rounded bg-brand-subtle px-2.5 py-1 text-xs font-semibold text-brand"
                                             >
                                                 <UserRound
                                                     className="size-3"
@@ -946,34 +946,34 @@ export default function AssetShow() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-text-tertiary">
                                         Tidak ada
                                     </p>
                                 )}
                             </div>
                         </section>
 
-                        <section className="rounded-xl border border-border bg-card p-5">
+                        <section className="rounded-xl border border-border-subtle bg-surface-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
                                     />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                    <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                         Catatan
                                     </h2>
                                 </div>
                             </div>
                             <div className="mt-5">
                                 {asset.notes ? (
-                                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                                    <p className="text-sm leading-relaxed whitespace-pre-line text-text-tertiary">
                                         {asset.notes}
                                     </p>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-text-tertiary">
                                         Tidak ada catatan.
                                     </p>
                                 )}
@@ -982,27 +982,27 @@ export default function AssetShow() {
                     </div>
                 </div>
 
-                <section className="mt-4 rounded-xl border border-border bg-card p-5 md:p-6">
+                <section className="mt-4 rounded-xl border border-border-subtle bg-surface-card p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-brand-subtle bg-brand-subtle shadow-flat shadow-flat">
                                 <History
                                     className="size-4 text-primary"
                                     strokeWidth={1.75}
                                 />
                             </div>
                             <div>
-                                <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                                <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                                     Riwayat Siklus Hidup
                                 </h2>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                <p className="mt-0.5 text-xs text-text-tertiary">
                                     Penambahan, status, dan penempatan aset
                                     tercatat otomatis di sini.
                                 </p>
                             </div>
                         </div>
                         {asset.histories.length > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-3 py-1 text-xs font-semibold text-brand tabular-nums">
                                 <History
                                     className="size-3.5"
                                     strokeWidth={1.75}
@@ -1024,8 +1024,8 @@ export default function AssetShow() {
                                     className={cn(
                                         'rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200',
                                         historyFilter === filter.value
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                                            ? 'bg-brand text-white shadow-flat'
+                                            : 'text-text-tertiary hover:bg-accent hover:text-text-primary',
                                     )}
                                 >
                                     {filter.label}
@@ -1038,22 +1038,22 @@ export default function AssetShow() {
                         {asset.histories.length === 0 ? (
                             <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-6 py-8 text-center">
                                 <PackagePlus
-                                    className="size-6 text-muted-foreground/60"
+                                    className="size-6 text-text-tertiary/60"
                                     strokeWidth={1.25}
                                 />
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-text-tertiary">
                                     Belum ada riwayat perubahan pada aset ini.
                                 </p>
                             </div>
                         ) : historyGroups.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-text-tertiary">
                                 Tidak ada kejadian pada filter ini.
                             </p>
                         ) : (
                             <div className="space-y-6">
                                 {historyGroups.map((group) => (
                                     <div key={group.date}>
-                                        <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                        <p className="mb-3 text-xs font-semibold tracking-wide text-text-tertiary uppercase">
                                             {group.date}
                                         </p>
                                         <ol className="relative space-y-3 border-l border-border pl-5">
@@ -1088,14 +1088,14 @@ export default function AssetShow() {
                                                                 }
                                                             />
                                                         </span>
-                                                        <div className="rounded-lg border border-border bg-surface-sunken/50 px-3 py-2.5 transition-colors duration-200 hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60">
+                                                        <div className="rounded-lg border border-border-subtle bg-surface-sunken/50 px-3 py-2.5 transition-colors duration-200 hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60">
                                                             <div className="flex items-start justify-between gap-3">
-                                                                <p className="text-sm font-semibold text-foreground">
+                                                                <p className="text-sm font-semibold text-text-primary">
                                                                     {historyLabel(
                                                                         entry.field,
                                                                     )}
                                                                 </p>
-                                                                <span className="text-xs text-muted-foreground tabular-nums">
+                                                                <span className="text-xs text-text-tertiary tabular-nums">
                                                                     {formatHistoryTime(
                                                                         entry.created_at,
                                                                     )}
@@ -1113,7 +1113,7 @@ export default function AssetShow() {
                                                                                 false
                                                                             }
                                                                         />
-                                                                        <ArrowLeftRight className="size-3.5 text-muted-foreground" />
+                                                                        <ArrowLeftRight className="size-3.5 text-text-tertiary" />
                                                                         <StatusBadge
                                                                             value={
                                                                                 entry.new_value
@@ -1125,28 +1125,28 @@ export default function AssetShow() {
                                                                     </>
                                                                 ) : entry.old_value ? (
                                                                     <>
-                                                                        <span className="text-muted-foreground line-through decoration-muted-foreground/50">
+                                                                        <span className="text-text-tertiary line-through decoration-muted-foreground/50">
                                                                             {
                                                                                 entry.old_value
                                                                             }
                                                                         </span>
-                                                                        <ArrowLeftRight className="size-3.5 text-muted-foreground" />
-                                                                        <span className="font-medium text-foreground">
+                                                                        <ArrowLeftRight className="size-3.5 text-text-tertiary" />
+                                                                        <span className="font-medium text-text-primary">
                                                                             {
                                                                                 entry.new_value
                                                                             }
                                                                         </span>
                                                                     </>
                                                                 ) : (
-                                                                    <span className="font-medium text-foreground">
+                                                                    <span className="font-medium text-text-primary">
                                                                         {entry.new_value ??
-                                                                            '—'}
+                                                                            'â€”'}
                                                                     </span>
                                                                 )}
                                                             </div>
 
                                                             {entry.changed_by_name && (
-                                                                <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                                                <p className="mt-1.5 flex items-center gap-1 text-xs text-text-tertiary">
                                                                     <UserRound
                                                                         className="size-3"
                                                                         strokeWidth={
@@ -1222,3 +1222,4 @@ AssetShow.layout = {
         },
     ],
 };
+

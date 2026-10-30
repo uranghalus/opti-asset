@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+﻿import { Link, usePage } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -25,7 +25,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { cn } from '@/lib/utils';
-import { index as indexRoute } from '@/routes/employees';
+import { index as indexRoute } from '@/routes/tenant/employees';
 
 type RoleOption = {
     id: number;
@@ -131,7 +131,7 @@ export default function EmployeeShow() {
     const stats = [
         {
             label: 'NIK',
-            value: employee.nik_employee ?? '—',
+            value: employee.nik_employee ?? 'â€”',
             icon: Hash,
             accent: 'text-sky-600 dark:text-sky-400',
         },
@@ -140,19 +140,19 @@ export default function EmployeeShow() {
             value:
                 employee.department?.nama_department ??
                 employee.department?.kode_department ??
-                '—',
+                'â€”',
             icon: Building2,
             accent: 'text-emerald-600 dark:text-emerald-400',
         },
         {
             label: 'Email',
-            value: employee.email ?? '—',
+            value: employee.email ?? 'â€”',
             icon: Mail,
             accent: 'text-amber-600 dark:text-amber-400',
         },
         {
             label: 'No. WhatsApp',
-            value: employee.number ?? '—',
+            value: employee.number ?? 'â€”',
             icon: Phone,
             accent: 'text-rose-600 dark:text-rose-400',
         },
@@ -204,7 +204,7 @@ export default function EmployeeShow() {
                                         className="size-3.5 text-sky-500"
                                         strokeWidth={2}
                                     />
-                                    {employee.nik_employee ?? '—'}
+                                    {employee.nik_employee ?? 'â€”'}
                                 </p>
                             </div>
                         </div>
@@ -436,3 +436,4 @@ EmployeeShow.layout = {
         },
     ],
 };
+

@@ -2,57 +2,96 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TenantSwitchRequest;
-use App\Models\ActivityLog;
 use App\Models\Tenant;
+use App\Services\TenantAccess;
+use App\Services\TenantSwitchTarget;
 use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Routing\UrlGenerator;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Actions\MakeTenantCurrentAction;
 
 class TenantSwitchController extends Controller
 {
-    public function switch(TenantSwitchRequest $request): RedirectResponse
+    public function __construct(
+        protected TenantAccess $tenantAccess,
+        protected TenantSwitchTarget $switchTarget,
+        protected UrlGenerator $urlGenerator,
+        protected MakeTenantCurrentAction $makeTenantCurrentAction,
+    ) {}
+
+    public function switch(Request $request): RedirectResponse
     {
+        Gate::authorize('tenant.switch');
+
+        $validated = $request->validate([
+            'tenant' => ['required', 'string'],
+        ]);
+
+        $tenantCode = $validated['tenant'];
+        $tenant = Tenant::whereCode($tenantCode)->first();
+
+        if (! $tenant) {
+            abort(404, 'Tenant tidak ditemukan.');
+        }
+
         $user = $request->user();
-        $validated = $request->validated();
 
-        // 4. Resolve tenant (404 if missing)
-        $tenant = Tenant::findOrFail($validated['tenant_id']);
-
-        // 5. Scope/pivot — unless super-admin
-        if (! $user->hasRole('super-admin') && ! $user->tenants()->where('tenants.id', $tenant->id)->exists()) {
+        if (! $this->tenantAccess->canOperate($user, $tenant->id)) {
             abort(403, 'Anda tidak memiliki akses ke tenant ini.');
         }
 
-        // 6. Session (capture previous before put)
-        $previousTenantId = $request->session()->get('current_tenant_id');
-        $isActive = $previousTenantId === $tenant->id;
+        // Compute target page after switch (stay on current page)
+        $route = $request->route();
+        $routeName = $route ? $route->getName() : null;
+        $routeParams = $route ? $route->parameters() : [];
 
-        $request->session()->put('current_tenant_id', $tenant->id);
+        $target = $this->switchTarget->resolve($tenantCode, $routeName, $routeParams);
 
-        // 7. Audit — written in NEW tenant context (after session put)
-        ActivityLog::create([
+        // Set current tenant for Spatie multitenancy
+        $this->makeTenantCurrentAction->execute($tenant);
+
+        if ($request->hasSession()) {
+            $request->session()->put('current_tenant_id', $tenant->id);
+        }
+
+        Log::info('tenant.switch', [
             'user_id' => $user->id,
-            'user_name' => $user->name,
-            'action' => 'tenant.switch',
-            'subject_type' => Tenant::class,
-            'subject_id' => $tenant->id,
-            'subject_label' => $tenant->name,
-            'properties' => [
-                'from_tenant_id' => $previousTenantId,
-                'to_tenant_id' => $tenant->id,
-                'action' => 'tenant.switch',
-            ],
+            'from_tenant_id' => $request->session()->get('previous_tenant_id'),
+            'to_tenant_id' => $tenant->id,
+            'to_tenant_code' => $tenantCode,
+            'target_path' => $target['path'],
+            'fell_back' => $target['fell_back'],
         ]);
 
-        // 8. Respond
-        $message = $isActive
-            ? 'Tenant "'.$tenant->name.'" sudah aktif.'
-            : 'Berhasil beralih ke tenant "'.$tenant->name.'".';
+        return redirect($target['path']);
+    }
 
-        $toast = ['type' => 'success', 'message' => $message];
+    public function signed(Request $request, string $tenantCode): RedirectResponse
+    {
+        Gate::authorize('tenant.switch');
 
-        Inertia::flash('toast', $toast);
+        $tenant = Tenant::whereCode($tenantCode)->first();
 
-        return redirect()->route('dashboard');
+        if (! $tenant) {
+            abort(404, 'Tenant tidak ditemukan.');
+        }
+
+        $user = $request->user();
+
+        if (! $this->tenantAccess->canOperate($user, $tenant->id)) {
+            abort(403, 'Anda tidak memiliki akses ke tenant ini.');
+        }
+
+        $targetPath = $request->query('to', route('dashboard', ['tenant' => $tenantCode]));
+
+        $this->makeTenantCurrentAction->execute($tenant);
+
+        if ($request->hasSession()) {
+            $request->session()->put('current_tenant_id', $tenant->id);
+        }
+
+        return redirect($targetPath);
     }
 }

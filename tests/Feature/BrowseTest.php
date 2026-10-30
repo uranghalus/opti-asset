@@ -35,7 +35,7 @@ class BrowseTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -75,7 +75,7 @@ class BrowseTest extends TestCase
         $this->buildFullChain();
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/Index')
@@ -92,7 +92,7 @@ class BrowseTest extends TestCase
         [$group, $category, $cluster, $subCluster] = $this->buildFullChain();
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/Index')
@@ -121,10 +121,10 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/Index')
@@ -152,10 +152,10 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'cluster',
                 'node' => $cluster->id,
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected.level', 'cluster')
@@ -171,7 +171,7 @@ class BrowseTest extends TestCase
         $this->buildFullChain();
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected', null)
@@ -192,7 +192,7 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('tree.0.asset_count')
@@ -224,11 +224,11 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'location' => $targetLocation->id,
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('assets.data', 1)
@@ -258,11 +258,11 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'search' => 'MacBook',
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('assets.data', 1)
@@ -271,7 +271,7 @@ class BrowseTest extends TestCase
 
     public function test_browse_requires_authentication(): void
     {
-        $this->get(route('assets.browse'))->assertRedirect();
+        $this->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))->assertRedirect();
     }
 
     public function test_browse_respects_multi_tenant_isolation(): void
@@ -285,7 +285,7 @@ class BrowseTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse'))
+            ->get(route('tenant.assets.browse', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('tree', 1)
@@ -297,7 +297,7 @@ class BrowseTest extends TestCase
         $this->buildFullChain();
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', ['level' => 'invalid', 'node' => '123']))
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], ['level' => 'invalid', 'node' => '123'])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected', null)
@@ -320,11 +320,11 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'search' => 'TEST-ASSET-123',
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected.level', 'sub-cluster')
@@ -354,11 +354,11 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'department' => $dept->id_department,
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected.level', 'sub-cluster')
@@ -388,11 +388,11 @@ class BrowseTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'status' => 'ACT',
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('selected.level', 'sub-cluster')
@@ -414,11 +414,11 @@ class BrowseTest extends TestCase
         }
 
         $this->actingAs($this->user)
-            ->get(route('assets.browse', [
+            ->get(route('tenant.assets.browse', array_merge(['tenant' => $this->tenant->code], [
                 'level' => 'sub-cluster',
                 'node' => $subCluster->id,
                 'per_page' => 10,
-            ]))
+            ])))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('assets.data', 10)

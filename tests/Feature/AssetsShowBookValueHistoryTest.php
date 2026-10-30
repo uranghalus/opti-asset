@@ -27,7 +27,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         Permission::findOrCreate('asset.view', 'web');
@@ -55,7 +55,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -70,7 +70,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -88,7 +88,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -107,7 +107,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.show', $asset))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')

@@ -2,11 +2,17 @@
 
 @import 'tw-animate-css';
 
-/* Opname Field Desk v2.0 — self-hosted fonts (DESIGN.md §3.4).
-   Public Sans (UI) + Noto Sans Mono (kode aset, barcode, nilai). */
-@import '@fontsource-variable/public-sans';
-@import '@fontsource/noto-sans-mono/400.css';
-@import '@fontsource/noto-sans-mono/500.css';
+/* OptiAsset Studio — Evolved Soft UI Design System v2.4 (rebuilt per PRD v1.3)
+   Fonts: Plus Jakarta Sans (headings) + Inter (body) + JetBrains Mono (kode aset, barcode, nilai). Self-hosted via @fontsource. */
+@import '@fontsource-variable/inter';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -14,61 +20,93 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* Fonts (Evolved Soft UI: Plus Jakarta Sans headings + Inter body + JetBrains Mono) */
+    --font-heading:
+        'Plus Jakarta Sans', 'Inter Variable', 'Inter', ui-sans-serif, system-ui,
+        'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Noto Color Emoji';
     --font-sans:
-        'Public Sans Variable', 'Public Sans', ui-sans-serif, system-ui,
+        'Inter Variable', 'Inter', ui-sans-serif, system-ui,
         'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Noto Color Emoji';
     --font-mono:
-        'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+        'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
         monospace;
 
-    /* Opname Field Desk radii: 4px badges / 8px controls / 12px cards */
-    --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
+    /* Radius (Evolved Soft UI v2.4 — matches HTML design) */
+    --radius-sm: 9px;
+    --radius-md: 13px;
+    --radius-lg: 18px;
 
-    /* Brand aliases (DESIGN.md §3.1) */
-    --color-brand: #0d5c56;
-    --color-brand-hover: #0a4a45;
-    --color-brand-muted: #d8edea;
-    --color-brand-muted-border: #a7d2cc;
-    --color-paper: #f1f4f6;
-    --color-surface-sunken: #e9edf0;
-    --color-ink: #15202b;
-    --color-ink-muted: #5a6a7a;
-    --color-ink-subtle: #8593a2;
+    /* Brand tokens (Evolved Soft UI — #2D82B7) */
+    --color-brand: #2D82B7;
+    --color-brand-2: #4FA3D9;
+    --color-brand-hover: #246f9d;
+    --color-brand-subtle: rgba(45, 130, 183, 0.12);
+    --color-brand-glow: rgba(45, 130, 183, 0.35);
+    --color-glass: rgba(241, 245, 249, 0.75);
+    --color-row-hover: rgba(255, 255, 255, 0.03);
 
-    --shadow-sticky: 0 1px 0 rgba(21, 32, 43, 0.08);
-    --shadow-overlay: 0 8px 24px rgba(21, 32, 43, 0.14);
-    --shadow-toast: 0 4px 16px rgba(21, 32, 43, 0.12);
+    /* Surface tokens (soft ceramic light / soft deep dark) */
+    --color-surface-base: #f1f5f9;
+    --color-surface-card: #ffffff;
+    --color-surface-raised: #ffffff;
+    --color-surface-sunken: #e2e8f0;
+    --color-surface-hover: #f8fafc;
+    --color-surface-selected: rgba(45, 130, 183, 0.08);
+    --color-surface-card-2: #f6f8fb;
 
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
+    /* Border tokens */
+    --color-border-subtle: rgba(226, 232, 240, 0.9);
+    --color-border-highlight: rgba(255, 255, 255, 0.85);
+    --color-border-focus: #2D82B7;
 
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
+    /* Text tokens */
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-tertiary: #94a3b8;
+    --color-text-on-primary: #ffffff;
 
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
+    /* Shadow tokens (multi-layered depth) */
+    --shadow-soft: 0 6px 20px -3px rgba(148, 163, 184, 0.22), 0 2px 6px -1px rgba(148, 163, 184, 0.12);
+    --shadow-md: 0 16px 40px -4px rgba(15, 23, 42, 0.13), 0 4px 12px -2px rgba(45, 130, 183, 0.15);
+    --shadow-elevated: 0 16px 32px -4px rgba(148, 163, 184, 0.28), 0 4px 12px -2px rgba(148, 163, 184, 0.15);
+    --shadow-inset: inset 2px 2px 5px rgba(148, 163, 184, 0.28), inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+    --shadow-glow-primary: 0 8px 24px -4px rgba(45, 130, 183, 0.35);
+    --shadow-flat: 0 1px 3px rgba(148, 163, 184, 0.1);
 
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
+    /* Glow background (Evolved Soft UI v2.4 — HTML ambient glow) */
+    --bg-glow-light: radial-gradient(900px 480px at 85% -6%,rgba(45,130,183,.10),transparent 62%),radial-gradient(700px 460px at -8% 105%,rgba(52,211,153,.06),transparent 60%);
+    --bg-glow-dark: radial-gradient(900px 480px at 85% -6%,rgba(45,130,183,.16),transparent 62%),radial-gradient(700px 460px at -8% 105%,rgba(52,211,153,.05),transparent 60%);
 
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
+    /* Shadcn UI token aliases (mapped to Evolved Soft UI values) */
+    --color-background: var(--color-surface-base);
+    --color-foreground: var(--color-text-primary);
 
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
+    --color-card: var(--color-surface-card);
+    --color-card-foreground: var(--color-text-primary);
 
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
+    --color-popover: var(--color-surface-card);
+    --color-popover-foreground: var(--color-text-primary);
 
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
+    --color-primary: var(--color-brand);
+    --color-primary-foreground: var(--color-text-on-primary);
 
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
+    --color-secondary: #64748B;
+    --color-secondary-foreground: #ffffff;
+
+    --color-muted: var(--color-surface-sunken);
+    --color-muted-foreground: var(--color-text-secondary);
+
+    --color-accent: var(--color-brand);
+    --color-accent-foreground: var(--color-text-on-primary);
+
+    --color-destructive: #EF4444;
+    --color-destructive-foreground: #ffffff;
+
+    --color-border: var(--color-border-subtle);
+    --color-input: var(--color-border-subtle);
+    --color-ring: var(--color-border-focus);
 
     /* Status & tipe map (DESIGN.md §3.2 — LOCKED). Light values; .dark overrides below. */
     --color-status-act-text: #166534;
@@ -86,6 +124,7 @@
     --color-status-dsp-text: #9f1239;
     --color-status-dsp-bg: #ffe4e6;
     --color-status-dsp-border: #fda4af;
+
     --color-tipe-aktiva-text: #0d5c56;
     --color-tipe-aktiva-bg: #d8edea;
     --color-tipe-aktiva-border: #a7d2cc;
@@ -93,481 +132,378 @@
     --color-tipe-peralatan-bg: #e9edf0;
     --color-tipe-peralatan-border: #b9c4ce;
 
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
+    --color-chart-1: var(--color-brand);
+    --color-chart-2: #10B981;
+    --color-chart-3: #F59E0B;
+    --color-chart-4: #6366F1;
+    --color-chart-5: #EF4444;
 
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar: var(--color-surface-card);
 }
 
-/* ── Opname Field Desk v2.0 — light theme ─────────────────────────
-   Cool paper + mineral teal. Opaque surfaces, 1px borders.
-   Values map to DESIGN.md §3.6. */
-:root {
-    --background: #f1f4f6;
-    --foreground: #15202b;
-    --card: #ffffff;
-    --card-foreground: #15202b;
-    --popover: #ffffff;
-    --popover-foreground: #15202b;
-    --primary: #0d5c56;
-    --primary-foreground: #ffffff;
-    --secondary: #e9edf0;
-    --secondary-foreground: #15202b;
-    --muted: #e9edf0;
-    --muted-foreground: #5a6a7a;
-    --accent: #e9edf0;
-    --accent-foreground: #15202b;
-    --destructive: #b42318;
-    --destructive-foreground: #ffffff;
-    --border: #d5dce3;
-    --input: #d5dce3;
-    --ring: #0d5c56;
-    --chart-1: #0d5c56;
-    --chart-2: #0e7490;
-    --chart-3: #b45309;
-    --chart-4: #1d6a9f;
-    --chart-5: #475569;
-    --radius: 0.75rem;
-    --sidebar: #ffffff;
-    --sidebar-foreground: #15202b;
-    --sidebar-primary: #0d5c56;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #e9edf0;
-    --sidebar-accent-foreground: #15202b;
-    --sidebar-border: #d5dce3;
-    --sidebar-ring: #0d5c56;
-}
-
-/* ── Opname Field Desk v2.0 — dark theme ──────────────────────────
-   Cool navy desk (NO plum, NO amber). Primary lifts to #2A9B93 for AA;
-   button text on it is dark navy. Status recipes from DESIGN.md §3.2. */
+/* Dark mode overrides (outside @theme per Tailwind v4 rules) */
 .dark {
-    --background: #0b1220;
-    --foreground: #e8eef2;
-    --card: #1b2534;
-    --card-foreground: #e8eef2;
-    --popover: #1b2534;
-    --popover-foreground: #e8eef2;
-    --primary: #2a9b93;
-    --primary-foreground: #0b1220;
-    --secondary: #1b2534;
-    --secondary-foreground: #e8eef2;
-    --muted: #1b2534;
-    --muted-foreground: #9aa8b5;
-    --accent: #1b2534;
-    --accent-foreground: #e8eef2;
-    --destructive: #f04438;
-    --destructive-foreground: #0b1220;
-    --border: #2a3544;
-    --input: #2a3544;
-    --ring: #2a9b93;
-    --chart-1: #2a9b93;
-    --chart-2: #22a7bd;
-    --chart-3: #d97706;
-    --chart-4: #4a90c2;
-    --chart-5: #8fa3b8;
-    --sidebar: #0b1220;
-    --sidebar-foreground: #e8eef2;
-    --sidebar-primary: #2a9b93;
-    --sidebar-primary-foreground: #0b1220;
-    --sidebar-accent: #1b2534;
-    --sidebar-accent-foreground: #e8eef2;
-    --sidebar-border: #2a3544;
-    --sidebar-ring: #2a9b93;
+    --color-surface-base: #0B0F17;
+    --color-surface-card: #131B2A;
+    --color-surface-raised: #1A2436;
+    --color-surface-sunken: #070A10;
+    --color-surface-hover: #1E2B40;
+    --color-surface-selected: rgba(45, 130, 183, 0.18);
+    --color-surface-card-2: #1a2332;
+    --color-row-hover: rgba(255, 255, 255, 0.03);
 
-    --color-status-act-text: #86efac;
-    --color-status-act-bg: #052e16;
-    --color-status-act-border: #052e16;
-    --color-status-loan-text: #93c5fd;
-    --color-status-loan-bg: #172554;
-    --color-status-loan-border: #172554;
-    --color-status-rpr-text: #fcd34d;
-    --color-status-rpr-bg: #451a03;
-    --color-status-rpr-border: #451a03;
-    --color-status-mut-text: #67e8f9;
-    --color-status-mut-bg: #083344;
-    --color-status-mut-border: #083344;
-    --color-status-dsp-text: #fda4af;
-    --color-status-dsp-bg: #4c0519;
-    --color-status-dsp-border: #4c0519;
-    --color-tipe-aktiva-text: #7dd8cc;
-    --color-tipe-aktiva-bg: #123b37;
-    --color-tipe-aktiva-border: #1e5a54;
-    --color-tipe-peralatan-text: #9aa8b5;
-    --color-tipe-peralatan-bg: #1b2534;
-    --color-tipe-peralatan-border: #2a3544;
+    --color-border-subtle: rgba(30, 41, 59, 0.8);
+    --color-border-highlight: rgba(255, 255, 255, 0.08);
+    --color-border-focus: #2D82B7;
+
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-tertiary: #64748b;
+
+    /* Dark Soft Shadows with Soft Ambient Glows */
+    --shadow-flat: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-soft: 0 8px 24px -3px rgba(0, 0, 0, 0.55), 0 2px 8px -1px rgba(0, 0, 0, 0.35);
+    --shadow-elevated: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 4px 14px -2px rgba(45, 130, 183, 0.15);
+    --shadow-inset: inset 2px 2px 6px rgba(0, 0, 0, 0.65), inset -1px -1px 3px rgba(255, 255, 255, 0.05);
+    --shadow-glow-primary: 0 8px 28px rgba(45, 130, 183, 0.45);
+    --shadow-md: 0 18px 44px -4px rgba(0, 0, 0, 0.7), 0 4px 14px -2px rgba(45, 130, 183, 0.15);
+    --color-glass: rgba(12, 16, 23, 0.72);
 }
 
-@layer base {
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-    }
-
-    /* Kode aset, barcode, dan angka moneter selalu mono + tabular (DESIGN.md §3.4) */
-    .tabular-nums {
-        font-variant-numeric: tabular-nums;
-    }
+/* --- Evolved Soft UI utility classes --- */
+.soft-card {
+    background-color: var(--color-surface-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-soft);
+    border-radius: var(--radius-lg);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@layer utilities {
-    /* Premium easing (kept — token matches DESIGN.md §3.5) */
-    .ease-premium {
-        transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    /* ── Legacy class contract (ticket 01 → 02) ────────────────────
-       Names kept for one release so ~25 screens render on-system with
-       zero TSX edits. Definitions are now the OPAQUE ledger recipes:
-       surface bg, 1px border, structural shadow. No blur, no gradient.
-       Ticket 02 removes the names entirely. */
-
-    .glass-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-    }
-
-    .dark .glass-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-    }
-
-    .glass-panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-    }
-
-    .dark .glass-panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-    }
-
-    .glass-topbar {
-        background: var(--card);
-        border-bottom: 1px solid var(--border);
-    }
-
-    .glass-header {
-        background: var(--surface-sunken, #e9edf0);
-        border-bottom: 1px solid var(--border);
-    }
-
-    .dark .glass-header {
-        background: var(--card);
-        border-bottom: 1px solid var(--border);
-    }
-
-    /* Sidebar: opaque, paper-on-paper with a single hairline. */
-    .sidebar-glass,
-    [data-slot='sidebar'][data-mobile='true'] {
-        --sidebar: var(--card);
-        --sidebar-foreground: var(--foreground);
-        --sidebar-primary: var(--primary);
-        --sidebar-primary-foreground: var(--primary-foreground);
-        --sidebar-accent: var(--secondary);
-        --sidebar-accent-foreground: var(--foreground);
-        --sidebar-border: var(--border);
-        --sidebar-ring: var(--ring);
-        color: var(--sidebar-foreground);
-    }
-
-    .sidebar-glass [data-sidebar='sidebar'],
-    [data-slot='sidebar'][data-mobile='true'] {
-        background: var(--sidebar);
-        border-right: 1px solid var(--sidebar-border);
-    }
-
-    /* Active nav item — teal treatment (DESIGN.md P1: teal is brand, not status) */
-    .sidebar-nav-active {
-        background: color-mix(in oklab, var(--primary) 10%, transparent);
-        border-left: 3px solid var(--primary);
-        color: var(--primary);
-    }
-
-    .dark .sidebar-nav-active {
-        background: color-mix(in oklab, var(--primary) 16%, transparent);
-    }
-
-    /* ── Sonner toast — solid surface, semantic accents ────────────
-       Solid (never glass): readable over any content, printable mental model. */
-    .premium-toast {
-        --toast-accent: var(--primary);
-
-        display: flex;
-        align-items: flex-start !important;
-        gap: 0.75rem;
-        padding: 0.875rem 1rem !important;
-        border-radius: 0.75rem !important;
-        background: var(--card) !important;
-        border: 1px solid var(--border) !important;
-        box-shadow: var(--shadow-overlay) !important;
-        transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .premium-toast:hover {
-        box-shadow: var(--shadow-overlay) !important;
-    }
-
-    .premium-toast[data-type='success'] {
-        --toast-accent: #1b7f5a;
-    }
-    .premium-toast[data-type='error'] {
-        --toast-accent: #b42318;
-    }
-    .premium-toast[data-type='warning'] {
-        --toast-accent: #b45309;
-    }
-    .premium-toast[data-type='info'],
-    .premium-toast[data-type='default'] {
-        --toast-accent: #1d6a9f;
-    }
-
-    .dark .premium-toast[data-type='success'] {
-        --toast-accent: #34d399;
-    }
-    .dark .premium-toast[data-type='error'] {
-        --toast-accent: #fda4af;
-    }
-    .dark .premium-toast[data-type='warning'] {
-        --toast-accent: #fbbf24;
-    }
-    .dark .premium-toast[data-type='info'],
-    .dark .premium-toast[data-type='default'] {
-        --toast-accent: #67e8f9;
-    }
-
-    /* Icon chip — the single tinted element; text stays neutral for contrast. */
-    .premium-toast [data-icon] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 1.75rem;
-        height: 1.75rem;
-        margin-top: 1px;
-        border-radius: 0.5rem;
-        color: var(--toast-accent);
-        background: color-mix(in oklab, var(--toast-accent) 14%, transparent);
-        box-shadow: inset 0 0 0 1px
-            color-mix(in oklab, var(--toast-accent) 22%, transparent);
-    }
-
-    .premium-toast [data-icon] svg {
-        width: 1rem;
-        height: 1rem;
-        stroke-width: 2.25;
-    }
-
-    .premium-toast-title {
-        font-size: 0.875rem;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        line-height: 1.35;
-    }
-
-    .premium-toast-description {
-        margin-top: 0.125rem;
-        font-size: 0.8125rem;
-        line-height: 1.45;
-        color: var(--muted-foreground) !important;
-    }
-
-    .premium-toast-action {
-        border-radius: 0.5rem;
-        font-weight: 600;
-        background: transparent !important;
-        color: var(--toast-accent) !important;
-        border: none !important;
-    }
-
-    .premium-toast-action:hover {
-        background: color-mix(
-            in oklab,
-            var(--toast-accent) 12%,
-            transparent
-        ) !important;
-    }
-
-    .premium-toast-cancel {
-        border-radius: 0.5rem;
-        font-weight: 500;
-    }
-
-    .premium-toast-close {
-        top: 0.625rem !important;
-        right: 0.625rem !important;
-        border-radius: 0.5rem;
-        opacity: 0.55;
-    }
-
-    /* Clear the mobile tab bar (hidden at lg+) and honor safe areas. */
-    @media (max-width: 1023px) {
-        [data-sonner-toaster] {
-            bottom: calc(4rem + env(safe-area-inset-bottom)) !important;
-        }
-        .premium-toast {
-            width: min(22.25rem, calc(100vw - 1.5rem));
-        }
-    }
-
-    /* Card entrance — feedback-only motion (DESIGN.md §3.5: max 220ms) */
-    @keyframes card-enter {
-        from {
-            opacity: 0;
-            transform: translateY(6px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card-enter,
-    .animate-card-enter {
-        animation: card-enter 200ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
-    }
-
-    /* Stagger delays (kept — used across screens) */
-    .delay-100 {
-        transition-delay: 100ms;
-    }
-    .delay-150 {
-        transition-delay: 150ms;
-    }
-    .delay-200 {
-        transition-delay: 200ms;
-    }
-    .delay-300 {
-        transition-delay: 300ms;
-    }
-    .delay-400 {
-        transition-delay: 400ms;
-    }
-    .delay-500 {
-        transition-delay: 500ms;
-    }
-
-    /* Sidebar scrollbar (used by app-sidebar.tsx) */
-    .sidebar-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-thumb {
-        background: color-mix(in oklab, var(--border) 80%, transparent);
-        border-radius: 3px;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: var(--border-strong, #b9c4ce);
-    }
-
-    /* ── Manifest Deck (halaman Aset) — barcode vocabulary stays,
-       scoped to cool ledger tones ───────────────────────────────── */
-    .barcode-strip {
-        background-image: repeating-linear-gradient(
-            90deg,
-            currentColor 0 2px,
-            transparent 2px 4px,
-            currentColor 4px 7px,
-            transparent 7px 9px,
-            currentColor 9px 10px,
-            transparent 10px 14px
-        );
-    }
-
-    .manifest-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(90, 106, 122, 0.55) transparent;
-    }
-    .manifest-scroll::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .manifest-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .manifest-scroll::-webkit-scrollbar-thumb {
-        background: rgba(90, 106, 122, 0.55);
-        border-radius: 4px;
-    }
-    .dark .manifest-scroll {
-        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-    }
-    .dark .manifest-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.22);
-    }
-
-    .manifest-scope ::selection {
-        background: color-mix(in oklab, var(--primary) 28%, transparent);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .animate-card-enter,
-        .card-enter,
-        .stamp-slam {
-            animation: none !important;
-            transition: none !important;
-        }
-    }
+.soft-card:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
 }
 
-@keyframes stamp-slam {
-    from {
-        opacity: 0;
-        transform: scale(1.4);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-.stamp-slam {
-    animation: stamp-slam 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+.soft-card-static {
+    background-color: var(--color-surface-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-soft);
+    border-radius: var(--radius-lg);
 }
 
-/* Mobile-first tap targets: interactive elements meet the 44px minimum on touch devices */
+.soft-input {
+    background-color: var(--color-surface-sunken);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-inset);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    transition: all 0.2s ease;
+}
+
+.soft-input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.soft-btn-primary {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-glow-primary);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 600;
+}
+
+.soft-btn-primary:hover {
+    background-color: var(--color-brand-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px -2px rgba(45, 130, 183, 0.5);
+}
+
+.soft-btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-flat);
+}
+
+.soft-btn-secondary {
+    background-color: var(--color-surface-card);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.soft-btn-secondary:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-1px);
+}
+
+.soft-pill {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-flat);
+}
+
+.soft-progress-track {
+    background-color: var(--color-surface-sunken);
+    box-shadow: var(--shadow-inset);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.soft-progress-bar {
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgba(45, 130, 183, 0.4);
+    transition: width 0.4s ease;
+}
+
+/* Legacy glass contract (kept for ~25 screens pending removal) — now soft-surface aligned */
+.glass-card {
+    background-color: var(--color-surface-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-flat);
+    border-radius: var(--radius-lg);
+}
+
+.glass-panel {
+    background-color: var(--color-surface-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-flat);
+    border-radius: var(--radius-lg);
+}
+
+.glass-topbar {
+    background-color: color-mix(in srgb, var(--color-surface-card) 70%, transparent);
+    border-bottom: 1px solid var(--color-border-subtle);
+    backdrop-blur: md;
+}
+
+.glass-header {
+    background-color: color-mix(in srgb, var(--color-surface-card) 70%, transparent);
+    border-bottom: 1px solid var(--color-border-subtle);
+    backdrop-blur: md;
+}
+
+/* Premium toast (glass) */
+.premium-toast {
+    background-color: color-mix(in srgb, var(--color-surface-card) 90%, transparent);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-soft);
+    border-radius: var(--radius-lg);
+    backdrop-blur: md;
+}
+
+/* Legacy sidebar glass — now soft-surface aligned */
+.sidebar-glass {
+    background-color: var(--color-surface-card);
+    border-right: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+}
+
+.sidebar-nav-active {
+    background-color: var(--color-surface-selected);
+}
+
+/* Pulse soft glow */
+@keyframes soft-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.92); }
+}
+.pulse-indicator {
+    animation: soft-pulse 2.2s infinite ease-in-out;
+}
+
+/* Custom scrollbar (soft) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--color-surface-base);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface-sunken);
+    border-radius: 9999px;
+    border: 2px solid var(--color-surface-base);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand);
+}
+
+/* Mobile tap target minimum (44px) */
 @media (pointer: coarse) {
     button,
+    [role="button"],
     a,
-    [role='button'],
-    input[type='checkbox'],
-    input[type='radio'] {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    button *,
-    a * {
-        min-height: auto;
-        min-width: auto;
-    }
-    input:not([type='checkbox']):not([type='radio']),
+    input,
     select,
     textarea {
         min-height: 44px;
-        font-size: 16px;
+        min-width: 44px;
     }
 }
 
-/* Utility for consistent mobile card stacking */
-.mobile-stack > * + * {
-    margin-top: 0.75rem;
+/* Reduced motion — disable soft pulse and hover translates */
+@media (prefers-reduced-motion: reduce) {
+    .soft-card:hover,
+    .soft-btn-primary:hover,
+    .soft-btn-secondary:hover {
+        transform: none;
+    }
+    .pulse-indicator {
+        animation: none;
+        opacity: 1;
+    }
+    .soft-card {
+        transition: none;
+    }
+    .soft-input {
+        transition: none;
+    }
+    .soft-btn-primary {
+        transition: none;
+    }
+    .soft-btn-secondary {
+        transition: none;
+    }
+}
+
+/* Ambient glow background (Evolved Soft UI v2.4) */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg-glow-light);
+    pointer-events: none;
+}
+
+.dark body::before {
+    background: var(--bg-glow-dark);
+}
+
+/* Toast — glass premium (matches HTML .toast) */
+.premium-toast {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+}
+
+.premium-toast > div[data-toast] {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 15px;
+    border-radius: 15px;
+    background: var(--color-glass);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--color-border-highlight);
+    box-shadow: var(--shadow-md);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    color: var(--color-text-primary);
+    min-height: auto;
+}
+
+.premium-toast > div[data-toast].premium-toast-show,
+.premium-toast > div[data-toast].show {
+    transform: none;
+}
+
+.premium-toast-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.premium-toast-title {
+    font-size: 13px;
+    color: var(--color-text-primary);
+}
+
+.premium-toast-description {
+    font-size: 11.5px;
+    color: var(--color-text-tertiary);
+}
+
+.premium-toast-close {
+    background: none;
+    border: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    margin-left: auto;
+    padding: 2px;
+}
+
+.premium-toast-close:hover {
+    color: var(--color-text-primary);
+}
+
+.premium-toast-ok .premium-toast-icon {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34D399;
+}
+
+.premium-toast-err .premium-toast-icon {
+    background: rgba(248, 113, 113, 0.15);
+    color: #F87171;
+}
+
+.premium-toast-info .premium-toast-icon {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60A5FA;
+}
+
+.premium-toast-warn .premium-toast-icon {
+    background: rgba(251, 191, 36, 0.15);
+    color: #FBBF24;
+}
+
+/* Responsive — matches HTML design breakpoints */
+@media (max-width: 1250px) {
+    .kpi-row-responsive {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .grid-responsive-3 {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .search-wrap-responsive {
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    .search-wrap-responsive kbd {
+        display: none !important;
+    }
+    .topbar-responsive {
+        padding: 11px 14px !important;
+    }
+    .content-responsive {
+        padding: 18px 14px 30px !important;
+    }
+}
+
+@media (max-width: 820px) {
+    .kpi-row-responsive {
+        grid-template-columns: 1fr 1fr !important;
+    }
+    .page-title-subtitle-responsive {
+        display: none !important;
+    }
+    .btn-responsive-hide-text > span:last-child {
+        display: none !important;
+    }
 }

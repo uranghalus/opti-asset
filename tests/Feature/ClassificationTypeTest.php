@@ -36,7 +36,7 @@ class ClassificationTypeTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
     }
 
@@ -247,7 +247,7 @@ class ClassificationTypeTest extends TestCase
         config(['features.classification_v2' => true]);
 
         $this->actingAs($viewer)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('classification_v2', true)
@@ -256,7 +256,7 @@ class ClassificationTypeTest extends TestCase
         config(['features.classification_v2' => false]);
 
         $this->actingAs($viewer)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('classification_v2', false));
         $this->assertNotNull($group->fresh()->classification_type);
@@ -281,7 +281,7 @@ class ClassificationTypeTest extends TestCase
         $file = new UploadedFile($path, 'aktiva.xlsx', null, null, true);
 
         $this->actingAs($user)
-            ->post(route('assets.import'), ['file' => $file])
+            ->post(route('tenant.assets.import', ['tenant' => $this->tenant->code]), ['file' => $file])
             ->assertRedirect();
 
         // Perilaku import existing: klasifikasi gagal → aset tetap dibuat tanpa

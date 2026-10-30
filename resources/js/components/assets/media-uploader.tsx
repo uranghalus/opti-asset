@@ -1,4 +1,4 @@
-import {
+﻿import {
     CheckCircle2,
     CircleAlert,
     FileText,
@@ -16,7 +16,7 @@ import {
     MAX_FILE_BYTES,
 } from '@/lib/image-compression';
 import { cn } from '@/lib/utils';
-import { upload as uploadRoute } from '@/routes/assets';
+import { upload as uploadRoute } from '@/routes/tenant/assets';
 
 const ALLOWED_PHOTOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_DOCS = [
@@ -297,8 +297,8 @@ export function MediaUploader({
                 </p>
                 <p className="text-xs text-muted-foreground">
                     {isImage
-                        ? `JPG, PNG, WEBP, GIF · maks. ${maxFiles} foto · kompres otomatis ≤ 1 MB`
-                        : 'PDF, DOC, DOCX, XLS, XLSX, CSV, TXT · maks. 1 MB per file'}
+                        ? `JPG, PNG, WEBP, GIF Â· maks. ${maxFiles} foto Â· kompres otomatis â‰¤ 1 MB`
+                        : 'PDF, DOC, DOCX, XLS, XLSX, CSV, TXT Â· maks. 1 MB per file'}
                 </p>
                 <input
                     ref={inputRef}
@@ -430,7 +430,7 @@ function PendingRow({
                         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                             {item.compressedSize !== undefined &&
                             item.compressedSize < item.originalSize
-                                ? `${formatBytes(item.originalSize)} → ${formatBytes(item.compressedSize)}`
+                                ? `${formatBytes(item.originalSize)} â†’ ${formatBytes(item.compressedSize)}`
                                 : formatBytes(item.originalSize)}
                         </span>
                     ) : null}
@@ -488,3 +488,4 @@ function PendingRow({
         </li>
     );
 }
+

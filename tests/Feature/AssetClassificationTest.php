@@ -42,7 +42,7 @@ class AssetClassificationTest extends TestCase
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         foreach (['asset.classification.view', 'asset.classification.create', 'asset.classification.edit', 'asset.classification.delete'] as $name) {
@@ -67,7 +67,7 @@ class AssetClassificationTest extends TestCase
         AssetCluster::factory()->create(['asset_category_id' => $category->id]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('asset-classification')
@@ -86,13 +86,13 @@ class AssetClassificationTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->has('groups', 1));
     }
 
     public function test_group_can_be_created(): void
     {
-        $this->actingAs($this->user)->post(route('asset-classification.groups.store'), [
+        $this->actingAs($this->user)->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), [
             'classification_type' => 'peralatan',
             'code' => '02',
             'name' => 'Mesin',
@@ -110,8 +110,8 @@ class AssetClassificationTest extends TestCase
     public function test_group_name_is_required(): void
     {
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.groups.store'), ['code' => '01'])
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), ['code' => '01'])
             ->assertSessionHasErrors('name');
     }
 
@@ -120,8 +120,8 @@ class AssetClassificationTest extends TestCase
         AssetGroup::factory()->create(['code' => '01']);
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.groups.store'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), [
                 'classification_type' => 'aktiva_tetap',
                 'code' => '01',
                 'name' => 'Duplikat',
@@ -132,8 +132,8 @@ class AssetClassificationTest extends TestCase
     public function test_group_classification_type_is_required(): void
     {
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.groups.store'), ['code' => '03', 'name' => 'Tanpa Tipe'])
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), ['code' => '03', 'name' => 'Tanpa Tipe'])
             ->assertSessionHasErrors('classification_type');
     }
 
@@ -146,7 +146,7 @@ class AssetClassificationTest extends TestCase
         $this->user->update(['tenant_id' => $otherTenant->id]);
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.groups.store'), [
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), [
                 'classification_type' => 'aktiva_tetap',
                 'code' => '01',
                 'name' => 'Golongan',
@@ -161,7 +161,7 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['code' => '01']);
 
         $this->actingAs($this->user)
-            ->patch(route('asset-classification.groups.update', $group->id), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $group->id]), [
                 'code' => '01',
                 'name' => 'Tetap',
             ])
@@ -173,7 +173,7 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->patch(route('asset-classification.groups.update', $group->id), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $group->id]), [
                 'name' => 'Baru',
             ])
             ->assertRedirect();
@@ -188,7 +188,7 @@ class AssetClassificationTest extends TestCase
         $foreignGroup->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->patch(route('asset-classification.groups.update', $foreignGroup->id), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $foreignGroup->id]), [
                 'name' => 'X',
             ])
             ->assertNotFound();
@@ -198,7 +198,7 @@ class AssetClassificationTest extends TestCase
     {
         $group = AssetGroup::factory()->create();
 
-        $this->actingAs($this->user)->post(route('asset-classification.categories.store'), [
+        $this->actingAs($this->user)->post(route('tenant.asset-classification.categories.store', ['tenant' => $this->tenant->code]), [
             'asset_group_id' => $group->id,
             'classification_type' => 'aktiva_tetap',
             'code' => '01.01',
@@ -217,8 +217,8 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->peralatan()->create();
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.categories.store'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.categories.store', ['tenant' => $this->tenant->code]), [
                 'asset_group_id' => $group->id,
                 'classification_type' => 'aktiva_tetap',
                 'name' => 'Kategori Salah Tipe',
@@ -233,8 +233,8 @@ class AssetClassificationTest extends TestCase
         $foreignGroup->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.categories.store'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.categories.store', ['tenant' => $this->tenant->code]), [
                 'asset_group_id' => $foreignGroup->id,
                 'classification_type' => 'aktiva_tetap',
                 'name' => 'Kategori Asing',
@@ -254,7 +254,7 @@ class AssetClassificationTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('groups.0.children.0.children.0.children.0.name', 'Server Rack')
                 ->where('groups.0.children.0.children.0.children.0.notes', 'Rak server 42U'));
@@ -268,7 +268,7 @@ class AssetClassificationTest extends TestCase
         AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id]);
 
         $this->actingAs($this->user)
-            ->delete(route('asset-classification.groups.destroy', $group->id))
+            ->delete(route('tenant.asset-classification.groups.destroy', ['tenant' => $this->tenant->code, 'id' => $group->id]))
             ->assertRedirect();
 
         $this->assertSame(0, AssetGroup::withoutGlobalScopes()->count());
@@ -284,7 +284,7 @@ class AssetClassificationTest extends TestCase
         AssetGroup::factory()->create(['code' => '02', 'name' => 'B', 'sort_order' => 2]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('groups.0.name', 'A')
                 ->where('groups.1.name', 'B')
@@ -296,7 +296,7 @@ class AssetClassificationTest extends TestCase
         AssetGroup::factory()->create(['code' => '01', 'name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->where('groups.0.name', 'Lama'));
 
         $this->assertTrue(Cache::has("classification.tree.{$this->tenant->id}"));
@@ -307,7 +307,7 @@ class AssetClassificationTest extends TestCase
         $this->assertFalse(Cache::has("classification.tree.{$this->tenant->id}"));
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->where('groups.0.name', 'Baru'));
     }
 
@@ -318,7 +318,7 @@ class AssetClassificationTest extends TestCase
         $third = AssetGroup::factory()->create(['code' => null, 'name' => 'Ketiga']);
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.reorder'), [
+            ->post(route('tenant.asset-classification.reorder', ['tenant' => $this->tenant->code]), [
                 'level' => 'group',
                 'parent_id' => null,
                 'ids' => [$third->id, $first->id, $second->id],
@@ -337,7 +337,7 @@ class AssetClassificationTest extends TestCase
         $category = AssetCategory::factory()->create(['asset_group_id' => $sourceGroup->id]);
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.reorder'), [
+            ->post(route('tenant.asset-classification.reorder', ['tenant' => $this->tenant->code]), [
                 'level' => 'category',
                 'parent_id' => $targetGroup->id,
                 'ids' => [$category->id],
@@ -356,8 +356,8 @@ class AssetClassificationTest extends TestCase
         $own = AssetGroup::factory()->create(['code' => null]);
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.reorder'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.reorder', ['tenant' => $this->tenant->code]), [
                 'level' => 'group',
                 'parent_id' => null,
                 'ids' => [$foreignGroup->id, $own->id],
@@ -370,7 +370,7 @@ class AssetClassificationTest extends TestCase
     public function test_import_creates_full_hierarchy(): void
     {
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), [
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), [
                 'rows' => [
                     ['level' => 'group', 'tipe' => 'peralatan', 'code' => '01', 'name' => 'Elektronik'],
                     ['level' => 'category', 'tipe' => 'peralatan', 'code' => '01.01', 'name' => 'Komputer', 'parent_code' => '01'],
@@ -398,7 +398,7 @@ class AssetClassificationTest extends TestCase
     public function test_import_skips_rows_with_unknown_parent(): void
     {
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), [
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), [
                 'rows' => [
                     ['level' => 'category', 'tipe' => 'peralatan', 'code' => '99', 'name' => 'Yatim', 'parent_code' => 'tidak-ada'],
                 ],
@@ -411,7 +411,7 @@ class AssetClassificationTest extends TestCase
     public function test_import_is_idempotent_for_duplicate_codes_within_parent(): void
     {
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), [
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), [
                 'rows' => [
                     ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Tanah'],
                     ['level' => 'category', 'tipe' => 'aktiva_tetap', 'code' => '01.01', 'name' => 'Kavling', 'parent_code' => '01'],
@@ -436,11 +436,11 @@ class AssetClassificationTest extends TestCase
         ];
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), ['rows' => $rows])
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['rows' => $rows])
             ->assertRedirect();
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), ['rows' => $rows])
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['rows' => $rows])
             ->assertRedirect();
 
         $this->assertSame(1, AssetGroup::withoutGlobalScopes()->count());
@@ -452,7 +452,7 @@ class AssetClassificationTest extends TestCase
     public function test_import_attaches_children_to_correct_parent_when_codes_collide(): void
     {
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), [
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), [
                 'rows' => [
                     ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '01', 'name' => 'Golongan Tanah'],
                     ['level' => 'group', 'tipe' => 'aktiva_tetap', 'code' => '02', 'name' => 'Golongan Bangunan'],
@@ -493,7 +493,7 @@ class AssetClassificationTest extends TestCase
         // e.g. sub-cluster '01' under group='03', category='03', cluster='11'
         // gets parent_code='03.03.11'.
         $this->actingAs($this->user)
-            ->post(route('asset-classification.import'), [
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), [
                 'rows' => [
                     ['level' => 'group',       'tipe' => 'peralatan', 'code' => '03', 'name' => 'Layanan Peralatan & Mesin', 'parent_code' => ''],
                     ['level' => 'category',    'tipe' => 'peralatan', 'code' => '03', 'name' => 'Alat MEP',                  'parent_code' => '03'],
@@ -543,7 +543,7 @@ class AssetClassificationTest extends TestCase
 
     public function test_guests_cannot_view_classification(): void
     {
-        $this->get(route('asset-classification.index'))->assertRedirect();
+        $this->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))->assertRedirect();
     }
 
     public function test_user_without_permission_is_forbidden(): void
@@ -551,11 +551,11 @@ class AssetClassificationTest extends TestCase
         $outsider = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $this->actingAs($outsider)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
 
         $this->actingAs($outsider)
-            ->post(route('asset-classification.groups.store'), ['name' => 'X'])
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), ['name' => 'X'])
             ->assertForbidden();
     }
 
@@ -565,8 +565,8 @@ class AssetClassificationTest extends TestCase
         $category = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.reorder'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.reorder', ['tenant' => $this->tenant->code]), [
                 'level' => 'category',
                 'parent_id' => '00000000-0000-0000-0000-000000000000',
                 'ids' => [$category->id],
@@ -579,8 +579,8 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['code' => null]);
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.reorder'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.reorder', ['tenant' => $this->tenant->code]), [
                 'level' => 'group',
                 'parent_id' => $group->id,
                 'ids' => [$group->id],
@@ -595,7 +595,7 @@ class AssetClassificationTest extends TestCase
         $second = AssetCategory::factory()->create(['asset_group_id' => $group->id]);
 
         $this->actingAs($this->user)
-            ->post(route('asset-classification.bulk-destroy'), [
+            ->post(route('tenant.asset-classification.bulk-destroy', ['tenant' => $this->tenant->code]), [
                 'level' => 'category',
                 'ids' => [$first->id, $second->id],
             ])
@@ -608,8 +608,8 @@ class AssetClassificationTest extends TestCase
     public function test_bulk_destroy_rejects_unknown_ids(): void
     {
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.bulk-destroy'), [
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.bulk-destroy', ['tenant' => $this->tenant->code]), [
                 'level' => 'group',
                 'ids' => ['00000000-0000-0000-0000-000000000000'],
             ])
@@ -625,7 +625,7 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['code' => null]);
 
         $this->actingAs($viewer)
-            ->post(route('asset-classification.bulk-destroy'), [
+            ->post(route('tenant.asset-classification.bulk-destroy', ['tenant' => $this->tenant->code]), [
                 'level' => 'group',
                 'ids' => [$group->id],
             ])
@@ -639,8 +639,8 @@ class AssetClassificationTest extends TestCase
         $file = UploadedFile::fake()->create('data.txt', 10, 'text/plain');
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.import'), ['file' => $file])
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['file' => $file])
             ->assertSessionHasErrors('file');
     }
 
@@ -658,8 +658,8 @@ class AssetClassificationTest extends TestCase
         $file = new UploadedFile($path, 'hierarki.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
 
         $this->actingAs($this->user)
-            ->from(route('asset-classification.index'))
-            ->post(route('asset-classification.import'), ['file' => $file])
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['file' => $file])
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -686,7 +686,7 @@ class AssetClassificationTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('groups.0.level', 'group')
@@ -704,7 +704,7 @@ class AssetClassificationTest extends TestCase
         // Pengguna tanpa peran super-admin ditolak sebelum seeder dijalankan.
         $plainUser = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->actingAs($plainUser)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
 
         $this->seed(RolePermissionSeeder::class);
@@ -714,7 +714,7 @@ class AssetClassificationTest extends TestCase
         $this->user->assignRole(Role::findByName('super-admin', 'web'));
 
         $this->actingAs($this->user)
-            ->get(route('asset-classification.index'))
+            ->get(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->assertOk();
     }
 }

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+﻿import { Link } from '@inertiajs/react';
 import {
     Building2,
     FileText,
@@ -13,15 +13,15 @@ import { withReturnTo } from '@/lib/asset-return';
 import { StatusBadge, TipeBadge } from '@/lib/asset-status';
 import { LEVEL_SHORT } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
-import { edit, show } from '@/routes/assets';
+import { edit, show } from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
 
 /**
- * Kartu aset — komponen tanda tangan sistem (DESIGN.md §7).
- * Hierarki baca: status → nama → kode (mono) → lokasi/departemen.
+ * Kartu aset â€” komponen tanda tangan sistem (DESIGN.md Â§7).
+ * Hierarki baca: status â†’ nama â†’ kode (mono) â†’ lokasi/departemen.
  * Chain klasifikasi scope-relative (ADR 0002): hanya level di bawah
- * scope, kode mono-first, wrap dua baris — truncation tidak pernah
+ * scope, kode mono-first, wrap dua baris â€” truncation tidak pernah
  * mengenai kode.
  */
 export function AssetCard({
@@ -74,13 +74,13 @@ export function AssetCard({
         <article
             aria-label={asset.kode_asset ?? 'Aset tanpa kode'}
             className={cn(
-                'group relative flex gap-3 rounded-xl border border-border bg-card p-3 transition-colors duration-150',
-                'hover:border-border-strong',
-                selected && 'bg-primary-muted/50 border-primary',
+                'group relative flex gap-3 rounded-lg border border-border-subtle bg-surface-card p-3 shadow-soft transition-[box-shadow,transform,border-color] duration-200',
+                'hover:shadow-elevated hover:-translate-y-[2px] hover:border-brand-subtle',
+                selected && 'bg-brand-subtle border-brand',
                 isDisposed && 'opacity-70 saturate-[0.6]',
             )}
         >
-            {/* Pilihan — target 44px, jelas di kedua tema */}
+            {/* Pilihan â€” target 44px, jelas di kedua tema */}
             <label className="flex shrink-0 cursor-pointer items-start pt-0.5">
                 <Checkbox
                     checked={selected}
@@ -90,12 +90,12 @@ export function AssetCard({
                 />
             </label>
 
-            {/* Thumbnail — identitas visual, bukan spanduk */}
+            {/* Thumbnail â€” identitas visual, bukan spanduk */}
             <Link
                 href={withReturnTo(show.url({ asset: asset.id }))}
                 aria-hidden={photoUrl ? undefined : true}
                 tabIndex={photoUrl ? undefined : -1}
-                className="block size-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-sunken"
+                className="block size-12 shrink-0 overflow-hidden rounded-lg border border-border-subtle bg-surface-sunken shadow-inset"
             >
                 {photoUrl ? (
                     <img
@@ -105,7 +105,7 @@ export function AssetCard({
                         className="size-full object-cover"
                     />
                 ) : (
-                    <span className="flex size-full items-center justify-center text-ink-subtle dark:text-muted-foreground">
+                    <span className="flex size-full items-center justify-center text-text-tertiary">
                         <Package
                             aria-hidden
                             className="size-5"
@@ -121,12 +121,12 @@ export function AssetCard({
                     <div className="min-w-0">
                         <Link
                             href={withReturnTo(show.url({ asset: asset.id }))}
-                            className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="block truncate text-sm font-semibold text-text-primary transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                         >
                             {asset.item?.name ?? 'Tanpa nama'}
                         </Link>
-                        <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                            {asset.kode_asset ?? '—'}
+                        <p className="mt-0.5 truncate font-mono text-xs text-text-tertiary">
+                            {asset.kode_asset ?? 'â€”'}
                         </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
@@ -135,15 +135,15 @@ export function AssetCard({
                     </div>
                 </div>
 
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {[asset.brand, asset.model].filter(Boolean).join(' · ')}
-                    {asset.serial_number && ` · SN ${asset.serial_number}`}
+                <p className="mt-0.5 truncate text-xs text-text-tertiary">
+                    {[asset.brand, asset.model].filter(Boolean).join(' Â· ')}
+                    {asset.serial_number && ` Â· SN ${asset.serial_number}`}
                 </p>
 
                 {chainParts.length > 0 && (
                     <p
                         aria-label="Klasifikasi"
-                        className="line-clamp-2 text-xs leading-relaxed break-words text-ink-subtle dark:text-muted-foreground/70"
+                        className="line-clamp-2 text-xs leading-relaxed break-words text-text-tertiary"
                     >
                         {chainParts.map((part) => (
                             <span
@@ -151,12 +151,12 @@ export function AssetCard({
                                 className="mr-2 inline-flex items-baseline gap-1"
                             >
                                 {part.code && (
-                                    <span className="font-mono font-semibold text-foreground/80">
+                                    <span className="font-mono font-semibold text-text-primary/80">
                                         {part.code}
                                     </span>
                                 )}
                                 <span>{part.name}</span>
-                                <span className="text-muted-foreground/50">
+                                <span className="text-text-tertiary/70">
                                     {part.label}
                                 </span>
                             </span>
@@ -165,11 +165,11 @@ export function AssetCard({
                 )}
 
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-                    <div className="flex min-w-0 flex-col gap-0.5 text-xs text-muted-foreground">
+                    <div className="flex min-w-0 flex-col gap-0.5 text-xs text-text-tertiary">
                         <span className="inline-flex min-w-0 items-center gap-1.5">
                             <MapPin aria-hidden className="size-3.5 shrink-0" />
                             <span className="truncate">
-                                {asset.location?.name ?? '—'}
+                                {asset.location?.name ?? 'â€”'}
                             </span>
                         </span>
                         <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -178,21 +178,21 @@ export function AssetCard({
                                 className="size-3.5 shrink-0"
                             />
                             <span className="truncate">
-                                {asset.department?.nama_department ?? '—'}
+                                {asset.department?.nama_department ?? 'â€”'}
                             </span>
                         </span>
                     </div>
 
-                    {/* Aksi selalu terlihat — target 44px */}
+                    {/* Aksi selalu terlihat â€” target 44px */}
                     <span className="flex shrink-0 items-center gap-0.5">
                         <Link
                             href={withReturnTo(show.url({ asset: asset.id }))}
                         >
                             <Button
-                                variant="ghost"
+                                variant="soft-secondary"
                                 size="icon"
                                 aria-label="Lihat detail"
-                                className="size-9 rounded-md hover:bg-muted"
+                                className="size-9 rounded-md hover:bg-surface-hover"
                             >
                                 <FileText className="size-4" />
                             </Button>
@@ -201,20 +201,20 @@ export function AssetCard({
                             href={withReturnTo(edit.url({ asset: asset.id }))}
                         >
                             <Button
-                                variant="ghost"
+                                variant="soft-secondary"
                                 size="icon"
                                 aria-label="Ubah aset"
-                                className="size-9 rounded-md hover:bg-muted"
+                                className="size-9 rounded-md hover:bg-surface-hover"
                             >
                                 <Pencil className="size-4" />
                             </Button>
                         </Link>
                         <Button
-                            variant="ghost"
+                            variant="soft-secondary"
                             size="icon"
                             aria-label="Hapus aset"
                             onClick={onDelete}
-                            className="size-9 rounded-md hover:bg-destructive/10"
+                            className="size-9 rounded-md hover:bg-surface-hover hover:text-destructive"
                         >
                             <Trash2 className="size-4 text-destructive" />
                         </Button>
@@ -224,3 +224,4 @@ export function AssetCard({
         </article>
     );
 }
+

@@ -18,14 +18,11 @@ use App\Observers\RecordsActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Testing\TestResponse;
 use Illuminate\Validation\Rules\Password;
@@ -113,7 +110,7 @@ class AppServiceProvider extends ServiceProvider
     protected function grantSuperAdmin(): void
     {
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('super-admin') ? true : null;
+            return $user?->isSuperAdmin() ? true : null;
         });
 
         Gate::define('super-admin.view', function ($user): bool {
@@ -128,12 +125,12 @@ class AppServiceProvider extends ServiceProvider
             return $user?->hasPermissionTo('super-admin.revoke') ?? false;
         });
 
-        Gate::define('tenant.switch', function ($user): bool {
-            return $user?->hasPermissionTo('tenant.switch') ?? false;
+        Gate::define('tenant.manage', function ($user): bool {
+            return $user?->hasPermissionTo('tenant.manage') ?? false;
         });
 
-        RateLimiter::for('tenant.switch', function (Request $request) {
-            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
+        Gate::define('tenant.switch', function ($user): bool {
+            return $user?->hasPermissionTo('tenant.switch') ?? false;
         });
     }
 

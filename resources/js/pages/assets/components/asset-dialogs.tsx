@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+﻿import { router } from '@inertiajs/react';
 import { Check, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -13,11 +13,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { destroy, destroyBulk, importMethod } from '@/routes/assets';
+import { destroy, destroyBulk, importMethod } from '@/routes/tenant/assets';
 import type { Asset } from './types';
 
 /**
- * Cap peringatan hapus — surat perintah kaca dengan kode pos
+ * Cap peringatan hapus â€” surat perintah kaca dengan kode pos
  * yang dibatalkan dari manifest. Alur hapus tidak berubah.
  */
 export function AssetDeleteDialog({
@@ -186,7 +186,7 @@ export function AssetImportDialog({
     const [itemId, setItemId] = useState('');
     const [importing, setImporting] = useState(false);
 
-    // `items` dimuat lazy (Inertia optional prop) — ambil saat dialog
+    // `items` dimuat lazy (Inertia optional prop) â€” ambil saat dialog
     // dibuka pertama kali lewat partial reload, bukan di setiap kunjungan.
     useEffect(() => {
         if (open && items.length === 0) {
@@ -302,10 +302,10 @@ export function AssetImportDialog({
                                 onChange={(e) => setItemId(e.target.value)}
                                 className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none"
                             >
-                                <option value="">— Pilih item —</option>
+                                <option value="">â€” Pilih item â€”</option>
                                 {items.map((i) => (
                                     <option key={i.id} value={i.id}>
-                                        {i.code} — {i.name}
+                                        {i.code} â€” {i.name}
                                     </option>
                                 ))}
                             </select>
@@ -346,3 +346,4 @@ export function AssetImportDialog({
         </div>
     );
 }
+

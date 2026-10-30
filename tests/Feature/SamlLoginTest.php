@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use OneLogin\Saml2\Auth as SamlAuth;
@@ -26,6 +28,14 @@ class SamlLoginTest extends TestCase
 
     public function test_saml_acs_provisions_user_and_logs_in(): void
     {
+        config(['auth.super_admin_email' => 'superadmin@appdutamall.com']);
+
+        $tenant = Tenant::create([
+            'id' => 'tenant-top',
+            'code' => 'top',
+            'name' => 'PT Tata Optima Property',
+        ]);
+
         $samlAuth = \Mockery::mock(SamlAuth::class);
         $samlAuth->shouldReceive('processResponse')->once()->with(null);
         $samlAuth->shouldReceive('getErrors')->andReturn([]);
@@ -33,6 +43,7 @@ class SamlLoginTest extends TestCase
         $samlAuth->shouldReceive('getAttributes')->andReturn([
             'email' => ['test@example.com'],
             'name' => ['Test User'],
+            'company' => ['PT Tata Optima Property'],
             'department' => ['Engineering'],
             'position' => ['Developer'],
         ]);
@@ -44,8 +55,9 @@ class SamlLoginTest extends TestCase
 
         $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
         $this->assertTrue(Auth::check());
-        $response->assertRedirect('/dashboard');
-        $response->assertSessionHas('success', 'Login berhasil melalui SAML.');
+        $user = User::where('email', 'test@example.com')->first();
+        $this->assertSame($tenant->id, $user->tenant_id);
+        $response->assertRedirect(route('tenant.dashboard', ['tenant' => $tenant->code]));
     }
 
     public function test_saml_acs_missing_email_redirects_to_error(): void

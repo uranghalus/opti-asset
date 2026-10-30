@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\LoginLanding;
+use App\Services\LoginProvisioningService;
+use App\Services\SamlTenantResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +16,7 @@ use OneLogin\Saml2\Auth as SamlAuth;
 use OneLogin\Saml2\AuthnRequest;
 use OneLogin\Saml2\Metadata as SamlMetadata;
 use OneLogin\Saml2\Settings as SamlSettings;
+use Spatie\Permission\PermissionRegistrar;
 
 class SamlController extends Controller
 {
@@ -23,6 +27,9 @@ class SamlController extends Controller
      */
     public function __construct(
         protected SamlAuth $samlAuth,
+        protected LoginProvisioningService $provisioning,
+        protected SamlTenantResolver $tenantResolver,
+        protected LoginLanding $landing,
     ) {}
 
     /**
@@ -129,12 +136,45 @@ class SamlController extends Controller
                 ]
             );
 
+            // Role bootstrap at SSO login: super-admin self-heal + guest role.
+            $this->provisioning->provision($user);
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+            // Resolve tenant from SAML assertion's company attribute.
+            $resolution = $this->tenantResolver->resolve($attributes);
+
+            if ($resolution->isDenied()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                Log::warning('SAML login denied: '.$resolution->denialReason, [
+                    'email' => $email,
+                    'reason' => $resolution->denialReason,
+                ]);
+
+                return redirect()
+                    ->route('saml.denied')
+                    ->with('saml.denial_reason', $resolution->denialReason)
+                    ->with('error', 'Login ditolak: '.$resolution->denialReason);
+            }
+
+            // Set home tenant on user and save.
+            $user->update([
+                'tenant_id' => $resolution->tenant->id,
+                'last_login_at' => now(),
+                'last_login_ip' => $request->ip(),
+            ]);
+
             Auth::login($user);
             $request->session()->regenerate();
 
-            Log::info('SAML login success: '.$email);
+            Log::info('SAML login success: '.$email, [
+                'tenant_id' => $resolution->tenant->id,
+                'tenant_code' => $resolution->tenant->code,
+            ]);
 
-            return redirect()->intended('/dashboard')->with('success', 'Login berhasil melalui SAML.');
+            return $this->landing->redirect($user);
         } catch (\Exception $e) {
             Log::error('SAML ACS Exception: '.$e->getMessage());
 

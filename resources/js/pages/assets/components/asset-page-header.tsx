@@ -1,4 +1,4 @@
-﻿import { Link } from '@inertiajs/react';
+﻿import { Link, usePage } from '@inertiajs/react';
 import { MoreHorizontal, Plus, ScanLine, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,6 +60,8 @@ export function AssetsPageHeader({
     onOpenImport: () => void;
 }) {
     const { can } = useCan();
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const canCreate = can('asset.create');
     const parents = breadcrumb.slice(0, -1);
     const scopeCode = scopeNode?.code ?? null;
@@ -139,15 +141,17 @@ export function AssetsPageHeader({
                         Indeks klasifikasi
                     </Button>
 
-                    <Link href={scan.url()}>
-                        <Button
-                            variant="outline"
-                            aria-label="Pindai barcode aset"
-                        >
-                            <ScanLine className="size-4 text-primary" />
-                            Pindai
-                        </Button>
-                    </Link>
+                    {tenantCode && (
+                        <Link href={scan.url({ tenant: tenantCode })}>
+                            <Button
+                                variant="outline"
+                                aria-label="Pindai barcode aset"
+                            >
+                                <ScanLine className="size-4 text-primary" />
+                                Pindai
+                            </Button>
+                        </Link>
+                    )}
 
                     {canCreate && (
                         <DropdownMenu>
@@ -166,12 +170,16 @@ export function AssetsPageHeader({
                             >
                                 <DropdownMenuLabel>Impor</DropdownMenuLabel>
                                 <DropdownMenuItem
-                                    onClick={() =>
+                                    disabled={!tenantCode}
+                                    onClick={() => {
+                                        if (!tenantCode) return;
                                         window.open(
-                                            importTemplate.url(),
+                                            importTemplate.url({
+                                                tenant: tenantCode,
+                                            }),
                                             '_blank',
-                                        )
-                                    }
+                                        );
+                                    }}
                                 >
                                     <UploadCloud className="size-4" />
                                     Unduh template
@@ -190,29 +198,34 @@ export function AssetsPageHeader({
                                 >
                                     <Link
                                         href={
-                                            selectedCount > 0
-                                                ? labels.url({
-                                                      query: {
-                                                          ids: selectedIds,
-                                                      },
-                                                  })
+                                            selectedCount > 0 && tenantCode
+                                                ? labels.url(
+                                                      { tenant: tenantCode },
+                                                      { query: { ids: selectedIds } },
+                                                  )
                                                 : '#'
                                         }
                                     >
                                         Cetak yang dipilih
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href={labelsBatch.url()}>
-                                        Cetak massal
-                                    </Link>
-                                </DropdownMenuItem>
+                                {tenantCode && (
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href={labelsBatch.url({
+                                                tenant: tenantCode,
+                                            })}
+                                        >
+                                            Cetak massal
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
 
-                    {canCreate && (
-                        <Link href={withReturnTo(create.url())}>
+                    {canCreate && tenantCode && (
+                        <Link href={withReturnTo(create.url({ tenant: tenantCode }))}>
                             <Button className="gap-2 px-4 font-semibold">
                                 <Plus className="size-4" />
                                 Tambah aset

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 export function SearchBar({ className }: { className?: string }) {
     return (
-        <div className={cn('ml-4 min-w-50 flex-1 md:min-w-62.5 lg:ml-6', className)}>
+        <div className={cn('ml-2 min-w-48 flex-1 max-w-[360px] lg:ml-6', className)}>
             <div
                 className={cn(
                     'group relative flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 transition-all duration-300',
@@ -26,6 +26,9 @@ export function SearchBar({ className }: { className?: string }) {
                 {/* Input Text Field */}
                 <input
                     type="text"
+                    name="search"
+                    id="search-aset"
+                    aria-label="Cari aset, kode, atau barcode"
                     placeholder="Cari aset, kode, atau barcode…"
                     className="w-full border-none bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                 />

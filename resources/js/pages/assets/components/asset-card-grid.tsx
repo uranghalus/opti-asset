@@ -1,8 +1,9 @@
-﻿import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Inbox, LayoutGrid, Plus, Table2, X } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { ResourcePagination } from '@/components/resource-pagination';
 import { Button } from '@/components/ui/button';
+import { useCan } from '@/hooks/use-can';
 import { withReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
 import { create } from '@/routes/tenant/assets';
@@ -51,6 +52,11 @@ export function AssetCardGrid({
     view: AssetListView;
     onViewChange: (view: AssetListView) => void;
 }) {
+    const { can } = useCan();
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
+    const canCreate = can('asset.create');
+
     if (assets.data.length === 0) {
         const filtered = canClearFilters || search.trim() !== '';
 
@@ -77,8 +83,12 @@ export function AssetCardGrid({
                                 <X className="mr-2 size-4" />
                                 Bersihkan filter
                             </Button>
-                        ) : (
-                            <Link href={withReturnTo(create.url())}>
+                        ) : canCreate && tenantCode ? (
+                            <Link
+                                href={withReturnTo(
+                                    create.url({ tenant: tenantCode }),
+                                )}
+                            >
                                 <Button size="sm" className="font-semibold">
                                     <Plus
                                         className="mr-2 size-4"
@@ -87,11 +97,15 @@ export function AssetCardGrid({
                                     Tambah aset
                                 </Button>
                             </Link>
-                        )
+                        ) : undefined
                     }
                     secondaryAction={
-                        filtered ? (
-                            <Link href={withReturnTo(create.url())}>
+                        filtered && canCreate && tenantCode ? (
+                            <Link
+                                href={withReturnTo(
+                                    create.url({ tenant: tenantCode }),
+                                )}
+                            >
                                 <Button variant="ghost" size="sm">
                                     <Plus className="mr-2 size-4" />
                                     Tambah aset

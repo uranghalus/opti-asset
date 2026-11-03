@@ -20,7 +20,7 @@ class SamlTenantResolverTest extends TestCase
             'code' => 'top',
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['PT Tata Optima Property'],
         ]);
@@ -39,7 +39,7 @@ class SamlTenantResolverTest extends TestCase
             'code' => 'top',
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['pt tata optima property'],
         ]);
@@ -55,7 +55,7 @@ class SamlTenantResolverTest extends TestCase
             'code' => 'top',
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['  PT Tata Optima Property  '],
         ]);
@@ -65,7 +65,7 @@ class SamlTenantResolverTest extends TestCase
 
     public function test_denies_when_no_company_data_in_assertion(): void
     {
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'email' => ['test@example.com'],
             'name' => ['Test User'],
@@ -84,7 +84,7 @@ class SamlTenantResolverTest extends TestCase
             'code' => 'top',
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['PT Lainnya'],
         ]);
@@ -106,7 +106,7 @@ class SamlTenantResolverTest extends TestCase
             'code' => 'top-2',
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['PT Tata Optima Property'],
         ]);
@@ -124,7 +124,7 @@ class SamlTenantResolverTest extends TestCase
             'is_active' => false,
         ]);
 
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $result = $resolver->resolve([
             'company' => ['PT Tata Optima Property'],
         ]);
@@ -135,7 +135,7 @@ class SamlTenantResolverTest extends TestCase
 
     public function test_can_access_any_tenant_for_super_admin(): void
     {
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $user = User::factory()->create(['is_super_admin' => true]);
 
         $this->assertTrue($resolver->canAccessAnyTenant($user));
@@ -143,7 +143,7 @@ class SamlTenantResolverTest extends TestCase
 
     public function test_cannot_access_any_tenant_for_non_super_admin(): void
     {
-        $resolver = new SamlTenantResolver();
+        $resolver = new SamlTenantResolver;
         $user = User::factory()->create(['is_super_admin' => false]);
 
         $this->assertFalse($resolver->canAccessAnyTenant($user));

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import {
     Save,
     X,
@@ -30,13 +30,22 @@ import type {
 } from '@/types/classification';
 import { LEVEL_LABELS } from '@/types/classification';
 
-type ItemRouteFn = (id: string) => { url: string; method: string };
+type ItemRouteFn = (
+    args: Record<string, string | number>,
+) => { url: string; method: string };
 
 const UPDATE: Record<ClassificationLevel, ItemRouteFn> = {
     group: updateGroup,
     category: updateCategory,
     cluster: updateCluster,
     'sub-cluster': updateSubCluster,
+};
+
+const ROUTE_PARAM: Record<ClassificationLevel, string> = {
+    group: 'group',
+    category: 'category',
+    cluster: 'cluster',
+    'sub-cluster': 'subCluster',
 };
 
 const CHILD_LABEL: Partial<Record<ClassificationLevel, string>> = {
@@ -73,6 +82,8 @@ export function ClassificationDetailPanel({
     onAddChild,
     onClose,
 }: DetailProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const tint = LEVEL_TINTS[level];
 
     const form = useForm<ClassificationFormValues>({
@@ -85,6 +96,7 @@ export function ClassificationDetailPanel({
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!tenantCode) return;
 
         // Moves happen via reorder only: the PATCH validators whitelist
         // code/name/description/notes, so a parent id must never be sent
@@ -96,7 +108,12 @@ export function ClassificationDetailPanel({
             ...(level === 'sub-cluster' ? { notes: data.notes || null } : {}),
         }));
 
-        form.patch(UPDATE[level](node.id).url, {
+        form.patch(
+            UPDATE[level]({
+                tenant: tenantCode,
+                [ROUTE_PARAM[level]]: node.id,
+            }).url,
+            {
             only: ['groups'],
             preserveState: true,
             preserveScroll: true,

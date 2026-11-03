@@ -8,6 +8,7 @@ use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
+use App\Models\Department;
 use App\Models\Item;
 use App\Models\Tenant;
 use App\Models\User;
@@ -16,6 +17,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AssetControllerGateTest extends TestCase
@@ -41,8 +43,29 @@ class AssetControllerGateTest extends TestCase
             Permission::findOrCreate($permission, 'web');
         }
 
+        Role::findOrCreate('staff-asset', 'web');
+
+        $this->department = Department::create([
+            'id_department' => 'dept-acme',
+            'tenant_id' => $this->tenant->id,
+            'kode_department' => 'ACME',
+            'nama_department' => 'Departemen Acme',
+        ]);
+
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.view', 'asset.create', 'asset.edit', 'asset.delete']);
+
+        // Set employee session dengan department_id (sumber kebenaran untuk dept filter).
+        session(['employee' => [
+            'id_employee' => 'emp-acme-001',
+            'nik_employee' => 'NIK-001',
+            'nama_employee' => 'Karyawan Acme',
+            'email' => $this->user->email,
+            'department_id' => $this->department->id_department,
+            'division_id' => null,
+            'id_position' => null,
+            'tenant_id' => $this->tenant->id,
+        ]]);
     }
 
     /** @return array{group, category, cluster, subCluster, categoryModel, Item} */
@@ -126,7 +149,7 @@ class AssetControllerGateTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('assets.labels', ['ids' => []]))
+            ->get(route('tenant.assets.labels', ['tenant' => $this->tenant->code, 'ids' => []]))
             ->assertForbidden();
     }
 
@@ -145,7 +168,7 @@ class AssetControllerGateTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
     }
 
@@ -155,7 +178,7 @@ class AssetControllerGateTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
     }
 
@@ -189,7 +212,10 @@ class AssetControllerGateTest extends TestCase
 
     public function test_scan_lookup_ok_with_asset_view(): void
     {
-        $asset = Asset::factory()->create(['kode_asset' => 'AST-GATE-001']);
+        $asset = Asset::factory()->create([
+            'kode_asset' => 'AST-GATE-001',
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
             ->getJson(route('tenant.assets.scan-lookup', array_merge(['tenant' => $this->tenant->code], ['code' => 'AST-GATE-001'])))
@@ -199,15 +225,20 @@ class AssetControllerGateTest extends TestCase
 
     public function test_labels_ok_with_asset_view(): void
     {
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->get(route('assets.labels', ['ids' => [$asset->id]]))
+            ->get(route('tenant.assets.labels', ['tenant' => $this->tenant->code, 'ids' => [$asset->id]]))
             ->assertOk();
     }
 
     public function test_labels_batch_ok_with_asset_view(): void
     {
+        // labels-batch hanya untuk role asset-staff (bypass dept).
+        $this->user->assignRole('staff-asset');
+
         $this->actingAs($this->user)
             ->get(route('tenant.assets.labels-batch', ['tenant' => $this->tenant->code]))
             ->assertOk();
@@ -215,19 +246,23 @@ class AssetControllerGateTest extends TestCase
 
     public function test_show_ok_with_asset_view(): void
     {
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk();
     }
 
     public function test_history_ok_with_asset_view(): void
     {
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk();
     }
 
@@ -358,10 +393,12 @@ class AssetControllerGateTest extends TestCase
     {
         $this->user->revokePermissionTo('asset.edit');
 
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
     }
 
@@ -369,10 +406,12 @@ class AssetControllerGateTest extends TestCase
     {
         $this->user->revokePermissionTo('asset.edit');
 
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Tidak Boleh'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Tidak Boleh'])
             ->assertForbidden();
 
         $this->assertSame($asset->refresh()->brand, $asset->brand);
@@ -380,19 +419,24 @@ class AssetControllerGateTest extends TestCase
 
     public function test_edit_ok_with_asset_edit(): void
     {
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk();
     }
 
     public function test_update_ok_with_asset_edit(): void
     {
-        $asset = Asset::factory()->create(['brand' => 'Brand Awal']);
+        $asset = Asset::factory()->create([
+            'brand' => 'Brand Awal',
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Brand Baru'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Brand Baru'])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('Brand Baru', $asset->refresh()->brand);
@@ -404,10 +448,12 @@ class AssetControllerGateTest extends TestCase
     {
         $this->user->revokePermissionTo('asset.delete');
 
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
@@ -428,10 +474,12 @@ class AssetControllerGateTest extends TestCase
 
     public function test_destroy_ok_with_asset_delete(): void
     {
-        $asset = Asset::factory()->create();
+        $asset = Asset::factory()->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
@@ -439,7 +487,9 @@ class AssetControllerGateTest extends TestCase
 
     public function test_destroy_bulk_ok_with_asset_delete(): void
     {
-        $targets = Asset::factory()->count(3)->create();
+        $targets = Asset::factory()->count(3)->create([
+            'department_id' => $this->department->id_department,
+        ]);
 
         $this->actingAs($this->user)
             ->delete(route('tenant.assets.destroy-bulk', ['tenant' => $this->tenant->code]), ['ids' => $targets->pluck('id')->all()])

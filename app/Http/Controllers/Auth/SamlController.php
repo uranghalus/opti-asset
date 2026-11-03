@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\EmployeeSessionResolver;
 use App\Services\LoginLanding;
 use App\Services\LoginProvisioningService;
 use App\Services\SamlTenantResolver;
@@ -30,6 +31,7 @@ class SamlController extends Controller
         protected LoginProvisioningService $provisioning,
         protected SamlTenantResolver $tenantResolver,
         protected LoginLanding $landing,
+        protected EmployeeSessionResolver $employeeSessionResolver,
     ) {}
 
     /**
@@ -165,6 +167,12 @@ class SamlController extends Controller
                 'last_login_at' => now(),
                 'last_login_ip' => $request->ip(),
             ]);
+
+            // Store resolved tenant in session for LoginLanding redirect target
+            $request->session()->put('saml.tenant', $resolution->tenant->id);
+
+            // Resolve and persist employee data (department/division/position) in session
+            $this->employeeSessionResolver->resolve($user);
 
             Auth::login($user);
             $request->session()->regenerate();

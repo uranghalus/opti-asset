@@ -3,8 +3,8 @@
 namespace Tests\Feature\Services;
 
 use App\Models\Tenant;
-use App\Services\SamlTenantResolver;
 use App\Services\SamlTenantResolution;
+use App\Services\SamlTenantResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

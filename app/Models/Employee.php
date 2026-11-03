@@ -35,6 +35,7 @@ class Employee extends Model
         'number',
         'photo_url',
         'id_department',
+        'division_id',
         'id_position',
         'last_login_ip',
     ];
@@ -43,5 +44,17 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'id_department', 'id_department');
+    }
+
+    /** @return BelongsTo<Division, $this> */
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class, 'division_id', 'id_division');
+    }
+
+    /** @return BelongsTo<Position, $this> */
+    public function position(): BelongsTo
+    {
+        return $this->belongsTo(Position::class, 'id_position', 'id_position');
     }
 }

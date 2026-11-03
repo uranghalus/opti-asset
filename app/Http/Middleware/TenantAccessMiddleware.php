@@ -13,7 +13,7 @@ use Spatie\Multitenancy\Actions\MakeTenantCurrentAction;
  *
  * Resolves the tenant by route `tenant` code slug, makes it current for the
  * request (Spatie multitenancy), and verifies the user can operate on it
- * (IDOR prevention — D5).
+ * (IDOR prevention â€” D5).
  */
 class TenantAccessMiddleware
 {

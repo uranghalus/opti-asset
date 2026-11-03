@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\LoginProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class LoginProvisioningServiceTest extends TestCase
@@ -40,7 +41,7 @@ class LoginProvisioningServiceTest extends TestCase
 
     public function test_provision_does_not_add_guest_role_if_user_already_has_roles(): void
     {
-        \Spatie\Permission\Models\Role::firstOrCreate([
+        Role::firstOrCreate([
             'name' => 'karyawan',
             'guard_name' => 'web',
         ]);

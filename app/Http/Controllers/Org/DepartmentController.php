@@ -47,17 +47,9 @@ class DepartmentController extends Controller
     /**
      * Display the specified department.
      */
-    public function show(Request $request, string $department): Response
+    public function show(Request $request, string $tenant, string $department): Response
     {
         Gate::authorize('department.view');
-
-        \Log::debug('Dept show debug6', [
-            'dept_id_param' => $department,
-            'tenant_current' => Tenant::current()?->id,
-            'tenant_current_code' => Tenant::current()?->code,
-            'all_depts' => Department::pluck('id_department', 'tenant_id')->toArray(),
-            'dept_by_param' => Department::where('id_department', $department)->first()?->id_department,
-        ]);
 
         $department = Department::where('id_department', $department)
             ->where('tenant_id', Tenant::current()?->id)

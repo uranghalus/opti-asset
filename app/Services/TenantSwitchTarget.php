@@ -115,7 +115,7 @@ class TenantSwitchTarget
     private function dashboard(Tenant $tenant, bool $fellBack): array
     {
         return [
-            'path' => route('dashboard', ['tenant' => $tenant->code], absolute: false),
+            'path' => route('tenant.dashboard', ['tenant' => $tenant->code], absolute: false),
             'fell_back' => $fellBack,
         ];
     }

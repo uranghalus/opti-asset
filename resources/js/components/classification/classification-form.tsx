@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -31,10 +31,11 @@ import type {
 } from '@/types/classification';
 import { LEVEL_LABELS, TIPE_LABELS } from '@/types/classification';
 
-type RouteFn = (id: string) => { url: string; method: string };
-type StoreRouteFn = () => { url: string; method: string };
+type RouteFn = (
+    args: Record<string, string | number>,
+) => { url: string; method: string };
 
-const STORE: Record<ClassificationLevel, StoreRouteFn> = {
+const STORE: Record<ClassificationLevel, RouteFn> = {
     group: storeGroup,
     category: storeCategory,
     cluster: storeCluster,
@@ -46,6 +47,13 @@ const UPDATE: Record<ClassificationLevel, RouteFn> = {
     category: updateCategory,
     cluster: updateCluster,
     'sub-cluster': updateSubCluster,
+};
+
+const ROUTE_PARAM: Record<ClassificationLevel, string> = {
+    group: 'group',
+    category: 'category',
+    cluster: 'cluster',
+    'sub-cluster': 'subCluster',
 };
 
 const PARENT_FIELD: Partial<Record<ClassificationLevel, string>> = {
@@ -73,6 +81,8 @@ export function ClassificationForm({
     item,
     onClose,
 }: FormProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const isEditing = item !== null;
     const parentField = PARENT_FIELD[level];
 
@@ -87,6 +97,7 @@ export function ClassificationForm({
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!tenantCode) return;
 
         const options = {
             only: ['groups'],
@@ -123,9 +134,15 @@ export function ClassificationForm({
         }));
 
         if (isEditing) {
-            form.patch(UPDATE[level](item.id).url, options);
+            form.patch(
+                UPDATE[level]({
+                    tenant: tenantCode,
+                    [ROUTE_PARAM[level]]: item.id,
+                }).url,
+                options,
+            );
         } else {
-            form.post(STORE[level]().url, options);
+            form.post(STORE[level]({ tenant: tenantCode }).url, options);
         }
     };
 

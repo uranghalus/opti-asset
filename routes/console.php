@@ -9,3 +9,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:run-depreciation')->monthlyOn(1, '02:00')->withoutOverlapping();
+
+// Companies change rarely; a nightly reconciliation keeps tenant data aligned
+// with the Optigate portal without hammering the API.
+Schedule::command('app:sync-tenants')->dailyAt('01:00')->withoutOverlapping();
+
+// Sinkronisasi data organisasi per tenant (divisions, positions, employees,
+// lalu resolusi HOD) setelah daftar tenant disinkronkan.
+Schedule::command('app:sync-tenant-data')->dailyAt('02:00')->withoutOverlapping();

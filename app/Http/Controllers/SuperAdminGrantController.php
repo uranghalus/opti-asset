@@ -56,7 +56,7 @@ class SuperAdminGrantController extends Controller
         Gate::authorize('super-admin.grant');
 
         $userId = $request->validated('user_id');
-        $user = User::find($userId);
+        $user = User::findOrFail($userId);
 
         // Pelindung tambahan di sisi kontroler (selain FormRequest).
         if ($user->id === auth()->id()) {
@@ -100,7 +100,7 @@ class SuperAdminGrantController extends Controller
         Gate::authorize('super-admin.revoke');
 
         $userId = $request->validated('user_id');
-        $user = User::find($userId);
+        $user = User::findOrFail($userId);
 
         if ($user->id === auth()->id()) {
             return back()->withErrors([

@@ -21,17 +21,22 @@ use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Location;
 use App\Models\Tenant;
+use App\Services\EmployeeSessionResolver;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use LogicException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * @phpstan-type BrowseNode array{id: string, code: string|null, name: string, description: string|null, notes?: string|null, child_count: int, asset_count: int, level: string, children: array<int, mixed>}
@@ -48,6 +53,92 @@ class AssetController extends Controller
      * at the requested level, so grouped browsing never hides rows.
      */
     public const UNCLASSIFIED_NODE = 'unclassified';
+
+    /**
+     * Roles yang boleh melewati filter department (bypass).
+     * Sesuai ketentuan hanya staff asset, super-admin, dan admin-ho
+     * (`administrator` adalah padanan admin-ho di database).
+     *
+     * @var array<int, string>
+     */
+    private const DEPT_BYPASS_ROLES = [
+        'super-admin',
+        'super_admin',
+        'staff-asset',
+        'staff_asset',
+        'Asset Staff',
+        'administrator',
+    ];
+
+    /**
+     * Ambil department_id karyawan dari session 'employee'.
+     * Jika session kosong/null, user tidak boleh melihat aset apa pun.
+     */
+    private function getEmployeeDepartmentId(): ?string
+    {
+        $employee = session(EmployeeSessionResolver::SESSION_KEY);
+
+        if (! is_array($employee) || ! isset($employee['department_id'])) {
+            return null;
+        }
+
+        return (string) $employee['department_id'];
+    }
+
+    /**
+     * Cek apakah user login memiliki role yang boleh melewati filter department.
+     */
+    private function hasDepartmentBypass(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(self::DEPT_BYPASS_ROLES);
+    }
+
+    /**
+     * Terapkan filter department_id pada query Asset kecuali role bypass.
+     * Data aset tidak boleh bocor antar department (kecuali role pengecualian).
+     *
+     * @param  Builder<Asset>  $query
+     */
+    private function applyDepartmentFilter(Builder $query): void
+    {
+        if ($this->hasDepartmentBypass()) {
+            return;
+        }
+
+        $deptId = $this->getEmployeeDepartmentId();
+
+        if ($deptId === null) {
+            // Tanpa employee session ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ tidak ada aset yang terlihat (fail-closed).
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where('department_id', $deptId);
+    }
+
+    /**
+     * Pastikan aset milik department yang sama dengan employee login.
+     * Abort 403 jika aset berada di department lain.
+     */
+    private function enforceDepartmentOwnership(Asset $asset): void
+    {
+        if ($this->hasDepartmentBypass()) {
+            return;
+        }
+
+        $deptId = $this->getEmployeeDepartmentId();
+
+        if ($deptId === null || $asset->department_id !== $deptId) {
+            abort(SymfonyResponse::HTTP_FORBIDDEN, 'Aset tidak ada di department Anda.');
+        }
+    }
 
     public function index(Request $request): Response|JsonResponse
     {
@@ -90,7 +181,7 @@ class AssetController extends Controller
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
         $assetType = $request->string('asset_type')->trim()->toString();
-        // 'all' dikirim oleh kontrol filter lama — treat sebagai tanpa filter,
+        // 'all' dikirim oleh kontrol filter lama ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â treat sebagai tanpa filter,
         // bukan nilai kolom (pernah menolkan seluruh hasil).
         $assetType = in_array($assetType, ['fixed_asset', 'equipment'], true) ? $assetType : '';
         $department = $request->string('department')->trim()->toString();
@@ -115,6 +206,10 @@ class AssetController extends Controller
                 'assetSubCluster:id,code,name',
             ]);
 
+        // R6 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â enforcÃƒÂÃ‚Âµ department: aset diluar department login disembunyikan.
+        // Role pengecualian (staff-asset, super-admin, administrator/admin-ho) lihat semua.
+        $this->applyDepartmentFilter($assetsQuery);
+
         if ($validLevel) {
             $breadcrumb = $unclassified
                 ? [['id' => self::UNCLASSIFIED_NODE, 'level' => $level, 'code' => null, 'name' => 'Tanpa Klasifikasi']]
@@ -125,16 +220,20 @@ class AssetController extends Controller
                 'category' => 'asset_category_id',
                 'cluster' => 'asset_cluster_id',
                 'sub-cluster' => 'asset_sub_cluster_id',
+                default => throw new LogicException("Unsupported browse level: {$level}"),
             };
 
             if ($unclassified) {
                 $assetsQuery->whereNull($field);
             } else {
-                $directCount = Asset::query()->where($field, $nodeId)->count();
+                $directCount = Asset::query()
+                    ->where($field, $nodeId)
+                    ->tap(fn (Builder $query) => $this->applyDepartmentFilter($query))
+                    ->count();
 
                 if ($directCount === 0) {
                     // Fallback turunan: node tanpa aset langsung tidak boleh
-                    // menjadi dead-end — tampilkan semua aset di bawahnya.
+                    // menjadi dead-end ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tampilkan semua aset di bawahnya.
                     $descendantIds = $this->descendantScopeIds($level, $nodeId);
                     $assetsQuery->where(function ($query) use ($field, $nodeId, $descendantIds): void {
                         $query->where($field, $nodeId);
@@ -156,13 +255,13 @@ class AssetController extends Controller
                 ->orWhere('serial_number', 'like', "%{$search}%")
                 ->orWhere('brand', 'like', "%{$search}%")
                 ->orWhere('model', 'like', "%{$search}%")
-                // FR-04.1 — pencarian juga mencocokkan nama item.
+                // FR-04.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pencarian juga mencocokkan nama item.
                 ->orWhereHas('item', fn ($item) => $item->where('name', 'like', "%{$search}%"))))
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($assetType !== '', fn ($query) => $query->where('asset_type', $assetType))
             ->when($department !== '', fn ($query) => $query->where('department_id', $department))
             ->when($condition !== '', fn ($query) => $query->where('condition', $condition))
-            // FR-04.2 — filter lokasi pada halaman daftar aset.
+            // FR-04.2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â filter lokasi pada halaman daftar aset.
             ->when($location !== '', fn ($query) => $query->where('location_id', $location))
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)
@@ -176,10 +275,11 @@ class AssetController extends Controller
             'descendantFallback' => $descendantFallback,
             'unclassifiedCount' => Asset::query()
                 ->whereNull($this->unclassifiedColumnForRoot($initialLevel))
+                ->tap(fn (Builder $query) => $this->applyDepartmentFilter($query))
                 ->count(),
             'groups' => AssetGroup::query()->orderBy('sort_order')->get(['id', 'code', 'name']),
             'categories' => AssetCategory::query()->orderBy('sort_order')->get(['id', 'code', 'name', 'asset_group_id']),
-            // Daftar item hanya dibutuhkan dialog impor — partial reload
+            // Daftar item hanya dibutuhkan dialog impor ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â partial reload
             // tidak memintanya, jadi muat optional untuk memangkas payload browse.
             'items' => Inertia::optional(fn () => Item::query()->with('category:id,code')->orderBy('name')->get(['id', 'code', 'name', 'category_id'])),
             'locations' => Location::query()->orderBy('name')->get(['id', 'name']),
@@ -226,15 +326,15 @@ class AssetController extends Controller
         $user = request()->user();
         if ($user !== null && $user->hasAnyRole(['Asset Staff', 'Accounting', 'staff-asset', 'akunting'])) {
             return AssetCategory::query()
-                ->withCount('assets')
+                ->withCount(['assets' => fn (Builder $query) => $this->applyDepartmentFilter($query)])
                 ->with([
                     'clusters' => fn ($query) => $query
-                        ->withCount('assets')
+                        ->withCount(['assets' => fn (Builder $query) => $this->applyDepartmentFilter($query)])
                         ->orderBy('sort_order')
                         ->orderBy('code')
                         ->with([
                             'subClusters' => fn ($query) => $query
-                                ->withCount('assets')
+                                ->withCount(['assets' => fn (Builder $query) => $this->applyDepartmentFilter($query)])
                                 ->orderBy('sort_order')
                                 ->orderBy('code'),
                         ]),
@@ -248,10 +348,10 @@ class AssetController extends Controller
         }
 
         return AssetCluster::query()
-            ->withCount('assets')
+            ->withCount(['assets' => fn (Builder $query) => $this->applyDepartmentFilter($query)])
             ->with([
                 'subClusters' => fn ($query) => $query
-                    ->withCount('assets')
+                    ->withCount(['assets' => fn (Builder $query) => $this->applyDepartmentFilter($query)])
                     ->orderBy('sort_order')
                     ->orderBy('code'),
             ])
@@ -261,21 +361,6 @@ class AssetController extends Controller
             ->map(fn (AssetCluster $cluster) => $this->serializeBrowseCluster($cluster))
             ->values()
             ->all();
-    }
-
-    /** @return BrowseNode */
-    private function serializeBrowseGroup(AssetGroup $group): array
-    {
-        return [
-            'id' => $group->id,
-            'code' => $group->code,
-            'name' => $group->name,
-            'description' => $group->description,
-            'child_count' => $group->categories_count,
-            'asset_count' => $group->assets_count,
-            'level' => 'group',
-            'children' => $group->categories->map(fn (AssetCategory $category) => $this->serializeBrowseCategory($category))->all(),
-        ];
     }
 
     /** @return BrowseNode */
@@ -342,7 +427,7 @@ class AssetController extends Controller
 
     /**
      * Kolom "Tanpa Klasifikasi" mengikuti akar pohon peran: staf melihat
-     * pohon kategori, role lain pohon cluster — hitungan orphan harus
+     * pohon kategori, role lain pohon cluster ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â hitungan orphan harus
      * cocok dengan simpul yang benar-benar dirender.
      */
     private function unclassifiedColumnForRoot(string $initialLevel): string
@@ -445,7 +530,18 @@ class AssetController extends Controller
         Gate::authorize('asset.view');
 
         $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'string']]);
-        $assets = Asset::query()->whereKey($validated['ids'])->with($this->labelRelations())->orderBy('kode_asset')->get();
+
+        // R4 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cek ownership department: hanya aset di department login
+        // yang boleh dicetak label (kecuali role bypass).
+        $query = Asset::query()->whereKey($validated['ids']);
+        $this->applyDepartmentFilter($query);
+
+        $assets = $query->with($this->labelRelations())->orderBy('kode_asset')->get();
+
+        // Jika user tanpa bypass dan none of requested ids visible ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 403.
+        if (! $this->hasDepartmentBypass() && $assets->isEmpty()) {
+            abort(SymfonyResponse::HTTP_FORBIDDEN, 'Aset yang diminta tidak ada di department Anda.');
+        }
 
         return Inertia::render('assets/Labels', ['assets' => $assets]);
     }
@@ -454,7 +550,19 @@ class AssetController extends Controller
     {
         Gate::authorize('asset.view');
 
-        $assets = Asset::query()->with($this->labelRelations())->orderBy('kode_asset')->get();
+        // R1 / A6 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â batch print hanya untuk role asset-staff.
+        // Non-asset-staff: 403 (tombol disembunyikan di UI, URL langsung juga 403).
+        if (! Auth::user()?->hasAnyRole(self::DEPT_BYPASS_ROLES)) {
+            abort(SymfonyResponse::HTTP_FORBIDDEN, 'Hanya asset-staff yang boleh mencetak batch barcode.');
+        }
+
+        $query = Asset::query()->with($this->labelRelations())->orderBy('kode_asset');
+
+        // R1 / A2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â filter department + tenant (tenant via global scope BelongsToTenant).
+        // Role bypass (staff-asset, super-admin, administrator/admin-ho) lihat semua department.
+        $this->applyDepartmentFilter($query);
+
+        $assets = $query->get();
 
         return Inertia::render('assets/LabelsBatch', ['assets' => $assets]);
     }
@@ -471,7 +579,12 @@ class AssetController extends Controller
         Gate::authorize('asset.view');
 
         $validated = $request->validate(['code' => ['required', 'string', 'max:100']]);
-        $asset = Asset::query()->where('kode_asset', $validated['code'])->with(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name'])->first();
+        $query = Asset::query()->where('kode_asset', $validated['code'])->with(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name']);
+
+        // R5 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â scan lookup cek department: aset di luar department login tidak ditemukan.
+        $this->applyDepartmentFilter($query);
+
+        $asset = $query->first();
         if ($asset === null) {
             return response()->json(['message' => 'Aset tidak ditemukan.'], 404);
         }
@@ -486,9 +599,17 @@ class AssetController extends Controller
         return Inertia::render('assets/Create', $this->formProps());
     }
 
-    public function show(Asset $asset): Response
+    public function show(string $tenant, string $asset): Response
     {
         Gate::authorize('asset.view');
+
+        $asset = Asset::withoutGlobalScopes()->find($asset);
+        if (! $asset) {
+            abort(404);
+        }
+
+        // R4 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cek ownership department untuk tampilan detail aset.
+        $this->enforceDepartmentOwnership($asset);
 
         $asset->load([
             'item:id,name,code',
@@ -505,10 +626,14 @@ class AssetController extends Controller
         return Inertia::render('assets/Show', ['asset' => $asset]);
     }
 
-    public function edit(Asset $asset): Response
+    public function edit(string $tenant, string $asset): Response
     {
         Gate::authorize('asset.edit');
 
+        $asset = Asset::find($asset);
+        if (! $asset) {
+            abort(404);
+        }
         $asset->load(['item:id,name,code', 'location:id,name', 'department:id_department,nama_department', 'assetGroup:id,code,name', 'assetCategory:id,code,name', 'assetCluster:id,code,name', 'assetSubCluster:id,code,name']);
 
         return Inertia::render('assets/Edit', [...$this->formProps($asset->id), 'asset' => $asset]);
@@ -530,11 +655,19 @@ class AssetController extends Controller
         ]));
     }
 
-    public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
+    public function update(string $tenant, UpdateAssetRequest $request, string $asset): RedirectResponse
     {
         Gate::authorize('asset.edit');
 
-        // FR-07.6 — aset terhapus tidak boleh diubah (kecuali statusnya sendiri).
+        $asset = Asset::find($asset);
+        if (! $asset) {
+            abort(404);
+        }
+
+        // R7 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cek department ownership sebelum memperbarui aset.
+        $this->enforceDepartmentOwnership($asset);
+
+        // FR-07.6 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â aset terhapus tidak boleh diubah (kecuali statusnya sendiri).
         if ($asset->status === AssetStatus::DISPOSED) {
             Inertia::flash('toast', [
                 'type' => 'error',
@@ -559,7 +692,7 @@ class AssetController extends Controller
             $data['asset_sub_cluster_id'] = $chain['asset_sub_cluster_id'];
         }
 
-        // FR-13.9 — riwayat dicatat sebelum mutasi override agar nilai lama terbaca.
+        // FR-13.9 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â riwayat dicatat sebelum mutasi override agar nilai lama terbaca.
         $this->recordHistory->fromUpdate($asset, $validated, $data['kode_asset'] ?? null, $request->user());
 
         // Handle Manual Override
@@ -602,11 +735,19 @@ class AssetController extends Controller
         return ['kode_asset' => null, 'asset_group_id' => null, 'asset_category_id' => null, 'asset_cluster_id' => null, 'asset_sub_cluster_id' => null];
     }
 
-    public function destroy(Asset $asset): RedirectResponse
+    public function destroy(string $tenant, string $asset): RedirectResponse
     {
         Gate::authorize('asset.delete');
 
-        // FR-07.6 — aset yang telah dihapus tidak boleh dihapus dari sistem;
+        $asset = Asset::find($asset);
+        if (! $asset) {
+            abort(404);
+        }
+
+        // R3 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cek department ownership sebelum menghapus aset.
+        $this->enforceDepartmentOwnership($asset);
+
+        // FR-07.6 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â aset yang telah dihapus tidak boleh dihapus dari sistem;
         // catatan pertahankan untuk keperluan audit.
         if ($asset->status === AssetStatus::DISPOSED) {
             Inertia::flash('toast', [
@@ -629,8 +770,14 @@ class AssetController extends Controller
     {
         Gate::authorize('asset.delete');
 
+        // R2 / A5 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â validasi department_id: hanya aset di department login
+        // yang boleh dihapus bulk (kecuali role bypass).
+        $query = Asset::query()->whereKey($request->input('ids', []));
+        $this->applyDepartmentFilter($query);
+
         $validated = $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['required', 'uuid', Rule::exists('assets', 'id')->where('tenant_id', Tenant::current()?->id)]]);
-        $assets = Asset::query()->whereKey($validated['ids'])->get();
+
+        $assets = $query->get();
         foreach ($assets as $asset) {
             $asset->delete();
         }

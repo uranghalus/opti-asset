@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -41,6 +42,10 @@ class DisposedAssetGuardTest extends TestCase
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.edit', 'asset.delete', 'asset.transfer.create']);
+
+        // Bypass department scoping (R6/A5): uji ini hanya tentang guard status DSP.
+        Role::findOrCreate('staff-asset', 'web');
+        $this->user->assignRole('staff-asset');
     }
 
     private function activeAsset(array $attributes = []): Asset
@@ -65,8 +70,8 @@ class DisposedAssetGuardTest extends TestCase
         $originalBrand = $asset->brand;
 
         $this->actingAs($this->user)
-            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Diubah Paksa'])
+            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Diubah Paksa'])
             ->assertRedirect()
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
@@ -79,7 +84,7 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->activeAsset(['brand' => 'Brand Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Brand Baru'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Brand Baru'])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('Brand Baru', $asset->refresh()->brand);
@@ -92,8 +97,8 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->disposedAsset();
 
         $this->actingAs($this->user)
-            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->from(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertRedirect()
             ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
@@ -105,7 +110,7 @@ class DisposedAssetGuardTest extends TestCase
         $asset = $this->activeAsset();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);

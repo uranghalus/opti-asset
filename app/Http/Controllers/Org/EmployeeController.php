@@ -58,8 +58,13 @@ class EmployeeController extends Controller
     /**
      * Display the specified employee.
      */
-    public function show(Employee $employee): Response
+    public function show(string $tenant, string $employee): Response
     {
+        $employee = Employee::find($employee);
+        if (! $employee) {
+            abort(404);
+        }
+
         return Inertia::render('Employees/Show', [
             'employee' => $employee->load('department', 'roles'),
             'roles' => Role::query()
@@ -72,9 +77,14 @@ class EmployeeController extends Controller
     /**
      * Sync the roles assigned to the specified employee.
      */
-    public function assignRoles(AssignEmployeeRolesRequest $request, Employee $employee): RedirectResponse
+    public function assignRoles(string $tenant, AssignEmployeeRolesRequest $request, string $employee): RedirectResponse
     {
         Gate::authorize('employee.edit');
+
+        $employee = Employee::find($employee);
+        if (! $employee) {
+            abort(404);
+        }
 
         $employee->syncRoles($request->validated('roles'));
 

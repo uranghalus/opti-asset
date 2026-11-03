@@ -40,6 +40,12 @@ class Department extends Model
         return $this->hasMany(Employee::class, 'id_department', 'id_department');
     }
 
+    /** @return HasMany<Division, $this> */
+    public function divisions(): HasMany
+    {
+        return $this->hasMany(Division::class, 'department_id', 'id_department');
+    }
+
     /** @return BelongsTo<Employee, $this> */
     public function hod(): BelongsTo
     {

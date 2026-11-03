@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AssetsShowBookValueHistoryTest extends TestCase
@@ -34,6 +35,10 @@ class AssetsShowBookValueHistoryTest extends TestCase
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.view']);
+
+        // Bypass department scoping (R6/A5): uji ini tentang nilai buku di show.
+        Role::findOrCreate('staff-asset', 'web');
+        $this->user->assignRole('staff-asset');
     }
 
     public function test_show_renders_book_values_when_present(): void
@@ -55,7 +60,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -70,7 +75,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -88,7 +93,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -107,7 +112,7 @@ class AssetsShowBookValueHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')

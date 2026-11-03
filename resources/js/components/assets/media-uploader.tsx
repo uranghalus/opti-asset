@@ -7,7 +7,8 @@
     Trash2,
     UploadCloud,
 } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useEffect, useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -108,6 +109,8 @@ export function MediaUploader({
     maxFiles = 10,
     onBusyChange,
 }: MediaUploaderProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const valueRef = useRef(value);
@@ -149,8 +152,12 @@ export function MediaUploader({
                     compressedSize: toUpload.size,
                 });
 
+                if (!tenantCode) {
+                    throw new Error('Tenant tidak aktif.');
+                }
+
                 const { url } = await uploadFile(
-                    uploadRoute().url,
+                    uploadRoute({ tenant: tenantCode }).url,
                     toUpload,
                     (ratio) => updateItem(item.id, { progress: ratio }),
                 );

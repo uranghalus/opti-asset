@@ -34,13 +34,14 @@ class User extends Authenticatable implements PasskeyUser
 
     /**
      * The single source of truth for the super-admin bypass: the platform
-     * flag or the Spatie `super-admin` role. Gate::before delegates here;
-     * nothing else should re-implement the two-source check.
+     * flag or the Spatie `super-admin` role (both spellings exist in the
+     * `roles` table — hyphenated and underscored). Gate::before delegates
+     * here; nothing else should re-implement this check.
      *
      * @see https://spatie.be/docs/laravel-permission/v8/basic-usage/super-admin
      */
     public function isSuperAdmin(): bool
     {
-        return $this->is_super_admin || $this->hasRole('super-admin');
+        return $this->is_super_admin || $this->hasRole('super-admin') || $this->hasRole('super_admin');
     }
 }

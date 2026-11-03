@@ -84,7 +84,7 @@ class TenantSwitchController extends Controller
             abort(403, 'Anda tidak memiliki akses ke tenant ini.');
         }
 
-        $targetPath = $request->query('to', route('dashboard', ['tenant' => $tenantCode]));
+        $targetPath = $request->query('to', route('tenant.dashboard', ['tenant' => $tenantCode]));
 
         $this->makeTenantCurrentAction->execute($tenant);
 

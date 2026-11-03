@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -54,6 +55,11 @@ class AssetTest extends TestCase
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.view', 'asset.create', 'asset.edit', 'asset.delete']);
+
+        // Staff asset adalah role bypass department scoping (R6/A5): uji di sini
+        // bersifat gate-style (lihat semua aset), bukan uji scoping department.
+        Role::findOrCreate('staff-asset', 'web');
+        $this->user->assignRole('staff-asset');
     }
 
     // ---------- FR-11.3: otorisasi berbasis peran ----------
@@ -99,7 +105,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
     }
 
@@ -110,7 +116,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Tidak Boleh'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Tidak Boleh'])
             ->assertForbidden();
 
         $this->assertSame($asset->refresh()->brand, $asset->brand);
@@ -123,7 +129,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
@@ -144,7 +150,7 @@ class AssetTest extends TestCase
         $this->user->revokePermissionTo('asset.view');
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.history', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertForbidden();
     }
 
@@ -159,25 +165,27 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), ['brand' => 'Brand Baru'])
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), ['brand' => 'Brand Baru'])
             ->assertRedirect();
 
         $this->assertSame('Brand Asli', $asset->refresh()->brand);
     }
 
-    public function test_disposed_asset_still_viewable_and_deletable(): void
+    public function test_disposed_asset_still_viewable_but_not_deletable(): void
     {
         $asset = Asset::factory()->create(['status' => 'DSP']);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk();
 
+        // FR-07.6: aset yang telah dihapUS tidak diizinkan dihapus lagi —
+        // guard yang sama diuji penuh di DisposedAssetGuardTest.
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
-            ->assertRedirect();
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
+            ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
-        $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
+        $this->assertDatabaseHas('assets', ['id' => $asset->id]);
     }
 
     public function test_asset_gets_tenant_id_on_create(): void
@@ -335,7 +343,7 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -355,7 +363,7 @@ class AssetTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$foreign' => $foreign]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $foreign->id]))
             ->assertNotFound();
     }
 
@@ -399,7 +407,7 @@ class AssetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Show')
@@ -441,7 +449,7 @@ class AssetTest extends TestCase
         $second = Asset::factory()->create(['kode_asset' => '01.01.01.02.001']);
 
         $this->actingAs($this->user)
-            ->get(route('assets.labels', ['ids' => [$first->id, $second->id]]))
+            ->get(route('tenant.assets.labels', ['tenant' => $this->tenant->code, 'ids' => [$first->id, $second->id]]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Labels')
@@ -466,7 +474,7 @@ class AssetTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('assets.labels', ['ids' => [$own->id, $foreign->id]]))
+            ->get(route('tenant.assets.labels', ['tenant' => $this->tenant->code, 'ids' => [$own->id, $foreign->id]]))
             ->assertInertia(fn ($page) => $page
                 ->has('assets', 1)
                 ->where('assets.0.id', $own->id));
@@ -490,7 +498,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.edit', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('assets/Edit')
@@ -770,7 +778,7 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'item_id' => $itemB->id,
                 'serial_number' => 'SN-BARU-001',
             ])
@@ -790,7 +798,7 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'status' => 'LOAN',
                 'condition' => 'Rusak Ringan',
             ])
@@ -861,7 +869,7 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'item_id' => $itemB->id,
             ])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
@@ -880,7 +888,7 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'notes' => 'Diperbarui',
             ])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
@@ -894,7 +902,7 @@ class AssetTest extends TestCase
         AssetHistory::factory()->count(3)->create(['asset_id' => $asset->id]);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->get(route('tenant.assets.show', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertInertia(fn ($page) => $page
                 ->has('asset.histories', 3));
     }
@@ -905,7 +913,7 @@ class AssetTest extends TestCase
 
         $this->actingAs($this->user)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(0, Asset::count());
@@ -1185,7 +1193,7 @@ class AssetTest extends TestCase
 
         $asset = Asset::factory()->create(['item_id' => $item->id]);
 
-        $url = route('assets.update', $asset).'?return_to='.urlencode('/assets?page=2&search=abc');
+        $url = route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]).'?return_to='.urlencode('/assets?page=2&search=abc');
 
         $this->actingAs($this->user)
             ->patch($url, ['notes' => 'Diperbarui'])
@@ -1199,7 +1207,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['item_id' => $item->id]);
 
         foreach (['https://evil.com', '//evil.com', '/\\evil.com'] as $returnTo) {
-            $url = route('assets.update', $asset).'?return_to='.urlencode($returnTo);
+            $url = route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]).'?return_to='.urlencode($returnTo);
 
             $this->actingAs($this->user)
                 ->patch($url, ['notes' => 'Coba'])
@@ -1225,7 +1233,7 @@ class AssetTest extends TestCase
         $asset = Asset::factory()->create(['item_id' => $item->id]);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, '$asset' => $asset]))
+            ->delete(route('tenant.assets.destroy', ['tenant' => $this->tenant->code, 'asset' => $asset->id]))
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('assets', ['id' => $asset->id]);
@@ -1601,7 +1609,7 @@ class AssetTest extends TestCase
     {
         [$group, $category, $cluster] = $this->classificationChain();
         $item = Item::factory()->create();
-        Asset::factory()->create(['item_id' => $item->id, 'asset_cluster_id' => $cluster->id]);
+        Asset::factory()->create(['item_id' => $item->id, 'asset_category_id' => $category->id, 'asset_cluster_id' => $cluster->id]);
         Asset::factory()->count(2)->create(['item_id' => $item->id, 'asset_cluster_id' => null]);
 
         $this->actingAs($this->user)

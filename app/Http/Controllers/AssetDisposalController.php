@@ -115,9 +115,14 @@ class AssetDisposalController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(AssetDisposal $disposal): Response
+    public function show(string $tenant, string $disposal): Response
     {
         Gate::authorize('asset.disposal.view');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         $disposal->load(['asset:id,kode_asset,serial_number,item_id', 'asset.item:id,name,code', 'disposedBy:id,name']);
 
@@ -129,9 +134,14 @@ class AssetDisposalController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(AssetDisposal $disposal): Response|RedirectResponse
+    public function edit(string $tenant, string $disposal): Response|RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diedit.']);
@@ -162,9 +172,14 @@ class AssetDisposalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAssetDisposalRequest $request, AssetDisposal $disposal): RedirectResponse
+    public function update(string $tenant, UpdateAssetDisposalRequest $request, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diperbarui.']);
@@ -218,9 +233,14 @@ class AssetDisposalController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AssetDisposal $disposal): RedirectResponse
+    public function destroy(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.delete');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat dihapus.']);
@@ -253,9 +273,14 @@ class AssetDisposalController extends Controller
     /**
      * Approve a disposal request.
      */
-    public function approve(AssetDisposal $disposal): RedirectResponse
+    public function approve(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat disetujui.']);
@@ -289,9 +314,14 @@ class AssetDisposalController extends Controller
     /**
      * Reject a disposal request.
      */
-    public function reject(AssetDisposal $disposal): RedirectResponse
+    public function reject(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat ditolak.']);

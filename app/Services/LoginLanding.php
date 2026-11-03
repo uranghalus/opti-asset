@@ -37,25 +37,24 @@ class LoginLanding
 
     public function redirect(User $user): RedirectResponse
     {
-        // Platform accounts are never denied: a super admin (flag or role)
-        // bypasses every gate and tenant scope, so the no-role rule does not
-        // apply to it.
-        if ($user->isSuperAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-
         // hasAnyRole() with no arguments is always false in Spatie — the
         // question is whether the akun holds ANY role at all.
         if (! $user->roles()->exists()) {
             return $this->deny('no_role');
         }
 
-        // Role but no home tenant membership: login is not usable.
-        if (! $user->tenant_id) {
+        // Tenant resolved from SAML assertion (session) takes precedence over
+        // the user's stored tenant_id. session('saml.tenant') is set by
+        // SamlController::acs() from the SAML assertion's company attribute.
+        $sessionTenant = session('saml.tenant');
+        $tenantId = $sessionTenant ? (is_string($sessionTenant) ? $sessionTenant : $sessionTenant->id) : null;
+        $tenantId = $tenantId ?? $user->tenant_id;
+
+        if (! $tenantId) {
             return $this->deny('no_tenant');
         }
 
-        $tenant = Tenant::find((string) $user->tenant_id);
+        $tenant = Tenant::find((string) $tenantId);
 
         if (! $tenant) {
             return $this->deny('no_tenant');

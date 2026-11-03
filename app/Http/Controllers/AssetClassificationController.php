@@ -182,9 +182,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Golongan berhasil ditambahkan.');
     }
 
-    public function updateGroup(Request $request, AssetGroup $group): RedirectResponse
+    public function updateGroup(string $tenant, Request $request, string $group): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $group = AssetGroup::find($group);
+        if (! $group) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -204,9 +209,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Golongan berhasil diperbarui.');
     }
 
-    public function destroyGroup(AssetGroup $group): RedirectResponse
+    public function destroyGroup(string $tenant, string $group): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $group = AssetGroup::find($group);
+        if (! $group) {
+            abort(404);
+        }
 
         $group->delete();
 
@@ -240,9 +250,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Kategori berhasil ditambahkan.');
     }
 
-    public function updateCategory(Request $request, AssetCategory $category): RedirectResponse
+    public function updateCategory(string $tenant, Request $request, string $category): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $category = AssetCategory::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -262,9 +277,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    public function destroyCategory(AssetCategory $category): RedirectResponse
+    public function destroyCategory(string $tenant, string $category): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $category = AssetCategory::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $category->delete();
 
@@ -298,9 +318,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Cluster berhasil ditambahkan.');
     }
 
-    public function updateCluster(Request $request, AssetCluster $cluster): RedirectResponse
+    public function updateCluster(string $tenant, Request $request, string $cluster): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $cluster = AssetCluster::find($cluster);
+        if (! $cluster) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -320,9 +345,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Cluster berhasil diperbarui.');
     }
 
-    public function destroyCluster(AssetCluster $cluster): RedirectResponse
+    public function destroyCluster(string $tenant, string $cluster): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $cluster = AssetCluster::find($cluster);
+        if (! $cluster) {
+            abort(404);
+        }
 
         $cluster->delete();
 
@@ -357,9 +387,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Sub Cluster berhasil ditambahkan.');
     }
 
-    public function updateSubCluster(Request $request, AssetSubCluster $subCluster): RedirectResponse
+    public function updateSubCluster(string $tenant, Request $request, string $subCluster): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $subCluster = AssetSubCluster::find($subCluster);
+        if (! $subCluster) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -380,9 +415,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Sub Cluster berhasil diperbarui.');
     }
 
-    public function destroySubCluster(AssetSubCluster $subCluster): RedirectResponse
+    public function destroySubCluster(string $tenant, string $subCluster): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $subCluster = AssetSubCluster::find($subCluster);
+        if (! $subCluster) {
+            abort(404);
+        }
 
         $subCluster->delete();
 

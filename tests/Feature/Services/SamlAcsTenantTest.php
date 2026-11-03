@@ -4,11 +4,8 @@ namespace Tests\Feature\Services;
 
 use App\Models\Tenant;
 use App\Models\User;
-use App\Services\LoginLanding;
-use App\Services\LoginProvisioningService;
 use App\Services\SamlTenantResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class SamlAcsTenantTest extends TestCase

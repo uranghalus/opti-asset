@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AlertTriangle, Bell, CheckCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,13 +70,16 @@ const typeStyles: Record<
 
 export function NotificationBell() {
     const unreadCount = notifications.filter((n) => n.unread).length;
+    const [open, setOpen] = useState(false);
 
     return (
-        <Popover>
+        <Popover onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="ghost"
                     size="icon"
+                    aria-expanded={open}
+                    aria-label="Notifikasi"
                     className={cn(
                         'group relative size-10 rounded-2xl transition-all duration-300',
                         'bg-slate-100/80 dark:bg-slate-800/60',

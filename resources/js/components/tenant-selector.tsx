@@ -13,6 +13,7 @@ import {
     DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { signed as tenantSwitchSigned } from '@/routes/tenant/switch';
 
 type Tenant = {
     id: string;
@@ -47,10 +48,14 @@ export function TenantSelector() {
             setOpen(false);
             return;
         }
-        router.get(`/tenant/switch/${tenantCode}`, {
-            preserveScroll: true,
-            onFinish: () => setOpen(false),
-        });
+        router.get(
+            tenantSwitchSigned.url({ tenantCode }),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setOpen(false),
+            },
+        );
     };
 
     const tenantLabel = currentTenant ? (
@@ -65,9 +70,16 @@ export function TenantSelector() {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 px-3 py-1.5 text-sm">
-                    {tenantLabel}
-                    <ChevronDown className="ml-auto size-4" />
+                <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Pilih tenant"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm min-h-[44px] min-w-[200px] max-w-[320px] overflow-hidden"
+                >
+                    <span className="truncate whitespace-nowrap text-ellipsis">
+                        {tenantLabel}
+                    </span>
+                    <ChevronDown className="ml-auto size-4 shrink-0" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64 p-0">
@@ -103,10 +115,16 @@ export function TenantSelector() {
                             className="text-sm text-destructive"
                             onClick={() => {
                                 // Sign out / clear tenant
-                                router.get('/tenant/switch/' + currentTenant.code, {
-                                    preserveScroll: true,
-                                    onFinish: () => setOpen(false),
-                                });
+                                router.get(
+                                    tenantSwitchSigned.url({
+                                        tenantCode: currentTenant.code,
+                                    }),
+                                    {},
+                                    {
+                                        preserveScroll: true,
+                                        onFinish: () => setOpen(false),
+                                    },
+                                );
                             }}
                         >
                             Keluar dari tenant

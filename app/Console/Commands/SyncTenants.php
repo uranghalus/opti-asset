@@ -72,10 +72,12 @@ class SyncTenants extends Command
     {
         $companies = [];
         $page = 1;
+        $verify = config('services.optigate_portal.verify', true);
 
         while ($page <= static::MAX_PAGES) {
             $response = Http::withToken($token)
                 ->timeout(10)
+                ->withOptions(['verify' => $verify])
                 ->get($url.'/api/companies', [
                     'per_page' => static::PER_PAGE,
                     'page' => $page,

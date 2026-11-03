@@ -30,10 +30,6 @@ Route::get('/', function () {
 
     $user = Auth::user();
 
-    if ($user->isSuperAdmin()) {
-        return redirect()->route('tenants.index');
-    }
-
     if ($user->tenant_id) {
         $tenant = Tenant::find($user->tenant_id);
 
@@ -45,7 +41,7 @@ Route::get('/', function () {
     return redirect()->route('tenants.index');
 })->name('home');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['web', 'auth', 'tenant.access'])->group(function () {
     Route::prefix('{tenant}')->name('tenant.')->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
 
@@ -191,11 +187,6 @@ Route::prefix('auth')->group(function () {
             ->header('Content-Type', 'text/html');
     })->name('saml.denied');
 });
-
-Route::get('admin/dashboard', function () {
-    return response('<h1>Admin Dashboard</h1><p>Selamat datang, Super Admin.</p>', 200)
-        ->header('Content-Type', 'text/html');
-})->name('admin.dashboard');
 
 Route::get('auth/error', function () {
     $message = session('error', 'Terjadi kesalahan saat login SSO.');

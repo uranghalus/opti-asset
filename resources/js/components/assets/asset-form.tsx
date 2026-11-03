@@ -1,4 +1,4 @@
-﻿import { useForm } from '@inertiajs/react';
+﻿import { useForm, usePage } from '@inertiajs/react';
 import {
     Boxes,
     Building2,
@@ -147,6 +147,8 @@ export function AssetForm({
     employees,
     nextSequences,
 }: AssetFormProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const [photoBusy, setPhotoBusy] = useState(false);
     const [docBusy, setDocBusy] = useState(false);
 
@@ -202,6 +204,7 @@ export function AssetForm({
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!tenantCode) return;
 
         if (mediaBusy) {
             toast.info('Tunggu hingga seluruh file selesai diunggah.');
@@ -233,8 +236,10 @@ export function AssetForm({
 
             form.patch(
                 update(
-                    asset.id,
-                    returnTo ? { query: { return_to: returnTo } } : undefined,
+                    { tenant: tenantCode, asset: asset.id },
+                    returnTo
+                        ? { query: { return_to: returnTo } }
+                        : undefined,
                 ).url,
                 options,
             );
@@ -242,8 +247,10 @@ export function AssetForm({
             const returnTo = currentReturnTo();
 
             form.post(
-                store(returnTo ? { query: { return_to: returnTo } } : undefined)
-                    .url,
+                store(
+                    { tenant: tenantCode },
+                    returnTo ? { query: { return_to: returnTo } } : undefined,
+                ).url,
                 options,
             );
         }

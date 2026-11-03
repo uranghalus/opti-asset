@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AssetTypeOverrideHistoryTest extends TestCase
@@ -35,6 +36,10 @@ class AssetTypeOverrideHistoryTest extends TestCase
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.view', 'asset.edit']);
+
+        // Bypass department scoping (R6/A5): uji ini tentang riwayat asset_type.
+        Role::findOrCreate('staff-asset', 'web');
+        $this->user->assignRole('staff-asset');
     }
 
     public function test_asset_type_change_is_recorded_in_history(): void
@@ -47,7 +52,7 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'asset_type' => 'equipment',
             ])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
@@ -69,7 +74,7 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'type_override_reason' => 'Kebijakan internal perusahaan',
             ])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
@@ -91,7 +96,7 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'asset_type' => 'equipment',
                 'type_override_reason' => 'Alasan baru',
             ])
@@ -116,7 +121,7 @@ class AssetTypeOverrideHistoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset->id]), [
                 'asset_type' => 'fixed_asset',
             ])
             ->assertRedirect(route('tenant.assets.index', ['tenant' => $this->tenant->code]));

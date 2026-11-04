@@ -68,6 +68,7 @@
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
+  --color-success: var(--success);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
@@ -176,4 +177,9 @@
   h6 {
     @apply font-semibold;
   }
+}
+
+/* dashboard-layout-01 block: hide secondary nav labels when the sidebar collapses to icons */
+.group[data-collapsible='icon'] .hide-menu {
+    @apply hidden;
 }

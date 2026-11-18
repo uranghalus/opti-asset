@@ -30,7 +30,7 @@ class HandleInertiaRequests extends Middleware
             }
 
             if ($user) {
-                $query = $user->hasRole('super-admin')
+                $query = $user->isSuperAdmin()
                     ? Tenant::query()->select(['id', 'code', 'name'])->orderBy('name', 'asc')
                     : Tenant::query()->where('id', $user->tenant_id)->select(['id', 'code', 'name'])->orderBy('name', 'asc');
 
@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
                         'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
                     ])
                     : null,
-                'isSuperAdmin' => $user !== null && $user->hasRole('super-admin'),
+                'isSuperAdmin' => $user !== null && $user->isSuperAdmin(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -26,7 +26,7 @@ class LoginProvisioningServiceTest extends TestCase
 
         $user->refresh();
         $this->assertTrue($user->is_super_admin);
-        $this->assertTrue($user->hasRole('super_admin'));
+        $this->assertTrue($user->hasRole(User::ROLE_SUPER_ADMIN));
     }
 
     public function test_provision_grants_guest_role_to_role_less_user(): void

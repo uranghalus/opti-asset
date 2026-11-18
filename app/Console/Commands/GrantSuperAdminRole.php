@@ -62,15 +62,15 @@ class GrantSuperAdminRole extends Command
         }
 
         // Ensure the Spatie super-admin role.
-        if (! $user->hasRole('super-admin')) {
-            $this->line('  [role] super-admin assigned');
+        if (! $user->hasRole(User::ROLE_SUPER_ADMIN)) {
+            $this->line('  [role] '.User::ROLE_SUPER_ADMIN.' assigned');
             if (! $dryRun) {
-                $user->assignRole('super-admin');
+                $user->assignRole(User::ROLE_SUPER_ADMIN);
                 app(PermissionRegistrar::class)->forgetCachedPermissions();
                 $changed = true;
             }
         } else {
-            $this->line('  [role] super-admin (sudah ada)');
+            $this->line('  [role] '.User::ROLE_SUPER_ADMIN.' (sudah ada)');
         }
 
         // Ensure Gate::before recognises the account.

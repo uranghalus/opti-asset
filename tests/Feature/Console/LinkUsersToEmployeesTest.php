@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -172,22 +173,19 @@ class LinkUsersToEmployeesTest extends TestCase
         $this->assertSame($employee->id_employee, $user->fresh()->employee_id);
     }
 
-    public function test_links_lowest_id_employee_when_same_tenant_has_duplicate_emails(): void
+    public function test_same_tenant_duplicate_email_is_rejected_by_unique_index(): void
     {
         $tenant = $this->tenant('acme');
         $user = User::factory()->create(['tenant_id' => $tenant->id, 'email' => 'budi@acme.test']);
 
+        // Index unik (tenant_id, email) — hardening Task 9 — membuat duplikat
+        // email dalam satu tenant mustahil, sehingga match backfill tak
+        // pernah ambigu (tie-break orderBy id_employee tinggal defensive).
         $first = Employee::factory()->create([
             'id_employee' => '00000000-0000-0000-0000-000000000001',
             'tenant_id' => $tenant->id,
             'email' => 'budi@acme.test',
             'nik_employee' => 'NIK-001',
-        ]);
-        $second = Employee::factory()->create([
-            'id_employee' => '00000000-0000-0000-0000-000000000002',
-            'tenant_id' => $tenant->id,
-            'email' => 'budi@acme.test',
-            'nik_employee' => 'NIK-002',
         ]);
 
         $this->artisan('users:link-employees')
@@ -197,7 +195,15 @@ class LinkUsersToEmployeesTest extends TestCase
         $user->refresh();
 
         $this->assertSame($first->id_employee, $user->employee_id);
-        $this->assertNotSame($second->id_employee, $user->employee_id);
+
+        $this->expectException(QueryException::class);
+
+        Employee::factory()->create([
+            'id_employee' => '00000000-0000-0000-0000-000000000002',
+            'tenant_id' => $tenant->id,
+            'email' => 'budi@acme.test',
+            'nik_employee' => 'NIK-002',
+        ]);
     }
 
     public function test_skips_user_when_employee_already_linked_to_different_user(): void

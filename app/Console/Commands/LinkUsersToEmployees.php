@@ -41,8 +41,11 @@ class LinkUsersToEmployees extends Command
                 $sameTenantEmployee = $this->findSameTenantEmployee($user);
 
                 if ($sameTenantEmployee !== null) {
-                    $this->linkEmployee($user, $sameTenantEmployee, $dryRun);
-                    $linked++;
+                    if ($this->linkEmployee($user, $sameTenantEmployee, $dryRun)) {
+                        $linked++;
+                    } else {
+                        $skipped++;
+                    }
 
                     continue;
                 }
@@ -72,14 +75,17 @@ class LinkUsersToEmployees extends Command
                 }
 
                 // Same email in exactly one other tenant: link but warn.
-                $this->linkEmployee($user, $employee, $dryRun);
-                $crossTenant++;
-                Log::warning('users.link-employees cross-tenant', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'employee_id' => $employee->id_employee,
-                    'tenant_id' => $employee->tenant_id,
-                ]);
+                if ($this->linkEmployee($user, $employee, $dryRun)) {
+                    $crossTenant++;
+                    Log::warning('users.link-employees cross-tenant', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'employee_id' => $employee->id_employee,
+                        'tenant_id' => $employee->tenant_id,
+                    ]);
+                } else {
+                    $skipped++;
+                }
             }
         });
 
@@ -136,13 +142,41 @@ class LinkUsersToEmployees extends Command
 
     /**
      * Persist the user-employee link unless this is a dry run.
+     *
+     * Returns false — without touching the database — when the employee is
+     * already linked to a different user, which would violate the unique
+     * users.employee_id index; the caller counts that user as skipped.
      */
-    private function linkEmployee(User $user, Employee $employee, bool $dryRun): void
+    private function linkEmployee(User $user, Employee $employee, bool $dryRun): bool
     {
+        if ($this->isEmployeeLinkedToOtherUser($user, $employee)) {
+            Log::warning('users.link-employees employee-already-linked', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'employee_id' => $employee->id_employee,
+                'tenant_id' => $employee->tenant_id,
+            ]);
+
+            return false;
+        }
+
         if ($dryRun) {
-            return;
+            return true;
         }
 
         $user->update(['employee_id' => $employee->id_employee]);
+
+        return true;
+    }
+
+    /**
+     * Whether the employee is already linked to a user other than the given one.
+     */
+    private function isEmployeeLinkedToOtherUser(User $user, Employee $employee): bool
+    {
+        return User::query()
+            ->where('employee_id', $employee->id_employee)
+            ->where('id', '!=', $user->id)
+            ->exists();
     }
 }

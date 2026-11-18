@@ -199,4 +199,75 @@ class LinkUsersToEmployeesTest extends TestCase
         $this->assertSame($first->id_employee, $user->employee_id);
         $this->assertNotSame($second->id_employee, $user->employee_id);
     }
+
+    public function test_skips_user_when_employee_already_linked_to_different_user(): void
+    {
+        $tenant = $this->tenant('acme');
+
+        // The employee is pre-linked to user A outside the backfill.
+        $userA = User::factory()->create(['tenant_id' => $tenant->id, 'email' => 'agus@acme.test']);
+        $employee = Employee::factory()->create([
+            'tenant_id' => $tenant->id,
+            'email' => 'budi@acme.test',
+            'nik_employee' => 'NIK-001',
+        ]);
+        $userA->update(['employee_id' => $employee->id_employee]);
+
+        // User B shares the employee's email but is not linked yet.
+        $userB = User::factory()->create(['tenant_id' => $tenant->id, 'email' => 'budi@acme.test']);
+
+        Log::spy();
+
+        $this->artisan('users:link-employees')
+            ->expectsOutput('  linked: 0')
+            ->expectsOutput('  skipped: 2')
+            ->assertExitCode(Command::SUCCESS);
+
+        $this->assertNull($userB->fresh()->employee_id);
+        $this->assertSame($employee->id_employee, $userA->fresh()->employee_id);
+
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $event, array $context): bool => $event === 'users.link-employees employee-already-linked'
+                && $context['user_id'] === $userB->id
+                && $context['employee_id'] === $employee->id_employee
+        );
+
+        // A second run leaves the database state identical.
+        $this->artisan('users:link-employees')
+            ->expectsOutput('  skipped: 2')
+            ->assertExitCode(Command::SUCCESS);
+
+        $this->assertNull($userB->fresh()->employee_id);
+        $this->assertSame($employee->id_employee, $userA->fresh()->employee_id);
+    }
+
+    public function test_dry_run_reports_employee_already_linked_without_writing(): void
+    {
+        $tenant = $this->tenant('acme');
+
+        $userA = User::factory()->create(['tenant_id' => $tenant->id, 'email' => 'agus@acme.test']);
+        $employee = Employee::factory()->create([
+            'tenant_id' => $tenant->id,
+            'email' => 'budi@acme.test',
+            'nik_employee' => 'NIK-001',
+        ]);
+        $userA->update(['employee_id' => $employee->id_employee]);
+
+        $userB = User::factory()->create(['tenant_id' => $tenant->id, 'email' => 'budi@acme.test']);
+
+        Log::spy();
+
+        $this->artisan('users:link-employees', ['--dry-run' => true])
+            ->expectsOutput('  skipped: 2')
+            ->expectsOutput('  dry_run: yes')
+            ->assertExitCode(Command::SUCCESS);
+
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $event, array $context): bool => $event === 'users.link-employees employee-already-linked'
+                && $context['user_id'] === $userB->id
+        );
+
+        $this->assertNull($userB->fresh()->employee_id);
+        $this->assertSame($employee->id_employee, $userA->fresh()->employee_id);
+    }
 }

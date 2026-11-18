@@ -1,0 +1,38 @@
+# AI/tooling copies that duplicate the canonical project skills and agents.
+.agents/
+.cursor/
+.hermes/
+.qoder/
+.qwen/
+.trae/
+skills/
+.opencode/skills/
+.opencode/agents/
+.opencode/commands/
+
+# Scratch and transient investigation artifacts.
+.scratch/
+*.txt
+Qwen_html_*.html
+phpstan-full.txt
+phpstan-tests.txt
+
+# Generated framework/build artifacts.
+node_modules/
+vendor/
+public/build/
+public/hot/
+public/storage/
+bootstrap/cache/
+resources/js/actions/
+resources/js/routes/
+resources/js/wayfinder/
+storage/logs/
+storage/framework/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Local environment and credentials.
+.env
+.env.*
+!.env.example

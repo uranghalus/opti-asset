@@ -168,7 +168,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function ReportsIndex() {
-    const { transfers, disposals, filters } = usePage()
+    const { transfers, disposals, filters, tenant } = usePage()
         .props as unknown as PageProps;
 
     const [tSearch, setTSearch] = useState(filters.transfer_search ?? '');
@@ -227,7 +227,7 @@ export default function ReportsIndex() {
             params.disposal_status = overrides.dStatus ?? dStatus;
         }
 
-        router.get(reportsIndexRoute().url, params, {
+        router.get(reportsIndexRoute({ tenant }).url, params, {
             preserveState: true,
             replace: true,
             only: ['transfers', 'disposals', 'filters'],
@@ -807,6 +807,6 @@ export default function ReportsIndex() {
 }
 
 ReportsIndex.layout = {
-    breadcrumbs: [{ title: 'Laporan', href: reportsIndexRoute().url }],
+    breadcrumbs: [{ title: 'Laporan', href: reportsIndexRoute({ tenant: '' }).url }],
 };
 

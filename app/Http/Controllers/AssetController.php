@@ -603,7 +603,7 @@ class AssetController extends Controller
     {
         Gate::authorize('asset.view');
 
-        $asset = Asset::withoutGlobalScopes()->find($asset);
+        $asset = Asset::find($asset);
         if (! $asset) {
             abort(404);
         }

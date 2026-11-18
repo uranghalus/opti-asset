@@ -1,0 +1,184 @@
+=== worktrees
+/var/www/opti-asset  d9b82aa [development]
+
+=== local commits all refs
+d9b82aa 2026-11-04  (HEAD -> development, origin/development) feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+b162377 2026-11-04  feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+0806c9c 2026-11-04  feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+4f81987 2026-11-04  feat(layout): header dashboard baru (search, tenant, notifikasi, tema, profil)
+1d5d3a2 2026-11-04  feat(layout): sidebar blok memakai navigasi tenant-aware app
+272eb50 2026-11-04  feat(layout): helper tautan sidebar ter-flatten ber-prefix tenant
+07a724c 2026-11-04  feat(layout): izinkan ProfileDropdown blok menerima user, link, dan sign-out nyata
+9e87252 2026-11-04  feat(layout): izinkan Search blok menerima daftar tautan dari app
+
+=== /tmp/opencode listing
+total 54444
+drwxr-xr-x  7 root root    20480 Nov 17 11:24 .
+drwxrwxrwt 16 root root    20480 Nov 17 11:20 ..
+-rw-r--r--  1 root root    34608 Nov 16 21:29 adapter.ts
+-rw-r--r--  1 root root      378 Nov 17 07:53 ae.txt
+-rw-r--r--  1 root root     3341 Nov 17 04:50 after_prettier.js
+-rw-r--r--  1 root root   303555 Nov 16 22:09 all_reason.txt
+-rw-r--r--  1 root root     5912 Nov 17 04:59 allcfg.txt
+-rw-r--r--  1 root root      864 Nov 17 04:01 apache2.txt
+-rw-r--r--  1 root root     2735 Nov 17 03:35 apache_cfg.txt
+-rw-r--r--  1 root root     8768 Nov 17 09:00 b.txt
+-rw-r--r--  1 root root      703 Nov 17 07:37 b64.txt
+-rw-r--r--  1 root root     3023 Nov 17 04:50 before_prettier.js
+-rw-r--r--  1 root root    61949 Nov 17 08:49 bin.txt
+-rw-r--r--  1 root root     1274 Nov 17 04:56 branch.txt
+-rw-r--r--  1 root root      509 Nov 17 03:15 branch_state.txt
+-rw-r--r--  1 root root     1670 Nov 17 09:48 bytes.txt
+-rw-r--r--  1 root root      733 Nov 17 09:02 c.txt
+-rw-r--r--  1 root root     1051 Nov 17 04:58 cases.txt
+-rw-r--r--  1 root root     1289 Nov 17 07:35 cfg.txt
+-rw-r--r--  1 root root     5646 Nov 17 06:40 cfg3.txt
+-rw-r--r--  1 root root     1788 Nov 17 04:55 cfg_1.txt
+-rw-r--r--  1 root root     1874 Nov 17 04:55 cfg_31.txt
+-rw-r--r--  1 root root        0 Nov 17 04:55 cfg_61.txt
+-rw-r--r--  1 root root        0 Nov 17 04:55 cfg_91.txt
+-rw-r--r--  1 root root      682 Nov 17 04:52 cfgtest.txt
+-rw-r--r--  1 root root        0 Nov 16 20:59 check.txt
+-rw-r--r--  1 root root      347 Nov 17 04:28 check1.txt
+-rw-r--r--  1 root root     5863 Nov 17 04:29 check2.txt
+-rw-r--r--  1 root root     6113 Nov 17 04:29 check3.txt
+
+=== main OIDCProvider nl
+     1	<?php
+     2	
+     3	namespace App\Providers;
+     4	
+     5	use GuzzleHttp\RequestOptions;
+     6	use Laravel\Socialite\Two\InvalidStateException;
+     7	use SocialiteProviders\Manager\OAuth2\User;
+     8	use SocialiteProviders\OIDC\Provider as BaseProvider;
+     9	
+    10	class OIDCProvider extends BaseProvider
+    11	{
+    12	    public static function additionalConfigKeys(): array
+    13	    {
+    14	        return array_merge(parent::additionalConfigKeys(), [
+    15	            'authorization_url',
+    16	            'token_url',
+    17	            'userinfo_url',
+    18	        ]);
+    19	    }
+    20	
+    21	    /**
+    22	     * Use explicit OAuth endpoints when the provider does not expose OIDC discovery.
+    23	     *
+    24	     * @return array<string, mixed>
+    25	     */
+    26	    protected function getOpenIdConfig(): array
+    27	    {
+    28	        $authorizationUrl = $this->getConfig('authorization_url');
+    29	        $tokenUrl = $this->getConfig('token_url');
+    30	
+    31	        if ($authorizationUrl && $tokenUrl) {
+    32	            return [
+    33	                'authorization_endpoint' => $authorizationUrl,
+    34	                'token_endpoint' => $tokenUrl,
+    35	                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
+    36	            ];
+    37	        }
+    38	
+    39	        return parent::getOpenIdConfig();
+    40	    }
+    41	
+    42	    /**
+    43	     * Disable nonce verification.
+    44	     * Beberapa server SSO tidak mengirimkan 'nonce' di dalam ID Token mereka.
+    45	     * Mengubah nilai ini menjadi false akan melewati pengecekan nonce.
+    46	     */
+    47	    protected function usesNonce(): bool
+    48	    {
+    49	        return false;
+    50	    }
+    51	
+    52	    /**
+    53	     * Override user() untuk mengambil detail profil lengkap dari UserInfo / API User endpoint.
+    54	     */
+    55	    public function user()
+    56	    {
+    57	        if ($this->user) {
+    58	            return $this->user;
+    59	        }
+    60	
+    61	        if ($this->hasInvalidState()) {
+    62	            throw new InvalidStateException;
+    63	        }
+    64	
+    65	        $tokenResponse = $this->getAccessTokenResponse($this->request->input('code'));
+    66	
+    67	        // Decrypt JWT token (dari ID Token)
+    68	        $payload = (array) $this->decodeJWT(
+    69	            $tokenResponse['id_token'],
+    70	            $this->request->input('code')
+    71	        );
+    72	
+    73	        // Selalu ambil informasi profil lengkap dari UserInfo / API User endpoint menggunakan Access Token
+    74	        try {
+    75	            $userInfo = $this->getUserByToken($tokenResponse['access_token']);
+    76	            if (is_array($userInfo)) {
+    77	                $payload = array_merge($payload, $userInfo);
+    78	            }
+    79	        } catch (\Exception $e) {
+    80	            // Abaikan/log jika UserInfo gagal diakses
+    81	        }
+    82	
+    83	        $this->user = $this->mapUserToObject($payload);
+    84	
+    85	        return $this->user->setToken($tokenResponse['access_token'])
+    86	            ->setRefreshToken($tokenResponse['refresh_token'] ?? null)
+    87	            ->setExpiresIn($tokenResponse['expires_in']);
+    88	    }
+    89	
+    90	    /**
+    91	     * Override getUserByToken untuk mendukung pemanggilan OIDC_USER_INFO_URL (api/user) dari Gate
+    92	     * dengan menyertakan Authorization Bearer header.
+    93	     */
+    94	    protected function getUserByToken($token)
+    95	    {
+    96	        $url = config('services.oidc.user_info_url') ?: $this->getUserInfoUrl();
+    97	
+    98	        $response = $this->getHttpClient()->get($url, [
+    99	            RequestOptions::HEADERS => [
+   100	                'Authorization' => 'Bearer '.$token,
+   101	                'Accept' => 'application/json',
+   102	            ],
+   103	        ]);
+   104	
+   105	        return json_decode((string) $response->getBody(), true);
+   106	    }
+   107	
+   108	    /**
+   109	     * Map data user ke objek Laravel Socialite User.
+   110	     *
+   111	     * @param  array<string, mixed>  $user
+   112	     * @return User
+   113	     */
+   114	    protected function mapUserToObject(array $user)
+   115	    {
+   116	        // Pastikan key sub, nickname, dll ada sebelum memanggil parent agar mapping bawaan Socialite tidak kosong/error
+   117	        if (! isset($user['sub']) && isset($user['id'])) {
+   118	            $user['sub'] = $user['id'];
+   119	        }
+   120	        if (! isset($user['nickname']) && isset($user['username'])) {
+   121	            $user['nickname'] = $user['username'];
+   122	        }
+   123	
+   124	        /** @var User $mappedUser */
+   125	        $mappedUser = parent::mapUserToObject($user);
+   126	
+   127	        // Map foto profil (photo_url, photo, picture atau avatar) agar tidak bernilai null
+   128	        $avatar = $user['photo_url'] ?? $user['photo'] ?? $user['picture'] ?? $user['avatar'] ?? null;
+   129	        $mappedUser->avatar = $avatar;
+   130	
+   131	        $mappedUser->map(array_merge($mappedUser->attributes, [
+   132	            'avatar' => $avatar,
+   133	            'picture' => $avatar,
+   134	        ]));
+   135	
+   136	        return $mappedUser;
+   137	    }
+   138	}

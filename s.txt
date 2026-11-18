@@ -1,0 +1,146 @@
+=== apache sites-enabled
+/etc/apache2/conf-enabled/:
+total 8
+drwxr-xr-x 2 root root 4096 Jan 12  2024 .
+drwxr-xr-x 8 root root 4096 Nov 13 02:21 ..
+lrwxrwxrwx 1 root root   30 Jan 12  2024 charset.conf -> ../conf-available/charset.conf
+lrwxrwxrwx 1 root root   44 Jan 12  2024 localized-error-pages.conf -> ../conf-available/localized-error-pages.conf
+lrwxrwxrwx 1 root root   46 Jan 12  2024 other-vhosts-access-log.conf -> ../conf-available/other-vhosts-access-log.conf
+lrwxrwxrwx 1 root root   31 Jan 12  2024 security.conf -> ../conf-available/security.conf
+lrwxrwxrwx 1 root root   36 Jan 12  2024 serve-cgi-bin.conf -> ../conf-available/serve-cgi-bin.conf
+
+/etc/apache2/sites-enabled/:
+total 8
+drwxr-xr-x 2 root root 4096 Jan 12  2024 .
+drwxr-xr-x 8 root root 4096 Nov 13 02:21 ..
+lrwxrwxrwx 1 root root   31 Jan 12  2024 adminer.conf -> ../sites-available/adminer.conf
+lrwxrwxrwx 1 root root   31 Jan 12  2024 laravel.conf -> ../sites-available/laravel.conf
+
+=== grep DocumentRoot all apache
+/etc/apache2/sites-available/default-ssl.conf:4:	DocumentRoot /var/www/html
+/etc/apache2/sites-available/laravel.conf:6:    DocumentRoot /var/www/laravel/public
+/etc/apache2/sites-available/laravel.conf:12:    DocumentRoot /var/www/laravel/public
+/etc/apache2/sites-available/000-default.conf:12:	DocumentRoot /var/www/html
+
+=== config/services.php (current branch)
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Third Party Services
+    |--------------------------------------------------------------------------
+    |
+    | This file is for storing the credentials for third party services such
+    | as Resend, Postmark, AWS, and more. This file provides the de facto
+    | location for this type of information, allowing packages to have
+    | a conventional file to locate the various service credentials.
+    |
+    */
+
+    'postmark' => [
+        'key' => env('POSTMARK_API_KEY'),
+    ],
+
+    'resend' => [
+        'key' => env('RESEND_API_KEY'),
+    ],
+
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
+    ],
+    'optigate_portal' => [
+        'url' => env('WEB_PORTAL_URL'),
+        'token' => env('WEB_PORTAL_TOKEN'),
+        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+    ],
+];
+
+=== .env keys (masked)
+75:# SAML SSO (onelogin/php-saml)
+76:SAML_STRICT=fals<REDACTED>
+77:SAML_DEBUG=fals<REDACTED>
+78:SAML_IDP_ENTITY_ID="htt<REDACTED>
+79:SAML_IDP_SSO_URL="htt<REDACTED>
+80:SAML_IDP_SLO_URL="htt<REDACTED>
+81:SAML_IDP_CERT="MII<REDACTED>
+82:SAML_SP_ENTITY_ID=http<REDACTED>
+83:SAML_SP_ACS_URL=http<REDACTED>
+84:SAML_SP_SLO_URL=http<REDACTED>
+85:SAML_SP_CERT=<REDACTED>
+86:SAML_SP_PRIVATE_KEY=<REDACTED>
+87:SAML_WANT_MESSAGES_SIGNED=fals<REDACTED>
+88:SAML_WANT_ASSERTIONS_SIGNED=true<REDACTED>
+
+=== main composer.json oidc
+15:        "kovah/laravel-socialite-oidc": "^0.8.0",
+19:        "laravel/socialite": "^5.29",
+
+=== main config/services.php oidc block
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Third Party Services
+    |--------------------------------------------------------------------------
+    |
+    | This file is for storing the credentials for third party services such
+    | as Resend, Postmark, AWS, and more. This file provides the de facto
+    | location for this type of information, allowing packages to have
+    | a conventional file to locate the various service credentials.
+    |
+    */
+
+    'postmark' => [
+        'key' => env('POSTMARK_API_KEY'),
+    ],
+
+    'resend' => [
+        'key' => env('RESEND_API_KEY'),
+    ],
+
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
+    ],
+    'oidc' => [
+        'base_url' => env('OIDC_BASE_URL'),
+        'client_id' => env('OIDC_CLIENT_ID'),
+        'client_secret' => env('OIDC_CLIENT_SECRET'),
+        'redirect' => env('OIDC_REDIRECT_URI'),
+        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+        'token_url' => env('OIDC_TOKEN_URL'),
+        'user_info_url' => env('OIDC_USER_INFO_URL'),
+        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+        'logout_url' => env('OIDC_LOGOUT_URL'),
+        'guzzle' => [
+            'http_errors' => false,
+            'verify' => env('OIDC_VERIFY_SSL', true),
+        ],
+    ],
+    'optigate_portal' => [
+        'url' => env('WEB_PORTAL_URL'),
+        'token' => env('WEB_PORTAL_TOKEN'),
+        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+    ],
+];

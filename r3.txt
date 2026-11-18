@@ -1,0 +1,60 @@
+=== is laravel.log tracked?
+storage/logs/.gitignore
+
+=== OIDCProvider deleted when?
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+
+=== OIDCProvider across branches
+main: PRESENT
+development: absent
+origin/main: PRESENT
+origin/development: absent
+
+=== 17aa024 diff for OIDCProvider
+commit 17aa024c88a38230755704c48a844186831157bc
+Author: Muhammad Fauzan <muhammadfauzan7@gmail.com>
+Date:   Thu Sep 24 17:01:45 2026 +0800
+
+    feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+
+diff --git a/app/Providers/OIDCProvider.php b/app/Providers/OIDCProvider.php
+index 115d923..924051d 100644
+--- a/app/Providers/OIDCProvider.php
++++ b/app/Providers/OIDCProvider.php
+@@ -9,6 +9,36 @@
+ 
+ class OIDCProvider extends BaseProvider
+ {
++    public static function additionalConfigKeys(): array
++    {
++        return array_merge(parent::additionalConfigKeys(), [
++            'authorization_url',
++            'token_url',
++            'userinfo_url',
++        ]);
++    }
++
++    /**
++     * Use explicit OAuth endpoints when the provider does not expose OIDC discovery.
++     *
++     * @return array<string, mixed>
++     */
++    protected function getOpenIdConfig(): array
++    {
++        $authorizationUrl = $this->getConfig('authorization_url');
++        $tokenUrl = $this->getConfig('token_url');
++
++        if ($authorizationUrl && $tokenUrl) {
++            return [
++                'authorization_endpoint' => $authorizationUrl,
++                'token_endpoint' => $tokenUrl,
++                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
++            ];
++        }
++
++        return parent::getOpenIdConfig();
++    }
++
+     /**
+      * Disable nonce verification.
+      * Beberapa server SSO tidak mengirimkan 'nonce' di dalam ID Token mereka.

@@ -8,178 +8,386 @@
 @custom-variant dark (&:is(.dark *));
 
 @utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/*
+ * Opname Field Desk (DESIGN.md): Public Sans untuk UI, Noto Sans Mono untuk
+ * kode aset/barcode/nilai. Self-hosted, variable weight.
+ */
+@font-face {
+    font-family: 'Public Sans';
+    src: url('/fonts/public-sans/latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Noto Sans Mono';
+    src: url('/fonts/noto-sans-mono/latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
 }
 
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* Bayangan struktural saja (DESIGN.md — Elevation & Depth). */
 @theme {
-  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  --shadow-md: 0 1px 4px rgba(133, 146, 173, 0.2);
-  --shadow-btn-shadow: 0 9px 17.5px rgba(0, 0, 0, 0.05);
-  --radius-lg: 7px;
-  --margin-30: 30px;
-  --text-40: 40px;
+    --shadow-sticky: 0 1px 0 rgba(21, 32, 43, 0.08);
+    --shadow-overlay: 0 8px 24px rgba(21, 32, 43, 0.14);
+    --shadow-toast: 0 4px 16px rgba(21, 32, 43, 0.12);
+    --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-success: var(--success);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-public-sans);
+    --font-mono: var(--font-noto-mono);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-primary-muted: var(--primary-muted);
+    --color-primary-muted-border: var(--primary-muted-border);
+    --color-border-strong: var(--border-strong);
+    /* Status map terkunci (DESIGN.md — P1); nilai bertukar otomatis via .dark. */
+    --color-status-act-text: var(--status-act-text);
+    --color-status-act-bg: var(--status-act-bg);
+    --color-status-act-border: var(--status-act-border);
+    --color-status-loan-text: var(--status-loan-text);
+    --color-status-loan-bg: var(--status-loan-bg);
+    --color-status-loan-border: var(--status-loan-border);
+    --color-status-rpr-text: var(--status-rpr-text);
+    --color-status-rpr-bg: var(--status-rpr-bg);
+    --color-status-rpr-border: var(--status-rpr-border);
+    --color-status-mut-text: var(--status-mut-text);
+    --color-status-mut-bg: var(--status-mut-bg);
+    --color-status-mut-border: var(--status-mut-border);
+    --color-status-dsp-text: var(--status-dsp-text);
+    --color-status-dsp-bg: var(--status-dsp-bg);
+    --color-status-dsp-border: var(--status-dsp-border);
+    /* Tipe aset */
+    --color-tipe-aktiva-text: var(--tipe-aktiva-text);
+    --color-tipe-aktiva-bg: var(--tipe-aktiva-bg);
+    --color-tipe-aktiva-border: var(--tipe-aktiva-border);
+    --color-tipe-peralatan-text: var(--tipe-peralatan-text);
+    --color-tipe-peralatan-bg: var(--tipe-peralatan-bg);
+    --color-tipe-peralatan-border: var(--tipe-peralatan-border);
+    /* Radius eksplisit: sm 4 / md 8 / lg 12 (DESIGN.md — Shapes). */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-3xl: 24px;
+    --radius-4xl: 28px;
 }
 
 :root {
-  --font-geist: 'Geist', sans-serif;
-  --font-geist-mono: 'Geist Mono', monospace;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --success: oklch(0.627 0.194 149.214);
-  --warning: oklch(0.795 0.184 86.047);
-  --error: oklch(0.577 0.245 27.325);
-  --radius: 8px;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+    --font-public-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-noto-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, monospace;
+    /* Core */
+    --background: #f1f4f6;
+    --foreground: #15202b;
+    --card: #ffffff;
+    --card-foreground: #15202b;
+    --popover: #ffffff;
+    --popover-foreground: #15202b;
+    --primary: #0d5c56;
+    --primary-foreground: #ffffff;
+    --secondary: #e9edf0;
+    --secondary-foreground: #15202b;
+    --muted: #e9edf0;
+    --muted-foreground: #5a6a7a;
+    --accent: #e9edf0;
+    --accent-foreground: #15202b;
+    --destructive: #b42318;
+    --border: #d5dce3;
+    --input: #d5dce3;
+    --ring: #0d5c56;
+    --success: #1b7f5a;
+    --warning: #b45309;
+    --error: #b42318;
+    --radius: 12px;
+    --surface-sunken: #e9edf0;
+    --primary-muted: #d8edea;
+    --primary-muted-border: #a7d2cc;
+    --border-strong: #b9c4ce;
+    /* Status (LOCKED — P1) */
+    --status-act-text: #166534;
+    --status-act-bg: #dcfce7;
+    --status-act-border: #86efac;
+    --status-loan-text: #1e40af;
+    --status-loan-bg: #dbeafe;
+    --status-loan-border: #93c5fd;
+    --status-rpr-text: #92400e;
+    --status-rpr-bg: #fef3c7;
+    --status-rpr-border: #fcd34d;
+    --status-mut-text: #155e75;
+    --status-mut-bg: #cffafe;
+    --status-mut-border: #67e8f9;
+    --status-dsp-text: #9f1239;
+    --status-dsp-bg: #ffe4e6;
+    --status-dsp-border: #fda4af;
+    /* Tipe aset */
+    --tipe-aktiva-text: #0d5c56;
+    --tipe-aktiva-bg: #d8edea;
+    --tipe-aktiva-border: #a7d2cc;
+    --tipe-peralatan-text: #475569;
+    --tipe-peralatan-bg: #e9edf0;
+    --tipe-peralatan-border: #b9c4ce;
+    /* Chart: teal → cyan → amber → blue → slate (satu keluarga dengan warna utama) */
+    --chart-1: #0d5c56;
+    --chart-2: #0e7490;
+    --chart-3: #b45309;
+    --chart-4: #1d6a9f;
+    --chart-5: #475569;
+    /* Sidebar */
+    --sidebar: #f1f4f6;
+    --sidebar-foreground: #15202b;
+    --sidebar-primary: #0d5c56;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e9edf0;
+    --sidebar-accent-foreground: #15202b;
+    --sidebar-border: #d5dce3;
+    --sidebar-ring: #0d5c56;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+    /* Core — cool navy, never purple-plum */
+    --background: #0b1220;
+    --foreground: #e8eef2;
+    --card: #1b2534;
+    --card-foreground: #e8eef2;
+    --popover: #1b2534;
+    --popover-foreground: #e8eef2;
+    --primary: #2a9b93;
+    --primary-foreground: #0b1220;
+    --secondary: #1b2534;
+    --secondary-foreground: #e8eef2;
+    --muted: #1b2534;
+    --muted-foreground: #9aa8b5;
+    --accent: #1b2534;
+    --accent-foreground: #e8eef2;
+    --destructive: #f04438;
+    --border: #2a3544;
+    --border-strong: #405061;
+    --input: #2a3544;
+    --ring: #2a9b93;
+    --success: #1b7f5a;
+    --warning: #b45309;
+    --error: #f04438;
+    --surface-sunken: #101827;
+    --primary-muted: rgba(42, 155, 147, 0.16);
+    --primary-muted-border: rgba(42, 155, 147, 0.4);
+    /* Status — resep dark terverifikasi ≥ 8:1 */
+    --status-act-text: #86efac;
+    --status-act-bg: #052e16;
+    --status-act-border: #052e16;
+    --status-loan-text: #93c5fd;
+    --status-loan-bg: #172554;
+    --status-loan-border: #172554;
+    --status-rpr-text: #fcd34d;
+    --status-rpr-bg: #451a03;
+    --status-rpr-border: #451a03;
+    --status-mut-text: #67e8f9;
+    --status-mut-bg: #083344;
+    --status-mut-border: #083344;
+    --status-dsp-text: #fda4af;
+    --status-dsp-bg: #4c0519;
+    --status-dsp-border: #4c0519;
+    /* Tipe aset */
+    --tipe-aktiva-text: #0d5c56;
+    --tipe-aktiva-bg: #d8edea;
+    --tipe-aktiva-border: #a7d2cc;
+    --tipe-peralatan-text: #475569;
+    --tipe-peralatan-bg: #e9edf0;
+    --tipe-peralatan-border: #b9c4ce;
+    /* Chart — nilai sama dengan light; hue netral-amian terbaca di navy */
+    --chart-1: #0d5c56;
+    --chart-2: #0e7490;
+    --chart-3: #b45309;
+    --chart-4: #1d6a9f;
+    --chart-5: #475569;
+    /* Sidebar */
+    --sidebar: #151d2a;
+    --sidebar-foreground: #e8eef2;
+    --sidebar-primary: #2a9b93;
+    --sidebar-primary-foreground: #0b1220;
+    --sidebar-accent: #1b2534;
+    --sidebar-accent-foreground: #e8eef2;
+    --sidebar-border: #2a3544;
+    --sidebar-ring: #2a9b93;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+    * {
+        @apply border-border outline-ring/50;
+    }
 
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
+    body {
+        @apply bg-background font-sans text-foreground;
+    }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold;
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-semibold;
+    }
+
+    /*
+   * prefers-reduced-motion (DESIGN.md — Motion): gerakan spasial (slide/zoom/
+   * flip dari tw-animate/Radix) dihilangkan — elemen muncul/hilang instan.
+   * Feedback state yang bermakna (perubahan warna, opacity, bayangan) tetap
+   * teranimasi 150ms agar perubahan status tetap terbaca. Bukan kill global:
+   * state change dipertahankan, hanya gerakannya yang dilepas.
+   */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-property:
+                color, background-color, border-color, outline-color,
+                text-decoration-color, fill, stroke, opacity, box-shadow !important;
+            transition-duration: 150ms !important;
+        }
+    }
 }
 
-/* dashboard-layout-01 block: hide secondary nav labels when the sidebar collapses to icons */
+/* Sembunyikan label nav saat sidebar collapsed ke ikon (dipakai nav-collapse). */
 .group[data-collapsible='icon'] .hide-menu {
     @apply hidden;
+}
+
+/*
+ * Print / ekspor PDF dashboard. Scoped via `body:has([data-print-scope=
+ * "dashboard"])` — hanya aktif ketika halaman dashboard yang dicetak,
+ * halaman lain tidak terpengaruh.
+ *
+ * 1. Palet light dipaksa (nilai sama dengan :root) supaya cetak dari dark
+ *    mode tidak menghasilkan teks terang di atas kertas putih.
+ * 2. Gradient mesh, shadow, dan chrome aplikasi (sidebar, top bar)
+ *    dilepas; latar putih, tinta gelap, border tipis.
+ * 3. Perataan halaman (break-inside-avoid) & elemen interaktif
+ *    (print:hidden) diatur di komponen @/components/dashboard/*.
+ */
+@media print {
+    body:has([data-print-scope='dashboard']) {
+        /* Palet light — sama dengan :root di atas. */
+        --background: #ffffff;
+        --foreground: #15202b;
+        --card: #ffffff;
+        --card-foreground: #15202b;
+        --popover: #ffffff;
+        --popover-foreground: #15202b;
+        --secondary: #e9edf0;
+        --secondary-foreground: #15202b;
+        --muted: #e9edf0;
+        --muted-foreground: #5a6a7a;
+        --accent: #e9edf0;
+        --accent-foreground: #15202b;
+        --border: #d5dce3;
+        --input: #d5dce3;
+        --success: #1b7f5a;
+        --warning: #b45309;
+        --error: #b42318;
+        --surface-sunken: #e9edf0;
+        --primary-muted: #d8edea;
+        --primary-muted-border: #a7d2cc;
+        --border-strong: #b9c4ce;
+        --status-act-text: #166534;
+        --status-act-bg: #dcfce7;
+        --status-act-border: #86efac;
+        --status-loan-text: #1e40af;
+        --status-loan-bg: #dbeafe;
+        --status-loan-border: #93c5fd;
+        --status-rpr-text: #92400e;
+        --status-rpr-bg: #fef3c7;
+        --status-rpr-border: #fcd34d;
+        --status-mut-text: #155e75;
+        --status-mut-bg: #cffafe;
+        --status-mut-border: #67e8f9;
+        --status-dsp-text: #9f1239;
+        --status-dsp-bg: #ffe4e6;
+        --status-dsp-border: #fda4af;
+        --chart-1: #0d5c56;
+        --chart-2: #0e7490;
+        --chart-3: #b45309;
+        --chart-4: #1d6a9f;
+        --chart-5: #475569;
+        --primary: #0d5c56;
+        --primary-foreground: #ffffff;
+        --ring: #0d5c56;
+        --destructive: #b42318;
+        --tipe-aktiva-text: #0d5c56;
+        --tipe-aktiva-bg: #d8edea;
+        --tipe-peralatan-text: #475569;
+        --tipe-peralatan-bg: #e9edf0;
+
+        background: #ffffff;
+    }
+
+    /* Chrome aplikasi disembunyikan; konten dashboard jadi satu alur. */
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-wrapper'],
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-rail'] {
+        display: none;
+    }
+
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-inset'] {
+        margin: 0;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    body:has([data-print-scope='dashboard'])
+        [data-slot='sidebar-inset']
+        > header {
+        display: none;
+    }
+
+    /* Tanpa gradient & shadow; latar putih, teks gelap. */
+    body:has([data-print-scope='dashboard']) [data-print-scope='dashboard'] * {
+        background-image: none;
+        box-shadow: none;
+    }
 }

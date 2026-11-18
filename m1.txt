@@ -1,0 +1,108 @@
+=== main config/services.php lines 30-57
+     1	
+     2	    'slack' => [
+     3	        'notifications' => [
+     4	            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+     5	            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+     6	        ],
+     7	    ],
+     8	    'oidc' => [
+     9	        'base_url' => env('OIDC_BASE_URL'),
+    10	        'client_id' => env('OIDC_CLIENT_ID'),
+    11	        'client_secret' => env('OIDC_CLIENT_SECRET'),
+    12	        'redirect' => env('OIDC_REDIRECT_URI'),
+    13	        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+    14	        'token_url' => env('OIDC_TOKEN_URL'),
+    15	        'user_info_url' => env('OIDC_USER_INFO_URL'),
+    16	        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+    17	        'logout_url' => env('OIDC_LOGOUT_URL'),
+    18	        'guzzle' => [
+    19	            'http_errors' => false,
+    20	            'verify' => env('OIDC_VERIFY_SSL', true),
+    21	        ],
+    22	    ],
+    23	    'optigate_portal' => [
+    24	        'url' => env('WEB_PORTAL_URL'),
+    25	        'token' => env('WEB_PORTAL_TOKEN'),
+    26	        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+    27	    ],
+    28	];
+
+=== main AppServiceProvider socialite
+22-use Illuminate\Support\Facades\DB;
+23-use Illuminate\Support\Facades\Event;
+24-use Illuminate\Support\Facades\Gate;
+25-use Illuminate\Support\ServiceProvider;
+26-use Illuminate\Validation\Rules\Password;
+27:use SocialiteProviders\Manager\SocialiteWasCalled;
+28-
+29-class AppServiceProvider extends ServiceProvider
+30-{
+31-    /**
+32-     * Register any application services.
+33-     */
+34-    public function register(): void
+35-    {
+36-        //
+37-    }
+38-
+39-    /**
+40-     * Bootstrap any application services.
+41-     */
+42-    public function boot(): void
+43-    {
+44-        $this->configureDefaults();
+45-        $this->registerOidcProvider();
+46-        $this->registerActivityObservers();
+47-        $this->registerAssetObservers();
+--
+83-        );
+84-    }
+85-
+86-    protected function registerOidcProvider(): void
+87-    {
+88:        Event::listen(SocialiteWasCalled::class, function (SocialiteWasCalled $event): void {
+89:            $event->extendSocialite('oidc', OIDCProvider::class);
+90-        });
+91-    }
+92-
+93-    // Grant Super Admin role to the first user (FR-14).
+94-    // This is a temporary solution until a proper user management system is implemented.
+95-    // In a production environment, this should be handled with caution.
+96-    protected function grantSuperAdmin(): void
+97-    {
+98-        Gate::before(function ($user, $ability) {
+99-            return $user->hasRole('super-admin') ? true : null;
+100-        });
+101-    }
+102-
+103-    /**
+104-     * Roles are assigned to Employee records in the Employees section; sync
+105-     * them onto the matching User at login so they take effect for gates.
+106-     */
+107-    protected function syncUserRolesOnLogin(): void
+108-    {
+109-        Event::listen(Login::class, function (Login $event): void {
+
+=== main routes/web.php oidc block
+    Route::put('roles/{role}/permissions', [RoleController::class, 'syncPermissions'])->name('roles.permissions.sync');
+
+    Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+    Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
+    Route::patch('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+    Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
+});
+
+Route::prefix('auth')->group(function () {
+    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');
+});
+Route::middleware('auth')->group(function () {
+    Route::get('asset-disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
+    Route::get('asset-disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
+    Route::post('asset-disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
+    Route::get('asset-disposals/{disposal}', [AssetDisposalController::class, 'show'])->name('disposals.show');
+    Route::post('asset-disposals/{disposal}/approve', [AssetDisposalController::class, 'approve'])->name('disposals.approve');
+    Route::post('asset-disposals/{disposal}/reject', [AssetDisposalController::class, 'reject'])->name('disposals.reject');

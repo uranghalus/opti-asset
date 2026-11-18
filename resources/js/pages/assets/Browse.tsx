@@ -283,7 +283,7 @@ export default function Browse({ pageProps }: BrowseProps) {
     return (
         <div
             className={cn(
-                'relative flex min-h-[100dvh] flex-col bg-surface-base text-text-primary',
+                'relative flex min-h-[100dvh] flex-col bg-background text-foreground',
                 selected.size > 0 && 'pb-32 lg:pb-8',
                 isProcessing && 'pointer-events-none opacity-60',
             )}
@@ -292,7 +292,7 @@ export default function Browse({ pageProps }: BrowseProps) {
                 <div className="relative transition-all duration-200">
                     {isProcessing && (
                         <div className="absolute top-1/2 left-1/2 z-[200] -translate-x-1/2 -translate-y-1/2">
-                            <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-sm font-semibold text-text-primary shadow-[var(--shadow-overlay)]">
+                            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-overlay">
                                 <Spinner className="size-4" />
                                 Mencatat...
                             </div>
@@ -344,7 +344,7 @@ export default function Browse({ pageProps }: BrowseProps) {
 
                         <section
                             aria-label="Daftar aset"
-                            className="soft-card-static flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-xl p-0"
+                            className="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card p-0"
                         >
                             <AssetFilterBar
                                 search={search}

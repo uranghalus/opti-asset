@@ -1,0 +1,20 @@
+=== delete in development history
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+=== f8a7a28 name-status oidc files
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+D	app/Http/Controllers/OIDCController.php
+D	app/Providers/OIDCProvider.php
+M	config/services.php
+D	tests/Unit/OIDCProviderTest.php
+
+=== uncommitted routes/web.php diff (oidc/saml only)
+-    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 500)
++    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 401)
+=== .env OIDC vars presence
+0
+=== .env.example OIDC
+=== storage/logs mtime
+-rw-r--r-- 1 root root 7263256 2026-11-17 10:15:01.496857773 +0800 storage/logs/laravel.log
+=== .git mtime
+drwxr-xr-x 8 root root 4096 2026-11-17 12:37:58.982677923 +0800 .git
+=== Memory vault dirs

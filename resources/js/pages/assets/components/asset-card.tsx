@@ -74,9 +74,9 @@ export function AssetCard({
         <article
             aria-label={asset.kode_asset ?? 'Aset tanpa kode'}
             className={cn(
-                'group relative flex gap-3 rounded-lg border border-border-subtle bg-surface-card p-3 shadow-soft transition-[box-shadow,transform,border-color] duration-200',
-                'hover:shadow-elevated hover:-translate-y-[2px] hover:border-brand-subtle',
-                selected && 'bg-brand-subtle border-brand',
+                'group relative flex gap-3 rounded-lg border border-border bg-card p-3 transition-[border-color,background-color] duration-200',
+                'hover:border-border-strong',
+                selected && 'bg-primary-muted border-primary-muted-border',
                 isDisposed && 'opacity-70 saturate-[0.6]',
             )}
         >
@@ -95,7 +95,7 @@ export function AssetCard({
                 href={withReturnTo(show.url({ asset: asset.id }))}
                 aria-hidden={photoUrl ? undefined : true}
                 tabIndex={photoUrl ? undefined : -1}
-                className="block size-12 shrink-0 overflow-hidden rounded-lg border border-border-subtle bg-surface-sunken shadow-inset"
+                className="block size-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-sunken "
             >
                 {photoUrl ? (
                     <img
@@ -105,7 +105,7 @@ export function AssetCard({
                         className="size-full object-cover"
                     />
                 ) : (
-                    <span className="flex size-full items-center justify-center text-text-tertiary">
+                    <span className="flex size-full items-center justify-center text-muted-foreground">
                         <Package
                             aria-hidden
                             className="size-5"
@@ -121,11 +121,11 @@ export function AssetCard({
                     <div className="min-w-0">
                         <Link
                             href={withReturnTo(show.url({ asset: asset.id }))}
-                            className="block truncate text-sm font-semibold text-text-primary transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                            className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                             {asset.item?.name ?? 'Tanpa nama'}
                         </Link>
-                        <p className="mt-0.5 truncate font-mono text-xs text-text-tertiary">
+                        <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                             {asset.kode_asset ?? 'â€”'}
                         </p>
                     </div>
@@ -135,7 +135,7 @@ export function AssetCard({
                     </div>
                 </div>
 
-                <p className="mt-0.5 truncate text-xs text-text-tertiary">
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {[asset.brand, asset.model].filter(Boolean).join(' Â· ')}
                     {asset.serial_number && ` Â· SN ${asset.serial_number}`}
                 </p>
@@ -143,7 +143,7 @@ export function AssetCard({
                 {chainParts.length > 0 && (
                     <p
                         aria-label="Klasifikasi"
-                        className="line-clamp-2 text-xs leading-relaxed break-words text-text-tertiary"
+                        className="line-clamp-2 text-xs leading-relaxed break-words text-muted-foreground"
                     >
                         {chainParts.map((part) => (
                             <span
@@ -151,12 +151,12 @@ export function AssetCard({
                                 className="mr-2 inline-flex items-baseline gap-1"
                             >
                                 {part.code && (
-                                    <span className="font-mono font-semibold text-text-primary/80">
+                                    <span className="font-mono font-semibold text-foreground/80">
                                         {part.code}
                                     </span>
                                 )}
                                 <span>{part.name}</span>
-                                <span className="text-text-tertiary/70">
+                                <span className="text-muted-foreground/70">
                                     {part.label}
                                 </span>
                             </span>
@@ -165,7 +165,7 @@ export function AssetCard({
                 )}
 
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-                    <div className="flex min-w-0 flex-col gap-0.5 text-xs text-text-tertiary">
+                    <div className="flex min-w-0 flex-col gap-0.5 text-xs text-muted-foreground">
                         <span className="inline-flex min-w-0 items-center gap-1.5">
                             <MapPin aria-hidden className="size-3.5 shrink-0" />
                             <span className="truncate">
@@ -192,7 +192,7 @@ export function AssetCard({
                                 variant="soft-secondary"
                                 size="icon"
                                 aria-label="Lihat detail"
-                                className="size-9 rounded-md hover:bg-surface-hover"
+                                className="size-9 rounded-md hover:bg-accent"
                             >
                                 <FileText className="size-4" />
                             </Button>
@@ -204,7 +204,7 @@ export function AssetCard({
                                 variant="soft-secondary"
                                 size="icon"
                                 aria-label="Ubah aset"
-                                className="size-9 rounded-md hover:bg-surface-hover"
+                                className="size-9 rounded-md hover:bg-accent"
                             >
                                 <Pencil className="size-4" />
                             </Button>
@@ -214,7 +214,7 @@ export function AssetCard({
                             size="icon"
                             aria-label="Hapus aset"
                             onClick={onDelete}
-                            className="size-9 rounded-md hover:bg-surface-hover hover:text-destructive"
+                            className="size-9 rounded-md hover:bg-accent hover:text-destructive"
                         >
                             <Trash2 className="size-4 text-destructive" />
                         </Button>

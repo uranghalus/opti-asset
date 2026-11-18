@@ -285,7 +285,7 @@ export function MediaUploader({
             >
                 <span
                     className={cn(
-                        'flex size-11 items-center justify-center rounded-md border shadow-sm transition-all duration-200 group-hover:scale-105',
+                        'flex size-11 items-center justify-center rounded-md border transition-colors duration-200',
                         dragging
                             ? 'border-primary/30 bg-primary/15 text-primary'
                             : 'border-primary/20 bg-primary/10 text-primary',
@@ -386,7 +386,7 @@ function CommittedItem({
                 type="button"
                 aria-label="Hapus file"
                 onClick={onRemove}
-                className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:bg-destructive hover:text-white"
             >
                 <Trash2 className="size-3" />
             </button>

@@ -1,0 +1,55 @@
+=== branches
+* development d9b82aa [origin/development] feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+  main        59edbb6 [origin/main] Merge pull request #10 from uranghalus/development
+
+=== HEAD oidc/saml files
+RUNBOOK_SAML_TENANT_SYNC.md
+app/Http/Controllers/Auth/SamlController.php
+app/Services/SamlTenantResolution.php
+app/Services/SamlTenantResolver.php
+config/saml.php
+database/migrations/2026_08_28_165900_add_oidc_fields_to_users_table.php
+database/migrations/2026_10_28_000000_drop_oidc_id_from_users_table.php
+planning/saml-login-tenant-sync-plan.md
+planning/saml-login-tenant-sync-sprint-plan.md
+planning/sprint-saml-login-tenant-routing.md
+tests/Feature/Auth/SamlAcsSessionTest.php
+tests/Feature/SamlLoginTest.php
+tests/Feature/Services/SamlAcsTenantTest.php
+tests/Feature/Services/SamlTenantResolutionTest.php
+tests/Feature/Services/SamlTenantResolverTest.php
+
+=== HEAD app/Http/Controllers listing
+app/Http/Controllers/AssetCategoryController.php
+app/Http/Controllers/AssetClassificationController.php
+app/Http/Controllers/AssetController.php
+app/Http/Controllers/AssetDisposalController.php
+app/Http/Controllers/AssetHistoryController.php
+app/Http/Controllers/AssetTransferController.php
+app/Http/Controllers/AuditLogController.php
+app/Http/Controllers/Auth
+app/Http/Controllers/CategoryController.php
+app/Http/Controllers/Controller.php
+app/Http/Controllers/DashboardController.php
+app/Http/Controllers/ItemController.php
+app/Http/Controllers/LocationController.php
+app/Http/Controllers/Org
+app/Http/Controllers/PermissionController.php
+app/Http/Controllers/ReportController.php
+app/Http/Controllers/RoleController.php
+app/Http/Controllers/Settings
+app/Http/Controllers/SuperAdminGrantController.php
+app/Http/Controllers/TenantController.php
+app/Http/Controllers/TenantSwitchController.php
+
+=== HEAD app/Providers listing
+app/Providers/AppServiceProvider.php
+app/Providers/FortifyServiceProvider.php
+
+=== HEAD composer.json oidc/saml deps
+18:        "laravel/socialite": "^5.29",
+21:        "onelogin/php-saml": "^4.0",
+
+=== HEAD config/saml.php exists?
+config/saml.php
+config/services.php

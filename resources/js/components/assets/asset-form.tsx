@@ -321,7 +321,7 @@ export function AssetForm({
                                 'flex size-8 shrink-0 items-center justify-center rounded-md border',
                                 previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
-                                    : 'border-border bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground',
+                                    : 'border-border bg-surface-sunken text-muted-foreground dark:bg-muted dark:text-muted-foreground',
                             )}
                         >
                             <Tags className="size-4" strokeWidth={1.75} />

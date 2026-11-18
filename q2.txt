@@ -1,0 +1,15 @@
+=== log context 07:29
+
+=== stash
+
+=== find kovah dirs on fs
+/root/.cache/composer/files/kovah
+
+=== OIDCProvider history all
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+17aa024 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+a4da23a feat: add import result panel to display import summary and errors
+f2cfd32 feat(dashboard): add new components and charts for enhanced asset management
+
+=== main composer.lock socialiteproviders/oidc
+5181:            "name": "socialiteproviders/manager",

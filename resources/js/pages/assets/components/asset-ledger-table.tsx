@@ -53,7 +53,7 @@ function ScopeCells({
 
     return (
         <td className="max-w-[220px] px-3 py-2.5 text-xs">
-            <span className="line-clamp-2 break-words text-ink-subtle dark:text-muted-foreground/70">
+            <span className="line-clamp-2 break-words text-muted-foreground dark:text-muted-foreground/70">
                 {columns.map((level) => {
                     const node = byLevel[level];
 
@@ -107,7 +107,7 @@ export function AssetLedgerTable({
         <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
                 <thead className="sticky top-0 z-10 bg-surface-sunken">
-                    <tr className="border-b border-border-subtle text-left text-xs font-medium text-text-tertiary">
+                    <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
                         <th scope="col" className="w-10 px-3 py-2.5">
                             <span className="sr-only">Pilih</span>
                         </th>
@@ -161,9 +161,9 @@ export function AssetLedgerTable({
                                     )
                                 }
                                 className={cn(
-                                    'cursor-pointer border-b border-border-subtle/70 transition-colors hover:bg-surface-hover',
+                                    'cursor-pointer border-b border-border/70 transition-colors hover:bg-accent',
                                     selected.has(asset.id) &&
-                                        'bg-brand-subtle',
+                                        'bg-primary-muted',
                                     isDisposed && 'opacity-70 saturate-[0.6]',
                                 )}
                             >
@@ -180,7 +180,7 @@ export function AssetLedgerTable({
                                         className="size-4.5"
                                     />
                                 </td>
-                                <td className="px-3 py-2.5 font-mono text-xs text-text-tertiary tabular-nums">
+                                <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tabular-nums">
                                     {asset.kode_asset ?? 'â€”'}
                                 </td>
                                 <td className="max-w-[240px] px-3 py-2.5">
@@ -189,11 +189,11 @@ export function AssetLedgerTable({
                                             show.url({ asset: asset.id }),
                                         )}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="block truncate font-semibold text-text-primary transition-colors hover:text-brand"
+                                        className="block truncate font-semibold text-foreground transition-colors hover:text-primary"
                                     >
                                         {asset.item?.name ?? 'Tanpa nama'}
                                     </Link>
-                                    <p className="truncate text-xs text-text-tertiary">
+                                    <p className="truncate text-xs text-muted-foreground">
                                         {[asset.brand, asset.model]
                                             .filter(Boolean)
                                             .join(' Â· ')}
@@ -209,12 +209,12 @@ export function AssetLedgerTable({
                                     <TipeBadge value={asset.asset_type} />
                                 </td>
                                 <ScopeCells asset={asset} columns={scopeCols} />
-                                <td className="max-w-[160px] px-3 py-2.5 text-xs text-text-tertiary">
+                                <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
                                         {asset.location?.name ?? 'â€”'}
                                     </span>
                                 </td>
-                                <td className="max-w-[160px] px-3 py-2.5 text-xs text-text-tertiary">
+                                <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
                                         {asset.department?.nama_department ??
                                             'â€”'}
@@ -234,7 +234,7 @@ export function AssetLedgerTable({
                                                 variant="soft-secondary"
                                                 size="icon"
                                                 aria-label="Lihat detail"
-                                                className="size-8 rounded-md hover:bg-surface-hover"
+                                                className="size-8 rounded-md hover:bg-accent"
                                             >
                                                 <FileText className="size-3.5" />
                                             </Button>
@@ -248,7 +248,7 @@ export function AssetLedgerTable({
                                                 variant="soft-secondary"
                                                 size="icon"
                                                 aria-label="Ubah aset"
-                                                className="size-8 rounded-md hover:bg-surface-hover"
+                                                className="size-8 rounded-md hover:bg-accent"
                                             >
                                                 <Pencil className="size-3.5" />
                                             </Button>
@@ -258,7 +258,7 @@ export function AssetLedgerTable({
                                             size="icon"
                                             aria-label="Hapus aset"
                                             onClick={() => onDelete(asset)}
-                                            className="size-8 rounded-md hover:bg-surface-hover hover:text-destructive"
+                                            className="size-8 rounded-md hover:bg-accent hover:text-destructive"
                                         >
                                             <Trash2 className="size-3.5 text-destructive" />
                                         </Button>

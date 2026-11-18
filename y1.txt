@@ -1,0 +1,42 @@
+=== diff routes/web.php (full)
+diff --git a/routes/web.php b/routes/web.php
+index 5d09c63..9b9f8ea 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -191,7 +191,7 @@
+ Route::get('auth/error', function () {
+     $message = session('error', 'Terjadi kesalahan saat login SSO.');
+ 
+-    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 500)
++    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 401)
+         ->header('Content-Type', 'text/html');
+ })->name('auth.error');
+ 
+
+=== main log dates top 8
+59edbb6 2026-09-25 14:02:07 +0800 Merge pull request #10 from uranghalus/development
+089a60f 2026-09-25 13:59:41 +0800 feat: enhance asset management with classification levels and improved filtering
+17aa024 2026-09-24 17:01:45 +0800 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+266ab1a 2026-09-24 13:37:04 +0800 Mark design tickets 12-15 done; record asset page revamp in memory
+74f970c 2026-09-24 13:36:28 +0800 Add desktop ledger table with persistent view toggle (design ticket 15)
+e573dec 2026-09-24 13:27:31 +0800 Rebuild AssetCard as the signature ledger card (design ticket 14)
+4648a61 2026-09-24 13:20:21 +0800 De-glass asset page shell and translate manifest jargon (design ticket 13)
+d2cb226 2026-09-24 13:07:41 +0800 On-system status and classification recipes (design ticket 12)
+
+=== main .env.example OIDC block
+72-WEB_PORTAL_VERIFY_SSL=true
+73-
+74:# OIDC SSO (Kovah Socialite OIDC)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=
+
+=== main APP_URL
+5:APP_URL=http://localhost
+=== dev .env APP_URL
+5:APP_URL=http://localhost

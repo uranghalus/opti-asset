@@ -77,7 +77,7 @@ class RolePermissionTest extends TestCase
                 ->has('roles.data', 1)
                 ->where('roles.data.0.name', 'manager')
                 ->where('roles.data.0.users_count', 0)
-                ->has('permissionGroups', 5)
+                ->has('permissionGroups', 6)
                 ->where('permissionGroups.0.group', 'asset.location')
                 ->where('permissionGroups.2.group', 'inventory'));
     }
@@ -190,7 +190,7 @@ class RolePermissionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('permissions/Index')
                 ->where('permissions.total', Permission::count())
-                ->has('groups', 5)
+                ->has('groups', 6)
                 ->where('groups.0.name', 'asset.location')
                 ->where('groups.2.name', 'inventory'));
 

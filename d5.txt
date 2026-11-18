@@ -1,0 +1,32 @@
+=== onelogin version installed
+            "name": "onelogin/php-saml",
+            "version": "4.3.2",
+            "source": {
+onelogin/php-saml 4.3.2
+
+=== config/saml.php values resolved
+
+ saml .. 
+ strict .. false 
+ debug .. false 
+ idp ⇁ entityId .. https://gate.appdutamall.com/saml/metadata 
+ idp ⇁ singleSignOnService ⇁ url .. https://gate.appdutamall.com/saml/sso 
+ idp ⇁ singleSignOnService ⇁ binding urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect 
+ idp ⇁ singleLogoutService ⇁ url .. https://gate.appdutamall.com/saml/slo 
+ idp ⇁ singleLogoutService ⇁ binding urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect 
+ idp ⇁ x509cert MIID6jCCAtKgAwIBAgIBADANBgkqhkiG9w0BAQsFADCBjTELMAkGA1UEBhMCSUQxEDAOBgNVBAgMB0pha2FydGExEDAOBgNVBAcMB0pha2FydGExETAPBgNVBAoMCE9wdGlHYXRlMSgwJgYDVQQLDB9JVCBJZGVudGl0eSAmIEFjY2VzcyBNYW5hZ2VtZW50MR0wGwYDVQQDDBRnYXRlLmFwcGR1dGFtYWxsLmNvbTAeFw0yNjA5MTQwMjM4NDRaFw0zNjA5MTEwMjM4NDRaMIGNMQswCQYDVQQGEwJJRDEQMA4GA1UECAwHSmFrYXJ0YTEQMA4GA1UEBwwHSmFrYXJ0YTERMA8GA1UECgwIT3B0aUdhdGUxKDAmBgNVBAsMH0lUIElkZW50aXR5ICYgQWNjZXNzIE1hbmFnZW1lbnQxHTAbBgNVBAMMFGdhdGUuYXBwZHV0YW1hbGwuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApJNmKj0shbkZR5tj7rHdcvFKtSmDW29rUFKQafQs3HpSAvGvqEsgNYWet2nnA5uXP1x1FfxxkKYqJzmmJT/SwBwNVYw/FRRHy7qJgAQFfbGIFnTxNU3PGdo9vaeR9xdw8TeQpxMUmVgK0Etr7NjMScEgiWpbmbMsvJiKcfSjjKx0qvRk07oabAgis06c6fzTpsIju8Zj2MhXvdXQuHCVwyG/t+OFKlLupiAujkQReYUBxRAGUBorEcossVHZoH/9EkpvNHI9FaWMvIjLLaQJpGhGPso3KOTvCSdKzB3kx0/sNasI1rtxJAlstMOf9tk/2v9Op4nwNyxiDQsN8Rsh7QIDAQABo1MwUTAdBgNVHQ4EFgQUyrP41Q+xnuis6Esa3wJXN4hNoSEwHwYDVR0jBBgwFoAUyrP41Q+xnuis6Esa3wJXN4hNoSEwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAe5QwGYZCbbM7lYcEP9ppNzsVYNo5MUZ72Mbb2pVluObS7P5nh+0TzrhyD0taKmHclZII+wlMLcur51gltRGz7Z042zBGNwUR/jddpMmvkIR1+jCYVv5r0jN0fM35lD+PSCAqef4TBaCtpFTvsKCl+0bGE7AG7tdAwksMHqfabyNsFW+As5H7Qd6YoBjxJHyrAqeWnDbOLdfnqnan3VNw941dpEeAXuI6rMEfglh01jiUrZy40yaLrEGzvfmPD7do78o5MHHN4/4Ov5+HA2CEjTAHpVt6pCto77f+5YzSLNN0aXvGkFR69/UJB5dU7hvAKMNT1HBOD6FU/B0gncHU3g== 
+ sp ⇁ entityId .. http://localhost:8000/auth/saml/opti-saml-metadata 
+ sp ⇁ assertionConsumerService ⇁ url http://localhost:8000/auth/saml/opti-saml-acs 
+ sp ⇁ assertionConsumerService ⇁ binding urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST 
+ sp ⇁ singleLogoutService ⇁ url http://localhost:8000/auth/saml/opti-saml-logout 
+ sp ⇁ singleLogoutService ⇁ binding urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect 
+ sp ⇁ NameIDFormat .. urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress 
+ sp ⇁ x509cert .. 
+ sp ⇁ privateKey .. 
+ security ⇁ NameIDEncrypted .. false 
+ security ⇁ attributesEncrypted .. false 
+ security ⇁ wantMessagesSigned .. false 
+ security ⇁ wantAssertionsSigned .. true 
+ security ⇁ wantNameId .. true 
+ security ⇁ requestedAuthnContext .. false 
+

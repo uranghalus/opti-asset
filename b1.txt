@@ -1,0 +1,20 @@
+=== apache vhosts enabled
+total 8
+drwxr-xr-x 2 root root 4096 Jan 12  2024 .
+drwxr-xr-x 8 root root 4096 Nov 13 02:21 ..
+lrwxrwxrwx 1 root root   31 Jan 12  2024 adminer.conf -> ../sites-available/adminer.conf
+lrwxrwxrwx 1 root root   31 Jan 12  2024 laravel.conf -> ../sites-available/laravel.conf
+
+=== vhost contents (docroot/SetEnv)
+
+=== .env OIDC exact
+NO OIDC VARS in .env
+
+=== .env files present
+-rw-r--r-- 1 root root 4374 Nov 16 15:29 .env
+-rw-r--r-- 1 root root 1691 Nov 16 15:38 .env.example
+
+=== main .env OIDC?
+
+=== current branch config/services.php oidc
+NO oidc block on development

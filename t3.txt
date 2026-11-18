@@ -1,0 +1,59 @@
+=== reflog dated
+d9b82aa HEAD@{2026-11-17 10:18:00 +0800}: reset: moving to HEAD
+d9b82aa HEAD@{2026-11-16 15:38:52 +0800}: checkout: moving from main to development
+59edbb6 HEAD@{2026-11-16 13:24:04 +0800}: clone: from https://github.com/uranghalus/opti-asset.git
+
+=== log file stat
+2026-11-17 10:15:01.496857773 +0800 storage/logs/laravel.log
+
+=== all log timestamps
+[2026-11-17 01:47:57] testing.ERROR
+[2026-11-17 01:47:57] testing.ERROR
+[2026-11-17 01:48:39] testing.ERROR
+[2026-11-17 01:48:49] testing.ERROR
+[2026-11-17 01:48:49] testing.ERROR
+[2026-11-17 01:48:49] testing.ERROR
+[2026-11-17 01:48:49] testing.ERROR
+[2026-11-17 01:48:49] testing.ERROR
+
+=== CONTEXT.md
+# Opti-Asset
+
+Multi-tenant asset management for Indonesian enterprise operations: classification, registration, scan, mutation, disposal, audit trail.
+
+## Language
+
+### Classification
+
+**Klasifikasi**:
+The four-level hierarchy that organizes assets: Golongan → Kategori → Cluster → Sub-Cluster.
+_Avoid_: folder, directory, tree path
+
+**Golongan (Group)**:
+Top classification level; the broad family an asset belongs to.
+_Avoid_: class, type, category
+
+**Kategori (Category)**:
+Second classification level, child of a Golongan.
+_Avoid_: group, class
+
+**Cluster**:
+Third classification level, child of a Kategori.
+_Avoid_: group, family
+
+**Sub-Cluster**:
+Fourth and finest classification level, child of a Cluster.
+_Avoid_: subcategory, item type
+
+**Kode Klasifikasi**:
+Dotted code identifying the full path Golongan.Kategori.Cluster.Sub-Cluster (e.g. `03.08.01.03`). Always rendered in monospace.
+_Avoid_: class code, folder ID
+
+**Tanpa Klasifikasi**:
+Bucket for assets with no classification assigned; always listed last with its count.
+_Avoid_: unclassified node, other, root
+
+**Drill-down**:
+Navigation that narrows the asset list by entering one classification node at a time.
+_Avoid_: filtering, faceting
+

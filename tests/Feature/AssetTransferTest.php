@@ -305,13 +305,13 @@ class AssetTransferTest extends TestCase
     public function test_guests_are_redirected_from_index(): void
     {
         $this->get(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 
     public function test_guests_are_redirected_from_create(): void
     {
         $this->get(route('tenant.asset-transfers.create', ['tenant' => $this->tenant->code]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 
     public function test_approve_records_asset_history(): void

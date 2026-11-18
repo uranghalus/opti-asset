@@ -31,7 +31,7 @@ import type {
 import { LEVEL_LABELS } from '@/types/classification';
 
 type ItemRouteFn = (
-    args: Record<string, string | number>,
+    args: any,
 ) => { url: string; method: string };
 
 const UPDATE: Record<ClassificationLevel, ItemRouteFn> = {

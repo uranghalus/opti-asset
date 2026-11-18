@@ -91,7 +91,7 @@ type DeleteState = {
     item: ClassificationNode;
 };
 
-type RouteFn = (id: string) => { url: string; method: string };
+type RouteFn = (id?: any) => { url: string; method: string };
 
 const DESTROY: Record<ClassificationLevel, RouteFn> = {
     group: destroyGroup,

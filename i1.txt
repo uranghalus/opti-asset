@@ -1,0 +1,77 @@
+=== branches
+* development d9b82aa [origin/development] feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+  main        59edbb6 [origin/main] Merge pull request #10 from uranghalus/development
+
+=== recent log all
+* d9b82aa (HEAD -> development, origin/development) feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+* b162377 feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+* 0806c9c feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+* 4f81987 feat(layout): header dashboard baru (search, tenant, notifikasi, tema, profil)
+* 1d5d3a2 feat(layout): sidebar blok memakai navigasi tenant-aware app
+* 272eb50 feat(layout): helper tautan sidebar ter-flatten ber-prefix tenant
+* 07a724c feat(layout): izinkan ProfileDropdown blok menerima user, link, dan sign-out nyata
+* 9e87252 feat(layout): izinkan Search blok menerima daftar tautan dari app
+* 45a198f docs: laporan kerja harian 2026-11-03 (redesign sidebar shadcn)
+* aa9a20e chore: terapkan perubahan pre-staged (SAML, divisi, skills, routes, tests)
+* b89252b feat: sidebar layout redesign to shadcn-dashboard reference
+* 4f08f7c Refactor tenant-related tests to use tenant code instead of ID, update routes accordingly, and remove obsolete OrganizationTest and TenantSwitchTest files.
+* 5d64335 feat: tenant sync reconfiguration + SAML login & tenant set (opti-works port)
+* 888db71 feat(tenant-switch): backend contract + frontend UI (Phases 1-2) + PRD gap closure tests
+* 6f0f569 fix(depreciation): concurrency-safe snapshotBookValue + feature tests
+
+=== main: config/services.php oidc
+35-        ],
+36-    ],
+37:    'oidc' => [
+38-        'base_url' => env('OIDC_BASE_URL'),
+39-        'client_id' => env('OIDC_CLIENT_ID'),
+40-        'client_secret' => env('OIDC_CLIENT_SECRET'),
+41-        'redirect' => env('OIDC_REDIRECT_URI'),
+42-        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+43-        'token_url' => env('OIDC_TOKEN_URL'),
+44-        'user_info_url' => env('OIDC_USER_INFO_URL'),
+45-        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+46-        'logout_url' => env('OIDC_LOGOUT_URL'),
+47-        'guzzle' => [
+48-            'http_errors' => false,
+49-            'verify' => env('OIDC_VERIFY_SSL', true),
+50-        ],
+51-    ],
+52-    'optigate_portal' => [
+53-        'url' => env('WEB_PORTAL_URL'),
+54-        'token' => env('WEB_PORTAL_TOKEN'),
+55-        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+56-    ],
+57-];
+
+=== main: grep OIDC app routes
+main:app/Http/Controllers/OIDCController.php:9:use App\Providers\OIDCProvider;
+main:app/Http/Controllers/OIDCController.php:20:class OIDCController extends Controller
+main:app/Http/Controllers/OIDCController.php:28:        return Socialite::driver('oidc')->redirect();
+main:app/Http/Controllers/OIDCController.php:34:            /** @var OIDCProvider $driver */
+main:app/Http/Controllers/OIDCController.php:35:            $driver = Socialite::driver('oidc');
+main:app/Http/Controllers/OIDCController.php:40:            Log::info('OIDC Raw Data:', $rawData);
+main:app/Http/Controllers/OIDCController.php:66:                    'oidc_id' => $ssoUser->getId(),
+main:app/Http/Controllers/OIDCController.php:91:            $request->session()->put('oidc_id_token', $idToken);
+main:app/Http/Controllers/OIDCController.php:95:            Log::error('OIDC SSO Callback Error: '.$e->getMessage());
+main:app/Http/Controllers/OIDCController.php:123:            $oidcId = $payload->sub;
+main:app/Http/Controllers/OIDCController.php:124:            $user = User::where('oidc_id', $oidcId)->first();
+main:app/Http/Controllers/OIDCController.php:150:            Log::error('OIDC Backchannel Logout Error: '.$th->getMessage());
+main:app/Models/User.php:18:#[Fillable(['name', 'email', 'password', 'tenant_id', 'department', 'oidc_id', 'last_login_at', 'last_login_ip'])]
+main:app/Providers/AppServiceProvider.php:45:        $this->registerOidcProvider();
+main:app/Providers/AppServiceProvider.php:86:    protected function registerOidcProvider(): void
+main:app/Providers/AppServiceProvider.php:89:            $event->extendSocialite('oidc', OIDCProvider::class);
+main:app/Providers/OIDCProvider.php:8:use SocialiteProviders\OIDC\Provider as BaseProvider;
+main:app/Providers/OIDCProvider.php:10:class OIDCProvider extends BaseProvider
+main:app/Providers/OIDCProvider.php:22:     * Use explicit OAuth endpoints when the provider does not expose OIDC discovery.
+main:app/Providers/OIDCProvider.php:91:     * Override getUserByToken untuk mendukung pemanggilan OIDC_USER_INFO_URL (api/user) dari Gate
+main:app/Providers/OIDCProvider.php:96:        $url = config('services.oidc.user_info_url') ?: $this->getUserInfoUrl();
+main:config/fortify.php:130:    | application authenticates exclusively via corporate SSO (OIDC).
+main:config/services.php:37:    'oidc' => [
+main:config/services.php:38:        'base_url' => env('OIDC_BASE_URL'),
+main:config/services.php:39:        'client_id' => env('OIDC_CLIENT_ID'),
+main:config/services.php:40:        'client_secret' => env('OIDC_CLIENT_SECRET'),
+main:config/services.php:41:        'redirect' => env('OIDC_REDIRECT_URI'),
+main:config/services.php:42:        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+main:config/services.php:43:        'token_url' => env('OIDC_TOKEN_URL'),
+main:config/services.php:44:        'user_info_url' => env('OIDC_USER_INFO_URL'),

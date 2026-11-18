@@ -1,0 +1,67 @@
+=== onelogin vendor present?
+vendor/onelogin/php-saml
+PRESENT
+
+=== composer.lock has onelogin?
+3531:            "name": "onelogin/php-saml",
+
+=== composer.json require
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "laravel/react-starter-kit",
+    "type": "project",
+    "description": "The skeleton application for the Laravel framework.",
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
+    "license": "MIT",
+"require": {
+        "php": "^8.3",
+        "barryvdh/laravel-dompdf": "*",
+        "inertiajs/inertia-laravel": "^3.0",
+        "laravel/chisel": "^0.1.0",
+        "laravel/fortify": "^1.37.2",
+        "laravel/framework": "^13.17",
+        "laravel/socialite": "^5.29",
+        "laravel/tinker": "^3.0",
+        "laravel/wayfinder": "^0.1.14",
+        "onelogin/php-saml": "^4.0",
+        "opcodesio/log-viewer": "^3.24",
+        "spatie/laravel-multitenancy": "^4.1",
+        "spatie/laravel-permission": "^8.3",
+        "spatie/simple-excel": "^3.10"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.24",
+        "fruitcake/laravel-debugbar": "^4.4",
+        "larastan/larastan": "^3.9",
+        "laravel/boost": "^2.2",
+        "laravel/pail": "^1.2.5",
+        "laravel/pao": "^1.0.6",
+        "laravel/pint": "^1.27",
+        "laravel/sail": "^1.53",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.9.3",
+        "phpunit/phpunit": "^12.5.23"
+    },
+    "autoload": {
+
+=== vendor autoload onelogin?
+4
+
+=== saml config keys in .env
+75:# SAML SSO (onelogin/php-saml)
+76:SAML_STRICT=false
+77:SAML_DEBUG=false
+78:SAML_IDP_ENTITY_ID="https://gate.appdutamall.com/saml/metadata"
+79:SAML_IDP_SSO_URL="https://gate.appdutamall.com/saml/sso"
+80:SAML_IDP_SLO_URL="https://gate.appdutamall.com/saml/slo"
+81:SAML_IDP_CERT="MIID6jCCAtKgAwIBAgIBADANBgkqhkiG9w0BAQsFADCBjTELMAkGA1UEBhMCSUQxEDAOBgNVBAgMB0pha2FydGExEDAOBgNVBAcMB0pha2FydGExETAPBgNVBAoMCE9wdGlHYXRlMSgwJgYDVQQLDB9JVCBJZGVudGl0eSAmIEFjY2VzcyBNYW5hZ2VtZW50MR0wGwYDVQQDDBRnYXRlLmFwcGR1dGFtYWxsLmNvbTAeFw0yNjA5MTQwMjM4NDRaFw0zNjA5MTEwMjM4NDRaMIGNMQswCQYDVQQGEwJJRDEQMA4GA1UECAwHSmFrYXJ0YTEQMA4GA1UEBwwHSmFrYXJ0YTERMA8GA1UECgwIT3B0aUdhdGUxKDAmBgNVBAsMH0lUIElkZW50aXR5ICYgQWNjZXNzIE1hbmFnZW1lbnQxHTAbBgNVBAMMFGdhdGUuYXBwZHV0YW1hbGwuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApJNmKj0shbkZR5tj7rHdcvFKtSmDW29rUFKQafQs3HpSAvGvqEsgNYWet2nnA5uXP1x1FfxxkKYqJzmmJT/SwBwNVYw/FRRHy7qJgAQFfbGIFnTxNU3PGdo9vaeR9xdw8TeQpxMUmVgK0Etr7NjMScEgiWpbmbMsvJiKcfSjjKx0qvRk07oabAgis06c6fzTpsIju8Zj2MhXvdXQuHCVwyG/t+OFKlLupiAujkQReYUBxRAGUBorEcossVHZoH/9EkpvNHI9FaWMvIjLLaQJpGhGPso3KOTvCSdKzB3kx0/sNasI1rtxJAlstMOf9tk/2v9Op4nwNyxiDQsN8Rsh7QIDAQABo1MwUTAdBgNVHQ4EFgQUyrP41Q+xnuis6Esa3wJXN4hNoSEwHwYDVR0jBBgwFoAUyrP41Q+xnuis6Esa3wJXN4hNoSEwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAe5QwGYZCbbM7lYcEP9ppNzsVYNo5MUZ72Mbb2pVluObS7P5nh+0TzrhyD0taKmHclZII+wlMLcur51gltRGz7Z042zBGNwUR/jddpMmvkIR1+jCYVv5r0jN0fM35lD+PSCAqef4TBaCtpFTvsKCl+0bGE7AG7tdAwksMHqfabyNsFW+As5H7Qd6YoBjxJHyrAqeWnDbOLdfnqnan3VNw941dpEeAXuI6rMEfglh01jiUrZy40yaLrEGzvfmPD7do78o5MHHN4/4Ov5+HA2CEjTAHpVt6pCto77f+5YzSLNN0aXvGkFR69/UJB5dU7hvAKMNT1HBOD6FU/B0gncHU3g=="
+82:SAML_SP_ENTITY_ID=http://localhost:8000/auth/saml/opti-saml-metadata
+83:SAML_SP_ACS_URL=http://localhost:8000/auth/saml/opti-saml-acs
+84:SAML_SP_SLO_URL=http://localhost:8000/auth/saml/opti-saml-logout
+85:SAML_SP_CERT=
+86:SAML_SP_PRIVATE_KEY=***
+87:SAML_WANT_MESSAGES_SIGNED=false
+88:SAML_WANT_ASSERTIONS_SIGNED=true

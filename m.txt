@@ -1,0 +1,45 @@
+=== main composer.json
+15:        "kovah/laravel-socialite-oidc": "^0.8.0",
+19:        "laravel/socialite": "^5.29",
+
+=== main composer.lock socialiteproviders/oidc
+
+=== main config/services.php
+37:    'oidc' => [
+38-        'base_url' => env('OIDC_BASE_URL'),
+39-        'client_id' => env('OIDC_CLIENT_ID'),
+40-        'client_secret' => env('OIDC_CLIENT_SECRET'),
+41-        'redirect' => env('OIDC_REDIRECT_URI'),
+42-        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+43-        'token_url' => env('OIDC_TOKEN_URL'),
+44-        'user_info_url' => env('OIDC_USER_INFO_URL'),
+45-        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+46-        'logout_url' => env('OIDC_LOGOUT_URL'),
+47-        'guzzle' => [
+48-            'http_errors' => false,
+49-            'verify' => env('OIDC_VERIFY_SSL', true),
+50-        ],
+51-    ],
+52-    'optigate_portal' => [
+53-        'url' => env('WEB_PORTAL_URL'),
+54-        'token' => env('WEB_PORTAL_TOKEN'),
+55-        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+56-    ],
+57-];
+
+=== main grep base_uri
+
+=== nginx?
+ls: cannot access '/etc/nginx/sites-enabled/': No such file or directory
+
+=== running php/nginx
+root         267  0.0  0.2 345484 39616 ?        Ss   Nov16   0:01 php-fpm: master process (/etc/php/8.4/fpm/php-fpm.conf)
+root         432  0.0  0.2 228604 33380 ?        Ss   Nov16   0:01 /usr/sbin/apache2 -k start
+www-data     438  0.0  0.0   3432  1376 ?        Ss   Nov16   0:01 /usr/bin/htcacheclean -d 120 -p /var/cache/apache2/mod_cache_disk -l 300M -n
+www-data     745  0.0  0.0 345484 10300 ?        S    Nov16   0:00 php-fpm: pool www
+www-data     746  0.0  0.0 345484 10300 ?        S    Nov16   0:00 php-fpm: pool www
+root        1630  0.1  0.4 185820 74252 ?        Ss   Nov16   1:03 php artisan boost:mcp
+www-data   19637  0.0  0.0 228692 12136 ?        S    00:00   0:00 /usr/sbin/apache2 -k start
+www-data   19638  0.0  0.0 228692 12136 ?        S    00:00   0:00 /usr/sbin/apache2 -k start
+www-data   19639  0.0  0.0 228692 12136 ?        S    00:00   0:00 /usr/sbin/apache2 -k start
+www-data   19640  0.0  0.0 228692 12136 ?        S    00:00   0:00 /usr/sbin/apache2 -k start

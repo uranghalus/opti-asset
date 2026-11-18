@@ -1,0 +1,61 @@
+=== onelogin installed?
+php-saml
+
+=== composer.lock onelogin
+3531:            "name": "onelogin/php-saml",
+
+=== git status
+ M .opencode/plugins/graphify.js
+ M routes/web.php
+?? a1.txt
+?? b1.txt
+?? f1.txt
+?? g1.txt
+?? graphify-out/
+?? h1.txt
+?? i.txt
+?? i1.txt
+?? j1.txt
+?? k3.txt
+?? m.txt
+?? m1.txt
+?? n1.txt
+?? o1.txt
+?? p2.txt
+?? q.txt
+?? q2.txt
+?? r.txt
+
+=== git log -3
+d9b82aa feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+b162377 feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+0806c9c feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+
+=== laravel.log OIDC/SAML errors (last 10 lines of file)
+ /var/www/opti-asset/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\\Framework\\TestSuite->run()
+#79 /var/www/opti-asset/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\\Framework\\TestSuite->run()
+#80 /var/www/opti-asset/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit\\TextUI\\TestRunner->run()
+#81 /var/www/opti-asset/vendor/phpunit/phpunit/phpunit(104): PHPUnit\\TextUI\\Application->run()
+#82 {main}
+"} {"tenantId":"acme"}
+[2026-11-17 01:04:04] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+[2026-11-17 01:07:11] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+[2026-11-17 01:07:11] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+[2026-11-17 01:09:17] local.INFO: LoginProvisioningService: platform super-admin self-healed {"email":"superadmin@appdutamall.com"} 
+[2026-11-17 01:09:17] local.INFO: SAML tenant resolution: tenant found {"company":"Duta Mall Banjarmasin","tenant_id":"01M67WPDZA4KC2GGG415WPF1E0","tenant_code":"DMB"} 
+[2026-11-17 01:09:17] local.INFO: SAML login success: superadmin@appdutamall.com {"tenant_id":"01M67WPDZA4KC2GGG415WPF1E0","tenant_code":"DMB"} 
+[2026-11-17 01:44:24] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+[2026-11-17 01:46:50] testing.INFO: LoginProvisioningService: guest role assigned {"email":"test@example.com"} 
+[2026-11-17 01:46:50] testing.INFO: SAML tenant resolution: tenant found {"company":"PT Tata Optima Property","tenant_id":"tenant-top","tenant_code":"top"} 
+[2026-11-17 01:46:50] testing.INFO: SAML login success: test@example.com {"tenant_id":"tenant-top","tenant_code":"top"} 
+[2026-11-17 01:46:50] testing.ERROR: SAML ACS Exception: Undefined array key "cn"  
+[2026-11-17 01:46:50] testing.ERROR: SAML ACS errors: Signature validation failed  
+[2026-11-17 01:46:50] testing.ERROR: SAML ACS NameID: null  
+[2026-11-17 01:46:50] testing.ERROR: SAML ACS attributes: []  
+[2026-11-17 01:46:50] testing.ERROR: SAML ACS raw response: fake...  
+[2026-11-17 01:47:40] testing.INFO: LoginProvisioningService: guest role assigned {"email":"ridho.fatahillah@tataoptima.com"} 
+[2026-11-17 01:47:40] testing.INFO: SAML tenant resolution: tenant found {"company":"PT Tata Optima Property","tenant_id":"tenant-top","tenant_code":"top"} 
+[2026-11-17 01:47:40] testing.INFO: SAML login success: ridho.fatahillah@tataoptima.com {"tenant_id":"tenant-top","tenant_code":"top"} 
+[2026-11-17 01:47:40] testing.INFO: LoginProvisioningService: guest role assigned {"email":"karyawan@lainnya.com"} 
+[2026-11-17 01:47:40] testing.WARNING: SAML tenant resolution: no tenant matches company name {"company":"PT Lainnya"} 
+[2026-11-17 01:47:40] testing.WARNING: SAML login denied: no_match {"email":"karyawan@lainnya.com","reason":"no_match"} 

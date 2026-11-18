@@ -1,0 +1,38 @@
+=== branch
+development
+ M .opencode/plugins/graphify.js
+?? a1.txt
+?? graphify-out/
+?? m.txt
+?? q.txt
+?? r.txt
+?? s.txt
+?? t1.txt
+?? v.txt
+?? v2.txt
+
+=== development: oidc/sso refs
+development:resources/js/components/ui/select.tsx:73:        avoidCollisions={false}
+
+=== main composer.lock kovah
+1584:            "name": "kovah/laravel-socialite-oidc",
+1585-            "version": "v0.8.0",
+1586-            "source": {
+1587-                "type": "git",
+1588-                "url": "https://github.com/Kovah/laravel-socialite-oidc.git",
+1589-                "reference": "cfd9c9a658da97b961d936159c45ca4ed082e62a"
+1590-            },
+1591-            "dist": {
+1592-                "type": "zip",
+1593-                "url": "https://api.github.com/repos/Kovah/laravel-socialite-oidc/zipball/cfd9c9a658da97b961d936159c45ca4ed082e62a",
+1594-                "reference": "cfd9c9a658da97b961d936159c45ca4ed082e62a",
+1595-                "shasum": ""
+1596-            },
+1597-            "require": {
+1598-                "ext-json": "*",
+
+=== repo grep base_uri
+optigate-complete-api-docs.md:2518:$client = new Client(['base_uri' => 'https://gate.appdutamall.com']);
+optigate-complete-api-docs.md:2549:$client = new Client(['base_uri' => 'https://gate.appdutamall.com']);
+
+=== repo grep configure base

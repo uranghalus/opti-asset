@@ -21,22 +21,22 @@ export type LevelTint = {
 export const LEVEL_TINTS: Record<ClassificationLevel, LevelTint> = {
     group: {
         bg: 'bg-surface-sunken dark:bg-muted',
-        fg: 'text-ink-muted dark:text-muted-foreground',
+        fg: 'text-muted-foreground',
         solid: '#5a6a7a',
     },
     category: {
         bg: 'bg-surface-sunken dark:bg-muted',
-        fg: 'text-ink-muted dark:text-muted-foreground',
+        fg: 'text-muted-foreground',
         solid: '#5a6a7a',
     },
     cluster: {
         bg: 'bg-surface-sunken dark:bg-muted',
-        fg: 'text-ink-muted dark:text-muted-foreground',
+        fg: 'text-muted-foreground',
         solid: '#5a6a7a',
     },
     'sub-cluster': {
         bg: 'bg-surface-sunken dark:bg-muted',
-        fg: 'text-ink-muted dark:text-muted-foreground',
+        fg: 'text-muted-foreground',
         solid: '#5a6a7a',
     },
 };

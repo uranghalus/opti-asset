@@ -1,0 +1,73 @@
+=== diff stat HEAD (first 40)
+ .agents/skills/agents-orchestrator/SKILL.md        |    364 -
+ .agents/skills/ask-matt/SKILL.md                   |     21 +-
+ .agents/skills/codebase-design/DESIGN-IT-TWICE.md  |      2 +-
+ .agents/skills/design-brand-guardian/SKILL.md      |    319 -
+ .agents/skills/design-ui-designer/SKILL.md         |    383 -
+ .agents/skills/design-ux-architect/SKILL.md        |    479 -
+ .agents/skills/design-ux-researcher/SKILL.md       |    326 -
+ .agents/skills/diagnosing-bugs/SKILL.md            |      2 +-
+ .../{GLOSSARY-FORMAT.md => CONTEXT-FORMAT.md}      |     20 +-
+ .agents/skills/domain-modeling/SKILL.md            |     24 +-
+ .../skills/engineering-backend-architect/SKILL.md  |    246 -
+ .../skills/engineering-devops-automator/SKILL.md   |    382 -
+ .../skills/engineering-frontend-developer/SKILL.md |    228 -
+ .../skills/engineering-senior-developer/SKILL.md   |    173 -
+ .agents/skills/impeccable/SKILL.md                 |     24 +-
+ .../agents/impeccable_asset_producer.toml          |     84 +-
+ .../impeccable/agents/impeccable_documenter.toml   |      6 +-
+ .../agents/impeccable_finish_reviewer.toml         |     25 +-
+ .../agents/impeccable_manual_edit_applier.toml     |      2 +-
+ .agents/skills/impeccable/reference/android.md     |      6 -
+ .agents/skills/impeccable/reference/animate.md     |      3 -
+ .../skills/impeccable/reference/audit.native.md    |      2 +-
+ .agents/skills/impeccable/reference/bolder.md      |      4 +-
+ .agents/skills/impeccable/reference/craft-floor.md |      1 -
+ .agents/skills/impeccable/reference/critique.md    |     40 +-
+ .../reference/degraded/asset-producer.md           |     84 +-
+ .../impeccable/reference/degraded/documenter.md    |      6 +-
+ .../reference/degraded/finish-reviewer.md          |     25 +-
+ .../reference/degraded/manual-edit-applier.md      |      2 +-
+ .agents/skills/impeccable/reference/distill.md     |      2 +-
+ .agents/skills/impeccable/reference/doctor.md      |      9 +-
+ .agents/skills/impeccable/reference/document.md    |      2 +-
+ .agents/skills/impeccable/reference/extract.md     |      2 +-
+ .agents/skills/impeccable/reference/hooks.md       |     46 +-
+ .agents/skills/impeccable/reference/init.md        |     16 +-
+ .agents/skills/impeccable/reference/ios.md         |      6 -
+ .agents/skills/impeccable/reference/layout.md      |      2 +-
+ .agents/skills/impeccable/reference/live-setup.md  |     18 +-
+ .agents/skills/impeccable/reference/live.md        |     62 +-
+ .agents/skills/impeccable/reference/new-work.md    |    107 +-
+
+=== main recent log
+59edbb6 Merge pull request #10 from uranghalus/development
+089a60f feat: enhance asset management with classification levels and improved filtering
+17aa024 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+266ab1a Mark design tickets 12-15 done; record asset page revamp in memory
+74f970c Add desktop ledger table with persistent view toggle (design ticket 15)
+e573dec Rebuild AssetCard as the signature ledger card (design ticket 14)
+4648a61 De-glass asset page shell and translate manifest jargon (design ticket 13)
+d2cb226 On-system status and classification recipes (design ticket 12)
+8f3ddfb Mark design ticket 01 done in tracker; refresh project memory and code graph
+432d92d Apply Opname Field Desk v2.0 tokens: Public Sans + teal ledger theme, opaque glass contract
+51663e5 Replace Soft UI / Amex / NOON identity with Opname Field Desk design brief.
+9cd0726 Merge pull request #9 from uranghalus/development
+ffabfdd Merge branch 'development' of https://github.com/uranghalus/opti-asset into development
+a4da23a feat: add import result panel to display import summary and errors
+5b6018c Merge pull request #8 from uranghalus/development
+
+=== main log touching OIDC files
+17aa024 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+a4da23a feat: add import result panel to display import summary and errors
+befa9f4 refactor: remove welcome page and redirect to SSO login
+e5a0e3b feat: add asset categories, departments, and employees management routes and tests
+d5ebedd feat: add tenant management functionality
+f2cfd32 feat(dashboard): add new components and charts for enhanced asset management
+9e4fae2 first commit
+
+=== main tree: auth files
+app/Http/Controllers/OIDCController.php
+app/Providers/OIDCProvider.php
+database/migrations/2026_08_28_165900_add_oidc_fields_to_users_table.php
+tests/Unit/OIDCProviderTest.php

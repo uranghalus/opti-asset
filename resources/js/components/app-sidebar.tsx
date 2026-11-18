@@ -1,11 +1,8 @@
 import { usePage } from '@inertiajs/react';
 
-import SimpleBar from 'simplebar-react';
-
 import AppLogo from '@/components/app-logo';
 import { Badge } from '@/components/ui/badge';
 import { NavCollapse } from '@/components/nav-collapse';
-import { NavSecondary } from '@/components/nav-secondary';
 import { NavUser } from '@/components/nav-user';
 
 import {
@@ -24,10 +21,9 @@ export function AppSidebar() {
 
     return (
         <Sidebar
-            variant="inset"
             collapsible="icon"
             side="left"
-            className="border-r border-border bg-background"
+            className="border-r border-border bg-sidebar"
         >
             <SidebarHeader
                 className="p-3 group-data-[state=collapsed]:px-2.5 flex flex-row items-center justify-between border-b border-border"
@@ -39,20 +35,17 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <SimpleBar style={{ height: '100%' }}>
-                    <SidebarGroup
-                        className="flex items-center justify-center group-data-[state=collapsed]:px-2 px-3 py-4"
-                    >
-                        <div className="px-0 group-data-[state=collapsed]:px-0 w-full flex flex-col gap-4">
-                            <NavCollapse groups={sidebarData.navGroups} />
-                        </div>
-                    </SidebarGroup>
-                </SimpleBar>
+                <SidebarGroup
+                    className="flex items-center justify-center group-data-[state=collapsed]:px-2 px-3 py-4"
+                >
+                    <div className="px-0 group-data-[state=collapsed]:px-0 w-full flex flex-col gap-4">
+                        <NavCollapse groups={sidebarData.navGroups} />
+                    </div>
+                </SidebarGroup>
             </SidebarContent>
 
             <SidebarFooter className="p-4">
                 <div className="flex flex-col gap-2">
-                    <NavSecondary />
                     <NavUser />
                 </div>
             </SidebarFooter>

@@ -1,0 +1,27 @@
+=== main provider: override present?
+12:    public static function additionalConfigKeys(): array
+14:        return array_merge(parent::additionalConfigKeys(), [
+26:    protected function getOpenIdConfig(): array
+28:        $authorizationUrl = $this->getConfig('authorization_url');
+29:        $tokenUrl = $this->getConfig('token_url');
+35:                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
+39:        return parent::getOpenIdConfig();
+
+=== main provider history
+17aa024 2026-09-24 17:01:45 +0800 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+a4da23a 2026-09-19 09:51:49 +0800 feat: add import result panel to display import summary and errors
+f2cfd32 2026-07-21 16:53:01 +0800 feat(dashboard): add new components and charts for enhanced asset management
+
+=== main .env.example OIDC values (raw)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=
+
+=== .env SAML IdP entity id
+78:SAML_IDP_ENTITY_ID="https://gate.appdutamall.com/saml/metadata"
+79:SAML_IDP_SSO_URL="https://gate.appdutamall.com/saml/sso"

@@ -1,0 +1,40 @@
+=== f8a7a28 provider: getOpenIdConfig present?
+fatal: path 'app/Providers/OIDCProvider.php' does not exist in 'f8a7a28'
+
+=== main provider raw services oidc block (od)
+0000000  \n                   '   s   l   a   c   k   '       =   >    
+0000020   [  \n                                   '   n   o   t   i   f
+0000040   i   c   a   t   i   o   n   s   '       =   >       [  \n    
+0000060                                               '   b   o   t   _
+0000100   u   s   e   r   _   o   a   u   t   h   _   t   o   k   e   n
+
+=== git show main config/services.php lines 30-55
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
+    ],
+    'oidc' => [
+        'base_url' => env('OIDC_BASE_URL'),
+        'client_id' => env('OIDC_CLIENT_ID'),
+        'client_secret' => env('OIDC_CLIENT_SECRET'),
+        'redirect' => env('OIDC_REDIRECT_URI'),
+        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+        'token_url' => env('OIDC_TOKEN_URL'),
+        'user_info_url' => env('OIDC_USER_INFO_URL'),
+        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+        'logout_url' => env('OIDC_LOGOUT_URL'),
+        'guzzle' => [
+            'http_errors' => false,
+            'verify' => env('OIDC_VERIFY_SSL', true),
+        ],
+    ],
+    'optigate_portal' => [
+        'url' => env('WEB_PORTAL_URL'),
+        'token' => env('WEB_PORTAL_TOKEN'),
+        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+
+=== deploy workflows
+tests.yml

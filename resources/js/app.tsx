@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { setUrlDefaults } from '@/wayfinder';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'opti-asset';
 
 // Wayfinder tenant default URL parameter setup
 let activeTenantCode: string | null = null;
@@ -67,8 +67,12 @@ createInertiaApp({
             case name === 'assets/Labels':
             case name === 'assets/LabelsBatch':
                 return null;
+            case name.startsWith('Auth/'):
+                return null;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name.startsWith('Auth/'):
+                return null;
             default:
                 return DashboardLayout;
         }
@@ -84,7 +88,7 @@ createInertiaApp({
         );
     },
     progress: {
-        color: 'oklch(0.52 0.15 245)',
+        color: '#0D5C56',
         includeCSS: true,
         delay: 250,
     },

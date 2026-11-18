@@ -1,0 +1,43 @@
+=== reflog
+d9b82aa HEAD@{0}: reset: moving to HEAD
+d9b82aa HEAD@{1}: checkout: moving from main to development
+59edbb6 HEAD@{2}: clone: from https://github.com/uranghalus/opti-asset.git
+
+=== main..development commits
+d9b82aa feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+b162377 feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+0806c9c feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+4f81987 feat(layout): header dashboard baru (search, tenant, notifikasi, tema, profil)
+1d5d3a2 feat(layout): sidebar blok memakai navigasi tenant-aware app
+272eb50 feat(layout): helper tautan sidebar ter-flatten ber-prefix tenant
+07a724c feat(layout): izinkan ProfileDropdown blok menerima user, link, dan sign-out nyata
+9e87252 feat(layout): izinkan Search blok menerima daftar tautan dari app
+45a198f docs: laporan kerja harian 2026-11-03 (redesign sidebar shadcn)
+aa9a20e chore: terapkan perubahan pre-staged (SAML, divisi, skills, routes, tests)
+b89252b feat: sidebar layout redesign to shadcn-dashboard reference
+4f08f7c Refactor tenant-related tests to use tenant code instead of ID, update routes accordingly, and remove obsolete OrganizationTest and TenantSwitchTest files.
+5d64335 feat: tenant sync reconfiguration + SAML login & tenant set (opti-works port)
+888db71 feat(tenant-switch): backend contract + frontend UI (Phases 1-2) + PRD gap closure tests
+6f0f569 fix(depreciation): concurrency-safe snapshotBookValue + feature tests
+cc8cb48 feat(tenant-switch): backend contract + frontend UI (Phases 1-2)
+e54707e feat(tenant-switcher): replace hardcoded hex/slate with design tokens (Task 3)
+0a9ba3a feat(tenant-switch): rebuild trigger as switchable chip vs static label (phase 2 task 1)
+eb64200 feat(tenant-switch): rewrite switch() per blueprint §3 strict order
+b94c30f feat: add idempotent TenantSwitchPermissionSeeder
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+0403796 Merge branch 'main' of https://github.com/uranghalus/opti-asset into development
+63ecd88 feat: add depreciation settings page and related tests
+6397ae1 fix: adjust bottom positioning for mobile components to account for safe area insets
+
+=== main..development touching oidc/saml files
+aa9a20e chore: terapkan perubahan pre-staged (SAML, divisi, skills, routes, tests)
+M	routes/web.php
+5d64335 feat: tenant sync reconfiguration + SAML login & tenant set (opti-works port)
+M	routes/web.php
+cc8cb48 feat(tenant-switch): backend contract + frontend UI (Phases 1-2)
+M	routes/web.php
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+D	app/Http/Controllers/OIDCController.php
+D	app/Providers/OIDCProvider.php
+M	config/services.php
+M	routes/web.php

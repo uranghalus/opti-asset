@@ -103,7 +103,7 @@ export function AssetsPageHeader({
                             {scopeNode?.name ?? 'Aset'}
                         </span>
                         {scopeCode && (
-                            <span className="shrink-0 rounded-md bg-surface-sunken px-1.5 py-0.5 font-mono text-sm font-semibold text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                            <span className="shrink-0 rounded-md bg-surface-sunken px-1.5 py-0.5 font-mono text-sm font-semibold text-muted-foreground dark:bg-muted dark:text-muted-foreground">
                                 {scopeCode}
                             </span>
                         )}
@@ -122,7 +122,7 @@ export function AssetsPageHeader({
                         </span>{' '}
                         aset
                         {descendantFallback && (
-                            <span className="ml-2 rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-medium text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                            <span className="ml-2 rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-medium text-muted-foreground dark:bg-muted dark:text-muted-foreground">
                                 termasuk aset di sub-scope
                             </span>
                         )}

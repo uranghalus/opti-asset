@@ -32,7 +32,7 @@ import type {
 import { LEVEL_LABELS, TIPE_LABELS } from '@/types/classification';
 
 type RouteFn = (
-    args: Record<string, string | number>,
+    args?: any,
 ) => { url: string; method: string };
 
 const STORE: Record<ClassificationLevel, RouteFn> = {
@@ -200,7 +200,7 @@ export function ClassificationForm({
                                                     'flex h-11 items-center justify-center rounded-lg border text-sm font-medium transition-colors duration-150',
                                                     selected
                                                         ? 'border-primary-muted-border bg-primary-muted text-primary'
-                                                        : 'border-border bg-surface-sunken text-ink-muted hover:border-border-strong hover:text-foreground',
+                                                        : 'border-border bg-surface-sunken text-muted-foreground hover:border-border-strong hover:text-foreground',
                                                 )}
                                             >
                                                 {TIPE_LABELS[tipe]}

@@ -443,13 +443,13 @@ class AssetDisposalTest extends TestCase
     public function test_guests_are_redirected_from_index(): void
     {
         $this->get(route('tenant.disposals.index', ['tenant' => $this->tenant->code]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 
     public function test_guests_are_redirected_from_create(): void
     {
         $this->get(route('tenant.disposals.create', ['tenant' => $this->tenant->code]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 
     public function test_guests_are_redirected_from_show(): void
@@ -457,7 +457,7 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 
     public function test_guests_are_redirected_from_approve_and_reject(): void
@@ -465,9 +465,9 @@ class AssetDisposalTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
 
         $this->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('saml.login'));
     }
 }

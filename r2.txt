@@ -1,0 +1,52 @@
+=== git status short
+ M .opencode/plugins/graphify.js
+?? a1.txt
+?? b1.txt
+?? f1.txt
+?? g1.txt
+?? graphify-out/
+?? h1.txt
+?? i.txt
+?? i1.txt
+?? j1.txt
+?? k3.txt
+?? m.txt
+?? m1.txt
+?? n1.txt
+?? o1.txt
+?? p2.txt
+?? q.txt
+?? q2.txt
+?? r.txt
+?? r2.txt
+
+=== branch containing f8a7a28
+* development
+  remotes/origin/development
+
+=== full log entry (raw, first 3500 chars)
+[2026-11-16 05:34:58] production.ERROR: There are no commands defined in the "boost" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"boost\" namespace. at /var/www/opti-asset/vendor/symfony/console/Application.php:716)
+[stacktrace]
+#0 /var/www/opti-asset/vendor/symfony/console/Application.php(769): Symfony\\Component\\Console\\Application->findNamespace()
+#1 /var/www/opti-asset/vendor/symfony/console/Application.php(321): Symfony\\Component\\Console\\Application->find()
+#2 /var/www/opti-asset/vendor/symfony/console/Application.php(218): Symfony\\Component\\Console\\Application->doRun()
+#3 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#4 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1242): Illuminate\\Foundation\\Console\\Kernel->handle()
+#5 /var/www/opti-asset/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
+#6 {main}
+"} 
+[2026-11-16 07:29:41] local.ERROR: Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. {"exception":"[object] (SocialiteProviders\\OIDC\\ConfigurationFetchingException(code: 0): Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. at /var/www/opti-asset/vendor/kovah/laravel-socialite-oidc/src/Provider.php:233)
+[stacktrace]
+#0 /var/www/opti-asset/app/Providers/OIDCProvider.php(39): SocialiteProviders\\OIDC\\Provider->getOpenIdConfig()
+#1 /var/www/opti-asset/vendor/kovah/laravel-socialite-oidc/src/Provider.php(130): App\\Providers\\OIDCProvider->getOpenIdConfig()
+#2 /var/www/opti-asset/vendor/kovah/laravel-socialite-oidc/src/Provider.php(102): SocialiteProviders\\OIDC\\Provider->getAuthUrl()
+#3 /var/www/opti-asset/app/Http/Controllers/OIDCController.php(28): SocialiteProviders\\OIDC\\Provider->redirect()
+#4 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\\Http\\Controllers\\OIDCController->redirect()
+#5 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Routing/Route.php(276): Illuminate\\Routing\\ControllerDispatcher->dispatch()
+#6 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Routing/Route.php(216): Illuminate\\Routing\\Route->runController()
+#7 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\\Routing\\Route->run()
+#8 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Routing\\Router->{closure:Illuminate\\Routing\\Router::runRouteWithinStack():821}()
+#9 /var/www/opti-asset/vendor/laravel/boost/src/Middleware/InjectBoost.php(22): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():178}()
+#10 /var/www/opti-asset/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Laravel\\Boost\\Middleware\\InjectBoost->handle()
+#11 /var/www/opti-asset/vendor/inertiajs/inertia-laravel/src/Middleware.php(138): Illuminate\\Pipeline\\Pipeline->{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}()
+#12 /var/www/opti-asset/vendor/laravel/framework/src/

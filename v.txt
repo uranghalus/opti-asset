@@ -1,0 +1,19 @@
+=== working tree composer.lock kovah?
+
+=== /var/www/html
+ls: cannot access '/var/www/html': No such file or directory
+
+=== /var/www/laravel
+ls: cannot access '/var/www/laravel': No such file or directory
+
+=== symlinks to opti-asset
+
+=== apache env vars / vhost for opti
+/etc/apache2/sites-available/default-ssl.conf:65:	#   none, optional, require and optional_no_ca.  Depth is a
+/etc/apache2/sites-available/default-ssl.conf:72:	#   Set various options for the SSL engine.
+/etc/apache2/sites-available/default-ssl.conf:92:	#    This enables optimized SSL connection renegotiation handling when SSL
+
+=== logs containing Unable get OIDC on box
+
+=== laravel.log OIDC-ish lines
+24

@@ -113,7 +113,7 @@ export function ClassificationSidebar({
                 <h2 className="text-sm font-semibold text-foreground">
                     Indeks Klasifikasi
                 </h2>
-                <span className="rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-semibold text-ink-muted tabular-nums dark:bg-muted dark:text-muted-foreground">
+                <span className="rounded-sm bg-surface-sunken px-1.5 py-0.5 text-xs font-semibold text-muted-foreground tabular-nums dark:bg-muted dark:text-muted-foreground">
                     {tree.length}
                 </span>
             </div>

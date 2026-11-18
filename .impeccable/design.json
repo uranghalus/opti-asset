@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-17T00:00:00Z",
+  "title": "Design System: Opname Field Desk (v2.1)",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Mineral Teal",
+        "canonical": "#0D5C56",
+        "tonalRamp": ["#083B37", "#0A4A45", "#0D5C56", "#2A7A72", "#4F9A91", "#7FBAB2", "#A7D2CC", "#D8EDEA"]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cool Paper",
+        "canonical": "#F1F4F6",
+        "tonalRamp": ["#8593A2", "#B9C4CE", "#D5DCE3", "#E9EDF0", "#F1F4F6", "#F7F9FA", "#FBFCFC", "#FFFFFF"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#15202B",
+        "tonalRamp": ["#0B1220", "#15202B", "#2A3544", "#405061", "#5A6A7A", "#8593A2", "#B9C4CE", "#D5DCE3"]
+      },
+      "destructive": {
+        "role": "semantic",
+        "displayName": "Action Red",
+        "canonical": "#B42318"
+      },
+      "success": { "role": "semantic", "displayName": "Success Green", "canonical": "#1B7F5A" },
+      "warning": { "role": "semantic", "displayName": "Warning Amber", "canonical": "#B45309" },
+      "info": { "role": "semantic", "displayName": "Info Blue", "canonical": "#1D6A9F" },
+      "status-act-bg": { "role": "status", "displayName": "Aktif Tint", "canonical": "#DCFCE7" },
+      "status-loan-bg": { "role": "status", "displayName": "Dipinjamkan Tint", "canonical": "#DBEAFE" },
+      "status-rpr-bg": { "role": "status", "displayName": "Perbaikan Tint", "canonical": "#FEF3C7" },
+      "status-mut-bg": { "role": "status", "displayName": "Dimutasi Tint", "canonical": "#CFFAFE" },
+      "status-dsp-bg": { "role": "status", "displayName": "Dihapus Tint", "canonical": "#FFE4E6" },
+      "dark-bg": { "role": "dark", "displayName": "Dark Background", "canonical": "#0B1220" },
+      "dark-primary": { "role": "dark", "displayName": "Dark Primary Teal", "canonical": "#2A9B93" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Rare page titles only (Dashboard, Scan)." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers, detail page titles." },
+      "title": { "displayName": "Title", "purpose": "Card and dialog titles." },
+      "body": { "displayName": "Body", "purpose": "Forms, descriptions." },
+      "label": { "displayName": "Label", "purpose": "Field labels, table headers, buttons." },
+      "caption": { "displayName": "Caption", "purpose": "Meta, timestamps, table footnotes." },
+      "mono": { "displayName": "Mono", "purpose": "Kode aset, barcode, nilai buku — tabular-nums always." }
+    },
+    "shadows": [
+      { "name": "none", "value": "none", "purpose": "Resting surfaces; depth = border + paper-to-surface shift." },
+      { "name": "sticky", "value": "0 1px 0 rgba(21,32,43,0.08)", "purpose": "Sticky headers, tab bars, sticky footers." },
+      { "name": "overlay", "value": "0 8px 24px rgba(21,32,43,0.14)", "purpose": "Dialogs, popovers, dropdowns." },
+      { "name": "toast", "value": "0 4px 16px rgba(21,32,43,0.12)", "purpose": "Toasts only." }
+    ],
+    "motion": [
+      { "name": "micro", "value": "120ms", "purpose": "Chips, badges, hover tint." },
+      { "name": "standard", "value": "180ms", "purpose": "Sheets, dialogs, panels." },
+      { "name": "max", "value": "220ms", "purpose": "Hard maximum for any transition (toasts)." },
+      { "name": "easing", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Single easing token; dies under prefers-reduced-motion." },
+      { "name": "reduced-motion", "value": "spatial: none (instant); state: 150ms color/opacity/box-shadow only", "purpose": "prefers-reduced-motion path — spatial movement removed, state-change feedback preserved." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One per view — the main action. Mineral teal fill, white text, 8px radius.",
+      "html": "<button class=\"ds-btn-primary\">Simpan</button>",
+      "css": ".ds-btn-primary { background: #0D5C56; color: #FFFFFF; height: 40px; padding: 10px 16px; border: none; border-radius: 8px; font: 500 14px 'Public Sans', ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background 180ms cubic-bezier(0.32,0.72,0,1); } .ds-btn-primary:hover { background: #0A4A45; } .ds-btn-primary:active { background: #083B37; } .ds-btn-primary:focus-visible { outline: 2px solid #0D5C56; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Icon Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Toolbars and the top bar — 44px hit target, transparent until hover.",
+      "html": "<button class=\"ds-btn-icon\" aria-label=\"Notifikasi\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"/></svg></button>",
+      "css": ".ds-btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; color: #5A6A7A; border: none; border-radius: 8px; cursor: pointer; transition: background 120ms cubic-bezier(0.32,0.72,0,1), color 120ms cubic-bezier(0.32,0.72,0,1); } .ds-btn-icon:hover { background: #E9EDF0; color: #15202B; } .ds-btn-icon:focus-visible { outline: 2px solid #0D5C56; outline-offset: 2px; }"
+    },
+    {
+      "name": "Input / Search Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Opaque surface, 1px border, teal focus ring — no inset shadow, no glow.",
+      "html": "<div class=\"ds-input\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#8593A2\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input type=\"text\" placeholder=\"Cari aset, kode, atau barcode…\" aria-label=\"Cari aset, kode, atau barcode\"></div>",
+      "css": ".ds-input { display: flex; align-items: center; gap: 8px; width: 280px; height: 40px; padding: 8px 12px; background: #FFFFFF; border: 1px solid #D5DCE3; border-radius: 8px; } .ds-input:focus-within { border-color: #0D5C56; outline: 2px solid #0D5C56; outline-offset: 2px; } .ds-input input { flex: 1; border: none; background: transparent; font: 400 14px 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #15202B; outline: none; } .ds-input input::placeholder { color: #5A6A7A; }"
+    },
+    {
+      "name": "Status Badge (Aktif)",
+      "kind": "chip",
+      "refersTo": "status-badge-act",
+      "description": "Locked recipe: text + color + 1px border, soft rectangle. Never color-only.",
+      "html": "<span class=\"ds-badge-act\"><span class=\"ds-dot\"></span>Aktif</span>",
+      "css": ".ds-badge-act { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 2px 8px; background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; border-radius: 4px; font: 500 12px 'Public Sans', ui-sans-serif, system-ui, sans-serif; } .ds-dot { width: 6px; height: 6px; border-radius: 9999px; background: #166534; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "sidebar-item-active",
+      "description": "36px row; active = teal-muted selected row with teal border, never a filled primary block.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\" aria-current=\"page\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/></svg>Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7\" cy=\"7\" r=\"1\"/></svg>Aset</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 220px; padding: 8px; background: #F1F4F6; } .ds-nav-item { display: flex; align-items: center; gap: 12px; height: 36px; padding: 8px 12px; border: 1px solid transparent; border-radius: 8px; font: 500 14px 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #5A6A7A; text-decoration: none; transition: background 120ms cubic-bezier(0.32,0.72,0,1); } .ds-nav-item:hover { background: #E9EDF0; } .ds-nav-item.is-active { background: #D8EDEA; border-color: #A7D2CC; color: #0D5C56; } .ds-nav-item:focus-visible { outline: 2px solid #0D5C56; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card / Container",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Opaque white surface on cool paper, 1px border, 12px radius, no resting shadow.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Ringkasan Aset</h3><p class=\"ds-card-body\">1.248 aset aktif tercatat pada tenant ini.</p></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1px solid #D5DCE3; border-radius: 12px; padding: 16px; } .ds-card-title { margin: 0 0 4px; font: 600 18px 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #15202B; } .ds-card-body { margin: 0; font: 400 14px 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #5A6A7A; }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Honest emptiness: icon, one Bahasa Indonesia sentence, CTA only when real.",
+      "html": "<div class=\"ds-empty\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#8593A2\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"/></svg><p>Belum ada notifikasi</p></div>",
+      "css": ".ds-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; background: #FFFFFF; border: 1px dashed #D5DCE3; border-radius: 12px; } .ds-empty p { margin: 0; font: 400 14px 'Public Sans', ui-sans-serif, system-ui, sans-serif; color: #5A6A7A; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Opname Field Desk",
+    "overview": "The moment of stocktake: a cool-gray clipboard under fluorescent light, a mineral-teal inventory stamp, a barcode label, a stamped ledger line. Institutional without being cold; precise without being sterile. An instrument, not a showcase — surfaces are opaque, borders are 1px, codes are monospace, and status color is earned information, never decoration.",
+    "keyCharacteristics": [
+      "Mineral teal #0D5C56 on cool paper #F1F4F6 — stewardship, not finance-blue or SaaS purple",
+      "Opaque surfaces, 1px borders, structural-only shadows; no glass, no glow, no gradients on chrome",
+      "Public Sans for UI, Noto Sans Mono for codes and figures — tabular numerals in every table",
+      "Status-first color lock: five status hues are semantic, never decorative",
+      "Light-first field UI with an equal dark peer (cool navy) for desk night sessions",
+      "Data density 7/10 desktop lists, 5/10 mobile cards; touch targets ≥ 44×44px",
+      "Motion 3/10 — feedback only, 120–220ms, single easing, dies under prefers-reduced-motion"
+    ],
+    "rules": [
+      { "name": "The Status Lock Rule", "body": "Status hues are semantic, not free accents. The ACT green is never a Simpan button; the LOAN blue is never a link. Dihapus additionally gets muted row treatment — a tombstone, not a task.", "section": "colors" },
+      { "name": "The Two Reds Rule", "body": "destructive #B42318 belongs to actions (delete/reject). Status DSP owns its own red family. Merging them makes every Dihapus row look like a live delete button.", "section": "colors" },
+      { "name": "The No-Glass Rule", "body": "No glassmorphism, frosted panels, backdrop-filter on chrome, glow, or gradients on surfaces. Opaque + 1px border is the cheapest way to look trustworthy.", "section": "colors" },
+      { "name": "The Code Face Rule", "body": "Asset codes, barcode values, and monetary values are always mono with font-variant-numeric: tabular-nums — never the UI sans.", "section": "typography" },
+      { "name": "The Structural Shadow Rule", "body": "Shadows mark real elevation only. Multi-layer decorative shadows, colored glow, and inset neumorphism are banned.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use primary teal #0D5C56 for CTAs, links, focus rings, selection tints, and the brand mark — ≤ 10% of any screen",
+      "Do keep every surface opaque with a 1px border (#D5DCE3 light / #2A3544 dark)",
+      "Do set active sidebar/nav state as primary-muted + teal border with primary text",
+      "Do keep codes, barcodes, and money in Noto Sans Mono with tabular-nums; label copy in Bahasa Indonesia",
+      "Do keep exactly one header (the top bar), one version badge, and honest empty states everywhere",
+      "Do verify both themes and a 44px touch target before shipping any chrome element"
+    ],
+    "donts": [
+      "Don't use glass, backdrop-blur, glow, gradients, or purple — anywhere in chrome",
+      "Don't hardcode legacy accents (#2D82B7, sky-*, slate gradients) — use semantic tokens",
+      "Don't use Soft-UI inset shadows or hover-lift/translate on static controls; motion is feedback only, ≤ 220ms",
+      "Don't fill nav or widgets with mock data or dead links; an honest empty state beats a decorated lie",
+      "Don't reuse status hues for decoration or the primary color for status",
+      "Don't pill-shape CTAs, use emoji in chrome, or style asset codes in the UI sans"
+    ]
+  }
+}

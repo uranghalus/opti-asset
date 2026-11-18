@@ -121,8 +121,8 @@ export function AssetCardGrid({
     return (
         <div className="flex min-h-[500px] flex-1 flex-col">
             {/* Saklar tampilan â€” hanya relevan di lebar tabel (xl) */}
-            <div className="hidden items-center justify-end gap-1 border-b border-border-subtle px-4 py-2 xl:flex">
-                <span className="mr-auto text-xs text-text-tertiary">
+            <div className="hidden items-center justify-end gap-1 border-b border-border px-4 py-2 xl:flex">
+                <span className="mr-auto text-xs text-muted-foreground">
                     Tampilan
                 </span>
                 {VIEW_OPTIONS.map((option) => (
@@ -133,10 +133,10 @@ export function AssetCardGrid({
                         aria-pressed={view === option.value}
                         className={cn(
                             'inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors',
-                            'focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none',
+                            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                             view === option.value
-                                ? 'bg-surface-sunken text-text-primary'
-                                : 'text-text-tertiary hover:bg-surface-hover hover:text-text-primary',
+                                ? 'bg-surface-sunken text-foreground'
+                                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                         )}
                     >
                         <option.icon className="size-3.5" />
@@ -175,7 +175,7 @@ export function AssetCardGrid({
             )}
 
             {assets.last_page > 1 && (
-                <div className="border-t border-border-subtle p-4 sm:px-5">
+                <div className="border-t border-border p-4 sm:px-5">
                     <ResourcePagination
                         links={assets.links}
                         currentPage={assets.current_page}

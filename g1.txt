@@ -1,0 +1,79 @@
+=== current .env.example OIDC
+none
+
+=== main .env.example OIDC block
+72-WEB_PORTAL_VERIFY_SSL=true
+73-
+74:# OIDC SSO (Kovah Socialite OIDC)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=
+
+=== grep OIDC in logs (all)
+
+=== grep OIDC in whole repo working tree
+./database/seeders/RolePermissionSeeder.php:18:     * user baru (OIDC/registrasi) yang belum memiliki role apa pun.
+./PRODUCT.md:11:Enterprise asset managers and administrators who need to classify, organize, and manage organizational assets across multiple tenants/departments. Users authenticate via corporate SSO (OIDC) and operate in an Indonesian-language interface.
+./PRODUCT.md:23:- Users authenticate through corporate OIDC/SSO provider (no local password flow)
+./PRODUCT.md:52:- OIDC SSO integration with user provisioning
+./planning/ui-design.md:194:**Specs:** Select-like component in top header. Height 36px. Left: Building2 icon 16px. Text: tenant name 14px `--color-foreground`. Right: chevron-down 16px. Dropdown: list of tenants, each 40px, active highlighted `--color-primary` 10%. SSO/OIDC note: "Login via SSO" subtitle 11px `--color-muted-foreground`.
+./planning/ui-design.md:404:- [ ] Tenant Switcher with SSO/OIDC subtitle
+./planning/ux-research-report-part3.md:133:25. **Login** — SSO/OIDC (FR-10.4, FR-11.1)
+./planning/ux-research-report-part4.md:76:| Authentication | Corporate SSO/OIDC, no local password | PRODUCT.md |
+./planning/ux-research-report-part1.md:136:**Screens:** Login (SSO/OIDC), Permission configuration
+./planning/ux-research-report-part2.md:59:- Corporate SSO (OIDC) — no local password flow
+./planning/ia-navigation-design.md:26:| Auth | Corporate SSO/OIDC, no local passwords; session-based tenant switching |
+./planning/ia-navigation-design.md:292:1. Login (SSO/OIDC) → Dashboard
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:101:        return $this->getUserByOIDCToken($token) ??
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:106:     * Get user based on the OIDC token.
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:111:    protected function getUserByOIDCToken($token)
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:119:        $data = (array) JWT::decode($token, $this->getPublicKeyOfOIDCToken($kid));
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:138:     * Get the public key to verify the signature of OIDC token.
+./vendor/laravel/socialite/src/Two/FacebookProvider.php:143:    protected function getPublicKeyOfOIDCToken(string $kid)
+
+=== f8a7a28 stat
+commit f8a7a28273f6cf9359a0aaf7f6bc562fbe4d85a8
+Author: Muhammad Fauzan Laptop <muhammadfauzan7@gmail.com>
+Date:   Thu Oct 29 01:35:48 2026 +0800
+
+    feat: reconfigure role & permission system with superadmin grant
+    
+    Backend:
+    - Add super_admin_grants audit trail table with FKs to users
+    - Add SuperAdminGrant model with grantedBy/grantedTo/revokedBy relations
+    - Add SuperAdminGrantController (index/store/destroy)
+    - Add StoreSuperAdminGrantRequest and UpdateSuperAdminGrantRequest
+    - Add super-admin.{view,grant,revoke} permissions and gate abilities
+    - Assign super-admin permissions to administrator role
+    - Protect bootstrap superadmin@appdutamall.com from revocation
+    - 25 backend tests pass (145 assertions)
+    
+    Frontend:
+    - Add super-admin-grants Wayfinder routes and page (grant form + audit trail)
+    - Add PermissionMatrix, SuperAdminGrantForm, AuditTrailTable, ConfirmationDialog components
+    - Update roles/permissions pages with super-admin protection and bulk actions
+    - Update sidebar with Hak Akses SuperAdmin nav item (gate-based visibility)
+    - Indonesian UI copy throughout
+    - ESLint/Prettier/TypeScript clean
+
+ .agents/skills/ask-matt/SKILL.md                   |     21 +-
+ .agents/skills/codebase-design/DESIGN-IT-TWICE.md  |      2 +-
+ .agents/skills/diagnosing-bugs/SKILL.md            |      2 +-
+ .../{CONTEXT-FORMAT.md => GLOSSARY-FORMAT.md}      |     20 +-
+ .agents/skills/domain-modeling/SKILL.md            |     24 +-
+ .agents/skills/impeccable/SKILL.md                 |     24 +-
+ .../agents/impeccable_asset_producer.toml          |     84 +-
+ .../impeccable/agents/impeccable_documenter.toml   |      6 +-
+ .../agents/impeccable_finish_reviewer.toml         |     25 +-
+ .../agents/impeccable_manual_edit_applier.toml     |      2 +-
+ .agents/skills/impeccable/reference/android.md     |      6 +
+ .agents/skills/impeccable/reference/animate.md     |      3 +
+ .../skills/impeccable/reference/audit.native.md    |      2 +-
+ .agents/skills/impeccable/reference/bolder.md      |      4 +-
+ .agents/skills/impeccable/reference/craft-floor.md |      1 +
+ .agents/skills/impeccable/reference/critique.md    |     40 +-

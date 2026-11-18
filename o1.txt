@@ -1,0 +1,44 @@
+=== diff development..main stat
+ tests/Feature/DashboardAssetTypeBreakdownTest.php  |    124 -
+ tests/Feature/DashboardTest.php                    |     30 +-
+ tests/Feature/DepartmentTest.php                   |     19 +-
+ tests/Feature/DepreciationCalculatorTest.php       |    187 -
+ tests/Feature/DisposedAssetGuardTest.php           |    161 -
+ tests/Feature/EmployeeTest.php                     |      2 +-
+ tests/Feature/Error401Test.php                     |     38 -
+ tests/Feature/ExampleTest.php                      |      2 +-
+ tests/Feature/ItemCategoryLocationGateTest.php     |    435 -
+ tests/Feature/ItemTest.php                         |     50 +-
+ tests/Feature/LocationTest.php                     |     26 +-
+ tests/Feature/LoginRedirectTest.php                |     70 -
+ tests/Feature/OrganizationTest.php                 |    132 +
+ tests/Feature/PermissionsInfrastructureTest.php    |      2 +-
+ tests/Feature/ReportTest.php                       |     32 +-
+ tests/Feature/RoleFilterLevelTest.php              |     12 +-
+ tests/Feature/RolePermissionTest.php               |      2 +-
+ tests/Feature/SamlLoginTest.php                    |     95 -
+ .../Services/EmployeeSessionResolverTest.php       |    137 -
+ tests/Feature/Services/LoginLandingTest.php        |    116 -
+ .../Services/LoginProvisioningServiceTest.php      |     84 -
+ tests/Feature/Services/SamlAcsTenantTest.php       |     64 -
+ .../Feature/Services/SamlTenantResolutionTest.php  |     40 -
+ tests/Feature/Services/SamlTenantResolverTest.php  |    151 -
+ tests/Feature/Settings/DepreciationTest.php        |     23 -
+ tests/Feature/SuperAdminGrantTest.php              |    260 -
+ tests/Feature/SuperAdminRbacTest.php               |    177 -
+ tests/TestCase.php                                 |      8 -
+ tests/Unit/OIDCProviderTest.php                    |     46 +
+ 2064 files changed, 3647256 insertions(+), 151747 deletions(-)
+
+=== development:config/services.php oidc?
+NONE
+
+=== main:composer.json kovah
+15:        "kovah/laravel-socialite-oidc": "^0.8.0",
+
+=== development:composer.json kovah
+NONE
+
+=== reflog
+d9b82aa HEAD@{2026-11-16 15:38:52 +0800}: checkout: moving from main to development
+59edbb6 HEAD@{2026-11-16 13:24:04 +0800}: clone: from https://github.com/uranghalus/opti-asset.git

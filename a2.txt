@@ -1,0 +1,98 @@
+=== main config/services.php oidc block
+37:    'oidc' => [
+38-        'base_url' => env('OIDC_BASE_URL'),
+39-        'client_id' => env('OIDC_CLIENT_ID'),
+40-        'client_secret' => env('OIDC_CLIENT_SECRET'),
+41-        'redirect' => env('OIDC_REDIRECT_URI'),
+42-        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+43-        'token_url' => env('OIDC_TOKEN_URL'),
+44-        'user_info_url' => env('OIDC_USER_INFO_URL'),
+45-        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+46-        'logout_url' => env('OIDC_LOGOUT_URL'),
+47-        'guzzle' => [
+48-            'http_errors' => false,
+49-            'verify' => env('OIDC_VERIFY_SSL', true),
+50-        ],
+51-    ],
+
+=== main composer.lock kovah
+1584:            "name": "kovah/laravel-socialite-oidc",
+1585-            "version": "v0.8.0",
+1586-            "source": {
+1587-                "type": "git",
+1588-                "url": "https://github.com/Kovah/laravel-socialite-oidc.git",
+1589-                "reference": "cfd9c9a658da97b961d936159c45ca4ed082e62a"
+1590-            },
+
+=== workflows tests.yml
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        with:
+          node-version: '22'
+
+      - name: Setup Application
+        run: composer setup
+
+      - name: Run CI Checks
+        run: composer ci:check
+
+=== docs mentioning OIDC (worktree)
+
+=== main docs mentioning OIDC
+
+=== .env SAML IdP host only
+78:SAML_IDP_ENTITY_ID="https://gate.appdutamall.com
+
+=== git status clean view
+ M .opencode/plugins/graphify.js
+ M config/app.php
+ M resources/css/app.css
+ M resources/js/app.tsx
+ M resources/js/components/app-logo.tsx
+ M resources/js/components/app-sidebar-header.tsx
+ M resources/js/components/app-sidebar.tsx
+ D resources/js/components/dashboard-layout-header.tsx
+ M resources/js/components/nav-collapse.tsx
+ D resources/js/components/nav-secondary.tsx
+ M resources/js/components/nav-user.tsx
+ M resources/js/components/notification-bell.tsx
+ M resources/js/components/search-bar.tsx
+ D resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/app-sidebar.tsx
+ D resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-language.tsx
+ D resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile.tsx
+ D resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/nav-main.tsx
+ D resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/search.tsx
+ M resources/js/components/tenant-selector.tsx
+ M resources/js/components/theme-toggle.tsx
+ M resources/js/components/ui/input.tsx
+ M resources/js/layouts/app/dashboard-layout.tsx
+ D resources/js/lib/sidebar-links.ts
+ M routes/web.php

@@ -1,0 +1,32 @@
+=== delete history (full)
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+
+=== commits touching file between 59edbb6 and development tip
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+
+=== merge commit tree
+<?php
+
+namespace App\Providers;
+
+use GuzzleHttp\RequestOptions;
+use Laravel\Socialite\Two\InvalidStateException;
+use SocialiteProviders\Manager\OAuth2\User;
+use SocialiteProviders\OIDC\Provider as BaseProvider;
+
+class OIDCProvider extends BaseProvider
+{
+    public static function additionalConfigKeys(): array
+
+=== main file mtime line 39
+                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
+            ];
+        }
+
+        return parent::getOpenIdConfig();
+    }
+
+    /**
+
+=== kovah in main composer.lock
+1584:            "name": "kovah/laravel-socialite-oidc",

@@ -1,0 +1,45 @@
+=== psr7 message source
+vendor/guzzlehttp/psr7/src/Uri.php:260:     * - network-path references, e.g. '//example.com/path'
+vendor/guzzlehttp/psr7/src/Uri.php:275:     * Whether the URI is a network-path reference.
+vendor/guzzlehttp/psr7/src/Uri.php:277:     * A relative reference that begins with two slash characters is termed an network-path reference.
+vendor/guzzlehttp/psr7/src/Message.php:269:        // parsed as a network-path reference with its own authority.
+
+=== context Uri.php
+248-    public static function isDefaultPort(UriInterface $uri): bool
+249-    {
+250-        return $uri->getPort() === null
+251-            || (isset(self::DEFAULT_PORTS[$uri->getScheme()]) && $uri->getPort() === self::DEFAULT_PORTS[$uri->getScheme()]);
+252-    }
+253-
+254-    /**
+255-     * Whether the URI is absolute, i.e. it has a scheme.
+256-     *
+257-     * An instance of UriInterface can either be an absolute URI or a relative reference. This method returns true
+258-     * if it is the former. An absolute URI has a scheme. A relative reference is used to express a URI relative
+259-     * to another URI, the base URI. Relative references can be divided into several forms:
+260:     * - network-path references, e.g. '//example.com/path'
+--
+263-     *
+264-     * @see Uri::isNetworkPathReference
+265-     * @see Uri::isAbsolutePathReference
+266-     * @see Uri::isRelativePathReference
+267-     * @see https://datatracker.ietf.org/doc/html/rfc3986#section-4
+268-     */
+269-    public static function isAbsolute(UriInterface $uri): bool
+270-    {
+271-        return $uri->getScheme() !== '';
+272-    }
+273-
+274-    /**
+275:     * Whether the URI is a network-path reference.
+276-     *
+277:     * A relative reference that begins with two slash characters is termed an network-path reference.
+
+=== psr7 version
+1307:            "name": "guzzlehttp/psr7",
+1308-            "version": "2.13.0",
+1309-            "source": {
+1310-                "type": "git",
+1311-                "url": "https://github.com/guzzle/psr7.git",
+
+=== memory files

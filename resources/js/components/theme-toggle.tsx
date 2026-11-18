@@ -11,61 +11,26 @@ export function ThemeToggle() {
         setIsMounted(true);
     }, []);
 
-    const toggleTheme = () => {
-        const next = resolvedAppearance === 'light' ? 'dark' : 'light';
-        const toggleMode = () => updateAppearance(next);
-
-        if (!(document as Document & { startViewTransition?: (cb: () => void) => void }).startViewTransition) {
-            toggleMode();
-            return;
-        }
-
-        const transition = (
-            document as Document & {
-                startViewTransition: (cb: () => void) => { ready: Promise<void> };
-            }
-        ).startViewTransition(toggleMode);
-
-        transition.ready.then(() => {
-            document.documentElement.animate(
-                {
-                    clipPath: ['inset(0 0 100% 0)', 'inset(0)'],
-                },
-                {
-                    duration: 800,
-                    easing: 'ease-in-out',
-                    pseudoElement: '::view-transition-new(root)',
-                },
-            );
-        });
-    };
-
     if (!isMounted) {
-        // Render nothing on the server to avoid hydration mismatch
-        return null;
+        // Placeholder ukuran tetap agar tidak ada layout shift saat mount
+        return <div className="size-11 shrink-0" aria-hidden="true" />;
     }
 
+    const isDark = appearance === 'dark' || resolvedAppearance === 'dark';
+
     return (
-        <div>
-            {appearance === 'dark' || resolvedAppearance === 'dark' ? (
-                <Button
-                    variant="ghost"
-                    className="h-10 w-10 hover:bg-primary/5 rounded-full cursor-pointer"
-                    onClick={toggleTheme}
-                    aria-label="Ganti Tema Terang"
-                >
-                    <Sun className="size-5" />
-                </Button>
+        <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
+            aria-label={isDark ? 'Ganti Tema Terang' : 'Ganti Tema Gelap'}
+        >
+            {isDark ? (
+                <Sun className="size-5" aria-hidden="true" />
             ) : (
-                <Button
-                    variant="ghost"
-                    className="h-10 w-10 hover:bg-primary/5 rounded-full cursor-pointer"
-                    onClick={toggleTheme}
-                    aria-label="Ganti Tema Gelap"
-                >
-                    <Moon className="size-5" />
-                </Button>
+                <Moon className="size-5" aria-hidden="true" />
             )}
-        </div>
+        </Button>
     );
 }

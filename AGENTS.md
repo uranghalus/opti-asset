@@ -3,67 +3,32 @@
 ## Identitas Project
 
 - **Nama:** opti-asset (folder/slug: `opti-asset`)
-- **Memory:** SecondBrain (vault Obsidian) + Supermemory (plugin `opencode-supermemory`). Keduanya WAJIB selalu sinkron.
+- **Memory project:** Graphify knowledge graph (`graphify-out/`) — sumber kebenaran pengetahuan kode & arsitektur project ini.
+- **Catatan manual:** SecondBrain (vault Obsidian) di mesin Windows user — catatan offline, tidak wajib per sesi.
 
 ---
 
 ## Aturan Utama
 
 1. **JANGAN berasumsi.** Kalau ada yang tidak jelas (kebutuhan, scope, gaya kode, nama, lokasi file), TANYA user dulu sebelum mengerjakan.
-2. **Wajib baca memory sebelum mengerjakan APA PUN** (lihat bagian _Protokol Setiap Pekerjaan_). Jangan mengandalkan ingatan sesi — baca dari Supermemory dan vault.
-3. **Gaya coding dan struktur kode user TIDAK boleh berubah-ubah.** Ikuti `Patterns/` di vault dan memory bertipe `preference` / `learned-pattern` di Supermemory. Jangan memperkenalkan gaya, struktur folder, atau penamaan baru tanpa persetujuan user.
-4. **Vault dan Supermemory harus sama.** Setiap catatan yang ditulis ke salah satunya wajib ditulis juga ke yang lain pada sesi yang sama.
-5. **Jangan pernah menyimpan** `.env`, kredensial, API key, token, atau data pribadi ke vault maupun Supermemory. Konten di dalam `<private>...</private>` tidak disimpan.
+2. **Wajib pakai knowledge graph sebelum mengerjakan APA PUN** (lihat bagian _Protokol Setiap Pekerjaan_). Jangan mengandalkan ingatan sesi.
+3. **Gaya coding dan struktur kode user TIDAK boleh berubah-ubah.** Ikuti pola yang terbaca di graph (komunitas, hub node, file terkait) dan kode di sekitar lokasi yang dituju. Jangan memperkenalkan gaya, struktur folder, atau penamaan baru tanpa persetujuan user.
+4. **Graf wajib ikut diperbarui.** Setiap selesai mengubah kode, jalankan `graphify update .` (AST-only, tanpa biaya LLM). Post-commit hook melakukan ini otomatis; kalau hook gagal/lewat, jalankan manual.
+5. **Jangan pernah menyimpan** `.env`, kredensial, API key, token, atau data pribadi ke knowledge graph maupun catatan vault.
 
 ---
 
-## Supermemory (opencode-supermemory)
+## Memory Project: Graphify
 
-### Konfigurasi
+Knowledge graph project ini ada di `graphify-out/` (`graph.json`, `graph.html`, `GRAPH_REPORT.md`). Skill lengkap terpasang di `.opencode/skills/graphify/`; aturan pemakaian ada di bagian **graphify** di bawah file ini.
 
-Plugin terdaftar di config OpenCode (`opencode.jsonc`):
-
-```jsonc
-{
-    "plugin": ["opencode-supermemory"],
-}
-```
-
-Container tag project dikunci ke `opti-asset` lewat `supermemory.jsonc` (agar memory sama di semua mesin dan tidak berubah mengikuti hash path/remote):
-
-```jsonc
-{
-    "projectContainerTag": "opti-asset",
-}
-```
-
-Cek koneksi kapan saja: `bunx opencode-supermemory@latest status`. Log: `~/.opencode-supermemory.log`.
-
-### Tool `supermemory`
-
-| Mode      | Args                         | Fungsi            |
-| --------- | ---------------------------- | ----------------- |
-| `add`     | `content`, `type?`, `scope?` | Simpan memory     |
-| `search`  | `query`, `scope?`            | Cari memory       |
-| `profile` | `query?`                     | Lihat profil user |
-| `list`    | `scope?`, `limit?`           | Daftar memory     |
-| `forget`  | `memoryId`, `scope?`         | Hapus memory      |
-
-- **Scope:** `project` (default) dan `user`.
-- **Type:** `project-config`, `architecture`, `error-solution`, `preference`, `learned-pattern`, `conversation`.
-- `forget` hanya boleh dipakai atas permintaan eksplisit user.
-
-### Pemetaan vault → type Supermemory
-
-| Folder vault    | Type Supermemory                                         |
-| --------------- | -------------------------------------------------------- |
-| `Context/`      | `project-config`                                         |
-| `Architecture/` | `architecture`                                           |
-| `Decisions/`    | `architecture`                                           |
-| `Patterns/`     | `learned-pattern`; gaya/preferensi coding → `preference` |
-| `Mistakes/`     | `error-solution`                                         |
-| `Planning/`     | `project-config`                                         |
-| `Sessions/`     | `conversation` (ringkasan sesi saja, bukan log mentah)   |
+| Perintah                        | Fungsi                                                      |
+| ------------------------------- | ----------------------------------------------------------- |
+| `graphify query "<pertanyaan>"` | Jawab pertanyaan codebase dari graf (jalankan sebelum grep) |
+| `graphify path "<A>" "<B>"`     | Relasi terpendek antara dua konsep/file                     |
+| `graphify explain "<konsep>"`   | Penjelasan satu node secara plain-language                  |
+| `graphify update .`             | Update inkremental setelah kode berubah (AST-only, gratis)  |
+| `graphify label`                | Perbarui nama komunitas dengan LLM (opsional, butuh key)    |
 
 ---
 
@@ -71,29 +36,27 @@ Cek koneksi kapan saja: `bunx opencode-supermemory@latest status`. Log: `~/.open
 
 ### Sebelum mengerjakan
 
-1. `supermemory` mode `profile` — baca profil dan preferensi user.
-2. `supermemory` mode `search` (scope `project`) dengan kata kunci sesuai tugas. Lakukan lebih dari satu pencarian bila tugas menyentuh beberapa area.
-3. Baca vault: `Context/`, `Decisions/`, `Patterns/`, `Planning/`, dan `Architecture/` / `Mistakes/` yang relevan.
-4. Cek issue/PRD yang sedang berjalan bila ada.
-5. Jika isi Supermemory dan vault **bertentangan** atau salah satunya kosong untuk hal yang seharusnya ada, **laporkan ke user dan tanya** — jangan memilih sendiri.
+1. Untuk pertanyaan "di mana X didefinisikan", "apa yang memanggil Y", "alur data Z": jalankan `graphify query` — bukan grep mentah.
+2. Baca `DESIGN.md` dan bagian relevan `GRAPH_REPORT.md` (god nodes, komunitas) untuk konteks arsitektur bila tugas menyentuh area luas.
+3. Cek issue/PRD yang sedang berjalan bila ada.
 
 ### Selama mengerjakan
 
-- Ikuti `Patterns/` dan memory `preference` / `learned-pattern`. Baca kode di sekitar sebelum menulis kode baru.
-- Jika menemukan pola/gaya yang belum tercatat, tanya user lalu catat (vault + Supermemory).
+- Ikuti pola yang terbaca di graf dan di kode sekitar lokasi edit; baca kode di sekitar sebelum menulis kode baru.
+- Jika menemukan pola/gaya baru, tanya user lalu catat (vault, sebagai catatan offline).
 
 ### Setelah mengerjakan
 
-1. Tulis log sesi di vault (lihat _Development Log_).
-2. Untuk hal signifikan (keputusan, pola baru, bug + solusinya, perubahan arsitektur, preferensi gaya coding): tulis/update catatan di folder vault yang sesuai, **lalu** `supermemory add` dengan isi yang sama dan `type` sesuai tabel pemetaan. Sertakan path catatan vault di `content`.
-3. Verifikasi sinkron: `supermemory search` isi yang baru disimpan harus ketemu, dan file vault-nya ada. Jika salah satu gagal, beri tahu user.
-4. Jika tool `supermemory` tidak tersedia atau error, beri tahu user dan tanya cara melanjutkan — jangan diam-diam lanjut hanya dengan vault.
+1. Jalankan `graphify update .` — graf wajib ikut diperbarui di sesi yang sama dengan perubahan kode.
+2. Verifikasi `GRAPH_REPORT.md` ter-generate ulang (hook post-commit atau manual), dan laporkan ke user kalau update gagal.
 
 ---
 
 ## SecondBrain (Vault Obsidian)
 
-Simpan seluruh catatan penting project ini di path berikut. **JANGAN tanya ulang lokasi vault di tiap sesi baru.**
+Vault berisi catatan manual project (keputusan, pola, histori bug, rencana). **JANGAN tanya ulang lokasi vault di tiap sesi baru.**
+
+Status: **catatan offline manual — bukan kanal wajib per sesi.** Vault hanya bisa diakses dari mesin Windows user. Session agent di mesin ini TIDAK boleh bergantung pada isi vault dan tidak perlu memverifikasi sinkronisasi vault di akhir sesi; kalau user minta, agent cukup menyiapkan draf catatan untuk dipindahkan manual.
 
 ```text
 C:\Users\Administrator\OneDrive\SecondBrain\01 Projects\opti-asset
@@ -108,7 +71,7 @@ C:\Users\Administrator\OneDrive\SecondBrain\01 Projects\opti-asset
 
 Buat folder yang belum ada secara otomatis saat pertama kali dibutuhkan.
 
-> Catatan: aturan "Documentation Files" di bagian Laravel Boost (di bawah) berlaku untuk dokumentasi di dalam repo. Catatan di vault Obsidian dan memory Supermemory dikecualikan, karena memang diwajibkan oleh file ini. `record-rule` tetap dipakai untuk aturan tim di `.ai/rules`; vault/Supermemory tidak menggantikannya.
+> Catatan: aturan "Documentation Files" di bagian Laravel Boost (di bawah) berlaku untuk dokumentasi di dalam repo. Catatan vault bersifat off-repo dan ditulis manual oleh user, jadi dikecualikan. `record-rule` tetap dipakai untuk aturan tim di `.ai/rules`.
 
 ### Kapan pakai folder yang mana
 
@@ -122,7 +85,7 @@ Buat folder yang belum ada secara otomatis saat pertama kali dibutuhkan.
 
 ### Cek duplikat sebelum membuat catatan
 
-Sebelum bikin file baru di folder manapun (kecuali Sessions/), cari dulu catatan dengan topik serupa — di vault **dan** di Supermemory:
+Sebelum bikin file baru di folder manapun (kecuali Sessions/), cari dulu catatan dengan topik serupa — di vault:
 
 - Ada yang serupa → update catatan itu, jangan bikin file baru.
 - Cukup beda untuk dipisah → buat baru, hubungkan `[[wikilink]]` ke yang lama.
@@ -171,7 +134,6 @@ Sessions/ = log mentah. Decisions/ = rangkuman KEPUTUSAN/HASIL. Setelah menyeles
 1. Buat/update catatan di Decisions/ — APA yang diputuskan dan MENGAPA.
 2. Tambahkan `[[wikilink]]` ke Sessions sumber.
 3. Di Sessions terkait, tambahkan bagian `Terkait:` yang menyebut balik Decisions-nya.
-4. Sinkronkan ke Supermemory (lihat _Protokol Setiap Pekerjaan_).
 
 ### Memory Linking (Obsidian wikilink)
 
@@ -198,9 +160,9 @@ status: <active|done|archived>
 
 ## Di Awal Sesi Baru
 
-1. Jalankan _Protokol Setiap Pekerjaan → Sebelum mengerjakan_ (Supermemory `profile` + `search`).
-2. Baca `Context/`, `Decisions/`, `Patterns/`, `Planning/` di vault.
-3. Bandingkan hasilnya; laporkan jika ada yang tidak sinkron.
+1. Pastikan graf current: kalau ragu, jalankan `graphify update .` (AST-only, cepat).
+2. Untuk pertanyaan codebase, mulai dari `graphify query` / `GRAPH_REPORT.md` (lihat aturan **graphify** di bawah).
+3. Baca `DESIGN.md` untuk aturan desain UI project.
 
 ---
 
@@ -443,3 +405,17 @@ Do not use for: refactoring, writing scripts from scratch, debugging business lo
 4. Answer using the fetched docs
 
 <!-- context7 -->
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. When the answer is under a Markdown heading, `graphify section "<heading>"` prints that section's text, so the .md need not be opened. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.

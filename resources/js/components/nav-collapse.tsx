@@ -1,5 +1,4 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useSidebar } from '@/components/ui/sidebar';
 import {
@@ -38,28 +37,14 @@ export function NavCollapse({ groups, className }: NavCollapseProps) {
         <>
             {groups.map((group) => (
                 <div key={group.title}>
-                    {/* Heading */}
-                    <span
-                        className={cn(
-                            'text-xs uppercase block font-semibold text-muted-foreground mb-2 transition-all duration-200',
-                            isCollapse
-                                ? 'text-center group-hover:text-start group-data-[state=expanded]:text-start'
-                                : ''
-                        )}
-                    >
-                        {isCollapse ? (
-                            <>
-                                <span className="group-hover:hidden group-data-[state=expanded]:hidden">
-                                    ...
-                                </span>
-                                <span className="hidden group-hover:inline group-data-[state=expanded]:inline">
-                                    {group.title}
-                                </span>
-                            </>
-                        ) : (
-                            group.title
-                        )}
-                    </span>
+                    {/* Saat collapsed, judul tetap ada untuk screen reader */}
+                    {isCollapse ? (
+                        <span className="sr-only">{group.title}</span>
+                    ) : (
+                        <span className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
+                            {group.title}
+                        </span>
+                    )}
 
                     <SidebarMenu className="space-y-1">
                         {group.items.map((item) => {
@@ -69,28 +54,31 @@ export function NavCollapse({ groups, className }: NavCollapseProps) {
                                 <SidebarMenuItem key={item.url}>
                                     <SidebarMenuButton
                                         asChild
+                                        tooltip={item.title}
                                         className={cn(
-                                            'flex items-center gap-3 w-full group relative group-data-[state=collapsed]:px-2.5 px-3 py-2 my-0.5 transition-all duration-200 rounded-md',
-                                            active && 'bg-primary text-background font-medium',
-                                            className
+                                            'flex w-full items-center gap-3 rounded-md border px-3 py-2 transition-colors duration-150 group-data-[state=collapsed]:px-2.5',
+                                            active
+                                                ? 'border-primary-muted-border bg-primary-muted font-medium text-primary'
+                                                : 'border-transparent hover:bg-accent',
+                                            className,
                                         )}
                                     >
                                         <Link href={tenantUrl(item.url)} prefetch>
-                                            <div className="flex items-center gap-3 w-full">
+                                            <div className="flex w-full items-center gap-3">
                                                 {item.icon && (
                                                     <item.icon
                                                         className={cn(
                                                             'h-4 w-4 shrink-0',
                                                             active
-                                                                ? 'text-background'
-                                                                : 'text-muted-foreground'
+                                                                ? 'text-primary'
+                                                                : 'text-muted-foreground',
                                                         )}
                                                     />
                                                 )}
                                                 <span
                                                     className={cn(
-                                                        'font-medium hide-menu whitespace-nowrap',
-                                                        active ? 'font-bold' : ''
+                                                        'hide-menu whitespace-nowrap font-medium',
+                                                        active && 'font-semibold',
                                                     )}
                                                 >
                                                     {item.title}

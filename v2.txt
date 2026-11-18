@@ -1,0 +1,45 @@
+=== psr7 present?
+guzzle
+promises
+psr7
+uri-template
+
+=== grep string in vendor
+
+=== grep 'configure base_uri' vendor
+
+=== kovah clone: getAuthUrl/getOpenIdConfig line numbers HEAD
+3:namespace SocialiteProviders\OIDC;
+127:    protected function getAuthUrl($state): string
+223:    protected function getOpenIdConfig()
+
+=== tags line numbers
+-- v0.4.0
+125:    protected function getAuthUrl($state): string
+211:    protected function getOpenIdConfig()
+64:            'base_url',
+215:                $configUrl = rtrim($this->getConfig('base_url'), '/') . '/.well-known/openid-configuration';
+-- v0.5.0
+139:    protected function getAuthUrl($state): string
+235:    protected function getOpenIdConfig()
+76:            'base_url',
+239:                $configUrl = rtrim($this->getConfig('base_url'), '/') . '/.well-known/openid-configuration';
+260:        $cacheKey = 'oidc_jwks_' . md5($this->getConfig('base_url'));
+-- v0.6.0
+139:    protected function getAuthUrl($state): string
+235:    protected function getOpenIdConfig()
+76:            'base_url',
+239:                $configUrl = rtrim($this->getConfig('base_url'), '/') . '/.well-known/openid-configuration';
+260:        $cacheKey = 'oidc_jwks_' . md5($this->getConfig('base_url'));
+-- v0.7.0
+139:    protected function getAuthUrl($state): string
+235:    protected function getOpenIdConfig()
+76:            'base_url',
+239:                $configUrl = rtrim($this->getConfig('base_url'), '/') . '/.well-known/openid-configuration';
+260:        $cacheKey = 'oidc_jwks_' . md5($this->getConfig('base_url'));
+-- v0.8.0
+127:    protected function getAuthUrl($state): string
+223:    protected function getOpenIdConfig()
+76:            'base_url',
+227:                $configUrl = rtrim($this->getConfig('base_url'), '/') . '/.well-known/openid-configuration';
+248:        $cacheKey = 'oidc_jwks_' . md5($this->getConfig('base_url'));

@@ -1,0 +1,81 @@
+=== when was getOpenIdConfig override added
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+17aa024 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+
+=== main tests/Unit/OIDCProviderTest.php
+<?php
+
+namespace Tests\Unit;
+
+use App\Providers\OIDCProvider;
+use Illuminate\Http\Request;
+use Tests\TestCase;
+
+class TestableOIDCProvider extends OIDCProvider
+{
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    public function discoveryConfig(array $config): array
+    {
+        $this->config = $config;
+
+        return $this->getOpenIdConfig();
+    }
+}
+
+class OIDCProviderTest extends TestCase
+{
+    public function test_explicit_oauth_endpoints_bypass_oidc_discovery(): void
+    {
+        $provider = new TestableOIDCProvider(
+            Request::create('/'),
+            'client-id',
+            'client-secret',
+            'https://app.test/callback',
+        );
+
+        $configuration = $provider->discoveryConfig([
+            'authorization_url' => 'https://gate.example.test/oauth/authorize',
+            'token_url' => 'https://gate.example.test/oauth/token',
+            'userinfo_url' => 'https://gate.example.test/api/user',
+        ]);
+
+        $this->assertSame([
+            'authorization_endpoint' => 'https://gate.example.test/oauth/authorize',
+            'token_endpoint' => 'https://gate.example.test/oauth/token',
+            'userinfo_endpoint' => 'https://gate.example.test/api/user',
+        ], $configuration);
+    }
+}
+
+=== main config/services.php oidc block exact
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
+    ],
+    'oidc' => [
+        'base_url' => env('OIDC_BASE_URL'),
+        'client_id' => env('OIDC_CLIENT_ID'),
+        'client_secret' => env('OIDC_CLIENT_SECRET'),
+        'redirect' => env('OIDC_REDIRECT_URI'),
+        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
+        'token_url' => env('OIDC_TOKEN_URL'),
+        'user_info_url' => env('OIDC_USER_INFO_URL'),
+        'userinfo_url' => env('OIDC_USER_INFO_URL'),
+        'logout_url' => env('OIDC_LOGOUT_URL'),
+        'guzzle' => [
+            'http_errors' => false,
+            'verify' => env('OIDC_VERIFY_SSL', true),
+        ],
+    ],
+    'optigate_portal' => [
+        'url' => env('WEB_PORTAL_URL'),
+        'token' => env('WEB_PORTAL_TOKEN'),
+        'verify' => env('WEB_PORTAL_VERIFY_SSL', true),
+    ],
+];

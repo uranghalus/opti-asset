@@ -91,7 +91,7 @@ const STATUS_PRESENTATION: Record<
 };
 
 const NEUTRAL_CHIP =
-    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
+    'bg-surface-sunken text-muted-foreground ring-border-strong dark:bg-muted dark:ring-border';
 
 const TIPE_PRESENTATION: Record<string, { label: string; chip: string }> = {
     fixed_asset: {
@@ -158,11 +158,12 @@ export function assetStatusChip(value: string | null | undefined): string {
 
 export function assetStatusDot(value: string | null | undefined): string {
     if (!value) {
-        return 'bg-ink-subtle';
+        return 'bg-muted-foreground/50';
     }
 
     return (
-        STATUS_PRESENTATION[value as AssetStatusValue]?.dot ?? 'bg-ink-subtle'
+        STATUS_PRESENTATION[value as AssetStatusValue]?.dot ??
+        'bg-muted-foreground/50'
     );
 }
 

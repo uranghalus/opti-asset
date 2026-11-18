@@ -141,12 +141,11 @@ class AssetClassificationTest extends TestCase
     {
         AssetGroup::factory()->create(['code' => '01']);
 
-        $otherTenant = Tenant::create(['id' => 'beta', 'name' => 'Beta Corp']);
-        $otherTenant->makeCurrent();
+        $otherTenant = Tenant::create(['id' => 'beta', 'code' => 'beta', 'name' => 'Beta Corp']);
         $this->user->update(['tenant_id' => $otherTenant->id]);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $this->tenant->code]), [
+            ->post(route('tenant.asset-classification.groups.store', ['tenant' => $otherTenant->code]), [
                 'classification_type' => 'aktiva_tetap',
                 'code' => '01',
                 'name' => 'Golongan',

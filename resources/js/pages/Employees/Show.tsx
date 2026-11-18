@@ -26,6 +26,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { cn } from '@/lib/utils';
 import { index as indexRoute } from '@/routes/tenant/employees';
+import { update as updateRoles } from '@/routes/tenant/employees/roles';
 
 type RoleOption = {
     id: number;
@@ -115,7 +116,7 @@ export default function EmployeeShow() {
 
     const handleAssign = () => {
         setAssigning(true);
-        assignPost(`/employees/${employee.id_employee}/roles`, {
+        assignPost(updateRoles(employee.id_employee).url, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Role karyawan berhasil diperbarui.');

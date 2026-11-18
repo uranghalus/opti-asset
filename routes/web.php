@@ -191,15 +191,24 @@ Route::prefix('auth')->group(function () {
     })->name('saml.denied');
 });
 
-// Login password/passkey & two-factor challenge dinonaktifkan —
-// autentikasi tunggal aplikasi ini adalah SAML. Registrasi app-level
-// pada URI+method yang sama menggantikan route Fortify dengan 404,
-// sementara management routes (logout, 2FA settings, passkey CRUD)
-// tetap hidup karena Features::passkeys() tidak dilepas.
-Route::post('login', fn () => abort(404))->name('login.store');
-Route::post('passkeys/login', fn () => abort(404))->name('passkeys.login');
-Route::post('passkeys/login/options', fn () => abort(404))->name('passkeys.login-options');
-Route::post('two-factor-challenge', fn () => abort(404))->name('two-factor.login');
+// Dua mode login via env SSO_ENABLED (default true):
+// - SSO aktif → SAML-only: endpoint password/passkey/two-factor-challenge
+//   di-override dengan 404 (management routes tetap hidup karena
+//   Features::passkeys() tidak dilepas).
+// - SSO nonaktif (mode demo) → login email/password (LoginController) aktif.
+// Catatan: nilai dibaca saat route di-registrasi — bila route di-cache,
+// jalankan `php artisan route:clear` setelah mengubah SSO_ENABLED.
+if (env('SSO_ENABLED', true)) {
+    Route::post('login', fn () => abort(404))->name('login.store');
+    Route::post('passkeys/login', fn () => abort(404))->name('passkeys.login');
+    Route::post('passkeys/login/options', fn () => abort(404))->name('passkeys.login-options');
+    Route::post('two-factor-challenge', fn () => abort(404))->name('two-factor.login');
+} else {
+    Route::middleware('guest')->group(function () {
+        Route::get('login', [LoginController::class, 'show'])->name('login');
+        Route::post('login', [LoginController::class, 'store'])->name('login.store');
+    });
+}
 
 Route::get('auth/error', function () {
     $message = session('error', 'Terjadi kesalahan saat login SSO.');
@@ -207,11 +216,5 @@ Route::get('auth/error', function () {
     return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 401)
         ->header('Content-Type', 'text/html');
 })->name('auth.error');
-
-// Login with email/password (only when SSO_ENABLED=false).
-Route::middleware('guest')->group(function () {
-    Route::get('login', [LoginController::class, 'show'])->name('login');
-    Route::post('login', [LoginController::class, 'store'])->name('login.store');
-});
 
 require __DIR__.'/settings.php';

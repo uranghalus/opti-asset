@@ -6,6 +6,7 @@ use App\Http\Controllers\AssetDisposalController;
 use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\AssetTransferController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\SamlController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -25,7 +26,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (! Auth::check()) {
-        return redirect()->route('saml.login');
+        return env('SSO_ENABLED', true)
+            ? redirect()->route('saml.login')
+            : redirect()->route('login');
     }
 
     $user = Auth::user();
@@ -191,8 +194,14 @@ Route::prefix('auth')->group(function () {
 Route::get('auth/error', function () {
     $message = session('error', 'Terjadi kesalahan saat login SSO.');
 
-    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 500)
+    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 401)
         ->header('Content-Type', 'text/html');
 })->name('auth.error');
+
+// Login with email/password (only when SSO_ENABLED=false).
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'show'])->name('login');
+    Route::post('login', [LoginController::class, 'store'])->name('login.store');
+});
 
 require __DIR__.'/settings.php';

@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Employee;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use OneLogin\Saml2\Auth as SamlAuth;
@@ -14,7 +16,7 @@ class SamlAcsSessionTest extends TestCase
 
     private const REQUEST_ID = 'saml-request-id-01';
 
-    public function test_acs_berhasil_menyimpan_tenant_ke_session(): void
+    public function test_acs_berhasil_menyimpan_employee_dan_membersihkan_tenant_session(): void
     {
         config(['auth.super_admin_email' => 'superadmin@appdutamall.com']);
 
@@ -23,6 +25,18 @@ class SamlAcsSessionTest extends TestCase
             'name' => 'PT Tata Optima Property',
             'code' => 'top',
             'is_active' => true,
+        ]);
+
+        // Employee ter-link via FK: snapshot session `employee` harus ada
+        // setelah ACS sukses (resolusi FK, bukan email).
+        $employee = Employee::factory()->create([
+            'email' => 'ridho.fatahillah@tataoptima.com',
+            'tenant_id' => $tenant->id,
+        ]);
+        User::factory()->create([
+            'email' => 'ridho.fatahillah@tataoptima.com',
+            'tenant_id' => $tenant->id,
+            'employee_id' => $employee->id_employee,
         ]);
 
         $samlAuth = \Mockery::mock(SamlAuth::class);
@@ -40,14 +54,20 @@ class SamlAcsSessionTest extends TestCase
 
         $this->app->instance(SamlAuth::class, $samlAuth);
 
-        $this->withSession(['saml_request_id' => self::REQUEST_ID])
+        $response = $this->withSession(['saml_request_id' => self::REQUEST_ID])
             ->post(route('saml.acs'), ['SAMLResponse' => 'respons-saml-palsu']);
 
-        $this->assertSame(
-            $tenant->id,
+        $response->assertRedirect(route('tenant.dashboard', ['tenant' => $tenant->code]));
+
+        // Tenant resolusi hanya diperlukan sampai landing memutuskan tujuan:
+        // setelah sukses ia harus dibersihkan dari session.
+        $this->assertNull(
             session('saml.tenant'),
-            'Tenant yang ter-resolusi harus disimpan ke session setelah ACS berhasil.'
+            'saml.tenant harus dibersihkan setelah ACS berhasil.'
         );
+
+        $this->assertIsArray(session('employee'));
+        $this->assertSame($employee->id_employee, session('employee')['id_employee']);
     }
 
     public function test_acs_tanpa_tenant_yang_cocok_tidak_menyimpan_session_dan_ditolak(): void

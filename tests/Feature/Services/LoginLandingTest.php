@@ -41,11 +41,18 @@ class LoginLandingTest extends TestCase
     {
         Auth::guard('web')->login(User::factory()->create());
 
+        // Data session basi (mis. tenant hasil resolusi) harus ikut hilang.
+        session()->put('saml.tenant', 'tenant-stale');
+        session()->put('marker', 'stale');
+
         $landing = new LoginLanding;
         $response = $landing->deny('no_tenant');
 
         $this->assertFalse(Auth::check());
+        $this->assertNull(session('saml.tenant'), 'Session tenant basi harus di-invalidate.');
+        $this->assertNull(session('marker'), 'Seluruh session harus di-invalidate saat deny.');
         $this->assertSame(route('saml.denied'), $response->getTargetUrl());
+        // Flash reason diset SETELAH invalidate — harus tetap terbaca.
         $this->assertSame('no_tenant', session('saml.denial_reason'));
     }
 
@@ -53,10 +60,15 @@ class LoginLandingTest extends TestCase
     {
         Auth::guard('web')->login(User::factory()->create());
 
+        session()->put('saml.tenant', 'tenant-stale');
+        session()->put('marker', 'stale');
+
         $landing = new LoginLanding;
         $response = $landing->deny('no_role');
 
         $this->assertFalse(Auth::check());
+        $this->assertNull(session('saml.tenant'), 'Session tenant basi harus di-invalidate.');
+        $this->assertNull(session('marker'), 'Seluruh session harus di-invalidate saat deny.');
         $this->assertSame(route('saml.denied'), $response->getTargetUrl());
         $this->assertSame('no_role', session('saml.denial_reason'));
     }

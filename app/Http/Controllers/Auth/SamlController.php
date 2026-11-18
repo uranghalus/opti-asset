@@ -182,7 +182,14 @@ class SamlController extends Controller
                 'tenant_code' => $resolution->tenant->code,
             ]);
 
-            return $this->landing->redirect($user);
+            $landing = $this->landing->redirect($user);
+
+            // Tenant hasil resolusi hanya diperlukan sampai landing memutuskan
+            // tujuan; bersihkan agar tidak tersangkut di session yang sudah
+            // di-regenerate (parity dengan denial path yang meng-invalidate).
+            $request->session()->forget('saml.tenant');
+
+            return $landing;
         } catch (\Exception $e) {
             Log::error('SAML ACS Exception: '.$e->getMessage());
 

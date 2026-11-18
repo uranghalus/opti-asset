@@ -13,47 +13,28 @@ use Illuminate\Support\Facades\Session;
  * so no separate department assignment is needed — the employee record is the
  * single source of truth for the user's organizational context.
  *
- * Matching order:
- *  1. By email (primary) — Employee.email matches User.email
- *  2. By NIK (fallback) — Employee.nik_employee matches User->nik dynamic attribute
- *
- * If no match is found, null is returned and the employee session is cleared.
+ * Resolution is the persistent `employee_id` FK (User::employee(), which
+ * bypasses the Employee tenant global scope so it also resolves when no
+ * tenant is current — e.g. during SAML ACS before any tenant context
+ * exists). If the user has no linked employee, null is returned and the
+ * employee session is cleared.
  */
 class EmployeeSessionResolver
 {
     public const SESSION_KEY = 'employee';
 
     /**
-     * Resolve the employee for the given user and store it in the session.
+     * Snapshot session `employee` dari instance Employee — kontrak tunggal
+     * untuk resolver saat login DAN refresh per-request di Inertia share().
      *
-     * @return array{id_employee: string, nik_employee: string, nama_employee: string, email: string, department_id: ?string, division_id: ?string, id_position: ?string, tenant_id: string}|null
+     * `department_id` memakai key kanonik (kolom model `id_department`);
+     * pembaca session tidak boleh melihat nama kolom mentah.
+     *
+     * @return array{id_employee: string, tenant_id: string, nik_employee: string, nama_employee: string, email: ?string, number: ?string, photo_url: ?string, department_id: ?string, division_id: ?string, id_position: ?string, last_login_ip: ?string, updated_at: string, created_at: string}
      */
-    public function resolve(User $user): ?array
+    public static function snapshot(Employee $employee): array
     {
-        $employee = Employee::withoutGlobalScopes()
-            ->where('email', $user->email)
-            ->first();
-
-        if (! $employee) {
-            $nik = $user->nik ?? null;
-            if ($nik) {
-                $employee = Employee::withoutGlobalScopes()
-                    ->where('nik_employee', $nik)
-                    ->first();
-            }
-        }
-
-        if (! $employee) {
-            Session::forget(self::SESSION_KEY);
-
-            return null;
-        }
-
-        // Store the employee attributes in the session using the canonical
-        // `department_id` key. The Employee model column is `id_department`, so
-        // the key is normalised here — readers must never see the raw column
-        // name (see department-scoping P0-A).
-        Session::put(self::SESSION_KEY, [
+        return [
             'id_employee' => $employee->id_employee,
             'tenant_id' => $employee->tenant_id,
             'nik_employee' => $employee->nik_employee,
@@ -67,7 +48,25 @@ class EmployeeSessionResolver
             'last_login_ip' => $employee->last_login_ip,
             'updated_at' => $employee->updated_at->toISOString(),
             'created_at' => $employee->created_at->toISOString(),
-        ]);
+        ];
+    }
+
+    /**
+     * Resolve the employee for the given user and store it in the session.
+     *
+     * @return array{id_employee: string, nik_employee: string, nama_employee: string, email: string, department_id: ?string, division_id: ?string, id_position: ?string, tenant_id: string}|null
+     */
+    public function resolve(User $user): ?array
+    {
+        $employee = $user->employee;
+
+        if ($employee === null) {
+            Session::forget(self::SESSION_KEY);
+
+            return null;
+        }
+
+        Session::put(self::SESSION_KEY, self::snapshot($employee));
 
         // Return a curated subset for the caller.
         return [

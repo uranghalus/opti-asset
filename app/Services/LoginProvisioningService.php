@@ -13,7 +13,7 @@ use Spatie\Permission\Models\Role;
  * Two rules, in this order, both inside one transaction and both idempotent:
  *
  * 1. The platform account (config `auth.super_admin_email`, env-fed — never
- *    an email literal in code) is self-healed: the `super_admin` role, the
+ *    an email literal in code) is self-healed: the `super-admin` role, the
  *    `is_super_admin` flag (which backs the platform surfaces TenantAccess,
  *    while the role backs Gate::before) and the link to the karyawan carrying
  *    the same email when the account is unlinked. `tenant_id` is never touched.
@@ -29,10 +29,6 @@ use Spatie\Permission\Models\Role;
  */
 class LoginProvisioningService
 {
-    private const SUPER_ADMIN_ROLE = 'super_admin';
-
-    private const GUEST_ROLE = 'guest';
-
     public function provision(User $user): void
     {
         DB::transaction(function () use ($user): void {
@@ -55,9 +51,9 @@ class LoginProvisioningService
             $user->update(['is_super_admin' => true]);
         }
 
-        $role = Role::firstOrCreate(['name' => self::SUPER_ADMIN_ROLE, 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => User::ROLE_SUPER_ADMIN, 'guard_name' => 'web']);
 
-        if (! $user->hasRole(self::SUPER_ADMIN_ROLE)) {
+        if (! $user->hasRole(User::ROLE_SUPER_ADMIN)) {
             $user->assignRole($role);
         }
 
@@ -68,8 +64,8 @@ class LoginProvisioningService
 
     private function ensureGuestRole(User $user): void
     {
-        // Super-admin already has super_admin role; no guest role needed.
-        if ($user->hasRole(self::SUPER_ADMIN_ROLE)) {
+        // Super-admin already has the super-admin role; no guest role needed.
+        if ($user->hasRole(User::ROLE_SUPER_ADMIN)) {
             return;
         }
 
@@ -78,7 +74,7 @@ class LoginProvisioningService
             return;
         }
 
-        $role = Role::firstOrCreate(['name' => self::GUEST_ROLE, 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => User::ROLE_GUEST, 'guard_name' => 'web']);
         $user->assignRole($role);
 
         Log::info('LoginProvisioningService: guest role assigned', [

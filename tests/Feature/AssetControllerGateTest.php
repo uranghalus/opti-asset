@@ -9,6 +9,7 @@ use App\Models\AssetCluster;
 use App\Models\AssetGroup;
 use App\Models\AssetSubCluster;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Tenant;
 use App\Models\User;
@@ -55,17 +56,15 @@ class AssetControllerGateTest extends TestCase
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
         $this->user->givePermissionTo(['asset.view', 'asset.create', 'asset.edit', 'asset.delete']);
 
-        // Set employee session dengan department_id (sumber kebenaran untuk dept filter).
-        session(['employee' => [
-            'id_employee' => 'emp-acme-001',
-            'nik_employee' => 'NIK-001',
-            'nama_employee' => 'Karyawan Acme',
-            'email' => $this->user->email,
-            'department_id' => $this->department->id_department,
-            'division_id' => null,
-            'id_position' => null,
+        // Session `employee` kini diturunkan dari relasi FK setiap request oleh
+        // HandleInertiaRequests::share() (bukan di-seed manual): employee
+        // ter-link dengan department acme adalah sumber kebenaran dept filter.
+        $employee = Employee::factory()->create([
             'tenant_id' => $this->tenant->id,
-        ]]);
+            'nama_employee' => 'Karyawan Acme',
+            'id_department' => $this->department->id_department,
+        ]);
+        $this->user->update(['employee_id' => $employee->id_employee]);
     }
 
     /** @return array{group, category, cluster, subCluster, categoryModel, Item} */

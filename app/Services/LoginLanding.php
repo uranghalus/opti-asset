@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Auth;
  * so this resolver only decides WHERE a freshly authenticated user lands:
  *
  * - No active role at all  → session ended, denied ('no_role'): a login that
- *   may do nothing is not a usable session.
+ *   may do nothing is not a usable session. Ini kini safety net — akun tanpa
+ *   role apa pun sudah diberi `guest` oleh LoginProvisioningService.
  * - Platform super admin   → central admin panel (unit bisnis picker).
  * - Home tenant membership → that tenant's dashboard.
  * - Role but no membership → session ended, denied ('no_tenant').
@@ -23,12 +24,17 @@ use Illuminate\Support\Facades\Auth;
 class LoginLanding
 {
     /**
-     * End the freshly started session before bouncing to the denial page —
-     * a rejected login must not stay authenticated.
+     * End the freshly started session — logout, invalidate seluruh data
+     * session (termasuk tenant hasil resolusi), regenerate token — lalu
+     * flash alasan penolakan SETELAH invalidate. Login yang ditolak tidak
+     * boleh tetap terautentikasi ataupun membawa data session basi.
      */
     public function deny(string $reason): RedirectResponse
     {
         Auth::guard('web')->logout();
+
+        session()->invalidate();
+        session()->regenerateToken();
 
         return redirect()
             ->route('saml.denied')

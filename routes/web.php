@@ -191,6 +191,16 @@ Route::prefix('auth')->group(function () {
     })->name('saml.denied');
 });
 
+// Login password/passkey & two-factor challenge dinonaktifkan —
+// autentikasi tunggal aplikasi ini adalah SAML. Registrasi app-level
+// pada URI+method yang sama menggantikan route Fortify dengan 404,
+// sementara management routes (logout, 2FA settings, passkey CRUD)
+// tetap hidup karena Features::passkeys() tidak dilepas.
+Route::post('login', fn () => abort(404))->name('login.store');
+Route::post('passkeys/login', fn () => abort(404))->name('passkeys.login');
+Route::post('passkeys/login/options', fn () => abort(404))->name('passkeys.login-options');
+Route::post('two-factor-challenge', fn () => abort(404))->name('two-factor.login');
+
 Route::get('auth/error', function () {
     $message = session('error', 'Terjadi kesalahan saat login SSO.');
 

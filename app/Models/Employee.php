@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Permission\Traits\HasRoles;
 
 class Employee extends Model
@@ -56,5 +57,11 @@ class Employee extends Model
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class, 'id_position', 'id_position');
+    }
+
+    /** @return HasOne<User, $this> */
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'employee_id', 'id_employee');
     }
 }

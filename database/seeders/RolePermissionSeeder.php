@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -105,6 +106,11 @@ class RolePermissionSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         Role::create(['name' => self::SUPER_ADMIN, 'guard_name' => 'web']);
+
+        // Landing role: nol permission. Diberikan sekali oleh
+        // LoginProvisioningService saat akun belum punya role — tanpa role
+        // ini, akun tanpa role employee akan ditolak di login.
+        Role::create(['name' => User::ROLE_GUEST, 'guard_name' => 'web']);
 
         foreach (self::ROLE_PERMISSIONS as $roleName => $permissions) {
             $role = Role::create(['name' => $roleName, 'guard_name' => 'web']);

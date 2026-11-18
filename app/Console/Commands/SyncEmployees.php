@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -38,27 +39,41 @@ class SyncEmployees extends Command
             if ($response->successful()) {
                 $employees = $response->json('data') ?? $response->json();
                 $count = 0;
+                $failed = 0;
 
                 foreach ($employees as $employee) {
-                    Employee::withoutGlobalScopes()->updateOrCreate(
-                        ['id_employee' => $employee['id']],
-                        [
+                    try {
+                        Employee::withoutGlobalScopes()->updateOrCreate(
+                            ['id_employee' => $employee['id']],
+                            [
+                                'tenant_id' => $tenantId,
+                                'nik_employee' => $employee['nik'] ?? null,
+                                'nama_employee' => $employee['name'],
+                                'email' => $employee['email'] ?? null,
+                                'number' => $employee['whatsapp_number'] ?? null,
+                                'photo_url' => $employee['photo_url'] ?? null,
+                                'id_department' => $employee['department'] ?? null,
+                                'id_position' => $employee['position'] ?? $employee['position_id'] ?? null,
+                                'last_login_ip' => $employee['last_login_ip'] ?? null,
+                            ]
+                        );
+                        $count++;
+                    } catch (QueryException $e) {
+                        // Index unik (tenant_id, email): data portal dengan email
+                        // duplikat dalam satu tenant dilewati, tidak
+                        // membatalkan seluruh sinkronisasi.
+                        $failed++;
+
+                        Log::warning('Auto-sync Employee: melewati data duplikat.', [
+                            'id_employee' => $employee['id'] ?? null,
                             'tenant_id' => $tenantId,
-                            'nik_employee' => $employee['nik'] ?? null,
-                            'nama_employee' => $employee['name'],
-                            'email' => $employee['email'] ?? null,
-                            'number' => $employee['whatsapp_number'] ?? null,
-                            'photo_url' => $employee['photo_url'] ?? null,
-                            'id_department' => $employee['department'] ?? null,
-                            'id_position' => $employee['position'] ?? $employee['position_id'] ?? null,
-                            'last_login_ip' => $employee['last_login_ip'] ?? null,
-                        ]
-                    );
-                    $count++;
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
                 }
 
-                $this->info("Sinkronisasi selesai! $count data berhasil diproses.");
-                Log::info("Auto-sync Employee berhasil: $count data.");
+                $this->info("Sinkronisasi selesai! $count data diproses, $failed dilewati (email duplikat).");
+                Log::info("Auto-sync Employee berhasil: $count data, $failed dilewati.");
 
                 return Command::SUCCESS;
             }

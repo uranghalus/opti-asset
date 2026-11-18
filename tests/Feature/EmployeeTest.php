@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -318,5 +319,24 @@ class EmployeeTest extends TestCase
         $employee = Employee::withoutGlobalScopes()->where('nik_employee', 'NIK-001')->first();
         $this->assertNotNull($employee);
         $this->assertSame($other->id, $employee->tenant_id);
+    }
+
+    public function test_unique_tenant_email_index_rejects_duplicate(): void
+    {
+        $email = 'duplikat@example.com';
+
+        Employee::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'email' => $email,
+        ]);
+
+        // Index unik (tenant_id, email) menolak duplikat dalam satu tenant —
+        // query backfill Task 2 mengandalkan keunikan ini.
+        $this->expectException(QueryException::class);
+
+        Employee::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'email' => $email,
+        ]);
     }
 }

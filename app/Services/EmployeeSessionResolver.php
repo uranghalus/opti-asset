@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
 
@@ -23,6 +24,34 @@ class EmployeeSessionResolver
     public const SESSION_KEY = 'employee';
 
     /**
+     * Snapshot session `employee` dari instance Employee — kontrak tunggal
+     * untuk resolver saat login DAN refresh per-request di Inertia share().
+     *
+     * `department_id` memakai key kanonik (kolom model `id_department`);
+     * pembaca session tidak boleh melihat nama kolom mentah.
+     *
+     * @return array{id_employee: string, tenant_id: string, nik_employee: string, nama_employee: string, email: ?string, number: ?string, photo_url: ?string, department_id: ?string, division_id: ?string, id_position: ?string, last_login_ip: ?string, updated_at: string, created_at: string}
+     */
+    public static function snapshot(Employee $employee): array
+    {
+        return [
+            'id_employee' => $employee->id_employee,
+            'tenant_id' => $employee->tenant_id,
+            'nik_employee' => $employee->nik_employee,
+            'nama_employee' => $employee->nama_employee,
+            'email' => $employee->email,
+            'number' => $employee->number,
+            'photo_url' => $employee->photo_url,
+            'department_id' => $employee->id_department,
+            'division_id' => $employee->division_id,
+            'id_position' => $employee->id_position,
+            'last_login_ip' => $employee->last_login_ip,
+            'updated_at' => $employee->updated_at->toISOString(),
+            'created_at' => $employee->created_at->toISOString(),
+        ];
+    }
+
+    /**
      * Resolve the employee for the given user and store it in the session.
      *
      * @return array{id_employee: string, nik_employee: string, nama_employee: string, email: string, department_id: ?string, division_id: ?string, id_position: ?string, tenant_id: string}|null
@@ -37,25 +66,7 @@ class EmployeeSessionResolver
             return null;
         }
 
-        // Store the employee attributes in the session using the canonical
-        // `department_id` key. The Employee model column is `id_department`, so
-        // the key is normalised here — readers must never see the raw column
-        // name (see department-scoping P0-A).
-        Session::put(self::SESSION_KEY, [
-            'id_employee' => $employee->id_employee,
-            'tenant_id' => $employee->tenant_id,
-            'nik_employee' => $employee->nik_employee,
-            'nama_employee' => $employee->nama_employee,
-            'email' => $employee->email,
-            'number' => $employee->number,
-            'photo_url' => $employee->photo_url,
-            'department_id' => $employee->id_department,
-            'division_id' => $employee->division_id,
-            'id_position' => $employee->id_position,
-            'last_login_ip' => $employee->last_login_ip,
-            'updated_at' => $employee->updated_at->toISOString(),
-            'created_at' => $employee->created_at->toISOString(),
-        ]);
+        Session::put(self::SESSION_KEY, self::snapshot($employee));
 
         // Return a curated subset for the caller.
         return [

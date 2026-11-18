@@ -18,10 +18,24 @@ export type TenantInfo = {
     name: string;
 };
 
+export type EmployeeSession = {
+    id_employee: string;
+    tenant_id: string;
+    nik_employee: string;
+    nama_employee: string;
+    email: string | null;
+    number: string | null;
+    photo_url: string | null;
+    department_id: string | null;
+    division_id: string | null;
+    id_position: string | null;
+};
+
 export type Auth = {
     user: User;
     isSuperAdmin: boolean;
     canSwitchTenant?: boolean;
+    employee?: EmployeeSession | null;
 };
 
 /* @chisel-passkeys */

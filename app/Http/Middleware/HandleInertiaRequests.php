@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
+use App\Services\EmployeeSessionResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -47,6 +49,37 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        // Refresh snapshot employee dari relasi FK setiap request. share()
+        // berjalan SEBELUM controller, jadi pembaca session (mis.
+        // AssetController department scoping) selalu melihat data terkini
+        // tanpa login ulang. loadMissing() — bukan $user->employee langsung —
+        // karena preventLazyLoading aktif di non-production.
+        $employeeSnapshot = null;
+
+        if ($user) {
+            $user->loadMissing('employee');
+            $employee = $user->employee;
+
+            if ($employee === null) {
+                Session::forget(EmployeeSessionResolver::SESSION_KEY);
+            } else {
+                Session::put(EmployeeSessionResolver::SESSION_KEY, EmployeeSessionResolver::snapshot($employee));
+
+                $employeeSnapshot = [
+                    'id_employee' => $employee->id_employee,
+                    'tenant_id' => $employee->tenant_id,
+                    'nik_employee' => $employee->nik_employee,
+                    'nama_employee' => $employee->nama_employee,
+                    'email' => $employee->email,
+                    'number' => $employee->number,
+                    'photo_url' => $employee->photo_url,
+                    'department_id' => $employee->id_department,
+                    'division_id' => $employee->division_id,
+                    'id_position' => $employee->id_position,
+                ];
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -60,6 +93,7 @@ class HandleInertiaRequests extends Middleware
                     ])
                     : null,
                 'isSuperAdmin' => $user !== null && $user->isSuperAdmin(),
+                'employee' => $employeeSnapshot,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

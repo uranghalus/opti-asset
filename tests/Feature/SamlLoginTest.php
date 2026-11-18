@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,6 +59,47 @@ class SamlLoginTest extends TestCase
         $user = User::where('email', 'test@example.com')->first();
         $this->assertSame($tenant->id, $user->tenant_id);
         $response->assertRedirect(route('tenant.dashboard', ['tenant' => $tenant->code]));
+    }
+
+    public function test_login_with_roleless_employee_lands_as_guest(): void
+    {
+        $tenant = Tenant::create([
+            'id' => 'tenant-top',
+            'code' => 'top',
+            'name' => 'PT Tata Optima Property',
+        ]);
+        $tenant->makeCurrent();
+
+        // Employee ter-link (FK) tanpa role apa pun: login tetap sukses,
+        // user mendarat sebagai `guest` — bukan ditolak dengan `no_role`.
+        $employee = Employee::factory()->create(['email' => 'test@example.com']);
+        $user = User::factory()->create([
+            'email' => 'test@example.com',
+            'tenant_id' => $tenant->id,
+            'employee_id' => $employee->id_employee,
+        ]);
+
+        $samlAuth = \Mockery::mock(SamlAuth::class);
+        $samlAuth->shouldReceive('processResponse')->once()->with(null);
+        $samlAuth->shouldReceive('getErrors')->andReturn([]);
+        $samlAuth->shouldReceive('isAuthenticated')->andReturn(true);
+        $samlAuth->shouldReceive('getAttributes')->andReturn([
+            'email' => ['test@example.com'],
+            'name' => ['Test User'],
+            'company' => ['PT Tata Optima Property'],
+            'department' => ['Engineering'],
+            'position' => ['Developer'],
+        ]);
+        $samlAuth->shouldReceive('getNameId')->andReturn('test@example.com');
+
+        $this->app->instance(SamlAuth::class, $samlAuth);
+
+        $response = $this->post('/auth/saml/opti-saml-acs', ['SAMLResponse' => 'fake']);
+
+        $this->assertTrue(Auth::check());
+        $this->assertSame($user->id, auth()->id());
+        $response->assertRedirect(route('tenant.dashboard', ['tenant' => $tenant->code]));
+        $this->assertTrue($user->fresh()->hasRole(User::ROLE_GUEST));
     }
 
     public function test_saml_acs_missing_email_redirects_to_error(): void

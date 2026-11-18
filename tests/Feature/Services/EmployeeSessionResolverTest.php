@@ -14,17 +14,19 @@ class EmployeeSessionResolverTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_resolve_matches_employee_by_email_and_stores_session(): void
+    public function test_resolve_writes_employee_snapshot_from_fk_link(): void
     {
         $tenant = $this->setCurrentTenant();
         $department = Department::factory()->create(['tenant_id' => $tenant->id]);
 
+        // Email sengaja berbeda dari user: satu-satunya jalur resolusi
+        // adalah FK `employee_id`, bukan email/NIK.
         $employee = Employee::create([
             'id_employee' => 'emp-001',
             'tenant_id' => $tenant->id,
             'nik_employee' => 'NIK-1234',
             'nama_employee' => 'John Doe',
-            'email' => 'john.doe@example.com',
+            'email' => 'employee.john@example.com',
             'number' => '081234567890',
             'photo_url' => null,
             'id_department' => $department->id,
@@ -35,6 +37,7 @@ class EmployeeSessionResolverTest extends TestCase
 
         $user = User::factory()->create([
             'email' => 'john.doe@example.com',
+            'employee_id' => $employee->id_employee,
         ]);
 
         $resolver = new EmployeeSessionResolver;
@@ -44,7 +47,7 @@ class EmployeeSessionResolverTest extends TestCase
         $this->assertSame('emp-001', $result['id_employee']);
         $this->assertSame('NIK-1234', $result['nik_employee']);
         $this->assertSame('John Doe', $result['nama_employee']);
-        $this->assertSame('john.doe@example.com', $result['email']);
+        $this->assertSame('employee.john@example.com', $result['email']);
         $this->assertSame($department->id, $result['department_id']);
         $this->assertSame('div-001', $result['division_id']);
         $this->assertSame('pos-001', $result['id_position']);
@@ -59,63 +62,64 @@ class EmployeeSessionResolverTest extends TestCase
         $this->assertSame($employee->id_employee, $stored['id_employee']);
     }
 
-    public function test_resolve_matches_employee_by_nik_when_no_email_match(): void
+    public function test_resolve_forgets_session_when_user_has_no_linked_employee(): void
     {
-        $tenant = $this->setCurrentTenant();
-        $department = Department::factory()->create(['tenant_id' => $tenant->id]);
-
-        $employee = Employee::create([
-            'id_employee' => 'emp-003',
-            'tenant_id' => $tenant->id,
-            'nik_employee' => 'NIK-8888',
-            'nama_employee' => 'Budi Santoso',
-            'email' => 'budi@example.com',
-            'number' => '081234567892',
-            'photo_url' => null,
-            'id_department' => $department->id,
-            'division_id' => 'div-003',
-            'id_position' => 'pos-003',
-            'last_login_ip' => null,
-        ]);
-
-        // User email differs from every employee email; NIK comes from SAML.
-        $user = User::factory()->create([
-            'email' => 'different@example.com',
-        ]);
-        $user->setAttribute('nik', 'NIK-8888');
-
-        $resolver = new EmployeeSessionResolver;
-        $result = $resolver->resolve($user);
-
-        $this->assertNotNull($result);
-        $this->assertSame('emp-003', $result['id_employee']);
-        $this->assertSame('NIK-8888', $result['nik_employee']);
-        $this->assertSame('Budi Santoso', $result['nama_employee']);
-        $this->assertSame('budi@example.com', $result['email']);
-        $this->assertSame($department->id, $result['department_id']);
-        $this->assertSame('div-003', $result['division_id']);
-        $this->assertSame('pos-003', $result['id_position']);
-        $this->assertSame($tenant->id, $result['tenant_id']);
-
-        $stored = session('employee');
-        $this->assertSame($department->id, $stored['department_id']);
-        $this->assertArrayNotHasKey('id_department', $stored);
-        $this->assertSame($employee->id_employee, $stored['id_employee']);
-    }
-
-    public function test_resolve_returns_null_and_stores_null_session_when_no_match(): void
-    {
-        $tenant = $this->setCurrentTenant();
+        $this->setCurrentTenant();
 
         $user = User::factory()->create([
             'email' => 'nobody@example.com',
         ]);
+
+        // Snapshot basi dari login sebelumnya harus ikut terhapus.
+        session([EmployeeSessionResolver::SESSION_KEY => ['id_employee' => 'emp-stale']]);
 
         $resolver = new EmployeeSessionResolver;
         $result = $resolver->resolve($user);
 
         $this->assertNull($result);
         $this->assertNull(session('employee'));
+    }
+
+    public function test_resolve_works_without_current_tenant(): void
+    {
+        $tenant = $this->setCurrentTenant();
+        $department = Department::factory()->create(['tenant_id' => $tenant->id]);
+
+        $employee = Employee::create([
+            'id_employee' => 'emp-002',
+            'tenant_id' => $tenant->id,
+            'nik_employee' => 'NIK-5678',
+            'nama_employee' => 'Budi Santoso',
+            'email' => 'employee.budi@example.com',
+            'number' => '081234567891',
+            'photo_url' => null,
+            'id_department' => $department->id,
+            'division_id' => 'div-002',
+            'id_position' => 'pos-002',
+            'last_login_ip' => null,
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'budi@example.com',
+            'employee_id' => $employee->id_employee,
+        ]);
+
+        // Kondisi persis seperti SAML ACS sebelum tenant context ada:
+        // resolusi lewat FK (withoutGlobalScopes) tetap harus ketemu.
+        Tenant::forgetCurrent();
+
+        $resolver = new EmployeeSessionResolver;
+        $result = $resolver->resolve($user);
+
+        $this->assertNotNull($result);
+        $this->assertSame('emp-002', $result['id_employee']);
+        $this->assertSame('Budi Santoso', $result['nama_employee']);
+        $this->assertSame($department->id, $result['department_id']);
+        $this->assertSame($tenant->id, $result['tenant_id']);
+
+        $stored = session('employee');
+        $this->assertSame($employee->id_employee, $stored['id_employee']);
+        $this->assertSame($tenant->id, $stored['tenant_id']);
     }
 
     /**

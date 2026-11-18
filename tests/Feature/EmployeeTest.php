@@ -129,12 +129,23 @@ class EmployeeTest extends TestCase
         $role = Role::create(['name' => 'staff', 'guard_name' => 'web']);
         $employee->assignRole($role);
 
+        // Linked user mirror: role non-protected employee + guest milik user.
+        $guest = Role::create(['name' => User::ROLE_GUEST, 'guard_name' => 'web']);
+        $this->user->update(['employee_id' => $employee->id_employee]);
+        $this->user->assignRole($role);
+        $this->user->assignRole($guest);
+
         $this->actingAs($this->user)
             ->from(route('employees.index'))
             ->post(route('employees.roles.update', $employee), ['roles' => []])
             ->assertRedirect(route('employees.index'));
 
         $this->assertSame(0, $employee->fresh()->roles()->count());
+
+        // User-side: role non-protected ikut tercabut, `guest` tetap menempel.
+        $fresh = $this->user->fresh();
+        $this->assertFalse($fresh->hasRole('staff'));
+        $this->assertTrue($fresh->hasRole(User::ROLE_GUEST));
     }
 
     public function test_roles_must_exist_when_assigned_to_employee(): void

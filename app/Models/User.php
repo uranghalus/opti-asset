@@ -22,6 +22,19 @@ class User extends Authenticatable implements PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    public const ROLE_SUPER_ADMIN = 'super-admin';
+
+    public const ROLE_GUEST = 'guest';
+
+    /**
+     * Role yang tidak boleh dicabut oleh sinkronisasi dari Employee:
+     * `guest` (landing role untuk akun tanpa role employee) dan
+     * `super-admin` (akses platform, diberikan langsung pada User).
+     *
+     * @var list<string>
+     */
+    public const PROTECTED_ROLE_NAMES = [self::ROLE_GUEST, self::ROLE_SUPER_ADMIN];
+
     protected function casts(): array
     {
         return [
@@ -55,6 +68,6 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function isSuperAdmin(): bool
     {
-        return $this->is_super_admin || $this->hasRole('super-admin') || $this->hasRole('super_admin');
+        return $this->is_super_admin || $this->hasRole(self::ROLE_SUPER_ADMIN) || $this->hasRole('super_admin');
     }
 }

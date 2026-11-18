@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSuperAdminGrantRequest;
 use App\Http\Requests\UpdateSuperAdminGrantRequest;
-use App\Models\Employee;
 use App\Models\SuperAdminGrant;
 use App\Models\User;
 use Database\Seeders\SuperAdminSeeder;
@@ -152,9 +151,7 @@ class SuperAdminGrantController extends Controller
      */
     private function syncEmployeeRole(User $user, bool $grant): void
     {
-        $employee = Employee::withoutGlobalScopes()
-            ->where('email', $user->email)
-            ->first();
+        $employee = $user->employee;
 
         if ($employee === null) {
             return;

@@ -8,7 +8,6 @@ use App\Http\Requests\AssignEmployeeRolesRequest;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -90,7 +89,7 @@ class EmployeeController extends Controller
 
         // Push the new roles onto the linked User immediately so the change
         // takes effect without waiting for their next login.
-        $linkedUser = User::withoutGlobalScopes()->where('email', $employee->email)->first();
+        $linkedUser = $employee->user;
 
         if ($linkedUser !== null) {
             app(SyncUserRolesFromEmployeeAction::class)->execute($linkedUser);

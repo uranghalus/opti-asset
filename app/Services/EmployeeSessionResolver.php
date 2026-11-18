@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
 
@@ -13,11 +12,11 @@ use Illuminate\Support\Facades\Session;
  * so no separate department assignment is needed — the employee record is the
  * single source of truth for the user's organizational context.
  *
- * Matching order:
- *  1. By email (primary) — Employee.email matches User.email
- *  2. By NIK (fallback) — Employee.nik_employee matches User->nik dynamic attribute
- *
- * If no match is found, null is returned and the employee session is cleared.
+ * Resolution is the persistent `employee_id` FK (User::employee(), which
+ * bypasses the Employee tenant global scope so it also resolves when no
+ * tenant is current — e.g. during SAML ACS before any tenant context
+ * exists). If the user has no linked employee, null is returned and the
+ * employee session is cleared.
  */
 class EmployeeSessionResolver
 {
@@ -30,20 +29,9 @@ class EmployeeSessionResolver
      */
     public function resolve(User $user): ?array
     {
-        $employee = Employee::withoutGlobalScopes()
-            ->where('email', $user->email)
-            ->first();
+        $employee = $user->employee;
 
-        if (! $employee) {
-            $nik = $user->nik ?? null;
-            if ($nik) {
-                $employee = Employee::withoutGlobalScopes()
-                    ->where('nik_employee', $nik)
-                    ->first();
-            }
-        }
-
-        if (! $employee) {
+        if ($employee === null) {
             Session::forget(self::SESSION_KEY);
 
             return null;

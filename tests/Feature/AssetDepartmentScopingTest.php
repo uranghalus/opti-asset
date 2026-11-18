@@ -106,15 +106,18 @@ class AssetDepartmentScopingTest extends TestCase
      * Tulis session employee lewat jalur produksi (EmployeeSessionResolver),
      * bukan dengan menanam session manual — agar key `department_id`
      * yang diuji persis seperti runtime.
+     *
+     * Link lewat FK `employee_id`; email sengaja tidak disamakan karena
+     * resolusi tidak lagi memakai email.
      */
     private function asEmployeeOf(User $user, Department $department): void
     {
-        Employee::create([
+        $employee = Employee::create([
             'id_employee' => 'emp-'.strtolower($department->id_department),
             'tenant_id' => $this->tenant->id,
             'nik_employee' => 'NIK-'.strtoupper($department->id_department),
             'nama_employee' => 'Karyawan '.$department->nama_department,
-            'email' => $user->email,
+            'email' => 'hrd-'.strtolower($department->id_department).'@example.com',
             'number' => null,
             'photo_url' => null,
             'id_department' => $department->id_department,
@@ -122,6 +125,8 @@ class AssetDepartmentScopingTest extends TestCase
             'id_position' => null,
             'last_login_ip' => null,
         ]);
+
+        $user->update(['employee_id' => $employee->id_employee]);
 
         (new EmployeeSessionResolver)->resolve($user);
     }

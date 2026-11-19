@@ -1,0 +1,19 @@
+=== live routes (auth/oidc/saml)
+ GET|HEAD auth/saml/denied .. saml.denied › routes/web.php:183
+ GET|HEAD auth/saml/login .. saml.login › Auth\SamlController@redirect
+ POST auth/saml/opti-saml-acs .. saml.acs › Auth\SamlController@acs
+ GET|HEAD auth/saml/opti-saml-logout saml.logout › Auth\SamlController@logo…
+ GET|HEAD auth/saml/opti-saml-metadata saml.metadata › Auth\SamlController@…
+
+=== vendor/kovah present now?
+ABSENT
+
+=== config/services.php oidc (current branch)
+NONE
+
+=== live GET /login status
+405 
+=== live GET / (status)
+302 http://127.0.0.1:8000/auth/saml/login
+
+=== login html sso refs

@@ -24,7 +24,6 @@ class CreateTenantAction
         ]);
 
         $user->update(['tenant_id' => $tenant->id]);
-        $user->tenants()->attach($tenant->id);
 
         return $tenant;
     }

@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Hash, MapPin, Package, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { VibrantBackground } from '@/components/vibrant-background';
-import { index as indexRoute } from '@/routes/asset-transfers';
+import { index as indexRoute } from '@/routes/tenant/asset-transfers';
 
 type Asset = {
     id: string;
@@ -406,3 +406,4 @@ AssetTransferCreate.layout = {
         },
     ],
 };
+

@@ -30,7 +30,7 @@ class AuditLogTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -46,7 +46,7 @@ class AuditLogTest extends TestCase
         $this->user->revokePermissionTo('audit.view');
 
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index'))
+            ->get(route('tenant.audit-logs.index', ['tenant' => $this->tenant->code]))
             ->assertForbidden();
     }
 
@@ -119,7 +119,7 @@ class AuditLogTest extends TestCase
         $this->tenant->makeCurrent();
 
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index'))
+            ->get(route('tenant.audit-logs.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('audit-logs/Index')
@@ -135,14 +135,14 @@ class AuditLogTest extends TestCase
         Item::factory()->create(['name' => 'Item Unik XYZ']);
 
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index', ['action' => 'created']))
+            ->get(route('tenant.audit-logs.index', array_merge(['tenant' => $this->tenant->code], ['action' => 'created'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('logs.data')
                 ->where('filters.action', 'created'));
 
         $this->actingAs($this->user)
-            ->get(route('audit-logs.index', ['search' => 'Gudang Filter']))
+            ->get(route('tenant.audit-logs.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Gudang Filter'])))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('logs.data.0.subject_label', 'Gudang Filter'));

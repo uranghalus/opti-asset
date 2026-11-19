@@ -1,0 +1,22 @@
+=== composer cache kovah
+/root/.cache/composer/files/kovah/laravel-socialite-oidc/1e475875a560b36e53ae5b988ba3daf154acab26.zip
+
+=== running php servers
+root      102385  0.0  0.0   2584  1420 pts/3    S+   09:51   0:00 sh -c npx concurrently -c "#93c5fd,#c4b5fd,#fdba74" "php artisan serve" "php artisan queue:listen --tries=1" "npm run dev" --names='server,queue,vite'
+root      102386  0.0  0.5 1598156 83928 pts/3   Sl+  09:51   0:00 npm exec concurrently -c #93c5fd,#c4b5fd,#fdba74 php artisan serve php artisan queue:listen --tries=1 npm run dev --names=server,queue,vite
+root      102398  0.0  0.0   2588  1376 pts/3    S+   09:51   0:00 sh -c 'concurrently' -c '#93c5fd,#c4b5fd,#fdba74' 'php artisan serve' 'php artisan queue:listen --tries=1' 'npm run dev' --names=server,queue,vite
+root      102399  0.0  0.4 1420840 68688 pts/3   Sl+  09:51   0:00 node /var/www/opti-asset/node_modules/.bin/concurrently -c #93c5fd,#c4b5fd,#fdba74 php artisan serve php artisan queue:listen --tries=1 npm run dev --names=server,queue,vite
+root      102406  0.0  0.0   2588  1400 pts/3    S+   09:51   0:00 /bin/sh -c php artisan serve
+root      102407  0.0  0.4 181280 71420 pts/3    S+   09:51   0:01 php artisan serve
+root      102422  0.0  0.0   2588  1424 pts/3    S+   09:51   0:00 sh -c vite
+root      102423  0.0  5.3 17190500 878096 pts/3 Sl+  09:51   1:57 node /var/www/opti-asset/node_modules/.bin/vite
+
+=== .env OIDC vars
+NO OIDC VARS in .env
+
+=== guzzle present
+BodySummarizer.php
+BodySummarizerInterface.php
+Client.php
+ClientInterface.php
+ClientTrait.php

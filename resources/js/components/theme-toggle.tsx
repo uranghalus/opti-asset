@@ -1,69 +1,36 @@
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/hooks/use-appearance';
-import type { Appearance } from '@/hooks/use-appearance';
 
 export function ThemeToggle() {
-    const { appearance, updateAppearance } = useAppearance();
+    const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+    const [isMounted, setIsMounted] = useState(false);
 
-    const options: {
-        value: Appearance;
-        label: string;
-        icon: React.ReactNode;
-    }[] = [
-        {
-            value: 'light',
-            label: 'Light',
-            icon: <Sun className="h-4 w-4" />,
-        },
-        {
-            value: 'dark',
-            label: 'Dark',
-            icon: <Moon className="h-4 w-4" />,
-        },
-        {
-            value: 'system',
-            label: 'System',
-            icon: <Monitor className="h-4 w-4" />,
-        },
-    ];
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        // Placeholder ukuran tetap agar tidak ada layout shift saat mount
+        return <div className="size-11 shrink-0" aria-hidden="true" />;
+    }
+
+    const isDark = appearance === 'dark' || resolvedAppearance === 'dark';
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                    {appearance === 'dark' ? (
-                        <Moon className="h-4 w-4" />
-                    ) : appearance === 'light' ? (
-                        <Sun className="h-4 w-4" />
-                    ) : (
-                        <Monitor className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {options.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => updateAppearance(option.value)}
-                        className="flex items-center gap-2"
-                    >
-                        {option.icon}
-                        <span>{option.label}</span>
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
+            aria-label={isDark ? 'Ganti Tema Terang' : 'Ganti Tema Gelap'}
+        >
+            {isDark ? (
+                <Sun className="size-5" aria-hidden="true" />
+            ) : (
+                <Moon className="size-5" aria-hidden="true" />
+            )}
+        </Button>
     );
 }

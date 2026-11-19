@@ -1,0 +1,53 @@
+=== all local.ERROR lines (timestamp+msg head)
+11:[2026-11-16 07:29:41] local.ERROR: Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. 
+76:[2026-11-16 07:29:57] local.ERROR: Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. 
+141:[2026-11-16 07:31:05] local.ERROR: Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. 
+206:[2026-11-16 07:32:24] local.ERROR: Unable to get the OIDC configuration from /.well-known/openid-configuration: URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri. 
+271:[2026-11-16 07:38:53] local.ERROR: FilesystemIterator::__construct(/var/www/opti-asset/resources/js/routes/asset-classification/clusters): Failed to open directory: No such file or directory 
+295:[2026-11-16 18:17:17] local.ERROR: include(/var/www/opti-asset/vendor/composer/../socialiteproviders/manager/src/ServiceProvider.php): Failed to open stream: No such file or directory 
+46188:[2026-11-17 01:04:04] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+46189:[2026-11-17 01:07:11] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+46190:[2026-11-17 01:07:11] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+46194:[2026-11-17 01:44:24] local.ERROR: SAML ACS Exception: DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1  
+
+=== f8a7a28 stat
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+ .agents/skills/ask-matt/SKILL.md                   |     21 +-
+ .agents/skills/codebase-design/DESIGN-IT-TWICE.md  |      2 +-
+ .agents/skills/diagnosing-bugs/SKILL.md            |      2 +-
+ .../{CONTEXT-FORMAT.md => GLOSSARY-FORMAT.md}      |     20 +-
+ .agents/skills/domain-modeling/SKILL.md            |     24 +-
+ .agents/skills/impeccable/SKILL.md                 |     24 +-
+ .../agents/impeccable_asset_producer.toml          |     84 +-
+ .../impeccable/agents/impeccable_documenter.toml   |      6 +-
+ .../agents/impeccable_finish_reviewer.toml         |     25 +-
+ .../agents/impeccable_manual_edit_applier.toml     |      2 +-
+ .agents/skills/impeccable/reference/android.md     |      6 +
+ .agents/skills/impeccable/reference/animate.md     |      3 +
+ .../skills/impeccable/reference/audit.native.md    |      2 +-
+ .agents/skills/impeccable/reference/bolder.md      |      4 +-
+ .agents/skills/impeccable/reference/craft-floor.md |      1 +
+ .agents/skills/impeccable/reference/critique.md    |     40 +-
+ .../reference/degraded/asset-producer.md           |     84 +-
+ .../impeccable/reference/degraded/documenter.md    |      6 +-
+ .../reference/degraded/finish-reviewer.md          |     25 +-
+ .../reference/degraded/manual-edit-applier.md      |      2 +-
+ .agents/skills/impeccable/reference/distill.md     |      2 +-
+ .agents/skills/impeccable/reference/doctor.md      |      9 +-
+ .agents/skills/impeccable/reference/document.md    |      2 +-
+ .agents/skills/impeccable/reference/extract.md     |      2 +-
+ .agents/skills/impeccable/reference/hooks.md       |     46 +-
+ .agents/skills/impeccable/reference/init.md        |     16 +-
+ .agents/skills/impeccable/reference/ios.md         |      6 +
+ .agents/skills/impeccable/reference/layout.md      |      2 +-
+ .agents/skills/impeccable/reference/live-setup.md  |     18 +-
+ .agents/skills/impeccable/reference/live.md        |     62 +-
+ .agents/skills/impeccable/reference/new-work.md    |    107 +-
+ .agents/skills/impeccable/reference/overdrive.md   |      2 +-
+ .agents/skills/impeccable/reference/polish.md      |     20 +-
+ .agents/skills/impeccable/reference/quieter.md     |      2 +-
+ .agents/skills/impeccable/reference/routing.md     |     16 +-
+ .agents/skills/impeccable/reference/typeset.md     |      2 +-
+ .agents/skills/impeccable/reference/visualize.md   |     45 +-
+ .agents/skills/impeccable/scripts/VERSION          |      1 +
+ .../scripts/bin/windows-x64/impeccable.exe         |    Bin 0 -> 14720392 bytes

@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -31,7 +32,7 @@ class EmployeeTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
@@ -129,12 +130,23 @@ class EmployeeTest extends TestCase
         $role = Role::create(['name' => 'staff', 'guard_name' => 'web']);
         $employee->assignRole($role);
 
+        // Linked user mirror: role non-protected employee + guest milik user.
+        $guest = Role::create(['name' => User::ROLE_GUEST, 'guard_name' => 'web']);
+        $this->user->update(['employee_id' => $employee->id_employee]);
+        $this->user->assignRole($role);
+        $this->user->assignRole($guest);
+
         $this->actingAs($this->user)
             ->from(route('employees.index'))
             ->post(route('employees.roles.update', $employee), ['roles' => []])
             ->assertRedirect(route('employees.index'));
 
         $this->assertSame(0, $employee->fresh()->roles()->count());
+
+        // User-side: role non-protected ikut tercabut, `guest` tetap menempel.
+        $fresh = $this->user->fresh();
+        $this->assertFalse($fresh->hasRole('staff'));
+        $this->assertTrue($fresh->hasRole(User::ROLE_GUEST));
     }
 
     public function test_roles_must_exist_when_assigned_to_employee(): void
@@ -307,5 +319,24 @@ class EmployeeTest extends TestCase
         $employee = Employee::withoutGlobalScopes()->where('nik_employee', 'NIK-001')->first();
         $this->assertNotNull($employee);
         $this->assertSame($other->id, $employee->tenant_id);
+    }
+
+    public function test_unique_tenant_email_index_rejects_duplicate(): void
+    {
+        $email = 'duplikat@example.com';
+
+        Employee::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'email' => $email,
+        ]);
+
+        // Index unik (tenant_id, email) menolak duplikat dalam satu tenant —
+        // query backfill Task 2 mengandalkan keunikan ini.
+        $this->expectException(QueryException::class);
+
+        Employee::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'email' => $email,
+        ]);
     }
 }

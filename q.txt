@@ -1,0 +1,44 @@
+=== merge-base main dev
+59edbb6dba3df61a5a83e8983791c3a9218755bd
+
+=== main log
+59edbb6 Merge pull request #10 from uranghalus/development
+089a60f feat: enhance asset management with classification levels and improved filtering
+17aa024 feat: update skills-lock.json with new skills and modify RoleFilterLevelTest to reflect changes in initialLevel
+266ab1a Mark design tickets 12-15 done; record asset page revamp in memory
+74f970c Add desktop ledger table with persistent view toggle (design ticket 15)
+e573dec Rebuild AssetCard as the signature ledger card (design ticket 14)
+
+=== main composer.lock kovah entry
+1582-        },
+1583-        {
+1584:            "name": "kovah/laravel-socialite-oidc",
+1585-            "version": "v0.8.0",
+1586-            "source": {
+1587-                "type": "git",
+1588-                "url": "https://github.com/Kovah/laravel-socialite-oidc.git",
+1589-                "reference": "cfd9c9a658da97b961d936159c45ca4ed082e62a"
+1590-            },
+1591-            "dist": {
+1592-                "type": "zip",
+1593-                "url": "https://api.github.com/repos/Kovah/laravel-socialite-oidc/zipball/cfd9c9a658da97b961d936159c45ca4ed082e62a",
+1594-                "reference": "cfd9c9a658da97b961d936159c45ca4ed082e62a",
+1595-                "shasum": ""
+1596-            },
+
+=== kovah clone tags/branches
+v0.1
+v0.2.0
+v0.3.0
+v0.4.0
+v0.5.0
+v0.6.0
+v0.7.0
+v0.8.0
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/copilot/fix-11
+  remotes/origin/copilot/fix-8
+  remotes/origin/main
+
+=== guzzle psr7 error string

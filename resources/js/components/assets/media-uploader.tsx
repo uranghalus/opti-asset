@@ -1,4 +1,4 @@
-import {
+﻿import {
     CheckCircle2,
     CircleAlert,
     FileText,
@@ -7,7 +7,8 @@ import {
     Trash2,
     UploadCloud,
 } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useEffect, useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,7 @@ import {
     MAX_FILE_BYTES,
 } from '@/lib/image-compression';
 import { cn } from '@/lib/utils';
-import { upload as uploadRoute } from '@/routes/assets';
+import { upload as uploadRoute } from '@/routes/tenant/assets';
 
 const ALLOWED_PHOTOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_DOCS = [
@@ -108,6 +109,8 @@ export function MediaUploader({
     maxFiles = 10,
     onBusyChange,
 }: MediaUploaderProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const valueRef = useRef(value);
@@ -149,8 +152,12 @@ export function MediaUploader({
                     compressedSize: toUpload.size,
                 });
 
+                if (!tenantCode) {
+                    throw new Error('Tenant tidak aktif.');
+                }
+
                 const { url } = await uploadFile(
-                    uploadRoute().url,
+                    uploadRoute({ tenant: tenantCode }).url,
                     toUpload,
                     (ratio) => updateItem(item.id, { progress: ratio }),
                 );
@@ -278,7 +285,7 @@ export function MediaUploader({
             >
                 <span
                     className={cn(
-                        'flex size-11 items-center justify-center rounded-md border shadow-sm transition-all duration-200 group-hover:scale-105',
+                        'flex size-11 items-center justify-center rounded-md border transition-colors duration-200',
                         dragging
                             ? 'border-primary/30 bg-primary/15 text-primary'
                             : 'border-primary/20 bg-primary/10 text-primary',
@@ -297,8 +304,8 @@ export function MediaUploader({
                 </p>
                 <p className="text-xs text-muted-foreground">
                     {isImage
-                        ? `JPG, PNG, WEBP, GIF · maks. ${maxFiles} foto · kompres otomatis ≤ 1 MB`
-                        : 'PDF, DOC, DOCX, XLS, XLSX, CSV, TXT · maks. 1 MB per file'}
+                        ? `JPG, PNG, WEBP, GIF Â· maks. ${maxFiles} foto Â· kompres otomatis â‰¤ 1 MB`
+                        : 'PDF, DOC, DOCX, XLS, XLSX, CSV, TXT Â· maks. 1 MB per file'}
                 </p>
                 <input
                     ref={inputRef}
@@ -379,7 +386,7 @@ function CommittedItem({
                 type="button"
                 aria-label="Hapus file"
                 onClick={onRemove}
-                className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:bg-destructive hover:text-white"
             >
                 <Trash2 className="size-3" />
             </button>
@@ -430,7 +437,7 @@ function PendingRow({
                         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                             {item.compressedSize !== undefined &&
                             item.compressedSize < item.originalSize
-                                ? `${formatBytes(item.originalSize)} → ${formatBytes(item.compressedSize)}`
+                                ? `${formatBytes(item.originalSize)} â†’ ${formatBytes(item.compressedSize)}`
                                 : formatBytes(item.originalSize)}
                         </span>
                     ) : null}
@@ -488,3 +495,4 @@ function PendingRow({
         </li>
     );
 }
+

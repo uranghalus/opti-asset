@@ -127,7 +127,7 @@ return [
     |
     | View routes (login, register, password reset, email verification,
     | two-factor challenge, confirm password) are disabled because this
-    | application authenticates exclusively via corporate SSO (OIDC).
+    | application authenticates exclusively via corporate SSO (SAML).
     |
     */
 

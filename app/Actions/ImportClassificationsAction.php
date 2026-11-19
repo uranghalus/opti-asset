@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ClassificationType;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\SimpleExcel\SimpleExcelReader;
 
 /**
- * @phpstan-type ClassificationRow array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}
+ * @phpstan-type ClassificationRow array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null, tipe: string|null}
  */
 class ImportClassificationsAction
 {
@@ -33,9 +34,12 @@ class ImportClassificationsAction
     }
 
     /**
-     * Process parsed rows array (backward compat for tests).
+     * Process parsed rows array (backward compat for tests). Tipe klasifikasi
+     * is mandatory: rows without a valid peralatan/aktiva_tetap value are
+     * rejected per row (documented decision — no blind default; a typo'd
+     * tipe falls back to null and is rejected here too).
      *
-     * @param  array<int, array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null}>  $rows
+     * @param  array<int, array{level: string, name: string, code?: string|null, description?: string|null, parent_code?: string|null, tipe: string|null}>  $rows
      * @return array{created: int, updated: int, skipped: array<int, string>}
      */
     public function fromRows(array $rows): array
@@ -51,8 +55,28 @@ class ImportClassificationsAction
             return $summary;
         }
 
+        $validRows = [];
+        foreach ($collection as $row) {
+            if ($row['tipe'] === null) {
+                $summary['skipped'][] = "'{$row['name']}' (kolom tipe wajib diisi: peralatan atau aktiva_tetap).";
+
+                continue;
+            }
+
+            $validRows[] = $row;
+        }
+
+        /** @var Collection<int, ClassificationRow> $collection */
+        $collection = collect($validRows);
+
+        if ($collection->isEmpty()) {
+            return $summary;
+        }
+
         // Pre-load all existing records into memory (1 query per model).
-        $allGroups = AssetGroup::query()->get()->keyBy('code');
+        // Groups are keyed by "code|tipe" — the same code may exist per type.
+        $allGroups = AssetGroup::query()->get()
+            ->keyBy(fn (AssetGroup $g): string => $g->code.'|'.($g->classification_type instanceof ClassificationType ? $g->classification_type->value : ''));
         $allCategories = AssetCategory::query()->get()
             ->keyBy(fn (AssetCategory $c): string => "{$c->asset_group_id}.{$c->code}");
         $allClusters = AssetCluster::query()->get()
@@ -95,7 +119,8 @@ class ImportClassificationsAction
             $segments = $this->codeSegments($row);
             $code = $segments[0] ?? $row['code'] ?? null;
 
-            $existing = $code !== null ? $allGroups->get($code) : null;
+            /** @var AssetGroup|null $existing */
+            $existing = $code !== null ? $allGroups->get($code.'|'.$row['tipe']) : null;
 
             if ($existing) {
                 $existing->update([
@@ -108,11 +133,12 @@ class ImportClassificationsAction
                     'code' => $code,
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
+                    'classification_type' => $row['tipe'],
                 ]);
                 $summary['created']++;
 
                 if ($code !== null) {
-                    $allGroups->put($code, $group);
+                    $allGroups->put($code.'|'.$row['tipe'], $group);
                 }
             }
         }
@@ -137,10 +163,19 @@ class ImportClassificationsAction
                 continue;
             }
 
-            $group = $allGroups->get($groupCode);
+            $group = $allGroups->get($groupCode.'|'.$row['tipe']);
 
             if ($group === null) {
                 $summary['skipped'][] = "Kategori '{$row['name']}' (golongan '{$groupCode}' tidak ditemukan).";
+
+                continue;
+            }
+
+            // Composite FK would reject a type mismatch or a typed child under
+            // an untyped parent — reject per row with a clear message instead.
+            $mismatch = $this->parentTypeMismatch($group->classification_type, $row['tipe'], 'golongan');
+            if ($mismatch !== null) {
+                $summary['skipped'][] = "Kategori '{$row['name']}' ({$mismatch}).";
 
                 continue;
             }
@@ -160,6 +195,7 @@ class ImportClassificationsAction
                     'code' => $categoryCode,
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
+                    'classification_type' => $row['tipe'],
                 ]);
                 $summary['created']++;
 
@@ -179,10 +215,17 @@ class ImportClassificationsAction
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
-            $parent = $this->resolveParentFromCache(AssetCategory::class, $segments, $allGroups, $allCategories);
+            $parent = $this->resolveParentFromCache(AssetCategory::class, $segments, $row['tipe'], $allGroups, $allCategories);
 
             if (! $parent instanceof AssetCategory) {
                 $summary['skipped'][] = "Cluster '{$row['name']}' (induk tidak ditemukan).";
+
+                continue;
+            }
+
+            $mismatch = $this->parentTypeMismatch($parent->classification_type, $row['tipe'], 'kategori');
+            if ($mismatch !== null) {
+                $summary['skipped'][] = "Cluster '{$row['name']}' ({$mismatch}).";
 
                 continue;
             }
@@ -203,6 +246,7 @@ class ImportClassificationsAction
                     'code' => $clusterCode,
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
+                    'classification_type' => $row['tipe'],
                 ]);
                 $summary['created']++;
 
@@ -223,10 +267,17 @@ class ImportClassificationsAction
     {
         foreach ($rows as $row) {
             $segments = $this->codeSegments($row);
-            $parent = $this->resolveParentFromCache(AssetCluster::class, $segments, $allGroups, $allCategories, $allClusters);
+            $parent = $this->resolveParentFromCache(AssetCluster::class, $segments, $row['tipe'], $allGroups, $allCategories, $allClusters);
 
             if (! $parent instanceof AssetCluster) {
                 $summary['skipped'][] = "Sub Cluster '{$row['name']}' (induk tidak ditemukan).";
+
+                continue;
+            }
+
+            $mismatch = $this->parentTypeMismatch($parent->classification_type, $row['tipe'], 'cluster');
+            if ($mismatch !== null) {
+                $summary['skipped'][] = "Sub Cluster '{$row['name']}' ({$mismatch}).";
 
                 continue;
             }
@@ -247,6 +298,7 @@ class ImportClassificationsAction
                     'code' => $subClusterCode,
                     'name' => $row['name'],
                     'description' => $row['description'] ?? null,
+                    'classification_type' => $row['tipe'],
                 ]);
                 $summary['created']++;
 
@@ -259,13 +311,14 @@ class ImportClassificationsAction
      * Resolve parent from in-memory cache instead of DB queries.
      *
      * @param  array<int, string|null>  $segments
-     * @param  Collection<string, AssetGroup>  $allGroups
+     * @param  Collection<string, AssetGroup>  $allGroups  keyed by "code|tipe"
      * @param  Collection<string, AssetCategory>  $allCategories
      * @param  Collection<string, AssetCluster>  $allClusters
      */
     private function resolveParentFromCache(
         string $model,
         array $segments,
+        string $tipe,
         Collection $allGroups,
         Collection $allCategories,
         Collection $allClusters = new Collection,
@@ -279,7 +332,7 @@ class ImportClassificationsAction
             return null;
         }
 
-        $group = $allGroups->get($groupCode);
+        $group = $allGroups->get($groupCode.'|'.$tipe);
 
         if ($group === null) {
             return null;
@@ -323,7 +376,7 @@ class ImportClassificationsAction
             $normalized[$normalizedKey] = $value;
         }
 
-        // Legacy flat format: level / name / code / description / parent_code
+        // Legacy flat format: level / name / code / description / parent_code / tipe
         if (isset($normalized['level'], $normalized['name'])) {
             return [
                 'level' => $this->castLevel((string) $normalized['level']),
@@ -331,6 +384,7 @@ class ImportClassificationsAction
                 'code' => $normalized['code'] ?? null,
                 'description' => $normalized['description'] ?? null,
                 'parent_code' => $normalized['parent_code'] ?? null,
+                'tipe' => $this->castTipe((string) ($normalized['tipe'] ?? $normalized['tipe_klasifikasi'] ?? $normalized['classification_type'] ?? '')),
             ];
         }
 
@@ -351,7 +405,7 @@ class ImportClassificationsAction
         }
 
         if ($filled === []) {
-            return ['level' => '', 'name' => '', 'code' => null, 'description' => null, 'parent_code' => null];
+            return ['level' => '', 'name' => '', 'code' => null, 'description' => null, 'parent_code' => null, 'tipe' => null];
         }
 
         $node = last($filled);
@@ -365,7 +419,39 @@ class ImportClassificationsAction
             'code' => $node['value'],
             'description' => $this->valueOrNull($normalized['keterangan'] ?? null),
             'parent_code' => $parentPath ?: null,
+            'tipe' => $this->castTipe((string) ($normalized['tipe'] ?? $normalized['tipe_klasifikasi'] ?? $normalized['classification_type'] ?? '')),
         ];
+    }
+
+    /**
+     * The per-row failure message when the row's tipe differs from its parent's
+     * (the composite FK would reject the insert otherwise), or null when the
+     * tipe matches.
+     */
+    private function parentTypeMismatch(?ClassificationType $parentType, string $rowTipe, string $parentLabel): ?string
+    {
+        if ($parentType === null) {
+            return "tipe harus sama dengan {$parentLabel} induk: belum bertipe";
+        }
+
+        return $parentType->value !== $rowTipe
+            ? "tipe harus sama dengan {$parentLabel} induk: {$parentType->label()}"
+            : null;
+    }
+
+    /**
+     * Normalize a tipe value to the enum value; anything else (missing,
+     * typo'd, unknown) becomes null and the row is rejected by fromRows.
+     */
+    private function castTipe(string $value): ?string
+    {
+        $normalized = str_replace(' ', '_', trim(mb_strtolower($value)));
+
+        return match ($normalized) {
+            'peralatan', 'equipment' => 'peralatan',
+            'aktiva_tetap', 'fixed_asset' => 'aktiva_tetap',
+            default => null,
+        };
     }
 
     private function castLevel(string $value): string

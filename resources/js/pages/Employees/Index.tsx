@@ -1,4 +1,4 @@
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+﻿import { Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Building2,
@@ -34,8 +34,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
-import { index as indexRoute, show, sync } from '@/routes/employees';
-import { update as updateRoles } from '@/routes/employees/roles';
+import { index as indexRoute, show, sync } from '@/routes/tenant/employees';
+import { update as updateRoles } from '@/routes/tenant/employees/roles';
 
 type RoleOption = {
     id: number;
@@ -488,7 +488,7 @@ export default function EmployeesIndex() {
                                                     </h3>
                                                     <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                         {employee.nik_employee ??
-                                                            '—'}
+                                                            'â€”'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -580,7 +580,7 @@ export default function EmployeesIndex() {
                     {employees.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {employees.from}–{employees.to} dari{' '}
+                                Menampilkan {employees.from}â€“{employees.to} dari{' '}
                                 {employees.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -768,3 +768,4 @@ EmployeesIndex.layout = {
         },
     ],
 };
+

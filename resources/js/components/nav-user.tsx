@@ -1,27 +1,49 @@
-import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import {
+    ChevronDown,
+    LogOut,
+    Palette,
+    ShieldCheck,
+    User,
+} from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from '@/components/ui/sidebar';
-import { UserInfo } from '@/components/user-info';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useIsMobile } from '@/hooks/use-mobile';
-import type { User } from '@/types';
+import { useInitials } from '@/hooks/use-initials';
+import { logout } from '@/routes';
+import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editProfile } from '@/routes/profile';
+import { edit as editSecurity } from '@/routes/security';
+import type { User as AuthUser } from '@/types/auth';
 
 export function NavUser() {
-    const { auth } = usePage().props as { auth?: { user?: User } };
-    const { state } = useSidebar();
-    const isMobile = useIsMobile();
+    const { auth } = usePage().props as unknown as {
+        auth: { user: AuthUser | null };
+    };
+    const user = auth.user;
+    const getInitials = useInitials();
 
-    const user = auth?.user;
+    if (!user) {
+        return null;
+    }
+
+    const profileLinks = [
+        { label: 'Profil Saya', icon: User, href: editProfile().url },
+        { label: 'Keamanan', icon: ShieldCheck, href: editSecurity().url },
+        { label: 'Tampilan', icon: Palette, href: editAppearance().url },
+    ];
 
     return (
         <SidebarMenu>
@@ -30,25 +52,93 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group/sidebar-item h-11 gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-2 py-1 transition-all duration-150 hover:border-sidebar-ring/30 hover:bg-sidebar-accent data-[state=open]:border-sidebar-ring/30 data-[state=open]:bg-sidebar-accent"
-                            data-test="sidebar-menu-button"
+                            className="cursor-pointer"
+                            aria-label="Menu pengguna"
                         >
-                            {user && <UserInfo user={user} showEmail />}
-                            <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/40 transition-colors group-hover/sidebar-item:text-sidebar-foreground/70" />
+                            <Avatar className="size-8 rounded-full">
+                                {user.avatar ? (
+                                    <AvatarImage
+                                        src={user.avatar}
+                                        alt={user.name}
+                                    />
+                                ) : null}
+                                <AvatarFallback>
+                                    {getInitials(user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">
+                                    {user.name}
+                                </span>
+                                <span className="truncate text-xs text-muted-foreground">
+                                    {user.email}
+                                </span>
+                            </div>
+                            <ChevronDown
+                                className="ml-auto size-4 text-muted-foreground"
+                                aria-hidden="true"
+                            />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        side="top"
                         align="end"
-                        side={
-                            isMobile
-                                ? 'bottom'
-                                : state === 'collapsed'
-                                  ? 'left'
-                                  : 'bottom'
-                        }
+                        sideOffset={8}
+                        className="w-64"
                     >
-                        {user && <UserMenuContent user={user} />}
+                        <DropdownMenuLabel className="flex items-center gap-3 px-3 py-2.5 font-normal">
+                            <Avatar className="size-9">
+                                {user.avatar ? (
+                                    <AvatarImage
+                                        src={user.avatar}
+                                        alt={user.name}
+                                    />
+                                ) : null}
+                                <AvatarFallback>
+                                    {getInitials(user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm font-semibold text-foreground">
+                                    {user.name}
+                                </span>
+                                <span className="truncate text-xs text-muted-foreground">
+                                    {user.email}
+                                </span>
+                            </div>
+                        </DropdownMenuLabel>
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuGroup>
+                            {profileLinks.map(({ label, icon: Icon, href }) => (
+                                <DropdownMenuItem
+                                    key={label}
+                                    asChild
+                                    className="cursor-pointer gap-3 px-3 py-2 text-sm"
+                                >
+                                    <Link href={href} prefetch>
+                                        <Icon
+                                            size={18}
+                                            className="text-foreground"
+                                        />
+                                        <span>{label}</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuGroup>
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                            variant="destructive"
+                            className="cursor-pointer gap-3 px-3 py-2 text-sm"
+                            onSelect={() => router.post(logout.url())}
+                        >
+                            <LogOut size={18} />
+                            <span>Keluar</span>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

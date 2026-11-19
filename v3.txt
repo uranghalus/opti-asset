@@ -1,0 +1,36 @@
+=== reflog full
+d9b82aa HEAD@{2026-11-16 15:38:52 +0800}: checkout: moving from main to development
+59edbb6 HEAD@{2026-11-16 13:24:04 +0800}: clone: from https://github.com/uranghalus/opti-asset.git
+
+=== main OIDCProvider (git) vs /tmp copy
+IDENTICAL
+
+=== git show main OIDCProvider grep getOpenIdConfig
+15:            'authorization_url',
+16:            'token_url',
+26:    protected function getOpenIdConfig(): array
+28:        $authorizationUrl = $this->getConfig('authorization_url');
+29:        $tokenUrl = $this->getConfig('token_url');
+39:        return parent::getOpenIdConfig();
+
+=== main OIDCController
+22:    public function __construct(
+26:    public function redirect(): RedirectResponse
+28:        return Socialite::driver('oidc')->redirect();
+31:    public function callback(Request $request): RedirectResponse
+34:            /** @var OIDCProvider $driver */
+35:            $driver = Socialite::driver('oidc');
+36:            $ssoUser = $driver->stateless()->user();
+66:                    'oidc_id' => $ssoUser->getId(),
+91:            $request->session()->put('oidc_id_token', $idToken);
+101:    public function logoutCallback(Request $request): JsonResponse
+123:            $oidcId = $payload->sub;
+124:            $user = User::where('oidc_id', $oidcId)->first();
+128:                if (config('session.driver') === 'redis') {
+156:    private function findDepartmentId(string $ssoDepartmentName): ?string
+
+=== main routes oidc
+13:use App\Http\Controllers\OIDCController;
+135:    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+136:    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+137:    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');

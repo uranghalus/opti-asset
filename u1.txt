@@ -1,0 +1,74 @@
+=== main tree oidc/saml files
+app/Http/Controllers/OIDCController.php
+app/Providers/OIDCProvider.php
+database/migrations/2026_08_28_165900_add_oidc_fields_to_users_table.php
+tests/Unit/OIDCProviderTest.php
+
+=== f8a7a28 date + files
+f8a7a28273f6cf9359a0aaf7f6bc562fbe4d85a8 2026-10-29 01:35:48 +0800 feat: reconfigure role & permission system with superadmin grant
+
+ .agents/skills/ask-matt/SKILL.md                   |     21 +-
+ .agents/skills/codebase-design/DESIGN-IT-TWICE.md  |      2 +-
+ .agents/skills/diagnosing-bugs/SKILL.md            |      2 +-
+ .../{CONTEXT-FORMAT.md => GLOSSARY-FORMAT.md}      |     20 +-
+ .agents/skills/domain-modeling/SKILL.md            |     24 +-
+ .agents/skills/impeccable/SKILL.md                 |     24 +-
+ .../agents/impeccable_asset_producer.toml          |     84 +-
+ .../impeccable/agents/impeccable_documenter.toml   |      6 +-
+ .../agents/impeccable_finish_reviewer.toml         |     25 +-
+ .../agents/impeccable_manual_edit_applier.toml     |      2 +-
+ .agents/skills/impeccable/reference/android.md     |      6 +
+ .agents/skills/impeccable/reference/animate.md     |      3 +
+ .../skills/impeccable/reference/audit.native.md    |      2 +-
+ .agents/skills/impeccable/reference/bolder.md      |      4 +-
+ .agents/skills/impeccable/reference/craft-floor.md |      1 +
+ .agents/skills/impeccable/reference/critique.md    |     40 +-
+ .../reference/degraded/asset-producer.md           |     84 +-
+ .../impeccable/reference/degraded/documenter.md    |      6 +-
+ .../reference/degraded/finish-reviewer.md          |     25 +-
+ .../reference/degraded/manual-edit-applier.md      |      2 +-
+ .agents/skills/impeccable/reference/distill.md     |      2 +-
+ .agents/skills/impeccable/reference/doctor.md      |      9 +-
+ .agents/skills/impeccable/reference/document.md    |      2 +-
+ .agents/skills/impeccable/reference/extract.md     |      2 +-
+ .agents/skills/impeccable/reference/hooks.md       |     46 +-
+ .agents/skills/impeccable/reference/init.md        |     16 +-
+ .agents/skills/impeccable/reference/ios.md         |      6 +
+ .agents/skills/impeccable/reference/layout.md      |      2 +-
+ .agents/skills/impeccable/reference/live-setup.md  |     18 +-
+ .agents/skills/impeccable/reference/live.md        |     62 +-
+ .agents/skills/impeccable/reference/new-work.md    |    107 +-
+ .agents/skills/impeccable/reference/overdrive.md   |      2 +-
+ .agents/skills/impeccable/reference/polish.md      |     20 +-
+ .agents/skills/impeccable/reference/quieter.md     |      2 +-
+ .agents/skills/impeccable/reference/routing.md     |     16 +-
+ .agents/skills/impeccable/reference/typeset.md     |      2 +-
+ .agents/skills/impeccable/reference/visualize.md   |     45 +-
+ .agents/skills/impeccable/scripts/VERSION          |      1 +
+
+=== log dates around
+d9b82aa 2026-11-04 17:38:11 +0800 feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+b162377 2026-11-04 17:38:01 +0800 feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+0806c9c 2026-11-04 17:34:43 +0800 feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+4f81987 2026-11-04 17:22:58 +0800 feat(layout): header dashboard baru (search, tenant, notifikasi, tema, profil)
+1d5d3a2 2026-11-04 17:01:01 +0800 feat(layout): sidebar blok memakai navigasi tenant-aware app
+272eb50 2026-11-04 16:28:45 +0800 feat(layout): helper tautan sidebar ter-flatten ber-prefix tenant
+07a724c 2026-11-04 16:25:51 +0800 feat(layout): izinkan ProfileDropdown blok menerima user, link, dan sign-out nyata
+9e87252 2026-11-04 16:15:54 +0800 feat(layout): izinkan Search blok menerima daftar tautan dari app
+
+=== current dev tree oidc/saml
+RUNBOOK_SAML_TENANT_SYNC.md
+app/Http/Controllers/Auth/SamlController.php
+app/Services/SamlTenantResolution.php
+app/Services/SamlTenantResolver.php
+config/saml.php
+database/migrations/2026_08_28_165900_add_oidc_fields_to_users_table.php
+database/migrations/2026_10_28_000000_drop_oidc_id_from_users_table.php
+planning/saml-login-tenant-sync-plan.md
+planning/saml-login-tenant-sync-sprint-plan.md
+planning/sprint-saml-login-tenant-routing.md
+tests/Feature/Auth/SamlAcsSessionTest.php
+tests/Feature/SamlLoginTest.php
+tests/Feature/Services/SamlAcsTenantTest.php
+tests/Feature/Services/SamlTenantResolutionTest.php
+tests/Feature/Services/SamlTenantResolverTest.php

@@ -21,7 +21,8 @@ class UpdateAssetRequest extends FormRequest
     public function rules(): array
     {
         /** @var Asset|null $asset */
-        $asset = $this->route('asset');
+        $assetId = $this->route('asset');
+        $asset = $assetId ? Asset::whereKey($assetId)->first() : null;
 
         return [
             'item_id' => ['nullable', 'exists:items,id'],

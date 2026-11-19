@@ -24,17 +24,17 @@ export function EmptyState({
     return (
         <div
             className={cn(
-                'card-enter flex flex-col items-center justify-center gap-4 py-20 text-center',
-                !plain && 'glass-panel mt-4 delay-200',
+                'flex flex-col items-center justify-center gap-4 py-20 text-center',
+                !plain && 'mt-4 rounded-xl border border-dashed border-border',
             )}
         >
             {Icon && (
                 <div
                     className={cn(
-                        'flex size-16 items-center justify-center rounded-2xl text-primary',
+                        'flex size-16 items-center justify-center rounded-lg text-primary',
                         plain
-                            ? 'border border-white/20 bg-white/10'
-                            : 'glass-card shadow-md',
+                            ? 'bg-surface-sunken'
+                            : 'border border-border bg-surface-sunken',
                     )}
                 >
                     <Icon className="size-7" strokeWidth={1.25} />

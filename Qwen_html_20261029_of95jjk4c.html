@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptiAsset — Sistem Manajemen Aset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   OptiAsset — Evolved Soft UI v2.4 (rebuilt per PRD v1.3)
+   ============================================================ */
+:root{
+  --brand:#2D82B7; --brand-2:#4FA3D9; --brand-grad:linear-gradient(135deg,#2D82B7,#4FA3D9);
+  --ok:#34D399; --blue:#60A5FA; --amber:#FBBF24; --violet:#A78BFA; --red:#F87171;
+  --r-lg:18px; --r-md:13px; --r-sm:9px;
+  --fd:'Plus Jakarta Sans',sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0C1017; --card:#141B27; --card-2:#1A2332; --side:rgba(16,22,32,.82);
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.12);
+  --text:#E8EDF5; --muted:#8B98AC; --faint:#5B6879; --row-h:rgba(255,255,255,.03);
+  --glass:rgba(12,16,23,.72); --inset:inset 0 2px 8px rgba(0,0,0,.38);
+  --sh-sm:0 2px 12px rgba(0,0,0,.28); --sh-md:0 16px 40px rgba(0,0,0,.42);
+  --glow:radial-gradient(900px 480px at 85% -6%,rgba(45,130,183,.16),transparent 62%),radial-gradient(700px 460px at -8% 105%,rgba(52,211,153,.05),transparent 60%);
+}
+html[data-theme="light"]{
+  --bg:#F1F5F9; --card:#FFFFFF; --card-2:#F6F8FB; --side:rgba(255,255,255,.85);
+  --line:rgba(15,23,42,.08); --line-2:rgba(15,23,42,.14);
+  --text:#0F172A; --muted:#5B6B80; --faint:#94A3B8; --row-h:rgba(15,23,42,.025);
+  --glass:rgba(241,245,249,.75); --inset:inset 0 2px 6px rgba(15,23,42,.07);
+  --sh-sm:0 2px 12px rgba(15,23,42,.07); --sh-md:0 18px 44px rgba(15,23,42,.13);
+  --glow:radial-gradient(900px 480px at 85% -6%,rgba(45,130,183,.10),transparent 62%),radial-gradient(700px 460px at -8% 105%,rgba(52,211,153,.06),transparent 60%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:var(--glow);pointer-events:none}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px}
+::selection{background:rgba(45,130,183,.35)}
+.hidden{display:none!important}
+.mono{font-family:var(--fm);font-size:.92em;letter-spacing:.02em}
+
+/* ---------- layout ---------- */
+.app{display:flex;min-height:100vh}
+.sidebar{width:266px;position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;background:var(--side);backdrop-filter:blur(16px);border-right:1px solid var(--line);z-index:60;transition:transform .3s ease}
+.main{flex:1;margin-left:266px;display:flex;flex-direction:column;min-width:0}
+.content{padding:26px 28px 40px;display:flex;flex-direction:column;gap:22px;max-width:1560px;width:100%;margin:0 auto}
+.foot{padding:0 28px 26px;color:var(--faint);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.foot b{color:var(--muted)}
+
+/* ---------- sidebar ---------- */
+.side-head{display:flex;align-items:center;gap:12px;padding:20px 18px 14px}
+.logo-mark{width:40px;height:40px;border-radius:12px;background:var(--brand-grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 18px rgba(45,130,183,.4);flex-shrink:0}
+.side-head b{font-family:var(--fd);font-size:16px;display:block;line-height:1.2}
+.side-head span{font-size:11px;color:var(--muted)}
+.tenant{margin:4px 14px 10px;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card-2);cursor:pointer;transition:.2s}
+.tenant:hover{border-color:var(--line-2)}
+.tenant-ic{width:30px;height:30px;border-radius:9px;background:var(--brand-soft,rgba(45,130,183,.15));color:var(--brand-2);display:grid;place-items:center;flex-shrink:0}
+.tenant b{font-size:12.5px;display:block;line-height:1.25}
+.tenant span{font-size:11px;color:var(--faint)}
+.tenant .sw{margin-left:auto;color:var(--faint)}
+.nav{flex:1;overflow-y:auto;padding:2px 12px 12px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:14px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-md);color:var(--muted);cursor:pointer;font-weight:500;font-size:13.5px;transition:.16s;border:1px solid transparent;user-select:none}
+.nav-item:hover{color:var(--text);background:var(--row-h)}
+.nav-item.active{color:var(--text);background:rgba(45,130,183,.13);border-color:rgba(45,130,183,.28);box-shadow:inset 0 0 0 1px rgba(45,130,183,.08)}
+.nav-item.active svg{color:var(--brand-2)}
+.nav-badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(45,130,183,.16);color:var(--brand-2)}
+.nav-badge.warn{background:rgba(251,191,36,.14);color:var(--amber)}
+.nav-badge.danger{background:rgba(248,113,113,.14);color:var(--red)}
+.side-foot{margin:10px 14px 16px;display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-grad);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12.5px;flex-shrink:0}
+.side-foot b{font-size:12.5px;display:block;line-height:1.3}
+.side-foot span{font-size:11px;color:var(--faint)}
+
+/* ---------- topbar ---------- */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;padding:13px 28px;background:var(--glass);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.page-title h1{font-family:var(--fd);font-size:19px;line-height:1.2}
+.page-title p{font-size:12px;color:var(--muted)}
+.search-wrap{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 13px;min-width:320px;box-shadow:var(--inset)}
+.search-wrap svg{color:var(--faint);flex-shrink:0}
+.search-wrap input{background:none;border:none;outline:none;color:var(--text);font:inherit;font-size:13px;width:100%}
+.search-wrap input::placeholder{color:var(--faint)}
+kbd{font-family:var(--fm);font-size:10.5px;color:var(--faint);border:1px solid var(--line-2);border-radius:6px;padding:2px 6px;background:var(--card-2);white-space:nowrap}
+.top-actions{display:flex;align-items:center;gap:10px}
+
+/* ---------- buttons / inputs ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:11px;font:inherit;font-size:13px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:.18s;white-space:nowrap;color:var(--text);background:var(--card-2);border-color:var(--line)}
+.btn:hover{transform:translateY(-1px);border-color:var(--line-2)}
+.btn.primary{background:var(--brand-grad);color:#fff;box-shadow:0 6px 18px rgba(45,130,183,.35)}
+.btn.primary:hover{box-shadow:0 9px 24px rgba(45,130,183,.5)}
+.btn.danger{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.3)}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:9px}
+.icon-btn{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--card-2);border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:.18s;position:relative;flex-shrink:0}
+.icon-btn:hover{color:var(--text);border-color:var(--line-2);transform:translateY(-1px)}
+.icon-btn.sm{width:30px;height:30px;border-radius:8px}
+.icon-btn .dot{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px var(--card)}
+.icon-btn.tiny{width:28px;height:28px;border-radius:8px;color:var(--faint)}
+.icon-btn.tiny:hover{color:var(--brand-2)}
+.icon-btn.acc{color:var(--green)}
+.icon-btn.rej:hover{color:var(--red)}
+select,input[type=text],input[type=number],input[type=date],textarea{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px;outline:none;transition:.18s;font-size:13px}
+select:focus,input:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(45,130,183,.2)}
+.inset-field{box-shadow:var(--inset)}
+label.f-label{font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
+
+/* ---------- cards / grid ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:20px;min-width:0}
+.card>h3{font-family:var(--fd);font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card>.sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.span2{grid-column:span 2}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:8px;transition:.2s}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
+.kpi .k-top{display:flex;justify-content:space-between;align-items:center}
+.kpi .k-label{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.kpi .k-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.kpi .k-val{font-family:var(--fd);font-size:27px;font-weight:800;line-height:1}
+.kpi .k-sub{font-size:11.5px;color:var(--muted)}
+.t-brand{background:rgba(45,130,183,.14);color:var(--brand-2)}
+.t-green{background:rgba(52,211,153,.13);color:var(--ok)}
+.t-blue{background:rgba(96,165,250,.13);color:var(--blue)}
+.t-amber{background:rgba(251,191,36,.13);color:var(--amber)}
+.t-violet{background:rgba(167,139,250,.13);color:var(--violet)}
+.t-red{background:rgba(248,113,113,.13);color:var(--red)}
+
+/* ---------- badges ---------- */
+.bd{display:inline-flex;align-items:center;gap:6px;padding:3.5px 10px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.bd .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-Aktif{color:var(--ok);background:rgba(52,211,153,.12)}
+.st-Dipinjamkan{color:var(--blue);background:rgba(96,165,250,.12)}
+.st-DalamPerbaikan{color:var(--amber);background:rgba(251,191,36,.12)}
+.st-Dimutasi{color:var(--violet);background:rgba(167,139,250,.12)}
+.st-Dihapus{color:var(--red);background:rgba(248,113,113,.12)}
+.st-Menunggu{color:var(--amber);background:rgba(251,191,36,.12)}
+.st-Disetujui{color:var(--ok);background:rgba(52,211,153,.12)}
+.st-Ditolak{color:var(--red);background:rgba(248,113,113,.12)}
+.st-Diajukan{color:var(--blue);background:rgba(96,165,250,.12)}
+.tp{display:inline-flex;align-items:center;gap:6px;padding:3.5px 10px;border-radius:99px;font-size:11.5px;font-weight:600}
+.tp-at{color:#7CC6EA;background:rgba(45,130,183,.15);border:1px solid rgba(45,130,183,.3)}
+.tp-pr{color:var(--muted);background:var(--card-2);border:1px solid var(--line)}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:5px 12px}
+.chip svg{color:var(--brand-2)}
+
+/* ---------- table ---------- */
+.table-card{padding:6px 0 0;overflow:hidden}
+.table-scroll{overflow:auto;max-height:620px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--card);z-index:2}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr{transition:background .14s}
+.tbl tbody tr:hover{background:var(--row-h)}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl .sub{display:block;font-size:11.5px;color:var(--faint);margin-top:2px}
+.tbl input[type=checkbox]{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
+.table-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);flex-wrap:wrap;gap:10px}
+.pager{display:flex;gap:5px}
+.pager button{min-width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);cursor:pointer;font-size:12px;transition:.15s}
+.pager button:hover{color:var(--text)}
+.pager button.on{background:var(--brand-grad);color:#fff;border-color:transparent}
+.code-cell{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.mini-bar{width:64px;height:12px;border-radius:2px;opacity:.75;background:repeating-linear-gradient(90deg,currentColor 0 1.5px,transparent 1.5px 3.5px,currentColor 3.5px 6px,transparent 6px 7.5px,currentColor 7.5px 8.5px,transparent 8.5px 11px)}
+.link{background:none;border:none;color:var(--brand-2);font-family:var(--fm);font-size:12.5px;cursor:pointer;padding:0}
+.link:hover{text-decoration:underline}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar .grow{flex:1;min-width:200px}
+.view-toggle{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--card)}
+.view-toggle button{width:38px;height:38px;display:grid;place-items:center;background:none;border:none;color:var(--faint);cursor:pointer;transition:.15s}
+.view-toggle button.on{background:rgba(45,130,183,.16);color:var(--brand-2)}
+
+/* ---------- asset cards view ---------- */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px}
+.asset-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:10px;transition:.2s;cursor:pointer}
+.asset-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md);border-color:rgba(45,130,183,.35)}
+.ac-top{display:flex;justify-content:space-between;align-items:center}
+.ac-name{font-weight:700;font-family:var(--fd);font-size:14px;line-height:1.35}
+.ac-meta{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.ac-meta span{display:flex;align-items:center;gap:7px}
+.ac-meta svg{color:var(--faint);flex-shrink:0}
+.ac-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.ac-book{font-family:var(--fm);font-size:12.5px;color:var(--brand-2)}
+
+/* ---------- donut / gauge / bars ---------- */
+.gauge-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+svg text{font-family:var(--fd)}
+.g-bg{fill:none;stroke:var(--card-2);stroke-width:13}
+.g-val{fill:none;stroke:url(#ggrad);stroke-width:13;stroke-linecap:round;transition:stroke-dasharray 1s ease}
+.g-num{font-size:26px;font-weight:800;fill:var(--text)}
+.g-lbl{font-size:10px;fill:var(--muted);font-family:var(--fb)}
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.legend{display:flex;flex-direction:column;gap:8px;flex:1;min-width:150px}
+.legend .lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lg i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-family:var(--fm);font-size:12px}
+.mrow{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.mrow .m-top{display:flex;justify-content:space-between;font-size:12.5px}
+.mrow .m-top b{font-family:var(--fm);font-size:12px}
+.m-bar{height:9px;border-radius:99px;background:var(--card-2);box-shadow:var(--inset);overflow:hidden}
+.m-bar i{display:block;height:100%;border-radius:99px;background:var(--brand-grad);transition:width .8s ease}
+.metric-line{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.metric-line:last-child{border-bottom:none}
+.metric-line b{font-family:var(--fm);font-size:12px}
+
+/* ---------- timeline ---------- */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-left:8px}
+.tl-item{display:flex;gap:14px;position:relative;padding-bottom:20px}
+.tl-item::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:1.5px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.tl-ic{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;z-index:1}
+.tl-body b{font-size:13px;display:block}
+.tl-body span{font-size:12px;color:var(--muted)}
+.tl-time{margin-left:auto;font-size:11px;color:var(--faint);white-space:nowrap;padding-top:5px}
+
+/* ---------- scan ---------- */
+.scan-vp{position:relative;aspect-ratio:4/3;border-radius:16px;background:radial-gradient(120% 120% at 50% 0%,var(--card-2),var(--bg));box-shadow:var(--inset);overflow:hidden;display:grid;place-items:center;border:1px solid var(--line)}
+.scan-vp .hint{color:var(--faint);display:flex;flex-direction:column;align-items:center;gap:10px;font-size:12.5px;text-align:center;padding:20px}
+.corner{position:absolute;width:30px;height:30px;border:3px solid var(--brand-2);opacity:.9}
+.c-tl{top:14px;left:14px;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+.c-tr{top:14px;right:14px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
+.c-bl{bottom:14px;left:14px;border-right:none;border-top:none;border-radius:0 0 0 8px}
+.c-br{bottom:14px;right:14px;border-left:none;border-top:none;border-radius:0 0 8px 0}
+.scan-line{position:absolute;left:9%;right:9%;height:2.5px;background:linear-gradient(90deg,transparent,var(--brand-2),transparent);box-shadow:0 0 16px var(--brand-2);opacity:0;top:10%}
+.scan-vp.scanning .scan-line{opacity:1;animation:scanY 2.1s ease-in-out infinite}
+@keyframes scanY{0%,100%{top:9%}50%{top:88%}}
+.scan-result{border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.07);border-radius:14px;padding:16px;margin-top:14px;animation:fadeUp .35s ease}
+.scan-result.err{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.07)}
+.scan-log{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.scan-log li{display:flex;align-items:center;gap:10px;font-size:12.5px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card-2)}
+.scan-log li .t{margin-left:auto;color:var(--faint);font-size:11px}
+
+/* ---------- misc ---------- */
+.barcode-lg{height:44px;border-radius:5px;background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px,currentColor 4px 7px,transparent 7px 9px,currentColor 9px 10px,transparent 10px 13px,currentColor 13px 16px,transparent 16px 17px)}
+.tabs{display:flex;gap:4px;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px}
+.tabs button{flex:1;padding:8px;border:none;border-radius:9px;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.18s}
+.tabs button.on{background:var(--card);color:var(--text);box-shadow:var(--sh-sm)}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:9.5px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--muted)}
+.kv b{text-align:right;font-weight:600}
+.callout{display:flex;gap:12px;padding:14px;border-radius:13px;border:1px solid rgba(45,130,183,.3);background:rgba(45,130,183,.09);font-size:12.5px;color:var(--muted)}
+.callout svg{color:var(--brand-2);flex-shrink:0;margin-top:1px}
+.callout b{color:var(--text)}
+
+/* ---------- drawer ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(4,7,12,.55);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:.3s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:540px;max-width:100vw;background:var(--card);border-left:1px solid var(--line);z-index:90;transform:translateX(105%);transition:transform .38s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;box-shadow:var(--sh-md)}
+.drawer.open{transform:none}
+.drawer-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 22px}
+.drawer-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:9px;flex-wrap:wrap}
+
+/* ---------- modal ---------- */
+.modal-wrap{position:fixed;inset:0;z-index:120;display:none;place-items:center;background:rgba(4,7,12,.6);backdrop-filter:blur(6px);padding:20px}
+.modal-wrap.open{display:grid}
+.modal{width:600px;max-width:100%;max-height:92vh;overflow-y:auto;background:var(--card);border:1px solid var(--line-2);border-radius:20px;box-shadow:var(--sh-md);animation:pop .3s cubic-bezier(.22,1,.36,1)}
+.modal.small{width:440px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-family:var(--fd);font-size:16px}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:15px}
+.modal-foot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- toast (glass premium) ---------- */
+#toasts{position:fixed;top:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:10px;max-width:380px}
+.toast{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:15px;background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--line-2);box-shadow:var(--sh-md);transform:translateX(120%);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.toast.show{transform:none}
+.t-ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.toast b{font-size:13px;display:block}
+.toast .t-body span{font-size:11.5px;color:var(--muted)}
+.t-x{background:none;border:none;color:var(--faint);cursor:pointer;margin-left:auto;padding:2px}
+.toast.t-ok .t-ic{background:rgba(52,211,153,.15);color:var(--ok)}
+.toast.t-err .t-ic{background:rgba(248,113,113,.15);color:var(--red)}
+.toast.t-info .t-ic{background:rgba(96,165,250,.15);color:var(--blue)}
+.toast.t-warn .t-ic{background:rgba(251,191,36,.15);color:var(--amber)}
+
+/* ---------- pages ---------- */
+.page{display:none}
+.page.active{display:flex;flex-direction:column;gap:22px;animation:fadeUp .35s ease}
+.hamb{display:none}
+
+/* ---------- responsive ---------- */
+@media(max-width:1250px){.kpi-row{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:1024px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
+  .main{margin-left:0}.hamb{display:grid}
+  .search-wrap{min-width:0;flex:1}.search-wrap kbd{display:none}
+}
+@media(max-width:820px){
+  .g3,.g2,.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}
+  .kpi-row{grid-template-columns:1fr 1fr}.page-title p{display:none}
+  .content{padding:18px 14px 30px}.topbar{padding:11px 14px}
+  #btnNewAsset span{display:none}
+}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div class="logo-mark" id="logoMark"></div>
+      <div><b>OptiAsset</b><span>Sistem Manajemen Aset</span></div>
+    </div>
+    <div class="tenant" title="Multi-organisasi (multi-tenant)">
+      <div class="tenant-ic" id="tenantIc"></div>
+      <div><b>PT Nusantara Karya</b><span>Organisasi aktif</span></div>
+      <div class="sw" id="tenantSw"></div>
+    </div>
+    <nav class="nav" id="navBox"></nav>
+    <div class="side-foot">
+      <div class="avatar">RK</div>
+      <div><b>Rina Kusuma</b><span>Staff Asset</span></div>
+      <button class="icon-btn sm" style="margin-left:auto" title="Keluar" id="btnLogout"></button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn hamb" id="btnHamb"></button>
+      <div class="page-title"><h1 id="pageTitle">Dashboard</h1><p id="pageSub"></p></div>
+      <div class="search-wrap">
+        <span id="icSearch"></span>
+        <input id="globalSearch" placeholder="Cari aset, kode, atau barcode…">
+        <kbd>⌘K</kbd>
+      </div>
+      <div class="top-actions">
+        <button class="btn primary" id="btnNewAsset"><span id="icPlus"></span><span>Aset Baru</span></button>
+        <button class="icon-btn" id="btnTheme" title="Ganti tema"></button>
+        <button class="icon-btn" id="btnBell" title="Notifikasi"><span class="dot"></span></button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ========== DASHBOARD ========== -->
+      <section class="page active" data-page="dashboard">
+        <div class="kpi-row" id="kpiRow"></div>
+        <div class="grid g3">
+          <div class="card">
+            <h3>Metrik Keberhasilan</h3>
+            <p class="sub">Aset terklasifikasi + status valid + histori lengkap</p>
+            <div class="gauge-wrap">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <defs><linearGradient id="ggrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#2D82B7"/><stop offset="1" stop-color="#34D399"/>
+                </linearGradient></defs>
+                <circle cx="75" cy="75" r="58" class="g-bg"/>
+                <circle cx="75" cy="75" r="58" class="g-val" stroke-dasharray="332.5 364.4" transform="rotate(-90 75 75)"/>
+                <text x="75" y="72" text-anchor="middle" class="g-num">94,4%</text>
+                <text x="75" y="92" text-anchor="middle" class="g-lbl">target min. 95% · 3 bln</text>
+              </svg>
+              <div style="flex:1;min-width:170px">
+                <div class="metric-line"><span>Terklasifikasi benar</span><b style="color:var(--ok)">18/18</b></div>
+                <div class="metric-line"><span>Status valid & terkini</span><b style="color:var(--ok)">18/18</b></div>
+                <div class="metric-line"><span>Histori lengkap</span><b style="color:var(--amber)">17/18</b></div>
+                <div class="callout" style="margin-top:12px"><span id="icInfo"></span><div>1 aset impor (AST-0016) belum punya histori lengkap. <b>Lengkapi via backfill.</b></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" id="typeCard"></div>
+          <div class="card">
+            <h3>Distribusi Status</h3>
+            <p class="sub">Siklus hidup aset (ACT · LOAN · RPR · MUT · DSP)</p>
+            <div class="donut-wrap">
+              <svg width="150" height="150" viewBox="0 0 150 150" id="donut"></svg>
+              <div class="legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid g3">
+          <div class="card span2">
+            <h3>Aset per Klasifikasi</h3>
+            <p class="sub">Struktur Group › Category › Cluster › Sub-cluster</p>
+            <div id="groupBars"></div>
+          </div>
+          <div class="card">
+            <h3>Aktivitas Terbaru</h3>
+            <p class="sub">Audit trail — siapa, kapan, apa yang berubah</p>
+            <div class="timeline" id="actFeed"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Pengajuan Mutasi Menunggu Persetujuan</h3>
+          <p class="sub">Lokasi aset diperbarui otomatis setelah disetujui (FR-06.5)</p>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>ID</th><th>Aset</th><th>Asal → Tujuan</th><th>Tanggal</th><th>Diajukan</th><th style="text-align:right">Aksi</th></tr></thead>
+              <tbody id="mutPending"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== DATA ASET ========== -->
+      <section class="page" data-page="assets">
+        <div class="toolbar">
+          <div class="search-wrap inset-field grow" style="min-width:220px">
+            <span id="icSearch2"></span>
+            <input id="assetSearch" placeholder="Cari nama / kode / barcode…">
+          </div>
+          <select id="fGroup" title="Filter klasifikasi"></select>
+          <select id="fStatus" title="Filter status"></select>
+          <select id="fType" title="Filter tipe aset">
+            <option value="all">Semua Tipe</option>
+            <option>Aktiva Tetap</option><option>Peralatan</option>
+          </select>
+          <select id="fLoc" title="Filter lokasi"></select>
+          <div class="view-toggle">
+            <button id="vtTable" class="on" title="Tabel"></button>
+            <button id="vtCards" title="Kartu"></button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btnImport"></button>
+          <button class="btn" id="btnExportList"></button>
+          <button class="btn" id="btnLabels"></button>
+          <span class="chip" style="margin-left:auto" id="thrChip"></span>
+          <button class="btn danger hidden" id="btnBulkDel"></button>
+        </div>
+        <div class="card table-card" id="tableWrap">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr>
+                <th><input type="checkbox" id="ckAll"></th>
+                <th>Kode / Barcode</th><th>Nama Aset</th><th>Klasifikasi</th><th>Lokasi</th>
+                <th>Tipe Aset</th><th>Status</th><th>Nilai Buku</th><th style="text-align:right">Aksi</th>
+              </tr></thead>
+              <tbody id="assetTbody"></tbody>
+            </table>
+          </div>
+          <div class="table-foot">
+            <span id="assetCountLabel"></span>
+            <div class="pager"><button>‹</button><button class="on">1</button><button>2</button><button>3</button><button>›</button></div>
+          </div>
+        </div>
+        <div class="cards-grid hidden" id="assetCards"></div>
+      </section>
+
+      <!-- ========== SCAN ========== -->
+      <section class="page" data-page="scan">
+        <div class="grid g2">
+          <div class="card">
+            <h3>Pemindaian Kamera</h3>
+            <p class="sub">Arahkan kamera ke barcode aset · validasi otomatis (FR-05.4)</p>
+            <div class="scan-vp" id="scanVp">
+              <span class="corner c-tl"></span><span class="corner c-tr"></span>
+              <span class="corner c-bl"></span><span class="corner c-br"></span>
+              <div class="scan-line"></div>
+              <div class="hint" id="scanHint"></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+              <button class="btn primary" id="btnStartScan"></button>
+              <button class="btn" id="btnExtScan"></button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Cari Manual / Input Barcode</h3>
+            <p class="sub">Alternatif bila barcode fisik rusak atau hilang</p>
+            <div style="display:flex;gap:9px">
+              <input type="text" id="scanInput" class="inset-field" style="flex:1" placeholder="cth: AST-0004">
+              <button class="btn primary" id="btnManualScan"></button>
+            </div>
+            <div id="scanResult"></div>
+            <h3 style="margin-top:22px">Hasil Scan Terakhir</h3>
+            <ul class="scan-log" id="scanLog"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== MUTASI ========== -->
+      <section class="page" data-page="mutasi">
+        <div class="toolbar" id="mutStats"></div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>ID Mutasi</th><th>Aset</th><th>Asal → Tujuan</th><th>Tanggal</th><th>Diajukan Oleh</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
+              <tbody id="mutTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== DISPOSAL ========== -->
+      <section class="page" data-page="disposal">
+        <div class="callout" style="border-radius:14px"><span id="icAlert"></span><div>Aset berstatus <b>Dihapus (DSP)</b> dikunci dari seluruh transaksi aktif (FR-07.6). Seluruh pengajuan dan persetujuan tercatat permanen di riwayat aset & audit trail.</div></div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>ID</th><th>Aset</th><th>Alasan Penghapusan</th><th>Tanggal</th><th>Nilai Perolehan</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
+              <tbody id="dspTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== RIWAYAT ========== -->
+      <section class="page" data-page="history">
+        <div class="card">
+          <h3>Riwayat Aset</h3>
+          <p class="sub">Seluruh aktivitas aset: perubahan data, mutasi, disposal (FR-08)</p>
+          <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+            <select id="histSel" style="min-width:300px"></select>
+            <button class="btn" id="btnPrintHist"></button>
+          </div>
+          <div class="timeline" id="histTimeline"></div>
+        </div>
+      </section>
+
+      <!-- ========== KLASIFIKASI ========== -->
+      <section class="page" data-page="classification">
+        <div class="toolbar">
+          <button class="btn primary" id="btnAddGroup"></button>
+          <span class="chip" id="clsChip"></span>
+        </div>
+        <div class="grid g2" id="clsTree"></div>
+      </section>
+
+      <!-- ========== ITEM ========== -->
+      <section class="page" data-page="items">
+        <div class="toolbar">
+          <button class="btn primary" id="btnAddItem"></button>
+          <span class="chip">Item terhubung ke klasifikasi aset (FR-03.5)</span>
+        </div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>Nama Item</th><th>Klasifikasi</th><th>Spesifikasi</th><th>Jumlah Aset</th><th>Satuan</th><th style="text-align:right">Aksi</th></tr></thead>
+              <tbody id="itemTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== LAPORAN ========== -->
+      <section class="page" data-page="reports">
+        <div class="grid g2" id="reportGrid"></div>
+      </section>
+
+      <!-- ========== AUDIT ========== -->
+      <section class="page" data-page="audit">
+        <div class="toolbar">
+          <select id="aUser"></select>
+          <select id="aAct"></select>
+          <span class="chip" style="margin-left:auto">Log disimpan min. 1 tahun (NFR-09.1)</span>
+        </div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Modul</th><th>Detail Aktivitas</th></tr></thead>
+              <tbody id="auditTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== PENGGUNA ========== -->
+      <section class="page" data-page="users">
+        <div class="toolbar">
+          <button class="btn primary" id="btnAddUser"></button>
+          <span class="chip">Otorisasi berbasis peran — RBAC (FR-11)</span>
+        </div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>Pengguna</th><th>Email</th><th>Peran</th><th>Akses Terakhir</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
+              <tbody id="userTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== PENGATURAN ========== -->
+      <section class="page" data-page="settings">
+        <div class="grid g2">
+          <div class="card">
+            <h3>Ambang Batas Kapitalisasi</h3>
+            <p class="sub">Penentuan otomatis Tipe Aset (FR-13.2 · FR-13.3)</p>
+            <div class="callout" style="margin-bottom:16px"><span id="icInfo2"></span><div>Aset dengan <b>nilai perolehan ≥ ambang batas</b> otomatis menjadi <b>Aktiva Tetap</b> (dengan data akuntansi & penyusutan). Di bawahnya menjadi <b>Peralatan</b>.</div></div>
+            <label class="f-label" for="thrInput">Nilai ambang batas (Rp)</label>
+            <input type="number" id="thrInput" min="0" step="500000" style="width:100%;font-family:var(--fm)">
+            <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+              <button class="btn primary" id="btnSaveThr"></button>
+              <button class="btn" id="btnBackfill"></button>
+            </div>
+            <p style="font-size:11.5px;color:var(--faint);margin-top:12px">Override manual tipe aset tetap diizinkan untuk Staff Asset dengan alasan tercatat (FR-13.9).</p>
+          </div>
+          <div class="card">
+            <h3>Organisasi (Tenant)</h3>
+            <p class="sub">Profil organisasi aktif</p>
+            <div class="kv"><span>Nama organisasi</span><b>PT Nusantara Karya</b></div>
+            <div class="kv"><span>Kode tenant</span><b class="mono">NKR-01</b></div>
+            <div class="kv"><span>Kebijakan aset</span><b>PRD v1.3 · 9 Sep 2026</b></div>
+            <div class="kv"><span>Backup otomatis</span><b style="color:var(--ok)">Harian · 02:00 WIB</b></div>
+            <div class="kv"><span>RTO pemulihan</span><b>maks. 4 jam</b></div>
+            <h3 style="margin-top:20px">Data & Migrasi</h3>
+            <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+              <button class="btn" id="btnBackup"></button>
+              <button class="btn" id="btnRestore"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+    <div class="foot">
+      <span id="footIc"></span>
+      <span><b>OptiAsset Studio</b> · Evolved Soft UI v2.4 — dibangun ulang sesuai <b>PRD Sistem Manajemen Aset v1.3</b> · 16 aset termuat · Kamis, 29 Okt 2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DRAWER DETAIL ASET ================= -->
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div style="flex:1;min-width:0" id="drawerHead"></div>
+    <button class="icon-btn" id="drawerX"></button>
+  </div>
+  <div style="padding:14px 22px 0"><div class="tabs" id="drawerTabs"></div></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot"></div>
+</aside>
+
+<!-- ================= MODAL TAMBAH ASET ================= -->
+<div class="modal-wrap" id="assetModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Tambah Aset Baru</h3><button class="icon-btn sm" id="amX"></button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="full"><label class="f-label">Nama Aset *</label><input type="text" id="f-name" style="width:100%" placeholder="cth: Laptop Lenovo ThinkPad T14"></div>
+        <div><label class="f-label">Kode Aset (otomatis, unik)</label><input type="text" id="f-code" style="width:100%" readonly class="mono"></div>
+        <div><label class="f-label">Tanggal Perolehan</label><input type="date" id="f-date" style="width:100%"></div>
+        <div><label class="f-label">Group Klasifikasi</label><select id="f-group" style="width:100%"></select></div>
+        <div><label class="f-label">Kategori</label><select id="f-cat" style="width:100%"></select></div>
+        <div><label class="f-label">Lokasi</label><input type="text" id="f-loc" style="width:100%" placeholder="cth: Gedung A · Lantai 2"></div>
+        <div><label class="f-label">Departemen</label><input type="text" id="f-dept" style="width:100%" placeholder="cth: IT"></div>
+        <div><label class="f-label">Nilai Perolehan (Rp) *</label><input type="number" id="f-price" min="0" style="width:100%;font-family:var(--fm)" placeholder="0"></div>
+        <div><label class="f-label">Kondisi</label><select id="f-cond" style="width:100%"><option>Baik</option><option>Cukup</option><option>Rusak Ringan</option></select></div>
+        <div class="full"><div class="callout" id="f-typechip"></div></div>
+        <div class="full hidden" id="f-accWrap">
+          <div class="form-grid">
+            <div><label class="f-label">Masa Manfaat (tahun)</label><input type="number" id="f-life" min="1" value="4" style="width:100%"></div>
+            <div><label class="f-label">Metode Penyusutan</label><select id="f-method" style="width:100%"><option>Garis Lurus</option><option>Saldo Menurun</option></select></div>
+          </div>
+        </div>
+        <div class="full" style="display:flex;align-items:center;gap:9px">
+          <input type="checkbox" id="f-override" style="width:15px;height:15px;accent-color:var(--brand)">
+          <label for="f-override" style="font-size:12.5px;color:var(--muted)">Override manual tipe aset (FR-13.9)</label>
+        </div>
+        <div class="full hidden" id="f-ovWrap"><label class="f-label">Alasan override (wajib) *</label><input type="text" id="f-ovReason" style="width:100%" placeholder="cth: Kebijakan kapitalisasi internal divisi"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="amCancel">Batal</button>
+      <button class="btn primary" id="amSave"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL KONFIRMASI ================= -->
+<div class="modal-wrap" id="confirmModal">
+  <div class="modal small">
+    <div class="modal-body" style="text-align:center;padding:26px">
+      <div class="t-ic" style="width:46px;height:46px;border-radius:14px;margin:0 auto;background:rgba(248,113,113,.14);color:var(--red)" id="cfIc"></div>
+      <h3 style="font-family:var(--fd);margin-top:14px" id="cfTitle"></h3>
+      <p style="font-size:13px;color:var(--muted);margin-top:6px" id="cfDesc"></p>
+    </div>
+    <div class="modal-foot" style="justify-content:center">
+      <button class="btn" id="cfNo">Batal</button>
+      <button class="btn danger" id="cfYes">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= IKON ================= */
+const I={
+ grid:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
+ box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+ scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/>',
+ swap:'<path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/>',
+ trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ tree:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+ file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/>',
+ shield:'<path d="M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+ users:'<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+ sliders:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+ search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',check:'<path d="M20 6 9 17l-5-5"/>',
+ download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+ upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+ printer:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>',
+ eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ edit:'<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+ landmark:'<path d="M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2 3 7h18z"/>',
+ wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+ alert:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>',
+ refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/>',
+ building:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/>',
+ logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+ switchv:'<path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/>',
+ camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ gridv:'<path d="M3 3h8v8H3zM13 3h8v8h-8zM13 13h8v8h-8zM3 13h8v8H3z"/>',
+ chev:'<path d="m6 9 6 6 6-6"/>',
+ save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+ sheet:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M12 13v4"/>',
+ userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>'
+};
+const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+
+/* ================= UTIL ================= */
+const $=id=>document.getElementById(id);
+const rp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+const num=n=>Math.round(n).toLocaleString('id-ID');
+const BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const fd=iso=>{if(!iso)return'—';const p=iso.split('-');return`${+p[2]} ${BLN[+p[1]-1]} ${p[0]}`};
+const todayISO=()=>'2026-10-29';
+
+function toast(msg,kind='ok',sub=''){
+ const iconMap={ok:'check',err:'x',info:'info',warn:'alert'};
+ const el=document.createElement('div');el.className='toast t-'+kind;
+ el.innerHTML=`<span class="t-ic">${ic(iconMap[kind],15)}</span><div class="t-body"><b>${msg}</b>${sub?`<span>${sub}</span>`:''}</div><button class="t-x" onclick="this.parentElement.remove()">${ic('x',13)}</button>`;
+ $('toasts').appendChild(el);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+ setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),380)},4600);
+}
+let cfCb=null;
+function confirmBox(title,desc,cb){$('cfTitle').textContent=title;$('cfDesc').textContent=desc;cfCb=cb;$('confirmModal').classList.add('open')}
+$('cfNo').onclick=()=>$('confirmModal').classList.remove('open');
+$('cfYes').onclick=()=>{$('confirmModal').classList.remove('open');if(cfCb)cfCb()};
+
+/* ================= DATA (sesuai PRD) ================= */
+const state={theme:localStorage.getItem('oa-theme')||'dark',threshold:10000000,selected:new Set(),assetView:'table'};
+document.documentElement.dataset.theme=state.theme;
+
+const STATUSES=[
+ {key:'Aktif',code:'ACT',color:'#34D399'},
+ {key:'Dipinjamkan',code:'LOAN',color:'#60A5FA'},
+ {key:'Dalam Perbaikan',code:'RPR',color:'#FBBF24'},
+ {key:'Dimutasi',code:'MUT',color:'#A78BFA'},
+ {key:'Dihapus',code:'DSP',color:'#F87171'}];
+
+const ASSETS=[
+ {code:'AST-0001',name:'Laptop Lenovo ThinkPad X1 Carbon Gen 11',group:'Elektronik',cat:'Komputer',loc:'Gedung A · Lantai 2',dept:'IT',status:'Aktif',price:24500000,date:'2023-03-14',life:4,method:'Garis Lurus',accum:15300000,holder:'Andi Pratama',cond:'Baik'},
+ {code:'AST-0002',name:'Server Dell PowerEdge R750xs',group:'Elektronik',cat:'Server',loc:'Ruang Server · Gedung A',dept:'IT',status:'Aktif',price:185000000,date:'2024-01-22',life:5,method:'Garis Lurus',accum:55500000,holder:'Tim Infrastruktur',cond:'Baik'},
+ {code:'AST-0003',name:'Printer HP LaserJet Pro M404dn',group:'Elektronik',cat:'Printer',loc:'Gedung B · Lantai 1',dept:'Umum',status:'Aktif',price:4800000,date:'2023-07-02',holder:'Sekretariat',cond:'Baik'},
+ {code:'AST-0004',name:'Toyota Kijang Innova Zenix 2.0 G',group:'Kendaraan',cat:'Mobil Dinas',loc:'Pool Kendaraan',dept:'Operasional',status:'Dipinjamkan',price:385000000,date:'2024-06-30',life:8,method:'Garis Lurus',accum:48125000,holder:'Bagus Setiawan',cond:'Baik'},
+ {code:'AST-0005',name:'Meja Rapat Eksekutif Kayu Jati 12 Kursi',group:'Furnitur',cat:'Meja',loc:'Ruang Rapat Utama',dept:'Umum',status:'Aktif',price:12500000,date:'2022-08-10',life:8,method:'Garis Lurus',accum:4687500,holder:'Sekretariat',cond:'Baik'},
+ {code:'AST-0006',name:'Kursi Ergonomis Fantoni X-7',group:'Furnitur',cat:'Kursi',loc:'Gedung A · Lantai 3',dept:'HRD',status:'Aktif',price:3200000,date:'2024-02-19',holder:'Rina Kusuma',cond:'Baik'},
+ {code:'AST-0007',name:'Proyektor Epson EB-X500',group:'Elektronik',cat:'Proyektor',loc:'Ruang Pelatihan',dept:'HRD',status:'Dalam Perbaikan',price:7900000,date:'2023-10-05',life:4,method:'Garis Lurus',accum:1975000,holder:'Sari Wulandari',cond:'Rusak Ringan',override:'Aktiva Tetap',overrideReason:'Kapitalisasi gabungan paket pengadaan ruang pelatihan'},
+ {code:'AST-0008',name:'AC Daikin Split 2 PK Inverter (4 unit)',group:'Mesin',cat:'Pendingin',loc:'Gedung B · Lantai 2',dept:'Umum',status:'Aktif',price:11200000,date:'2023-05-11',life:8,method:'Garis Lurus',accum:4200000,holder:'Teknisi Gedung',cond:'Baik'},
+ {code:'AST-0009',name:'Genset Silent Yamaha 10 kVA + ATS',group:'Mesin',cat:'Genset',loc:'Gudang Operasional',dept:'Operasional',status:'Aktif',price:68000000,date:'2023-11-05',life:10,method:'Garis Lurus',accum:13600000,holder:'Tim Fasilitas',cond:'Baik'},
+ {code:'AST-0010',name:'Scanner Barcode Zebra DS2278',group:'Elektronik',cat:'Scanner',loc:'Gudang Utama',dept:'IT',status:'Aktif',price:2750000,date:'2025-01-15',holder:'Tim Gudang',cond:'Baik'},
+ {code:'AST-0011',name:'Lemari Arsip Besi Brother B-104',group:'Furnitur',cat:'Lemari',loc:'Gedung A · Lantai 1',dept:'Keuangan',status:'Aktif',price:5400000,date:'2021-09-23',holder:'Staf Keuangan',cond:'Cukup'},
+ {code:'AST-0012',name:'Laptop ASUS VivoBook 14',group:'Elektronik',cat:'Komputer',loc:'Gedung B · Lantai 1',dept:'Keuangan',status:'Dipinjamkan',price:8900000,date:'2024-08-07',holder:'Dewi Anggraini',cond:'Baik'},
+ {code:'AST-0013',name:'Forklift Toyota 2.5 Ton 8FG25',group:'Kendaraan',cat:'Alat Berat',loc:'Gudang Operasional',dept:'Operasional',status:'Dimutasi',price:245000000,date:'2022-04-18',life:10,method:'Garis Lurus',accum:98000000,holder:'Tim Gudang',cond:'Baik'},
+ {code:'AST-0014',name:'Mesin Fotokopi Canon imageRUNNER 2625',group:'Elektronik',cat:'Mesin Kantor',loc:'Gedung A · Lantai 1',dept:'Umum',status:'Aktif',price:32000000,date:'2024-09-12',life:5,method:'Garis Lurus',accum:6400000,holder:'Sekretariat',cond:'Baik'},
+ {code:'AST-0015',name:'UPS APC Smart-UPS 3000VA',group:'Elektronik',cat:'UPS',loc:'Ruang Server · Gedung A',dept:'IT',status:'Aktif',price:18500000,date:'2023-05-20',life:4,method:'Garis Lurus',accum:11100000,holder:'Tim Infrastruktur',cond:'Baik'},
+ {code:'AST-0016',name:'Dispenser Miyako WDP-300',group:'Elektronik',cat:'Peralatan Kecil',loc:'Pantry · Lantai 2',dept:'Umum',status:'Dihapus',price:1850000,date:'2019-03-01',holder:'—',cond:'Rusak Ringan'},
+ {code:'AST-0017',name:'Whiteboard Kaca Magnetic 240 cm',group:'Furnitur',cat:'Peralatan Rapat',loc:'Ruang Rapat Utama',dept:'Umum',status:'Aktif',price:4600000,date:'2024-04-03',holder:'Sekretariat',cond:'Baik'},
+ {code:'AST-0018',name:'Mesin Jilid Binding GBC C210',group:'Elektronik',cat:'Mesin Kantor',loc:'Gedung B · Lantai 2',dept:'Umum',status:'Aktif',price:6300000,date:'2025-02-27',holder:'Sekretariat',cond:'Baik'}];
+
+const transfers=[
+ {id:'MUT-0041',code:'AST-0013',from:'Gudang Operasional',to:'Gudang Cabang Bandung',date:'2026-10-28',by:'Bagus Setiawan',status:'Menunggu'},
+ {id:'MUT-0040',code:'AST-0004',from:'Pool Kendaraan',to:'Dinas Luar Kota — Semarang',date:'2026-10-27',by:'Rina Kusuma',status:'Menunggu'},
+ {id:'MUT-0039',code:'AST-0012',from:'Gedung A · Lantai 1',to:'Gedung B · Lantai 1',date:'2026-10-21',by:'Rina Kusuma',status:'Disetujui'},
+ {id:'MUT-0038',code:'AST-0007',from:'Ruang Rapat Utama',to:'Ruang Pelatihan',date:'2026-10-14',by:'Andi Pratama',status:'Disetujui'},
+ {id:'MUT-0037',code:'AST-0011',from:'Gedung A · Lantai 1',to:'Gudang Utama',date:'2026-10-08',by:'Bagus Setiawan',status:'Ditolak'}];
+
+const disposals=[
+ {id:'DSP-0014',code:'AST-0011',reason:'Habis masa manfaat, kondisi fisik rusak',date:'2026-10-27',by:'Rina Kusuma',status:'Diajukan'},
+ {id:'DSP-0013',code:'AST-0016',reason:'Rusak berat, biaya perbaikan tidak ekonomis',date:'2026-10-24',by:'Rina Kusuma',status:'Disetujui'}];
+
+const auditLogs=[
+ {t:'29 Okt 2026 · 09:42',u:'Rina Kusuma',r:'Staff Asset',act:'UPDATE',mod:'Mutasi',d:'Mengajukan mutasi MUT-0041 (AST-0013 → Cabang Bandung)'},
+ {t:'29 Okt 2026 · 08:00',u:'System',r:'Scheduler',act:'SNAPSHOT',mod:'Akuntansi',d:'Snapshot nilai buku harian 10 Aktiva Tetap (FR-13.10)'},
+ {t:'28 Okt 2026 · 16:40',u:'Dedi Santoso',r:'Super User',act:'UPDATE',mod:'Pengaturan',d:'Threshold kapitalisasi diubah Rp5.000.000 → Rp10.000.000'},
+ {t:'28 Okt 2026 · 14:21',u:'Rina Kusuma',r:'Staff Asset',act:'OVERRIDE',mod:'Tipe Aset',d:'Override AST-0007 → Aktiva Tetap: "Kapitalisasi gabungan paket pengadaan"'},
+ {t:'28 Okt 2026 · 11:05',u:'Bagus Setiawan',r:'Staff Asset',act:'CREATE',mod:'Data Aset',d:'Menambahkan aset AST-0015 UPS APC Smart-UPS 3000VA'},
+ {t:'27 Okt 2026 · 15:32',u:'Budi Hartono',r:'Manajemen',act:'EXPORT',mod:'Laporan',d:'Mengekspor Laporan Mutasi Aset (XLSX)'},
+ {t:'27 Okt 2026 · 10:12',u:'Sari Wulandari',r:'Auditor',act:'VIEW',mod:'Audit Trail',d:'Menelusuri riwayat disposal DSP-0013'},
+ {t:'26 Okt 2026 · 09:48',u:'Rina Kusuma',r:'Staff Asset',act:'UPDATE',mod:'Data Aset',d:'Status AST-0007 → Dalam Perbaikan'},
+ {t:'25 Okt 2026 · 13:20',u:'Dedi Santoso',r:'Super User',act:'CREATE',mod:'Pengguna',d:'Menambahkan Sari Wulandari (Auditor)'}];
+
+const users=[
+ {n:'Dedi Santoso',e:'dedi.santoso@nusantara.co.id',r:'Super User',last:'29 Okt 2026 · 08:12'},
+ {n:'Rina Kusuma',e:'rina.kusuma@nusantara.co.id',r:'Staff Asset',last:'29 Okt 2026 · 09:42'},
+ {n:'Bagus Setiawan',e:'bagus.setiawan@nusantara.co.id',r:'Staff Asset',last:'28 Okt 2026 · 17:03'},
+ {n:'Budi Hartono',e:'budi.hartono@nusantara.co.id',r:'Manajemen',last:'27 Okt 2026 · 15:32'},
+ {n:'Sari Wulandari',e:'sari.wulandari@nusantara.co.id',r:'Auditor',last:'27 Okt 2026 · 10:12'},
+ {n:'Andi Pratama',e:'andi.pratama@nusantara.co.id',r:'End User',last:'26 Okt 2026 · 11:20'}];
+
+const items=[
+ {name:'Laptop 14" Core i7 · 16GB/512GB',cat:'Elektronik › Komputer',spec:'Intel i7 Gen-13, RAM 16GB, SSD 512GB',count:6,unit:'Unit'},
+ {name:'Server Rack 2U Xeon Silver',cat:'Elektronik › Server',spec:'Xeon Silver 4314, 64GB ECC, 2×960GB SSD',count:2,unit:'Unit'},
+ {name:'Printer Laser A4 Duplex',cat:'Elektronik › Printer',spec:'40 ppm, duplex, LAN/WiFi',count:5,unit:'Unit'},
+ {name:'Mobil Dinas MPV 2.0',cat:'Kendaraan › Mobil Dinas',spec:'Bensin, transmisi otomatis',count:3,unit:'Unit'},
+ {name:'Meja Rapat 12 Kursi',cat:'Furnitur › Meja',spec:'Kayu jati finishing HPL',count:2,unit:'Set'},
+ {name:'Kursi Kerja Ergonomis',cat:'Furnitur › Kursi',spec:'Lumbar support, armrest 4D',count:24,unit:'Unit'},
+ {name:'AC Split 2 PK Inverter',cat:'Mesin › Pendingin',spec:'Inverter, refrigeran R32',count:8,unit:'Unit'},
+ {name:'Genset Silent 10 kVA',cat:'Mesin › Genset',spec:'Diesel + panel ATS',count:1,unit:'Unit'}];
+
+const classification=[
+ {g:'Elektronik',cats:[{n:'Komputer',cl:['Laptop','Desktop','Server']},{n:'Printer',cl:['Laser','Inkjet']},{n:'Proyektor',cl:[]},{n:'Scanner',cl:[]},{n:'Mesin Kantor',cl:['Fotokopi','Jilid']},{n:'UPS',cl:[]},{n:'Peralatan Kecil',cl:[]}]},
+ {g:'Furnitur',cats:[{n:'Meja',cl:['Rapat','Kerja']},{n:'Kursi',cl:[]},{n:'Lemari',cl:['Arsip','Penyimpanan']},{n:'Peralatan Rapat',cl:[]}]},
+ {g:'Kendaraan',cats:[{n:'Mobil Dinas',cl:[]},{n:'Alat Berat',cl:['Forklift','Crane']}]},
+ {g:'Mesin',cats:[{n:'Pendingin',cl:[]},{n:'Genset',cl:[]}]}];
+
+const reports=[
+ {t:'Laporan Data Aset',d:'Daftar seluruh aset beserta klasifikasi, status, lokasi, dan tipe aset.',ic:'box'},
+ {t:'Laporan Mutasi Aset',d:'Rekap perpindahan aset antar lokasi/unit beserta status persetujuan.',ic:'swap'},
+ {t:'Laporan Disposal Aset',d:'Riwayat penghapusan aset: alasan, tanggal, dan approval.',ic:'trash'},
+ {t:'Laporan Nilai Buku (Aktiva Tetap)',d:'Nilai perolehan, akumulasi penyusutan & nilai buku per periode.',ic:'landmark'}];
+
+/* ================= TIPE ASET (FR-13) ================= */
+function computeTypes(){
+ let changed=0;
+ ASSETS.forEach(a=>{
+   const t=a.override||(a.price>=state.threshold?'Aktiva Tetap':'Peralatan');
+   if(a._type&&a._type!==t)changed++;
+   a._type=t;
+   a._book=t==='Aktiva Tetap'?Math.max(a.price-(a.accum||0),0):null;
+ });
+ return changed;
+}
+const stClass=s=>'st-'+s.replace(/ /g,'');
+const stBadge=s=>{const m=STATUSES.find(x=>x.key===s);return`<span class="bd ${stClass(s)}"><span class="dot"></span>${s}</span>`};
+const typeBadge=a=>a._type==='Aktiva Tetap'
+ ?`<span class="tp tp-at">${ic('landmark',12)}Aktiva Tetap${a.override?' · override':''}</span>`
+ :`<span class="tp tp-pr">${ic('wrench',12)}Peralatan</span>`;
+
+/* ================= NAVIGASI ================= */
+const NAV=[
+ {label:'Menu Utama'},
+ {v:'dashboard',ic:'grid',t:'Dashboard'},
+ {v:'assets',ic:'box',t:'Data Aset',badge:()=>ASSETS.length},
+ {v:'scan',ic:'scan',t:'Scan Barcode'},
+ {label:'Siklus Hidup'},
+ {v:'mutasi',ic:'swap',t:'Mutasi Aset',badge:()=>transfers.filter(m=>m.status==='Menunggu').length,tone:'warn'},
+ {v:'disposal',ic:'trash',t:'Disposal Aset',badge:()=>disposals.filter(d=>d.status==='Diajukan').length,tone:'danger'},
+ {v:'history',ic:'clock',t:'Riwayat Aset'},
+ {label:'Master Data'},
+ {v:'classification',ic:'tree',t:'Klasifikasi'},
+ {v:'items',ic:'tag',t:'Item Aset'},
+ {label:'Analitik & Administrasi'},
+ {v:'reports',ic:'file',t:'Laporan'},
+ {v:'audit',ic:'shield',t:'Audit Trail'},
+ {v:'users',ic:'users',t:'Pengguna & Peran'},
+ {v:'settings',ic:'sliders',t:'Pengaturan'}];
+const TITLES={dashboard:['Dashboard','Ringkasan kondisi, distribusi & metrik keberhasilan aset'],assets:['Data Aset','Kelola kode, klasifikasi, status & nilai aset'],scan:['Scan Barcode','Identifikasi aset via kamera atau scanner eksternal'],mutasi:['Mutasi Aset','Perpindahan lokasi/unit dengan alur persetujuan'],disposal:['Disposal Aset','Penghapusan & pensiun aset yang terdokumentasi'],history:['Riwayat Aset','Jejak perubahan data, mutasi & disposal per aset'],classification:['Klasifikasi Aset','Struktur Group › Category › Cluster › Sub-cluster'],items:['Item Aset','Master spesifikasi item per klasifikasi'],reports:['Laporan','Ekspor laporan aset, mutasi & disposal — XLSX / PDF'],audit:['Audit Trail','Log aktivitas: siapa, kapan, dan apa yang diubah'],users:['Pengguna & Peran','Manajemen akses berbasis peran (RBAC)'],settings:['Pengaturan','Threshold kapitalisasi, backfill tipe aset & tenant']};
+
+function buildNav(){
+ $('navBox').innerHTML=NAV.map(n=>n.label
+  ?`<p class="nav-label">${n.label}</p>`
+  :`<div class="nav-item ${n.v==='dashboard'?'active':''}" data-go="${n.v}">${ic(n.ic)}${n.t}${n.badge?`<span class="nav-badge ${n.tone||''}" id="nb-${n.v}">${n.badge()}</span>`:''}</div>`).join('');
+ document.querySelectorAll('.nav-item').forEach(el=>el.onclick=()=>go(el.dataset.go));
+}
+function updateBadges(){
+ NAV.filter(n=>n.badge).forEach(n=>{const el=$('nb-'+n.v);if(el)el.textContent=n.badge()});
+}
+function go(v){
+ document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.go===v));
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===v));
+ $('pageTitle').textContent=TITLES[v][0];$('pageSub').textContent=TITLES[v][1];
+ $('sidebar').classList.remove('open');
+ if(v==='assets')renderAssetTable();
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+ const cnt=s=>ASSETS.filter(a=>a.status===s).length;
+ const kpis=[
+  {l:'Total Aset',v:ASSETS.length,sub:'+3 aset bulan ini',i:'box',t:'t-brand'},
+  {l:'Aset Aktif',v:cnt('Aktif'),sub:Math.round(cnt('Aktif')/ASSETS.length*100)+'% dari total aset',i:'check',t:'t-green'},
+  {l:'Dipinjamkan',v:cnt('Dipinjamkan'),sub:'di 2 departemen',i:'users',t:'t-blue'},
+  {l:'Dalam Perbaikan',v:cnt('Dalam Perbaikan'),sub:'1 unit proyektor',i:'wrench',t:'t-amber'},
+  {l:'Disposal Diajukan',v:disposals.filter(d=>d.status==='Diajukan').length,sub:disposals.filter(d=>d.status==='Disetujui').length+' disetujui (YTD)',i:'trash',t:'t-red'}];
+ $('kpiRow').innerHTML=kpis.map(k=>`<div class="kpi"><div class="k-top"><span class="k-label">${k.l}</span><span class="k-ic ${k.t}">${ic(k.i,16)}</span></div><div class="k-val">${num(k.v)}</div><div class="k-sub">${k.sub}</div></div>`).join('');
+
+ // Breakdown tipe aset (FR-13.8)
+ const at=ASSETS.filter(a=>a._type==='Aktiva Tetap'),pr=ASSETS.filter(a=>a._type==='Peralatan');
+ const sumAt=at.reduce((s,a)=>s+a.price,0),sumBook=at.reduce((s,a)=>s+a._book,0),sumPr=pr.reduce((s,a)=>s+a.price,0);
+ const pctAt=Math.round(at.length/ASSETS.length*100);
+ $('typeCard').innerHTML=`<h3>Breakdown Tipe Aset</h3><p class="sub">FR-13.8 · Ambang batas: <b style="color:var(--brand-2)">${rp(state.threshold)}</b></p>
+  <div style="display:flex;gap:8px;height:10px;border-radius:99px;overflow:hidden;margin-bottom:18px;box-shadow:var(--inset)">
+    <div style="width:${pctAt}%;background:var(--brand-grad)"></div>
+    <div style="flex:1;background:var(--line-2)"></div>
+  </div>
+  <div style="display:flex;gap:12px;margin-bottom:12px"><span class="k-ic t-brand">${ic('landmark',16)}</span><div style="flex:1">
+    <div style="display:flex;justify-content:space-between"><b>Aktiva Tetap</b><span class="mono" style="font-size:12px">${at.length} unit (${pctAt}%)</span></div>
+    <div class="kv" style="padding:6px 0"><span>Nilai perolehan</span><b class="mono" style="font-size:12px">${rp(sumAt)}</b></div>
+    <div class="kv" style="padding:6px 0"><span>Total nilai buku</span><b class="mono" style="font-size:12px;color:var(--brand-2)">${rp(sumBook)}</b></div>
+  </div></div>
+  <div style="display:flex;gap:12px"><span class="k-ic t-violet">${ic('wrench',16)}</span><div style="flex:1">
+    <div style="display:flex;justify-content:space-between"><b>Peralatan</b><span class="mono" style="font-size:12px">${pr.length} unit</span></div>
+    <div class="kv" style="padding:6px 0"><span>Total nilai perolehan</span><b class="mono" style="font-size:12px">${rp(sumPr)}</b></div>
+    <div class="kv" style="padding:6px 0;border-bottom:none"><span>Data akuntansi</span><b style="font-size:12px;color:var(--faint)">tidak berlaku</b></div>
+  </div></div>`;
+
+ // Donut status
+ const C=2*Math.PI*54;let off=0;const total=ASSETS.length;
+ const segs=STATUSES.map(s=>({...s,n:cnt(s.key)})).filter(s=>s.n>0);
+ $('donut').innerHTML=segs.map(s=>{const f=s.n/total;const r=`<circle cx="75" cy="75" r="54" fill="none" stroke="${s.color}" stroke-width="15" stroke-dasharray="${Math.max(f*C-2,.5)} ${C}" transform="rotate(${-90+off*360} 75 75)"/>`;off+=f;return r}).join('')
+  +`<text x="75" y="72" text-anchor="middle" class="g-num" style="font-size:24px">${total}</text><text x="75" y="91" text-anchor="middle" class="g-lbl">aset tercatat</text>`;
+ $('donutLegend').innerHTML=segs.map(s=>`<div class="lg"><i style="background:${s.color}"></i>${s.key} <span style="color:var(--faint)">· ${s.code}</span><b>${s.n}</b></div>`).join('');
+
+ // Bar klasifikasi
+ const gc={};ASSETS.forEach(a=>gc[a.group]=(gc[a.group]||0)+1);
+ const max=Math.max(...Object.values(gc));
+ $('groupBars').innerHTML=Object.entries(gc).sort((a,b)=>b[1]-a[1]).map(([g,c])=>`<div class="mrow"><div class="m-top"><span>${g}</span><b>${c} aset</b></div><div class="m-bar"><i style="width:${c/max*100}%"></i></div></div>`).join('');
+
+ // Feed aktivitas
+ const tone={CREATE:'t-green',UPDATE:'t-blue',DELETE:'t-red',OVERRIDE:'t-violet',SNAPSHOT:'t-brand',VIEW:'t-amber',EXPORT:'t-amber'};
+ const kic={CREATE:'plus',UPDATE:'edit',DELETE:'trash',OVERRIDE:'edit',SNAPSHOT:'clock',VIEW:'eye',EXPORT:'download'};
+ $('actFeed').innerHTML=auditLogs.slice(0,5).map(l=>`<div class="tl-item"><span class="tl-ic ${tone[l.act]||'t-brand'}">${ic(kic[l.act]||'info',14)}</span><div class="tl-body"><b>${l.d}</b><span>${l.u} · ${l.r} · ${l.mod}</span></div><span class="tl-time">${l.t}</span></div>`).join('');
+
+ // Mutasi menunggu
+ const pend=transfers.filter(m=>m.status==='Menunggu');
+ $('mutPending').innerHTML=pend.length?pend.map(m=>{const a=ASSETS.find(x=>x.code===m.code);return`<tr>
+   <td class="mono">${m.id}</td><td><b>${a?a.name:m.code}</b><span class="sub mono">${m.code}</span></td>
+   <td>${m.from} <span style="color:var(--brand-2)">→</span> ${m.to}</td><td>${fd(m.date)}</td><td>${m.by}</td>
+   <td style="text-align:right;white-space:nowrap"><button class="icon-btn tiny acc" title="Setujui" onclick="approveMut('${m.id}',true)">${ic('check',15)}</button> <button class="icon-btn tiny rej" title="Tolak" onclick="approveMut('${m.id}',false)">${ic('x',15)}</button></td></tr>`}).join('')
+  :'<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:22px">Tidak ada pengajuan menunggu ✓</td></tr>';
+}
+
+/* ================= DATA ASET ================= */
+function fillFilters(){
+ const groups=[...new Set(ASSETS.map(a=>a.group))];
+ const locs=[...new Set(ASSETS.map(a=>a.loc))];
+ $('fGroup').innerHTML='<option value="all">Semua Klasifikasi</option>'+groups.map(g=>`<option>${g}</option>`).join('');
+ $('fStatus').innerHTML='<option value="all">Semua Status</option>'+STATUSES.map(s=>`<option>${s.key}</option>`).join('');
+ $('fLoc').innerHTML='<option value="all">Semua Lokasi</option>'+locs.map(l=>`<option>${l}</option>`).join('');
+}
+function filteredAssets(){
+ const q=($('assetSearch').value||'').toLowerCase();
+ const fg=$('fGroup').value,fs=$('fStatus').value,ft=$('fType').value,fl=$('fLoc').value;
+ return ASSETS.filter(a=>{
+  if(q&&!((a.name+' '+a.code).toLowerCase().includes(q)))return false;
+  if(fg!=='all'&&a.group!==fg)return false;
+  if(fs!=='all'&&a.status!==fs)return false;
+  if(ft!=='all'&&a._type!==ft)return false;
+  if(fl!=='all'&&a.loc!==fl)return false;
+  return true;});
+}
+function renderAssetTable(){
+ const rows=filteredAssets();
+ $('assetCountLabel').textContent=`Menampilkan ${rows.length} dari ${ASSETS.length} aset · daftar terakhir diingat`;
+ $('thrChip').innerHTML=`${ic('landmark',13)} Threshold kapitalisasi: <b style="color:var(--brand-2)">&nbsp;${rp(state.threshold)}</b>`;
+ const rowHtml=a=>`<tr>
+  <td><input type="checkbox" class="ck" data-code="${a.code}" ${state.selected.has(a.code)?'checked':''}></td>
+  <td><div class="code-cell"><button class="link" onclick="openAsset('${a.code}')">${a.code}</button><span class="mini-bar"></span></div></td>
+  <td><b>${a.name}</b><span class="sub">Diperoleh ${fd(a.date)} · ${a.holder}</span></td>
+  <td>${a.group}<span class="sub">${a.cat}</span></td>
+  <td>${a.loc}<span class="sub">${a.dept}</span></td>
+  <td>${typeBadge(a)}</td>
+  <td>${stBadge(a.status)}</td>
+  <td>${a._book!=null?`<span class="mono" style="color:var(--brand-2)">${rp(a._book)}</span>`:'<span style="color:var(--faint)">—</span>'}</td>
+  <td style="text-align:right;white-space:nowrap">
+    <button class="icon-btn tiny" title="Detail" onclick="openAsset('${a.code}')">${ic('eye',15)}</button>
+    <button class="icon-btn tiny" title="Cetak label barcode" onclick="toast('Label ${a.code} dikirim ke printer','info','Format label: kode + barcode Code-128')">${ic('printer',15)}</button>
+    <button class="icon-btn tiny" title="Ajukan mutasi" onclick="toast('Form mutasi untuk ${a.code}','info','Lengkapi lokasi tujuan di modul Mutasi')">${ic('swap',15)}</button>
+  </td></tr>`;
+ $('assetTbody').innerHTML=rows.length?rows.map(rowHtml).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--faint);padding:26px">Tidak ada aset yang cocok dengan filter.</td></tr>';
+ document.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{c.checked?state.selected.add(c.dataset.code):state.selected.delete(c.dataset.code);updateBulkBtn()});
+ $('ckAll').checked=rows.length>0&&rows.every(a=>state.selected.has(a.code));
+ // cards view
+ $('assetCards').innerHTML=rows.map(a=>`<div class="asset-card" onclick="openAsset('${a.code}')">
+   <div class="ac-top"><button class="link" onclick="event.stopPropagation()">${a.code}</button>${stBadge(a.status)}</div>
+   <div class="ac-name">${a.name}</div>
+   <div class="ac-meta"><span>${ic('tree',13)}${a.group} › ${a.cat}</span><span>${ic('building',13)}${a.loc}</span><span>${typeBadge(a)}</span></div>
+   <div class="ac-foot"><span class="ac-book">${a._book!=null?rp(a._book):'Peralatan'}</span><span style="color:var(--faint);font-size:11.5px">${a.dept}</span></div></div>`).join('');
+ updateBulkBtn();
+}
+function updateBulkBtn(){
+ const n=state.selected.size,b=$('btnBulkDel');
+ b.classList.toggle('hidden',n===0);
+ b.innerHTML=`${ic('trash',14)} Hapus (${n})`;
+}
+
+/* ================= DRAWER DETAIL ================= */
+let curAsset=null,curTab='ringkasan';
+function openAsset(code){curAsset=ASSETS.find(a=>a.code===code);if(!curAsset)return;curTab='ringkasan';renderDrawer();$('drawer').classList.add('open');$('backdrop').classList.add('show')}
+function closeDrawer(){$('drawer').classList.remove('open');$('backdrop').classList.remove('show')}
+function renderDrawer(){
+ const a=curAsset;
+ $('drawerHead').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${stBadge(a.status)}${typeBadge(a)}</div>
+  <h2 style="font-family:var(--fd);font-size:17px;line-height:1.35">${a.name}</h2>
+  <div class="mono" style="color:var(--brand-2);font-size:13px;margin-top:3px">${a.code}</div>
+  <div class="barcode-lg" style="margin-top:10px;max-width:220px"></div>`;
+ $('drawerTabs').innerHTML=['ringkasan','akuntansi','riwayat'].map(t=>`<button class="${t===curTab?'on':''}" onclick="setTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('');
+ const b=$('drawerBody');
+ if(curTab==='ringkasan'){
+  b.innerHTML=`<div class="kv"><span>Klasifikasi</span><b>${a.group} › ${a.cat}</b></div>
+   <div class="kv"><span>Lokasi</span><b>${a.loc}</b></div>
+   <div class="kv"><span>Departemen</span><b>${a.dept}</b></div>
+   <div class="kv"><span>Penanggung jawab</span><b>${a.holder}</b></div>
+   <div class="kv"><span>Tanggal perolehan</span><b>${fd(a.date)}</b></div>
+   <div class="kv"><span>Kondisi</span><b>${a.cond}</b></div>
+   <div class="kv"><span>Nilai perolehan</span><b class="mono">${rp(a.price)}</b></div>
+   ${a.override?`<div class="callout" style="margin-top:14px">${ic('edit',15)}<div><b>Override tipe manual:</b> ${a.override}<br>Alasan: ${a.overrideReason}</div></div>`:''}`;
+ }else if(curTab==='akuntansi'){
+  if(a._type!=='Aktiva Tetap'){
+   b.innerHTML=`<div class="callout">${ic('info',16)}<div>Aset bertipe <b>Peralatan</b> tidak memiliki data akuntansi (FR-13.6). Nilai perolehan di bawah ambang batas <b>${rp(state.threshold)}</b>.</div></div>`;
+  }else{
+   const rows=bookSchedule(a);
+   b.innerHTML=`<div class="kv"><span>Nilai perolehan</span><b class="mono">${rp(a.price)}</b></div>
+    <div class="kv"><span>Masa manfaat</span><b>${a.life} tahun</b></div>
+    <div class="kv"><span>Metode penyusutan</span><b>${a.method}</b></div>
+    <div class="kv"><span>Akumulasi penyusutan</span><b class="mono" style="color:var(--red)">− ${rp(a.accum||0)}</b></div>
+    <div class="kv"><span>Nilai buku terkini</span><b class="mono" style="color:var(--brand-2);font-size:15px">${rp(a._book)}</b></div>
+    <h3 style="margin:20px 0 4px;font-size:13px">Riwayat Nilai Buku per Periode (FR-13.10)</h3>
+    <p class="sub" style="font-size:11.5px;color:var(--faint)">Snapshot untuk kebutuhan audit historis</p>
+    <table class="tbl"><thead><tr><th>Periode</th><th>Akumulasi</th><th>Nilai Buku</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td>${r.p}</td><td class="mono">${rp(r.accum)}</td><td class="mono" style="color:var(--brand-2)">${rp(r.book)}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+ }else{
+  b.innerHTML=`<div class="timeline">${eventsFor(a).map(ev=>`<div class="tl-item"><span class="tl-ic ${ev.tone}">${ic(ev.ic,14)}</span><div class="tl-body"><b>${ev.t}</b><span>${ev.by}</span></div><span class="tl-time">${fd(ev.d)}</span></div>`).join('')}</div>`;
+ }
+ $('drawerFoot').innerHTML=`<button class="btn sm" onclick="toast('Label ${a.code} dikirim ke printer','info')">${ic('printer',13)} Cetak Label</button>
+  <button class="btn sm" onclick="toast('Form mutasi ${a.code} dibuka','info')">${ic('swap',13)} Mutasi</button>
+  <button class="btn sm" ${a.status==='Dihapus'?'disabled style="opacity:.45"':''} onclick="toast('Pengajuan disposal ${a.code} dibuat','warn','Menunggu persetujuan Manajemen')">${ic('trash',13)} Disposal</button>
+  <button class="btn sm" style="margin-left:auto" onclick="toast('Mode ubah aset (demo)','info')">${ic('edit',13)} Ubah</button>`;
+}
+function setTab(t){curTab=t;renderDrawer()}
+function bookSchedule(a){
+ const y0=new Date(a.date).getFullYear(),annual=a.price/(a.life||4);let acc=0;const rows=[];
+ for(let y=y0;y<=2026;y++){acc=Math.min(a.price,annual*(y-y0+1));rows.push({p:`31 Des ${y}`,accum:Math.round(acc),book:Math.max(a.price-Math.round(acc),0)})}
+ return rows;
+}
+function eventsFor(a){
+ const ev=[{d:a.date,t:'Aset didaftarkan · kode unik & barcode diterbitkan',by:'Staff Asset',tone:'t-green',ic:'plus'},
+  {d:a.date,t:`Tipe ditetapkan: ${a._type}${a.override?' (override manual — '+a.overrideReason+')':' (otomatis via threshold)'}`,by:a.override?'Staff Asset':'System',tone:'t-violet',ic:'tag'}];
+ if(a._type==='Aktiva Tetap')ev.push({d:a.date,t:'Data akuntansi dilengkapi (nilai perolehan, masa manfaat, metode)',by:'Staff Asset',tone:'t-blue',ic:'landmark'});
+ transfers.filter(m=>m.code===a.code).forEach(m=>ev.push({d:m.date,t:`Mutasi ${m.id}: ${m.from} → ${m.to} — ${m.status}`,by:m.by,tone:'t-violet',ic:'swap'}));
+ disposals.filter(x=>x.code===a.code).forEach(x=>ev.push({d:x.date,t:`Pengajuan disposal ${x.id}: ${x.reason}`,by:x.by,tone:'t-red',ic:'trash'}));
+ if(a.status==='Dihapus')ev.push({d:'2026-10-25',t:'Status berubah → Dihapus (DSP) · aset dikunci dari transaksi',by:'Dedi Santoso',tone:'t-red',ic:'trash'});
+ return ev.sort((x,y)=>y.d.localeCompare(x.d));
+}
+
+/* ================= MODAL TAMBAH ASET ================= */
+function nextCode(){const mx=ASSETS.reduce((m,a)=>Math.max(m,+a.code.split('-')[1]),0);return'AST-'+String(mx+1).padStart(4,'0')}
+function openAddModal(){
+ $('f-name').value='';$('f-price').value='';$('f-date').value=todayISO();$('f-loc').value='';$('f-dept').value='';
+ $('f-override').checked=false;$('f-ovWrap').classList.add('hidden');$('f-ovReason').value='';
+ $('f-code').value=nextCode();
+ $('f-group').innerHTML=classification.map(c=>`<option>${c.g}</option>`).join('');
+ fillCats();updateTypeChip();
+ $('assetModal').classList.add('open');
+}
+function fillCats(){const g=classification.find(c=>c.g===$('f-group').value);$('f-cat').innerHTML=(g?g.cats:[]).map(c=>`<option>${c.n}</option>`).join('')}
+function currentFormType(){
+ const ov=$('f-override').checked;
+ if(ov)return $('f-ovReason').value.trim()?'Aktiva Tetap':null;
+ const p=+$('f-price').value||0;
+ return p>=state.threshold?'Aktiva Tetap':'Peralatan';
+}
+function updateTypeChip(){
+ const p=+$('f-price').value||0,ov=$('f-override').checked;
+ const t=ov?'<b>Override manual</b> — isi alasan override di bawah':(p>=state.threshold?'<b>Aktiva Tetap</b> — nilai ≥ ambang batas':'<b>Peralatan</b> — nilai di bawah ambang batas');
+ $('f-typechip').innerHTML=`${ic('landmark',16)}<div>Tipe aset ${ov?'':'(otomatis, FR-13.2)'}: ${t}<br><span style="font-size:11px">Threshold kapitalisasi aktif: ${rp(state.threshold)}</span></div>`;
+ $('f-accWrap').classList.toggle('hidden',!(ov||(p>=state.threshold)));
+}
+function saveAsset(){
+ const name=$('f-name').value.trim(),price=+$('f-price').value||0;
+ if(!name){toast('Nama aset wajib diisi','err');return}
+ if(!price){toast('Nilai perolehan wajib diisi','err');return}
+ if($('f-override').checked&&!$('f-ovReason').value.trim()){toast('Alasan override wajib diisi (FR-13.9)','err');return}
+ const a={code:$('f-code').value,name,group:$('f-group').value,cat:$('f-cat').value,
+  loc:$('f-loc').value||'Belum ditentukan',dept:$('f-dept').value||'Umum',status:'Aktif',price,
+  date:$('f-date').value||todayISO(),life:+$('f-life').value||4,method:$('f-method').value,accum:0,
+  holder:'—',cond:$('f-cond').value,
+  override:$('f-override').checked?'Aktiva Tetap':null,
+  overrideReason:$('f-override').checked?$('f-ovReason').value.trim():null};
+ ASSETS.push(a);computeTypes();renderAll();
+ $('assetModal').classList.remove('open');
+ toast(`Aset ${a.code} berhasil ditambahkan`,`Tipe: ${a._type}${a.override?' (override)':''}`);
+ openAsset(a.code);
+}
+
+/* ================= MUTASI & DISPOSAL ================= */
+function renderMutasi(){
+ const c=s=>transfers.filter(m=>m.status===s).length;
+ $('mutStats').innerHTML=`<span class="chip">${ic('clock',13)} Menunggu: <b>&nbsp;${c('Menunggu')}</b></span>
+  <span class="chip">${ic('check',13)} Disetujui: <b>&nbsp;${c('Disetujui')}</b></span>
+  <span class="chip">${ic('x',13)} Ditolak: <b>&nbsp;${c('Ditolak')}</b></span>
+  <button class="btn primary" style="margin-left:auto" onclick="toast('Form pengajuan mutasi (demo)','info','FR-06.1 — catat lokasi asal & tujuan')">${ic('plus',14)} Ajukan Mutasi</button>`;
+ $('mutTbody').innerHTML=transfers.map(m=>{const a=ASSETS.find(x=>x.code===m.code);return`<tr>
+  <td class="mono">${m.id}</td><td><b>${a?a.name:m.code}</b><span class="sub mono">${m.code}</span></td>
+  <td>${m.from}<br><span style="color:var(--brand-2)">↓</span> ${m.to}</td>
+  <td>${fd(m.date)}</td><td>${m.by}</td><td>${stBadge(m.status)}</td>
+  <td style="text-align:right;white-space:nowrap">${m.status==='Menunggu'?`<button class="icon-btn tiny acc" title="Setujui" onclick="approveMut('${m.id}',true)">${ic('check',15)}</button> <button class="icon-btn tiny rej" title="Tolak" onclick="approveMut('${m.id}',false)">${ic('x',15)}</button>`:'<span style="color:var(--faint)">—</span>'}</td></tr>`}).join('');
+}
+function approveMut(id,ok){
+ const m=transfers.find(x=>x.id===id);if(!m)return;
+ m.status=ok?'Disetujui':'Ditolak';
+ if(ok){const a=ASSETS.find(x=>x.code===m.code);if(a){a.loc=m.to;if(a.status==='Dimutasi')a.status='Aktif'}}
+ renderAll();
+ ok?toast(`${id} disetujui`,`Lokasi ${m.code} diperbarui otomatis → ${m.to}`):toast(`${id} ditolak`,'warn','Alasan penolakan tercatat di riwayat');
+}
+function renderDisposal(){
+ $('dspTbody').innerHTML=disposals.map(d=>{const a=ASSETS.find(x=>x.code===d.code);return`<tr>
+  <td class="mono">${d.id}</td><td><b>${a?a.name:d.code}</b><span class="sub mono">${d.code}</span></td>
+  <td style="max-width:280px">${d.reason}<span class="sub">Diajukan oleh ${d.by}</span></td>
+  <td>${fd(d.date)}</td><td class="mono">${a?rp(a.price):'—'}</td><td>${stBadge(d.status)}</td>
+  <td style="text-align:right">${d.status==='Diajukan'?`<button class="btn sm" onclick="approveDsp('${d.id}')">${ic('check',13)} Setujui</button>`:'<span style="color:var(--faint)">selesai</span>'}</td></tr>`}).join('');
+}
+function approveDsp(id){
+ confirmBox(`Setujui disposal ${id}?`,'Status aset akan diubah menjadi Dihapus (DSP) dan aset dikunci dari seluruh transaksi aktif.',()=>{
+  const d=disposals.find(x=>x.id===id);if(!d)return;
+  d.status='Disetujui';
+  const a=ASSETS.find(x=>x.code===d.code);if(a)a.status='Dihapus';
+  renderAll();toast(`${id} disetujui`,`Aset ${d.code} kini berstatus Dihapus · tercatat di riwayat`);
+ });
+}
+
+/* ================= RIWAYAT / SCAN / LAINNYA ================= */
+function renderHistory(){
+ $('histSel').innerHTML=ASSETS.map(a=>`<option value="${a.code}">${a.code} — ${a.name}</option>`).join('');
+ drawHist();
+}
+function drawHist(){
+ const a=ASSETS.find(x=>x.code===$('histSel').value);if(!a)return;
+ $('histTimeline').innerHTML=eventsFor(a).map(ev=>`<div class="tl-item"><span class="tl-ic ${ev.tone}">${ic(ev.ic,14)}</span><div class="tl-body"><b>${ev.t}</b><span>${ev.by}</span></div><span class="tl-time">${fd(ev.d)}</span></div>`).join('');
+}
+function renderScan(){
+ $('scanHint').innerHTML=`${ic('camera',28)}<span>Arahkan barcode aset ke kamera<br>atau gunakan scanner eksternal (NFR-06.2)</span>`;
+}
+function foundAsset(a,manual){
+ $('scanResult').innerHTML=`<div class="scan-result">
+   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="font-family:var(--fd)">${a.name}</b>${stBadge(a.status)}</div>
+   <div style="font-size:12.5px;color:var(--muted);margin:6px 0 10px">${a.code} · ${a.group} › ${a.cat} · ${a.loc}</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm primary" onclick="openAsset('${a.code}')">${ic('eye',13)} Lihat Detail</button><button class="btn sm" onclick="toast('Label ${a.code} dicetak','info')">${ic('printer',13)} Cetak Label</button></div></div>`;
+ const li=document.createElement('li');
+ li.innerHTML=`<span style="color:var(--ok)">${ic('check',14)}</span><b class="mono">${a.code}</b> ${a.name}<span class="t">09:${40+Math.floor(Math.random()*19)} WIB</span>`;
+ $('scanLog').prepend(li);
+ toast(`Aset ditemukan: ${a.code}`,manual?'ok':'ok','Validasi barcode cocok dengan database');
+}
+function manualScan(){
+ const v=$('scanInput').value.trim().toUpperCase();if(!v)return;
+ const a=ASSETS.find(x=>x.code.toUpperCase()===v);
+ if(a){foundAsset(a,true)}
+ else{$('scanResult').innerHTML=`<div class="scan-result err"><b style="color:var(--red)">Barcode / kode tidak dikenali</b><div style="font-size:12.5px;color:var(--muted);margin-top:4px">Kode "${v}" tidak ditemukan dalam database aset. Coba pencarian manual nama aset.</div></div>`;toast('Barcode tidak valid','err','Tidak ada aset dengan kode tersebut')}
+ $('scanInput').value='';
+}
+function startScan(){
+ const vp=$('scanVp');if(vp.classList.contains('scanning'))return;
+ vp.classList.add('scanning');
+ toast('Memindai…','info','Mencari barcode dalam frame kamera');
+ setTimeout(()=>{
+  vp.classList.remove('scanning');
+  const pool=ASSETS.filter(a=>a.status!=='Dihapus');
+  foundAsset(pool[Math.floor(Math.random()*pool.length)]);
+ },2300);
+}
+function renderClassification(){
+ const gc={};ASSETS.forEach(a=>gc[a.group]=(gc[a.group]||0)+1);
+ $('clsChip').innerHTML=`${ic('tree',13)} ${classification.length} Group · ${classification.reduce((s,c)=>s+c.cats.length,0)} Kategori`;
+ $('clsTree').innerHTML=classification.map(c=>`<div class="card">
+   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+     <span class="k-ic t-brand">${ic('tree',16)}</span><h3 style="margin:0">${c.g}</h3>
+     <span class="chip" style="margin-left:auto">${gc[c.g]||0} aset</span>
+   </div>
+   ${c.cats.map(cat=>`<div style="padding:10px 0;border-bottom:1px dashed var(--line)">
+     <div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px">${ic('tag',14)}${cat.n}
+       <button class="icon-btn tiny" style="margin-left:auto" title="Tambah cluster" onclick="toast('Tambah cluster di bawah ${cat.n}','info','Demo klasifikasi')">${ic('plus',13)}</button></div>
+     ${cat.cl.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-left:22px">${cat.cl.map(x=>`<span class="chip" style="font-size:11px">${x}</span>`).join('')}</div>`:'<div style="padding-left:22px;font-size:11.5px;color:var(--faint);margin-top:4px">Belum ada cluster</div>'}
+   </div>`).join('')}
+ </div>`).join('');
+}
+function renderItems(){
+ $('itemTbody').innerHTML=items.map(i=>`<tr><td><b>${i.name}</b></td><td>${i.cat}</td><td style="color:var(--muted)">${i.spec}</td><td class="mono">${i.count}</td><td>${i.unit}</td>
+  <td style="text-align:right;white-space:nowrap"><button class="icon-btn tiny" onclick="toast('Ubah item (demo)','info')">${ic('edit',15)}</button> <button class="icon-btn tiny" onclick="toast('Item dihapus (demo)','warn')">${ic('trash',15)}</button></td></tr>`).join('');
+}
+function renderReports(){
+ $('reportGrid').innerHTML=reports.map(r=>`<div class="card">
+  <div style="display:flex;gap:12px;align-items:flex-start">
+    <span class="k-ic t-brand" style="width:40px;height:40px">${ic(r.ic,18)}</span>
+    <div><h3>${r.t}</h3><p class="sub" style="margin-bottom:14px">${r.d}</p></div>
+  </div>
+  <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+    <select style="flex:1;min-width:130px"><option>Okt 2026</option><option>Sep 2026</option><option>Q3 2026</option><option>Semester I 2026</option></select>
+    <button class="btn sm" onclick="toast('${r.t} diekspor','info','Format: XLSX (Excel)')">${ic('sheet',13)} Excel</button>
+    <button class="btn sm primary" onclick="toast('${r.t} diekspor','info','Format: PDF')">${ic('download',13)} PDF</button>
+  </div></div>`).join('');
+}
+function renderAudit(){
+ const us=[...new Set(auditLogs.map(l=>l.u))],as=[...new Set(auditLogs.map(l=>l.act))];
+ $('aUser').innerHTML='<option value="all">Semua Pengguna</option>'+us.map(u=>`<option>${u}</option>`).join('');
+ $('aAct').innerHTML='<option value="all">Semua Aksi</option>'+as.map(a=>`<option>${a}</option>`).join('');
+ drawAudit();
+}
+function drawAudit(){
+ const u=$('aUser').value,a=$('aAct').value;
+ const tone={CREATE:'t-green',UPDATE:'t-blue',OVERRIDE:'t-violet',SNAPSHOT:'t-brand',VIEW:'t-amber',EXPORT:'t-amber'};
+ $('auditTbody').innerHTML=auditLogs.filter(l=>(u==='all'||l.u===u)&&(a==='all'||l.act===a))
+  .map(l=>`<tr><td style="white-space:nowrap;color:var(--muted)">${l.t}</td>
+   <td><b>${l.u}</b><span class="sub">${l.r}</span></td>
+   <td><span class="bd ${tone[l.act]||'t-brand'}">${l.act}</span></td>
+   <td>${l.mod}</td><td style="color:var(--muted)">${l.d}</td></tr>`).join('');
+}
+function renderUsers(){
+ $('userTbody').innerHTML=users.map(u=>`<tr>
+  <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:30px;height:30px;font-size:11px">${u.n.split(' ').map(x=>x[0]).slice(0,2).join('')}</div><b>${u.n}</b></div></td>
+  <td style="color:var(--muted)">${u.e}</td><td>${stBadge(u.r==='Super User'?'Dipinjamkan':u.r==='Staff Asset'?'Aktif':u.r==='Manajemen'?'Dimutasi':'Dalam Perbaikan').replace(/<span class="bd[^>]*>.*?<\/span>/,'')}<span class="bd ${u.r==='Super User'?'tp-at':'tp-pr'}">${ic(u.r==='Super User'?'shield':u.r==='Auditor'?'eye':u.r==='Manajemen'?'landmark':'users',12)} ${u.r}</span></td>
+  <td style="color:var(--muted)">${u.last}</td><td>${stBadge('Aktif')}</td>
+  <td style="text-align:right"><button class="icon-btn tiny" onclick="toast('Kelola akses ${u.n} (demo)','info','RBAC — FR-11.3')">${ic('edit',15)}</button></td></tr>`).join('');
+}
+
+/* ================= PENGATURAN ================= */
+function applyThreshold(silent){
+ const prev={};ASSETS.forEach(a=>prev[a.code]=a._type);
+ state.threshold=+$('thrInput').value||state.threshold;
+ computeTypes();
+ const changed=ASSETS.filter(a=>prev[a.code]!==a._type).length;
+ renderAll();
+ if(!silent)toast('Ambang batas disimpan',`${rp(state.threshold)} · ${changed} aset berubah tipe (FR-13.11)`);
+ return changed;
+}
+
+/* ================= RENDER ALL ================= */
+function renderAll(){
+ computeTypes();
+ renderDashboard();renderAssetTable();renderMutasi();renderDisposal();
+ updateBadges();
+ $('thrInput').value=state.threshold;
+}
+
+/* ================= INIT ================= */
+function injectStaticIcons(){
+ $('logoMark').innerHTML=ic('box',20);$('tenantIc').innerHTML=ic('building',15);$('tenantSw').innerHTML=ic('switchv',14);
+ $('btnLogout').innerHTML=ic('logout',15);$('btnHamb').innerHTML=ic('list',17);$('icSearch').innerHTML=ic('search',15);$('icSearch2').innerHTML=ic('search',15);
+ $('icPlus').innerHTML=ic('plus',15);$('btnBell').innerHTML=ic('bell',17);$('btnTheme').innerHTML=ic(state.theme==='dark'?'sun':'moon',16);
+ $('btnImport').innerHTML=ic('upload',14)+' Import Spreadsheet';$('btnExportList').innerHTML=ic('download',14)+' Ekspor';
+ $('btnLabels').innerHTML=ic('printer',14)+' Cetak Label';$('vtTable').innerHTML=ic('list',16);$('vtCards').innerHTML=ic('gridv',16);
+ $('btnStartScan').innerHTML=ic('camera',15)+' Mulai Scan';$('btnExtScan').innerHTML=ic('scan',15)+' Scanner Eksternal';$('btnManualScan').innerHTML=ic('search',14)+' Cari';
+ $('btnAddGroup').innerHTML=ic('plus',14)+' Tambah Klasifikasi';$('btnAddItem').innerHTML=ic('plus',14)+' Tambah Item';
+ $('btnAddUser').innerHTML=ic('userplus',14)+' Tambah Pengguna';
+ $('icAlert').innerHTML=ic('alert',16);$('icInfo').innerHTML=ic('info',15);$('icInfo2').innerHTML=ic('info',15);
+ $('btnSaveThr').innerHTML=ic('save',14)+' Simpan Threshold';$('btnBackfill').innerHTML=ic('refresh',14)+' Hitung Ulang Massal (Backfill)';
+ $('btnBackup').innerHTML=ic('download',14)+' Backup Sekarang';$('btnRestore').innerHTML=ic('upload',14)+' Restore Backup';
+ $('btnPrintHist').innerHTML=ic('printer',14)+' Cetak Riwayat';$('drawerX').innerHTML=ic('x',16);
+ $('amX').innerHTML=ic('x',15);$('amSave').innerHTML=ic('check',14)+' Simpan Aset';$('cfIc').innerHTML=ic('alert',20);
+ $('footIc').innerHTML=ic('box',13);
+}
+function bindEvents(){
+ // navigasi & tema
+ $('btnHamb').onclick=()=>$('sidebar').classList.toggle('open');
+ $('btnTheme').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=state.theme;localStorage.setItem('oa-theme',state.theme);$('btnTheme').innerHTML=ic(state.theme==='dark'?'sun':'moon',16);toast(`Tema ${state.theme==='dark'?'gelap':'terang'} aktif`,'info','Preferensi disimpan')};
+ $('btnBell').onclick=()=>toast('3 notifikasi','info','2 mutasi menunggu · 1 disposal diajukan');
+ $('btnLogout').onclick=()=>toast('Sesi diakhiri (demo)','info');
+ document.querySelector('.tenant').onclick=()=>toast('Ganti organisasi','info','Multi-tenant: hanya NKR-01 tersedia pada fase ini');
+ // pencarian global (FR-04.1)
+ $('globalSearch').addEventListener('input',e=>{if(e.target.value){$('assetSearch').value=e.target.value;go('assets')}else renderAssetTable()});
+ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('globalSearch').focus()}if(e.key==='Escape'){closeDrawer();$('assetModal').classList.remove('open');$('confirmModal').classList.remove('open')}});
+ // filter aset
+ ['assetSearch'].forEach(id=>$(id).addEventListener('input',renderAssetTable));
+ ['fGroup','fStatus','fType','fLoc'].forEach(id=>$(id).addEventListener('change',renderAssetTable));
+ // toggle tampilan
+ $('vtTable').onclick=()=>{state.assetView='table';$('vtTable').classList.add('on');$('vtCards').classList.remove('on');$('tableWrap').classList.remove('hidden');$('assetCards').classList.add('hidden')};
+ $('vtCards').onclick=()=>{state.assetView='cards';$('vtCards').classList.add('on');$('vtTable').classList.remove('on');$('tableWrap').classList.add('hidden');$('assetCards').classList.remove('hidden')};
+ // toolbar aset
+ $('btnNewAsset').onclick=openAddModal;
+ $('btnImport').onclick=()=>toast('Impor spreadsheet dimulai','info','Parser format kantor: header multi-baris didukung');
+ $('btnExportList').onclick=()=>toast('Daftar aset diekspor','info','Format XLSX sesuai filter aktif');
+ $('btnLabels').onclick=()=>toast('Cetak label massal','info','Pilih aset via checkbox lalu cetak batch');
+ $('btnBulkDel').onclick=()=>confirmBox(`Hapus ${state.selected.size} aset terpilih?`,'Tindakan ini tercatat di audit trail dan dapat ditelusuri. Aset terhapus tidak dapat dipakai dalam transaksi.',()=>{
+   const n=state.selected.size;
+   for(let i=ASSETS.length-1;i>=0;i--)if(state.selected.has(ASSETS[i].code))ASSETS.splice(i,1);
+   state.selected.clear();renderAll();toast(`${n} aset dihapus`,'warn','Tercatat di audit trail')});
+ $('ckAll').onchange=e=>{filteredAssets().forEach(a=>e.target.checked?state.selected.add(a.code):state.selected.delete(a.code));renderAssetTable()};
+ // drawer
+ $('drawerX').onclick=closeDrawer;$('backdrop').onclick=closeDrawer;
+ // modal aset
+ $('amX').onclick=$('amCancel').onclick=()=>$('assetModal').classList.remove('open');
+ $('amSave').onclick=saveAsset;
+ $('f-group').onchange=fillCats;
+ $('f-price').oninput=updateTypeChip;
+ $('f-override').onchange=()=>{$('f-ovWrap').classList.toggle('hidden',!$('f-override').checked);updateTypeChip()};
+ $('f-ovReason').oninput=updateTypeChip;
+ // scan
+ $('btnStartScan').onclick=startScan;
+ $('btnExtScan').onclick=()=>toast('Menunggu input scanner USB/Bluetooth…','info','NFR-06.2');
+ $('btnManualScan').onclick=manualScan;
+ $('scanInput').addEventListener('keydown',e=>{if(e.key==='Enter')manualScan()});
+ // riwayat
+ $('histSel').onchange=drawHist;
+ $('btnPrintHist').onclick=()=>toast('Riwayat aset dicetak (PDF)','info');
+ // audit
+ $('aUser').onchange=drawAudit;$('aAct').onchange=drawAudit;
+ // pengaturan
+ $('btnSaveThr').onclick=()=>applyThreshold(false);
+ $('btnBackfill').onclick=()=>confirmBox('Hitung ulang tipe seluruh aset?','Backfill FR-13.11: tipe aset ditentukan ulang berdasarkan threshold terkini. Aset dengan override manual tidak terpengaruh.',()=>{const c=applyThreshold(true);toast('Backfill selesai',`${c} aset berubah tipe · override manual dipertahankan`)});
+ $('btnBackup').onclick=()=>toast('Backup database dijalankan','info','NFR-11.1 · backup harian otomatis 02:00 WIB');
+ $('btnRestore').onclick=()=>confirmBox('Restore dari backup?','Sistem akan dipulihkan ke snapshot terakhir (RTO maks. 4 jam).',()=>toast('Restore selesai','info','Data konsisten — NFR-03.2'));
+ // placeholder demo
+ $('btnAddGroup').onclick=()=>toast('Form klasifikasi baru','info','Group › Category › Cluster › Sub-cluster');
+ $('btnAddItem').onclick=()=>toast('Form item aset','info','Terhubung ke klasifikasi (FR-03.5)');
+ $('btnAddUser').onclick=()=>toast('Form pengguna baru','info','Pilih peran: Super User / Staff Asset / Manajemen / Auditor / End User');
+}
+
+injectStaticIcons();
+buildNav();
+fillFilters();
+renderScan();
+renderClassification();
+renderItems();
+renderReports();
+renderAudit();
+renderUsers();
+renderHistory();
+renderAll();
+bindEvents();
+go('dashboard');
+</script>
+</body>
+</html>

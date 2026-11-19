@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+﻿import { router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowUpDown,
     Building2,
@@ -49,7 +49,7 @@ import {
     index as indexRoute,
     store,
     update,
-} from '@/routes/items';
+} from '@/routes/tenant/items';
 
 type Category = {
     id: string;
@@ -106,10 +106,10 @@ type PageProps = {
 
 const SORT_OPTIONS = [
     { value: '', label: 'Terbaru' },
-    { value: 'name', label: 'Nama (A–Z)' },
-    { value: '-name', label: 'Nama (Z–A)' },
-    { value: 'code', label: 'Kode (A–Z)' },
-    { value: '-code', label: 'Kode (Z–A)' },
+    { value: 'name', label: 'Nama (Aâ€“Z)' },
+    { value: '-name', label: 'Nama (Zâ€“A)' },
+    { value: 'code', label: 'Kode (Aâ€“Z)' },
+    { value: '-code', label: 'Kode (Zâ€“A)' },
 ];
 
 const ALL = '';
@@ -819,7 +819,7 @@ export default function ItemsIndex() {
                     {items.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {items.from}–{items.to} dari{' '}
+                                Menampilkan {items.from}â€“{items.to} dari{' '}
                                 {items.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -1263,3 +1263,4 @@ ItemsIndex.layout = {
         },
     ],
 };
+

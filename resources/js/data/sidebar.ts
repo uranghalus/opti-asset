@@ -15,6 +15,7 @@ import {
     Coins,
     ShieldCheck,
     KeyRound,
+    Shield,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -235,6 +236,15 @@ export const sidebarData: SidebarData = {
                     icon: KeyRound,
                     permission: {
                         resource: 'permission',
+                        actions: ['view'],
+                    },
+                },
+                {
+                    title: 'Hak Akses SuperAdmin',
+                    url: '/super-admin-grants',
+                    icon: Shield,
+                    permission: {
+                        resource: 'super-admin',
                         actions: ['view'],
                     },
                 },

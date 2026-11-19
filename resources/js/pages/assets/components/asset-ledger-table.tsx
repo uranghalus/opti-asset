@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+﻿import { Link, router } from '@inertiajs/react';
 import { FileText, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,14 +6,14 @@ import { withReturnTo } from '@/lib/asset-return';
 import { StatusBadge, TipeBadge } from '@/lib/asset-status';
 import { LEVEL_SHORT } from '@/lib/classification-levels';
 import { cn } from '@/lib/utils';
-import { edit, show } from '@/routes/assets';
+import { edit, show } from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
 
 /**
- * Cakupan aktif (ADR 0002): baris hanya merender level DI BAWAH scope —
+ * Cakupan aktif (ADR 0002): baris hanya merender level DI BAWAH scope â€”
  * node scope sendiri tidak diulang di setiap baris. Kolom menyusut jadi
- * satu; kode klasifikasi mono-first, wrap dua baris — truncation tidak
+ * satu; kode klasifikasi mono-first, wrap dua baris â€” truncation tidak
  * pernah mengenai kode.
  */
 export function scopeColumns(
@@ -48,12 +48,12 @@ function ScopeCells({
     };
 
     if (columns.length === 0) {
-        return <td className="px-3 py-2.5 text-xs text-muted-foreground">—</td>;
+        return <td className="px-3 py-2.5 text-xs text-muted-foreground">â€”</td>;
     }
 
     return (
         <td className="max-w-[220px] px-3 py-2.5 text-xs">
-            <span className="line-clamp-2 break-words text-ink-subtle dark:text-muted-foreground/70">
+            <span className="line-clamp-2 break-words text-muted-foreground dark:text-muted-foreground/70">
                 {columns.map((level) => {
                     const node = byLevel[level];
 
@@ -84,7 +84,7 @@ function ScopeCells({
 }
 
 /**
- * Tabel ledger desktop (≥1280px, DESIGN.md §9): kepala kolom sunken,
+ * Tabel ledger desktop (â‰¥1280px, DESIGN.md Â§9): kepala kolom sunken,
  * baris 44px+, kode mono, angka tabular. Baris terpilih membuka detail;
  * kontrol di dalam baris menghentikan propagasi.
  */
@@ -106,7 +106,7 @@ export function AssetLedgerTable({
     return (
         <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
-                <thead className="sticky top-0 z-10 bg-surface-sunken dark:bg-muted">
+                <thead className="sticky top-0 z-10 bg-surface-sunken">
                     <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
                         <th scope="col" className="w-10 px-3 py-2.5">
                             <span className="sr-only">Pilih</span>
@@ -130,7 +130,7 @@ export function AssetLedgerTable({
                                     (
                                     {scopeCols
                                         .map((l) => LEVEL_SHORT[l])
-                                        .join(' › ')}
+                                        .join(' â€º ')}
                                     )
                                 </span>
                             )}
@@ -161,9 +161,9 @@ export function AssetLedgerTable({
                                     )
                                 }
                                 className={cn(
-                                    'cursor-pointer border-b border-border/70 transition-colors hover:bg-surface-sunken/60 dark:hover:bg-muted/60',
+                                    'cursor-pointer border-b border-border/70 transition-colors hover:bg-accent',
                                     selected.has(asset.id) &&
-                                        'bg-primary-muted/50',
+                                        'bg-primary-muted',
                                     isDisposed && 'opacity-70 saturate-[0.6]',
                                 )}
                             >
@@ -181,7 +181,7 @@ export function AssetLedgerTable({
                                     />
                                 </td>
                                 <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tabular-nums">
-                                    {asset.kode_asset ?? '—'}
+                                    {asset.kode_asset ?? 'â€”'}
                                 </td>
                                 <td className="max-w-[240px] px-3 py-2.5">
                                     <Link
@@ -196,7 +196,7 @@ export function AssetLedgerTable({
                                     <p className="truncate text-xs text-muted-foreground">
                                         {[asset.brand, asset.model]
                                             .filter(Boolean)
-                                            .join(' · ')}
+                                            .join(' Â· ')}
                                     </p>
                                 </td>
                                 <td className="px-3 py-2.5">
@@ -211,13 +211,13 @@ export function AssetLedgerTable({
                                 <ScopeCells asset={asset} columns={scopeCols} />
                                 <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
-                                        {asset.location?.name ?? '—'}
+                                        {asset.location?.name ?? 'â€”'}
                                     </span>
                                 </td>
                                 <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
                                         {asset.department?.nama_department ??
-                                            '—'}
+                                            'â€”'}
                                     </span>
                                 </td>
                                 <td
@@ -231,10 +231,10 @@ export function AssetLedgerTable({
                                             )}
                                         >
                                             <Button
-                                                variant="ghost"
+                                                variant="soft-secondary"
                                                 size="icon"
                                                 aria-label="Lihat detail"
-                                                className="size-8 rounded-md hover:bg-muted"
+                                                className="size-8 rounded-md hover:bg-accent"
                                             >
                                                 <FileText className="size-3.5" />
                                             </Button>
@@ -245,20 +245,20 @@ export function AssetLedgerTable({
                                             )}
                                         >
                                             <Button
-                                                variant="ghost"
+                                                variant="soft-secondary"
                                                 size="icon"
                                                 aria-label="Ubah aset"
-                                                className="size-8 rounded-md hover:bg-muted"
+                                                className="size-8 rounded-md hover:bg-accent"
                                             >
                                                 <Pencil className="size-3.5" />
                                             </Button>
                                         </Link>
                                         <Button
-                                            variant="ghost"
+                                            variant="soft-secondary"
                                             size="icon"
                                             aria-label="Hapus aset"
                                             onClick={() => onDelete(asset)}
-                                            className="size-8 rounded-md hover:bg-destructive/10"
+                                            className="size-8 rounded-md hover:bg-accent hover:text-destructive"
                                         >
                                             <Trash2 className="size-3.5 text-destructive" />
                                         </Button>
@@ -272,3 +272,4 @@ export function AssetLedgerTable({
         </div>
     );
 }
+

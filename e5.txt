@@ -1,0 +1,60 @@
+=== main AppServiceProvider socialite
+24-use Illuminate\Support\Facades\Gate;
+25-use Illuminate\Support\ServiceProvider;
+26-use Illuminate\Validation\Rules\Password;
+27:use SocialiteProviders\Manager\SocialiteWasCalled;
+28-
+29-class AppServiceProvider extends ServiceProvider
+30-{
+31-    /**
+32-     * Register any application services.
+33-     */
+34-    public function register(): void
+35-    {
+36-        //
+37-    }
+38-
+39-    /**
+--
+85-
+86-    protected function registerOidcProvider(): void
+87-    {
+88:        Event::listen(SocialiteWasCalled::class, function (SocialiteWasCalled $event): void {
+89:            $event->extendSocialite('oidc', OIDCProvider::class);
+90-        });
+91-    }
+92-
+93-    // Grant Super Admin role to the first user (FR-14).
+94-    // This is a temporary solution until a proper user management system is implemented.
+95-    // In a production environment, this should be handled with caution.
+96-    protected function grantSuperAdmin(): void
+97-    {
+98-        Gate::before(function ($user, $ability) {
+99-            return $user->hasRole('super-admin') ? true : null;
+100-        });
+101-    }
+
+=== main routes 125-145
+    Route::put('roles/{role}/permissions', [RoleController::class, 'syncPermissions'])->name('roles.permissions.sync');
+
+    Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+    Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
+    Route::patch('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+    Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
+});
+
+Route::prefix('auth')->group(function () {
+    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');
+});
+Route::middleware('auth')->group(function () {
+    Route::get('asset-disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
+    Route::get('asset-disposals/create', [AssetDisposalController::class, 'create'])->name('disposals.create');
+    Route::post('asset-disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
+    Route::get('asset-disposals/{disposal}', [AssetDisposalController::class, 'show'])->name('disposals.show');
+    Route::post('asset-disposals/{disposal}/approve', [AssetDisposalController::class, 'approve'])->name('disposals.approve');
+    Route::post('asset-disposals/{disposal}/reject', [AssetDisposalController::class, 'reject'])->name('disposals.reject');
+
+=== main login page ssO links

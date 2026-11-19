@@ -19,6 +19,12 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        /* Sekunder (outline): 1px border, surface fill — tanpa lift, tanpa
+           bayangan dekoratif (DESIGN.md — Buttons, Elevation & Depth). */
+        "soft-primary":
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:bg-primary/95",
+        "soft-secondary":
+          "border border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3 sm:min-h-[36px] min-h-[44px]",

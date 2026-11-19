@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+﻿import { Head, router, usePage } from '@inertiajs/react';
 import {
     ArchiveX,
     Box,
@@ -41,11 +41,11 @@ import {
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
-import { index as reportsIndexRoute } from '@/routes/reports';
+import { index as reportsIndexRoute } from '@/routes/tenant/reports';
 import {
     transfers as exportTransfersRoute,
     disposals as exportDisposalsRoute,
-} from '@/routes/reports/export';
+} from '@/routes/tenant/reports/export';
 
 type Transfer = {
     id: string;
@@ -157,7 +157,7 @@ const SEARCH_FOCUS_CLASSES =
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return '—';
+        return 'â€”';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -168,7 +168,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function ReportsIndex() {
-    const { transfers, disposals, filters } = usePage()
+    const { transfers, disposals, filters, tenant } = usePage()
         .props as unknown as PageProps;
 
     const [tSearch, setTSearch] = useState(filters.transfer_search ?? '');
@@ -180,7 +180,7 @@ export default function ReportsIndex() {
     const dTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
 
-    // Sinkronkan state lokal saat filter server berubah (partial reload) —
+    // Sinkronkan state lokal saat filter server berubah (partial reload) â€”
     // pola "adjust state during render" (React docs): setState hanya saat
     // props berubah, langsung saat render tanpa effect.
     if (filters !== prevFilters) {
@@ -227,7 +227,7 @@ export default function ReportsIndex() {
             params.disposal_status = overrides.dStatus ?? dStatus;
         }
 
-        router.get(reportsIndexRoute().url, params, {
+        router.get(reportsIndexRoute({ tenant }).url, params, {
             preserveState: true,
             replace: true,
             only: ['transfers', 'disposals', 'filters'],
@@ -513,7 +513,7 @@ export default function ReportsIndex() {
                                                                     ?.kode_asset ??
                                                                     t.asset
                                                                         ?.serial_number ??
-                                                                    '—'}
+                                                                    'â€”'}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 {t.asset?.brand}{' '}
@@ -525,10 +525,10 @@ export default function ReportsIndex() {
                                                         <TableCell className="text-muted-foreground">
                                                             {t.fromLocation
                                                                 ?.name ??
-                                                                '—'}{' '}
-                                                            →{' '}
+                                                                'â€”'}{' '}
+                                                            â†’{' '}
                                                             {t.toLocation
-                                                                ?.name ?? '—'}
+                                                                ?.name ?? 'â€”'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <span
@@ -748,16 +748,16 @@ export default function ReportsIndex() {
                                                             <p className="font-medium text-foreground">
                                                                 {d.asset
                                                                     ?.kode_asset ??
-                                                                    '—'}
+                                                                    'â€”'}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 {d.asset?.item
                                                                     ?.name ??
-                                                                    '—'}
+                                                                    'â€”'}
                                                             </p>
                                                         </TableCell>
                                                         <TableCell className="line-clamp-2 text-muted-foreground">
-                                                            {d.reason ?? '—'}
+                                                            {d.reason ?? 'â€”'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <span
@@ -807,5 +807,6 @@ export default function ReportsIndex() {
 }
 
 ReportsIndex.layout = {
-    breadcrumbs: [{ title: 'Laporan', href: reportsIndexRoute().url }],
+    breadcrumbs: [{ title: 'Laporan', href: reportsIndexRoute({ tenant: '' }).url }],
 };
+

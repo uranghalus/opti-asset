@@ -1,9 +1,9 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+﻿import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Boxes } from 'lucide-react';
 import { AssetForm } from '@/components/assets/asset-form';
 import type { AssetOption } from '@/components/assets/asset-form';
 import { assetListUrl } from '@/lib/asset-return';
-import { index as indexRoute } from '@/routes/assets';
+import { index as indexRoute } from '@/routes/tenant/assets';
 
 type CreateProps = {
     items: AssetOption[];
@@ -20,7 +20,7 @@ export default function AssetCreate() {
         <>
             <Head title="Tambah Aset" />
 
-            <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
+            <div className="relative flex min-h-[100dvh] flex-col bg-background text-foreground p-4 md:p-8">
                 <div className="mx-auto w-full max-w-4xl">
                     <Link
                         href={assetListUrl()}
@@ -30,9 +30,9 @@ export default function AssetCreate() {
                         Kembali ke Daftar Aset
                     </Link>
 
-                    <header className="mt-5 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-sticky)] sm:flex-row sm:items-center sm:justify-between">
+                    <header className="mt-5 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground">
                                 <Boxes className="size-6" strokeWidth={1.5} />
                             </div>
                             <div>
@@ -78,3 +78,4 @@ AssetCreate.layout = {
         },
     ],
 };
+

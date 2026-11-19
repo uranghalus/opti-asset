@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Permission\Traits\HasRoles;
 
 class Employee extends Model
@@ -35,6 +36,7 @@ class Employee extends Model
         'number',
         'photo_url',
         'id_department',
+        'division_id',
         'id_position',
         'last_login_ip',
     ];
@@ -43,5 +45,23 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'id_department', 'id_department');
+    }
+
+    /** @return BelongsTo<Division, $this> */
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class, 'division_id', 'id_division');
+    }
+
+    /** @return BelongsTo<Position, $this> */
+    public function position(): BelongsTo
+    {
+        return $this->belongsTo(Position::class, 'id_position', 'id_position');
+    }
+
+    /** @return HasOne<User, $this> */
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'employee_id', 'id_employee');
     }
 }

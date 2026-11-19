@@ -1,0 +1,95 @@
+=== main OIDCProvider full
+<?php
+
+namespace App\Providers;
+
+use GuzzleHttp\RequestOptions;
+use Laravel\Socialite\Two\InvalidStateException;
+use SocialiteProviders\Manager\OAuth2\User;
+use SocialiteProviders\OIDC\Provider as BaseProvider;
+
+class OIDCProvider extends BaseProvider
+{
+    public static function additionalConfigKeys(): array
+    {
+        return array_merge(parent::additionalConfigKeys(), [
+            'authorization_url',
+            'token_url',
+            'userinfo_url',
+        ]);
+    }
+
+    /**
+     * Use explicit OAuth endpoints when the provider does not expose OIDC discovery.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getOpenIdConfig(): array
+    {
+        $authorizationUrl = $this->getConfig('authorization_url');
+        $tokenUrl = $this->getConfig('token_url');
+
+        if ($authorizationUrl && $tokenUrl) {
+            return [
+                'authorization_endpoint' => $authorizationUrl,
+                'token_endpoint' => $tokenUrl,
+                'userinfo_endpoint' => $this->getConfig('userinfo_url'),
+            ];
+        }
+
+        return parent::getOpenIdConfig();
+    }
+
+    /**
+     * Disable nonce verification.
+     * Beberapa server SSO tidak mengirimkan 'nonce' di dalam ID Token mereka.
+     * Mengubah nilai ini menjadi false akan melewati pengecekan nonce.
+     */
+    protected function usesNonce(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Override user() untuk mengambil detail profil lengkap dari UserInfo / API User endpoint.
+     */
+    public function user()
+    {
+        if ($this->user) {
+            return $this->user;
+        }
+
+        if ($this->hasInvalidState()) {
+            throw new InvalidStateException;
+        }
+
+        $tokenResponse = $this->getAccessTokenResponse($this->request->input('code'));
+
+        // Decrypt JWT token (dari ID Token)
+        $payload = (array) $this->decodeJWT(
+            $tokenResponse['id_token'],
+            $this->request->input('code')
+        );
+
+        // Selalu ambil informasi profil lengkap dari UserInfo / API User endpoint menggunakan Access Token
+        try {
+            $userInfo = $this->getUserByToken($tokenResponse['access_token']);
+            if (is_array($userInfo)) {
+                $payload = array_merge($payload, $userInfo);
+            }
+        } catch (\Exception $e) {
+            // Abaikan/log jika UserInfo gagal diakses
+
+=== main .env.example OIDC
+74:# OIDC SSO (Kovah Socialite OIDC)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=
+
+=== dev .env.example OIDC
+NONE

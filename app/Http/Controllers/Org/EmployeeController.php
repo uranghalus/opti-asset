@@ -8,7 +8,6 @@ use App\Http\Requests\AssignEmployeeRolesRequest;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -58,8 +57,13 @@ class EmployeeController extends Controller
     /**
      * Display the specified employee.
      */
-    public function show(Employee $employee): Response
+    public function show(string $tenant, string $employee): Response
     {
+        $employee = Employee::find($employee);
+        if (! $employee) {
+            abort(404);
+        }
+
         return Inertia::render('Employees/Show', [
             'employee' => $employee->load('department', 'roles'),
             'roles' => Role::query()
@@ -72,15 +76,20 @@ class EmployeeController extends Controller
     /**
      * Sync the roles assigned to the specified employee.
      */
-    public function assignRoles(AssignEmployeeRolesRequest $request, Employee $employee): RedirectResponse
+    public function assignRoles(string $tenant, AssignEmployeeRolesRequest $request, string $employee): RedirectResponse
     {
         Gate::authorize('employee.edit');
+
+        $employee = Employee::find($employee);
+        if (! $employee) {
+            abort(404);
+        }
 
         $employee->syncRoles($request->validated('roles'));
 
         // Push the new roles onto the linked User immediately so the change
         // takes effect without waiting for their next login.
-        $linkedUser = User::withoutGlobalScopes()->where('email', $employee->email)->first();
+        $linkedUser = $employee->user;
 
         if ($linkedUser !== null) {
             app(SyncUserRolesFromEmployeeAction::class)->execute($linkedUser);

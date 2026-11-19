@@ -52,18 +52,28 @@ class LocationController extends Controller
         return back();
     }
 
-    public function update(UpdateLocationRequest $request, Location $location): RedirectResponse
+    public function update(string $tenant, UpdateLocationRequest $request, string $location): RedirectResponse
     {
         Gate::authorize('asset.location.edit');
+
+        $location = Location::find($location);
+        if (! $location) {
+            abort(404);
+        }
 
         $location->update($request->validated());
 
         return back();
     }
 
-    public function destroy(Location $location): RedirectResponse
+    public function destroy(string $tenant, string $location): RedirectResponse
     {
         Gate::authorize('asset.location.delete');
+
+        $location = Location::find($location);
+        if (! $location) {
+            abort(404);
+        }
 
         $location->delete();
 

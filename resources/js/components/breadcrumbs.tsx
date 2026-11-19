@@ -31,7 +31,10 @@ export function Breadcrumbs({
                                                 {item.title}
                                             </BreadcrumbPage>
                                         ) : (
-                                            <BreadcrumbLink asChild>
+                                            <BreadcrumbLink
+                                                asChild
+                                                className="hover:text-primary"
+                                            >
                                                 <Link href={item.href}>
                                                     {item.title}
                                                 </Link>

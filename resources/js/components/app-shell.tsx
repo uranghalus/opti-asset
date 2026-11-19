@@ -18,5 +18,12 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider
+            defaultOpen={isOpen}
+            style={{ "--sidebar-width-icon": "52px" } as React.CSSProperties}
+        >
+            {children}
+        </SidebarProvider>
+    );
 }

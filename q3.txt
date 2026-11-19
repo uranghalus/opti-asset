@@ -1,0 +1,76 @@
+=== root ls (dotfiles)
+.
+..
+.agents
+.claude
+.codex
+.cursor
+.editorconfig
+.env
+.env.example
+.freebuff
+.git
+.gitattributes
+.github
+.gitignore
+.hermes
+.impeccable
+.npmrc
+.opencode
+.phpunit.result.cache
+.prettierignore
+.prettierrc
+.qoder
+.qwen
+.scratch
+.sokudo
+.trae
+.worklog.yml
+AGENTS.md
+CONTEXT.md
+DESIGN.md
+PLAN_asset_classification_v2.md
+PRD_Sistem_Manajemen_Aset.md
+PRODUCT.md
+Qwen_html_20261029_of95jjk4c.html
+REPORT_2026-10-30.md
+REPORT_2026-11-02.md
+REPORT_2026-11-03.md
+RUNBOOK_HYDRATION_DASHBOARD_FIX.md
+RUNBOOK_SAML_TENANT_SYNC.md
+RUNBOOK_TODOS.md
+
+=== .env variants
+-rw-r--r-- 1 root root 4377 Nov 17 10:14 .env
+-rw-r--r-- 1 root root 1691 Nov 16 15:38 .env.example
+
+=== deploy-ish files
+-rw-r--r--   1 root root   4000 Nov 16 15:38 composer.json
+-rw-r--r--   1 root root 452805 Nov 16 15:38 composer.lock
+
+=== git grep OIDC_BASE_URL across refs (values)
+main: OIDC_BASE_URL=
+origin/HEAD: OIDC_BASE_URL=
+origin/dependabot/github_actions/github-actions-0982b03464: OIDC_BASE_URL=
+origin/main: OIDC_BASE_URL=
+
+=== any doc/runbook mentioning OIDC base url or idp
+./.agents/skills/migrate-radix-to-base/form-controls.md:75:| `avoidCollisions` | `boolean`, default `true` | `collisionAvoidance: CollisionAvoidance` on Positioner | Signature changed: boolean becomes a config object `{ side: 'flip' \| 'shift' \| 'none', align: 'flip' \| 'shift' \| 'none', fallbackAxisSide: 'start' \| 'end' \| 'none' }`. `avoidCollisions={false}` ~ `collisionAvoidance={{ side: 'none', align: 'none', fallbackAxisSide: 'none' }}`. |
+./.agents/skills/migrate-radix-to-base/overlays.md:226:| `avoidCollisions` | `boolean` / `true` | moved to Positioner `collisionAvoidance` | Signature changed. Radix boolean → Base `CollisionAvoidance` object `{ side?: 'flip' \| 'shift' \| 'none'; align?: 'flip' \| 'shift' \| 'none'; fallbackAxisSide?: 'start' \| 'end' \| 'none' }`. `avoidCollisions={false}` → `collisionAvoidance={{ side: 'none', align: 'none', fallbackAxisSide: 'none' }}`. |
+./.agents/skills/migrate-radix-to-base/overlays.md:329:| `avoidCollisions` | `boolean` / `true` | moved to Positioner `collisionAvoidance` | Same conversion as popover (`false` → all-`'none'` object). |
+./.agents/skills/migrate-radix-to-base/overlays.md:414:| `avoidCollisions` | `boolean` / `true` | moved to Positioner `collisionAvoidance` | Same conversion as popover. |
+./.agents/skills/migrate-radix-to-base/menus.md:62:| `avoidCollisions` | `boolean` / `true` | `collisionAvoidance` on **Positioner** (`CollisionAvoidance`) | Signature changed: object `{ side?: 'flip' \| 'shift' \| 'none'; align?: 'flip' \| 'shift' \| 'none'; fallbackAxisSide?: 'start' \| 'end' \| 'none' }`. `avoidCollisions={false}` → `collisionAvoidance={{ side: 'none', align: 'none', fallbackAxisSide: 'none' }}`. |
+./.agents/skills/migrate-radix-to-base/menus.md:228:Same fates as dropdown-menu Content for: `asChild`, `loop` (→ Root `loopFocus`), `onCloseAutoFocus` (→ Popup `finalFocus`), `onEscapeKeyDown`/`onPointerDownOutside`/`onFocusOutside`/`onInteractOutside` (→ Root `onOpenChange` reasons), `forceMount` (→ Portal `keepMounted`), `avoidCollisions` (→ `collisionAvoidance`), `collisionBoundary` (default `[]` → `'clipping-ancestors'`), `collisionPadding` (`0` → `5`), `sticky` (dropped, see menu note), `hideWhenDetached` (→ CSS on `data-anchor-hidden`).
+./.agents/skills/migrate-radix-to-base/menus.md:284:- `Content` (`loop`, `onCloseAutoFocus`, outside/escape callbacks, `forceMount`, `side`/`sideOffset`/`align`/`alignOffset`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `arrowPadding`, `sticky`, `hideWhenDetached`) → `Menu.Portal > Menu.Positioner > Menu.Popup` with the exact fates listed for dropdown-menu Content.
+./PRODUCT.md:11:Enterprise asset managers and administrators who need to classify, organize, and manage organizational assets across multiple tenants/departments. Users authenticate via corporate SSO (OIDC) and operate in an Indonesian-language interface.
+./PRODUCT.md:23:- Users authenticate through corporate OIDC/SSO provider (no local password flow)
+./PRODUCT.md:52:- OIDC SSO integration with user provisioning
+./planning/ui-design.md:194:**Specs:** Select-like component in top header. Height 36px. Left: Building2 icon 16px. Text: tenant name 14px `--color-foreground`. Right: chevron-down 16px. Dropdown: list of tenants, each 40px, active highlighted `--color-primary` 10%. SSO/OIDC note: "Login via SSO" subtitle 11px `--color-muted-foreground`.
+./planning/ui-design.md:404:- [ ] Tenant Switcher with SSO/OIDC subtitle
+./planning/ux-research-report-part3.md:133:25. **Login** — SSO/OIDC (FR-10.4, FR-11.1)
+./planning/ux-research-report-part4.md:76:| Authentication | Corporate SSO/OIDC, no local password | PRODUCT.md |
+./planning/ux-research-report-part1.md:136:**Screens:** Login (SSO/OIDC), Permission configuration
+./planning/ux-research-report-part2.md:59:- Corporate SSO (OIDC) — no local password flow
+./planning/ia-navigation-design.md:26:| Auth | Corporate SSO/OIDC, no local passwords; session-based tenant switching |
+./planning/ia-navigation-design.md:292:1. Login (SSO/OIDC) → Dashboard
+./DESIGN.md:159:> **Product:** Opti-Asset — multi-tenant asset classification & management. Indonesian-language UI, corporate OIDC/SSO.

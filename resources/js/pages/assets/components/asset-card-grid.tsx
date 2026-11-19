@@ -1,11 +1,12 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Inbox, LayoutGrid, Plus, Table2, X } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { ResourcePagination } from '@/components/resource-pagination';
 import { Button } from '@/components/ui/button';
+import { useCan } from '@/hooks/use-can';
 import { withReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
-import { create } from '@/routes/assets';
+import { create } from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 import { AssetCard } from './asset-card';
 import { AssetLedgerTable } from './asset-ledger-table';
@@ -23,7 +24,7 @@ const VIEW_OPTIONS: {
 ];
 
 /**
- * Badan daftar aset — Kartu (<1280) atau Tabel ledger (≥1280, default).
+ * Badan daftar aset â€” Kartu (<1280) atau Tabel ledger (â‰¥1280, default).
  * Kondisi kosong dan paginasi sama di kedua tampilan.
  */
 export function AssetCardGrid({
@@ -51,6 +52,11 @@ export function AssetCardGrid({
     view: AssetListView;
     onViewChange: (view: AssetListView) => void;
 }) {
+    const { can } = useCan();
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
+    const canCreate = can('asset.create');
+
     if (assets.data.length === 0) {
         const filtered = canClearFilters || search.trim() !== '';
 
@@ -77,8 +83,12 @@ export function AssetCardGrid({
                                 <X className="mr-2 size-4" />
                                 Bersihkan filter
                             </Button>
-                        ) : (
-                            <Link href={withReturnTo(create.url())}>
+                        ) : canCreate && tenantCode ? (
+                            <Link
+                                href={withReturnTo(
+                                    create.url({ tenant: tenantCode }),
+                                )}
+                            >
                                 <Button size="sm" className="font-semibold">
                                     <Plus
                                         className="mr-2 size-4"
@@ -87,11 +97,15 @@ export function AssetCardGrid({
                                     Tambah aset
                                 </Button>
                             </Link>
-                        )
+                        ) : undefined
                     }
                     secondaryAction={
-                        filtered ? (
-                            <Link href={withReturnTo(create.url())}>
+                        filtered && canCreate && tenantCode ? (
+                            <Link
+                                href={withReturnTo(
+                                    create.url({ tenant: tenantCode }),
+                                )}
+                            >
                                 <Button variant="ghost" size="sm">
                                     <Plus className="mr-2 size-4" />
                                     Tambah aset
@@ -106,7 +120,7 @@ export function AssetCardGrid({
 
     return (
         <div className="flex min-h-[500px] flex-1 flex-col">
-            {/* Saklar tampilan — hanya relevan di lebar tabel (xl) */}
+            {/* Saklar tampilan â€” hanya relevan di lebar tabel (xl) */}
             <div className="hidden items-center justify-end gap-1 border-b border-border px-4 py-2 xl:flex">
                 <span className="mr-auto text-xs text-muted-foreground">
                     Tampilan
@@ -119,10 +133,10 @@ export function AssetCardGrid({
                         aria-pressed={view === option.value}
                         className={cn(
                             'inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors',
-                            'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                             view === option.value
-                                ? 'bg-surface-sunken text-foreground dark:bg-muted'
-                                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                                ? 'bg-surface-sunken text-foreground'
+                                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                         )}
                     >
                         <option.icon className="size-3.5" />
@@ -176,3 +190,4 @@ export function AssetCardGrid({
         </div>
     );
 }
+

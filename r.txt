@@ -1,0 +1,46 @@
+=== .env OIDC keys (masked)
+76:SAML_STRICT=<REDACTED>
+77:SAML_DEBUG=<REDACTED>
+78:SAML_IDP_ENTITY_ID=<REDACTED>
+79:SAML_IDP_SSO_URL=<REDACTED>
+80:SAML_IDP_SLO_URL=<REDACTED>
+81:SAML_IDP_CERT=<REDACTED>
+82:SAML_SP_ENTITY_ID=<REDACTED>
+83:SAML_SP_ACS_URL=<REDACTED>
+84:SAML_SP_SLO_URL=<REDACTED>
+85:SAML_SP_CERT=<REDACTED>
+86:SAML_SP_PRIVATE_KEY=<REDACTED>
+87:SAML_WANT_MESSAGES_SIGNED=<REDACTED>
+88:SAML_WANT_ASSERTIONS_SIGNED=<REDACTED>
+
+=== .env.example OIDC block (main)
+74:# OIDC SSO (Kovah Socialite OIDC)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=
+
+=== kovah clone log
+cfd9c9a Merge pull request #19 from axlon/fix-scopes
+ea3b401 Fix handling of scopes
+7c4495d Merge pull request #18 from Kravets1996/upgrade-laravel-13
+5cd4e73 Added support for Laravel 13
+657cfb4 Merge pull request #17 from overworks/fix-deprecated
+1a626f5 Use Request::input() instead of Request::get()
+cc66833 Merge pull request #15 from Boy132/patch-1
+3697024 update `firebase/php-jwt`
+4fd4d66 Fix maintainer contact
+b3e14d9 Merge pull request #10 from Kovah/copilot/fix-8
+d7175c4 Update author details in composer.json
+d5b9065 Merge branch 'copilot/fix-7'
+e24cef2 Explicitly add firebase/php-jwt to composer.json
+53ec806 Merge pull request #12 from Kovah/copilot/fix-11
+a6c1a67 Complete comprehensive Copilot instructions for Laravel Socialite OIDC package
+
+=== history grep base_uri
+
+=== history grep scheme host

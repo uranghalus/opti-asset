@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+﻿import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     ArrowLeft,
@@ -46,7 +46,7 @@ import {
     edit as editRoute,
     index as indexRoute,
     labels as labelsRoute,
-} from '@/routes/assets';
+} from '@/routes/tenant/assets';
 import type { ClassificationLevel } from '@/types/classification';
 
 type Classification = {
@@ -123,7 +123,7 @@ const CONDITION_STYLES: Record<string, string> = {
 };
 
 const CONDITION_FALLBACK =
-    'bg-surface-sunken text-ink-muted ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
+    'bg-surface-sunken text-muted-foreground ring-border-strong dark:bg-muted dark:text-muted-foreground dark:ring-border';
 
 const CHAIN_LEVELS: ClassificationLevel[] = [
     'group',
@@ -134,7 +134,7 @@ const CHAIN_LEVELS: ClassificationLevel[] = [
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return '—';
+        return 'â€”';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -178,11 +178,11 @@ const HISTORY_ICON: Record<
 };
 
 const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
-    /* Kategori riwayat bukan status aset — memakai warna netral/aksen
-       chart (§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
+    /* Kategori riwayat bukan status aset â€” memakai warna netral/aksen
+       chart (Â§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
     created: {
-        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
-        dot: 'bg-ink-muted dark:bg-muted-foreground',
+        icon: 'bg-surface-sunken text-muted-foreground ring-border dark:bg-muted dark:text-muted-foreground',
+        dot: 'bg-muted-foreground dark:bg-muted-foreground',
     },
     status: {
         icon: 'bg-status-act-bg text-status-act-text ring-status-act-border dark:ring-status-act-border/40',
@@ -193,8 +193,8 @@ const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
         dot: 'bg-status-loan-text',
     },
     other: {
-        icon: 'bg-surface-sunken text-ink-muted ring-border dark:bg-muted dark:text-muted-foreground',
-        dot: 'bg-ink-subtle dark:bg-muted-foreground/60',
+        icon: 'bg-surface-sunken text-muted-foreground ring-border dark:bg-muted dark:text-muted-foreground',
+        dot: 'bg-muted-foreground/50 dark:bg-muted-foreground/60',
     },
 };
 
@@ -243,7 +243,7 @@ function formatHistoryDate(value: string): string {
 
 function formatPrice(value: string | null): string {
     if (value === null || value === '') {
-        return '—';
+        return 'â€”';
     }
 
     return new Intl.NumberFormat('id-ID', {
@@ -266,7 +266,7 @@ function DetailItem({
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/15 bg-primary/5 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted text-primary">
                 <Icon className="size-4" strokeWidth={1.75} />
             </div>
             <div className="min-w-0">
@@ -300,7 +300,7 @@ function Section({
     return (
         <section className="rounded-xl border border-border bg-card p-5 md:p-6">
             <div className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                     <Icon className="size-4 text-primary" strokeWidth={1.75} />
                 </div>
                 <div>
@@ -390,7 +390,7 @@ export default function AssetShow() {
                     Kembali ke Daftar Aset
                 </Link>
 
-                <header className="mt-5 rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-sticky)] sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+                <header className="mt-5 rounded-xl border border-border bg-card p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
                         <div className="relative size-16 shrink-0">
                             {hasPhotos ? (
@@ -400,7 +400,7 @@ export default function AssetShow() {
                                     className="size-16 rounded-lg border border-border object-cover"
                                 />
                             ) : (
-                                <div className="flex size-16 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                <div className="flex size-16 items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground dark:bg-muted dark:text-muted-foreground">
                                     <Boxes
                                         className="size-7"
                                         strokeWidth={1.5}
@@ -416,12 +416,12 @@ export default function AssetShow() {
                                 <StatusBadge value={asset.status} />
                             </div>
                             <p className="mt-1 truncate font-mono text-sm font-bold text-foreground tabular-nums">
-                                {asset.kode_asset ?? '—'}
+                                {asset.kode_asset ?? 'â€”'}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                 {[asset.brand, asset.model]
                                     .filter(Boolean)
-                                    .join(' · ') || '—'}
+                                    .join(' Â· ') || 'â€”'}
                             </p>
                         </div>
                     </div>
@@ -489,7 +489,7 @@ export default function AssetShow() {
                                     <span className="truncate">
                                         {[level.code, level.name]
                                             .filter(Boolean)
-                                            .join(' — ')}
+                                            .join(' â€” ')}
                                     </span>
                                 </span>
                             );
@@ -514,7 +514,7 @@ export default function AssetShow() {
                         >
                             {hasPhotos ? (
                                 <div className="space-y-3">
-                                    <div className="overflow-hidden rounded-xl border border-border/70 bg-card/60 shadow-sm">
+                                    <div className="overflow-hidden rounded-xl border border-border/70 bg-card ">
                                         <img
                                             src={asset.photo_url[photoIndex]}
                                             alt="Foto aset"
@@ -534,7 +534,7 @@ export default function AssetShow() {
                                                         className={cn(
                                                             'relative h-16 w-24 shrink-0 overflow-hidden rounded-md border transition-all duration-200',
                                                             index === photoIndex
-                                                                ? 'border-primary/60 ring-2 ring-primary/30'
+                                                                ? 'border-primary ring-2 ring-primary/30'
                                                                 : 'border-border/70 opacity-70 hover:opacity-100',
                                                         )}
                                                         aria-label={`Lihat foto ${index + 1}`}
@@ -551,8 +551,8 @@ export default function AssetShow() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-background/40 py-12 text-center">
-                                    <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-surface-sunken/40 py-12 text-center">
+                                    <div className="flex size-12 items-center justify-center rounded-xl bg-primary-muted text-primary">
                                         <Camera
                                             className="size-5"
                                             strokeWidth={1.75}
@@ -574,35 +574,35 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={Tags}
                                     label="Item"
-                                    value={asset.item?.name ?? '—'}
+                                    value={asset.item?.name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={Hash}
                                     label="Kode Aset"
-                                    value={asset.kode_asset ?? '—'}
+                                    value={asset.kode_asset ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Serial Number"
-                                    value={asset.serial_number ?? '—'}
+                                    value={asset.serial_number ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Part Number"
-                                    value={asset.part_number ?? '—'}
+                                    value={asset.part_number ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Brand"
-                                    value={asset.brand ?? '—'}
+                                    value={asset.brand ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Model"
-                                    value={asset.model ?? '—'}
+                                    value={asset.model ?? 'â€”'}
                                 />
                             </div>
                         </Section>
@@ -626,18 +626,18 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={UserRound}
                                     label="Vendor"
-                                    value={asset.vendor_name ?? '—'}
+                                    value={asset.vendor_name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={MapPin}
                                     label="Lokasi"
-                                    value={asset.location?.name ?? '—'}
+                                    value={asset.location?.name ?? 'â€”'}
                                 />
                                 <DetailItem
                                     icon={Building2}
                                     label="Department"
                                     value={
-                                        asset.department?.nama_department ?? '—'
+                                        asset.department?.nama_department ?? 'â€”'
                                     }
                                 />
                             </div>
@@ -650,7 +650,7 @@ export default function AssetShow() {
                         >
                             <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                                 <div className="flex items-start gap-3">
-                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/15 bg-primary/5 text-primary">
+                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted text-primary">
                                         <Tags
                                             className="size-4"
                                             strokeWidth={1.75}
@@ -678,7 +678,7 @@ export default function AssetShow() {
                                     value={
                                         asset.useful_life_years
                                             ? `${asset.useful_life_years} Tahun`
-                                            : '—'
+                                            : 'â€”'
                                     }
                                 />
                                 <DetailItem
@@ -694,7 +694,7 @@ export default function AssetShow() {
                                               : asset.depreciation_method ===
                                                   'none'
                                                 ? 'Tidak Disusutkan'
-                                                : '—'
+                                                : 'â€”'
                                     }
                                 />
                                 <DetailItem
@@ -721,7 +721,7 @@ export default function AssetShow() {
                                                           ),
                                                   ),
                                               )
-                                            : '—'
+                                            : 'â€”'
                                     }
                                     mono
                                 />
@@ -779,7 +779,7 @@ export default function AssetShow() {
                     <div className="space-y-4">
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                     <Barcode
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -814,7 +814,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -847,7 +847,7 @@ export default function AssetShow() {
                                             ] ?? CONDITION_FALLBACK,
                                         )}
                                     >
-                                        {asset.condition ?? '—'}
+                                        {asset.condition ?? 'â€”'}
                                     </span>
                                 </div>
                             </div>
@@ -855,7 +855,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                     <FileText
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -871,13 +871,13 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={FileText}
                                     label="No. SPB"
-                                    value={asset.no_spb ?? '—'}
+                                    value={asset.no_spb ?? 'â€”'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={FileText}
                                     label="Nomor Dokumen"
-                                    value={asset.document_number ?? '—'}
+                                    value={asset.document_number ?? 'â€”'}
                                     mono
                                 />
                                 <div>
@@ -893,7 +893,7 @@ export default function AssetShow() {
                                                         href={document}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                                                        className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary-muted"
                                                     >
                                                         <FileText
                                                             className="size-3.5 shrink-0"
@@ -917,7 +917,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                     <UserRound
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -935,7 +935,7 @@ export default function AssetShow() {
                                         {asset.pic?.map((person) => (
                                             <span
                                                 key={person}
-                                                className="inline-flex items-center gap-1.5 rounded bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                                                className="inline-flex items-center gap-1.5 rounded bg-primary-muted px-2.5 py-1 text-xs font-semibold text-primary"
                                             >
                                                 <UserRound
                                                     className="size-3"
@@ -955,7 +955,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -985,7 +985,7 @@ export default function AssetShow() {
                 <section className="mt-4 rounded-xl border border-border bg-card p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-sm">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
                                 <History
                                     className="size-4 text-primary"
                                     strokeWidth={1.75}
@@ -1002,7 +1002,7 @@ export default function AssetShow() {
                             </div>
                         </div>
                         {asset.histories.length > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
+                            <span className="inline-flex items-center gap-1.5 rounded-sm bg-primary-muted px-3 py-1 text-xs font-semibold text-primary tabular-nums">
                                 <History
                                     className="size-3.5"
                                     strokeWidth={1.75}
@@ -1022,9 +1022,9 @@ export default function AssetShow() {
                                         setHistoryFilter(filter.value)
                                     }
                                     className={cn(
-                                        'rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200',
+                                        'rounded-sm px-3 py-1 text-xs font-medium transition-colors duration-200',
                                         historyFilter === filter.value
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
+                                            ? 'bg-primary text-primary-foreground'
                                             : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                                     )}
                                 >
@@ -1140,7 +1140,7 @@ export default function AssetShow() {
                                                                 ) : (
                                                                     <span className="font-medium text-foreground">
                                                                         {entry.new_value ??
-                                                                            '—'}
+                                                                            'â€”'}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -1222,3 +1222,4 @@ AssetShow.layout = {
         },
     ],
 };
+

@@ -33,7 +33,7 @@ class PermissionsInfrastructureTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
@@ -167,11 +167,15 @@ class PermissionsInfrastructureTest extends TestCase
         $this->assertTrue($users->first()->hasRole('super-admin'));
     }
 
-    public function test_super_admin_seeder_assigns_role_to_matching_employee(): void
+    public function test_super_admin_seeder_assigns_role_to_linked_employee(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
         $employee = Employee::factory()->create(['email' => SuperAdminSeeder::EMAIL]);
+        User::factory()->create([
+            'email' => SuperAdminSeeder::EMAIL,
+            'employee_id' => $employee->id_employee,
+        ]);
 
         $this->seed(SuperAdminSeeder::class);
 
@@ -187,7 +191,7 @@ class PermissionsInfrastructureTest extends TestCase
         $this->user->assignRole('super-admin');
 
         $role = Role::create(['name' => 'staff-asset', 'guard_name' => 'web']);
-        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee = $this->linkEmployeeToUser($this->user);
         $employee->assignRole($role);
 
         app(SyncUserRolesFromEmployeeAction::class)->execute($this->user);
@@ -200,7 +204,7 @@ class PermissionsInfrastructureTest extends TestCase
     public function test_sync_action_copies_employee_roles_to_linked_user(): void
     {
         $role = Role::create(['name' => 'manager', 'guard_name' => 'web']);
-        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee = $this->linkEmployeeToUser($this->user);
         $employee->assignRole($role);
 
         app(SyncUserRolesFromEmployeeAction::class)->execute($this->user);
@@ -213,7 +217,7 @@ class PermissionsInfrastructureTest extends TestCase
         $this->user->assignRole('old-role');
 
         $role = Role::create(['name' => 'staff-asset', 'guard_name' => 'web']);
-        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee = $this->linkEmployeeToUser($this->user);
         $employee->assignRole($role);
 
         app(SyncUserRolesFromEmployeeAction::class)->execute($this->user);
@@ -231,21 +235,28 @@ class PermissionsInfrastructureTest extends TestCase
         $this->assertTrue($this->user->fresh()->hasRole('standalone'));
     }
 
-    public function test_sync_action_syncs_empty_employee_roles(): void
+    public function test_sync_action_keeps_guest_when_employee_has_no_roles(): void
     {
         $this->user->assignRole('to-be-cleared');
 
-        Employee::factory()->create(['email' => $this->user->email]);
+        Role::create(['name' => User::ROLE_GUEST, 'guard_name' => 'web']);
+        $this->user->assignRole(User::ROLE_GUEST);
+
+        $this->linkEmployeeToUser($this->user);
 
         app(SyncUserRolesFromEmployeeAction::class)->execute($this->user);
 
-        $this->assertSame(0, $this->user->fresh()->roles()->count());
+        // Employee tanpa role tidak lagi mengosongkan user: `guest` selamat
+        // (dan `super-admin` juga), role non-protected tetap dicabut.
+        $fresh = $this->user->fresh();
+        $this->assertTrue($fresh->hasRole(User::ROLE_GUEST));
+        $this->assertFalse($fresh->hasRole('to-be-cleared'));
     }
 
     public function test_login_event_triggers_role_sync(): void
     {
         $role = Role::create(['name' => 'akunting', 'guard_name' => 'web']);
-        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee = $this->linkEmployeeToUser($this->user);
         $employee->assignRole($role);
 
         // actingAs() does not dispatch auth events; a real login does.
@@ -257,7 +268,7 @@ class PermissionsInfrastructureTest extends TestCase
     public function test_assign_roles_endpoint_updates_linked_user_immediately(): void
     {
         $role = Role::create(['name' => 'manager', 'guard_name' => 'web']);
-        $employee = Employee::factory()->create(['email' => $this->user->email]);
+        $employee = $this->linkEmployeeToUser($this->user);
 
         $this->actingAs($this->user)
             ->from(route('employees.index'))
@@ -266,5 +277,18 @@ class PermissionsInfrastructureTest extends TestCase
 
         $this->assertTrue($employee->fresh()->hasRole('manager'));
         $this->assertTrue($this->user->fresh()->hasRole('manager'));
+    }
+
+    /**
+     * Buat employee lalu link ke user lewat FK `employee_id` — bukan
+     * email-match, sesuai kontrak resolusi baru.
+     */
+    private function linkEmployeeToUser(User $user): Employee
+    {
+        $employee = Employee::factory()->create();
+
+        $user->update(['employee_id' => $employee->id_employee]);
+
+        return $employee;
     }
 }

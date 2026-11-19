@@ -1,0 +1,96 @@
+=== delete commits on development
+f8a7a28 feat: reconfigure role & permission system with superadmin grant
+
+=== main file raw head (od)
+0000000   <   ?   p   h   p  \n  \n   n   a   m   e   s   p   a   c   e
+0000020       A   p   p   \   P   r   o   v   i   d   e   r   s   ;  \n
+0000040  \n   u   s   e       G   u   z   z   l   e   H   t   t   p   \
+0000060   R   e   q   u   e   s   t   O   p   t   i   o   n   s   ;  \n
+0000100   u   s   e       L   a   r   a   v   e   l   \   S   o   c   i
+0000120   a   l   i   t   e   \   T   w   o   \   I   n   v   a   l   i
+0000140   d   S   t   a   t   e   E   x   c   e   p   t   i   o   n   ;
+0000160  \n   u   s   e       S   o   c   i   a   l   i   t   e   P   r
+0000200   o   v   i   d   e   r   s   \   M   a   n   a   g   e   r   \
+0000220   O   A   u   t   h   2   \   U   s   e   r   ;  \n   u   s   e
+0000240       S   o   c   i   a   l   i   t   e   P   r   o   v   i   d
+0000260   e   r   s   \   O   I   D   C   \   P   r   o   v   i   d   e
+0000300   r       a   s       B   a   s   e   P   r   o   v   i   d   e
+0000320   r   ;  \n  \n   c   l   a   s   s       O   I   D   C   P   r
+0000340   o   v   i   d   e   r       e   x   t   e   n   d   s       B
+0000360   a   s   e   P   r   o   v   i   d   e   r  \n   {  \n        
+0000400           p   u   b   l   i   c       s   t   a   t   i   c    
+0000420   f   u   n   c   t   i   o   n       a   d   d   i   t   i   o
+0000440   n   a   l   C   o   n   f   i   g   K   e   y   s   (   )   :
+0000460       a   r   r   a   y  \n                   {  \n            
+
+=== php -l main OIDCProvider
+No syntax errors detected in /tmp/opencode/main_OIDCProvider.php
+
+=== main OIDCController
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Actions\CreateTenantAction;
+use App\Models\Department;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Providers\OIDCProvider;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
+class OIDCController extends Controller
+{
+    public function __construct(
+        private CreateTenantAction $createTenant,
+    ) {}
+
+    public function redirect(): RedirectResponse
+    {
+        return Socialite::driver('oidc')->redirect();
+    }
+
+    public function callback(Request $request): RedirectResponse
+    {
+        try {
+            /** @var OIDCProvider $driver */
+            $driver = Socialite::driver('oidc');
+            $ssoUser = $driver->stateless()->user();
+
+            $rawData = $ssoUser->user;
+            $ssoCompanyId = $rawData['company'] ?? null;
+            Log::info('OIDC Raw Data:', $rawData);
+            $ssoDepartmentName = is_array($rawData['department'] ?? null)
+                ? ($rawData['department']['name'] ?? $rawData['department']['id'] ?? null)
+                : ($rawData['department'] ?? null);
+
+            $user = User::where('email', $ssoUser->getEmail())->first();
+
+            $departmentId = null;
+            if (! empty($ssoDepartmentName)) {
+                try {
+                    if ($user?->tenant_id) {
+                        $departmentId = Tenant::find($user->tenant_id)
+                            ?->execute(fn () => $this->findDepartmentId($ssoDepartmentName));
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('SSO Callback: Gagal query Department — '.$e->getMessage());
+                }
+            }
+
+            $user = User::updateOrCreate(
+                ['email' => $ssoUser->getEmail()],
+
+=== main routes oidc
+13:use App\Http\Controllers\OIDCController;
+29:    return redirect()->route('authsso');
+135:    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+136:    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+137:    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');

@@ -11,6 +11,7 @@ use App\Models\AssetTransfer;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Location;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -108,12 +109,19 @@ class AssetTransferController extends Controller
             'message' => 'Permohonan mutasi aset berhasil diajukan.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
-    public function show(AssetTransfer $assetTransfer): Response
+    public function show(string $tenant, string $assetTransfer): Response
     {
         Gate::authorize('asset.transfer.view');
+
+        $assetTransfer = AssetTransfer::find($assetTransfer);
+        if (! $assetTransfer) {
+            abort(404);
+        }
 
         $assetTransfer->load([
             'asset:id,kode_asset,serial_number,brand,model,status,purchase_date,notes',
@@ -128,9 +136,14 @@ class AssetTransferController extends Controller
         ]);
     }
 
-    public function approve(Request $request, AssetTransfer $assetTransfer): RedirectResponse
+    public function approve(string $tenant, Request $request, string $assetTransfer): RedirectResponse
     {
         Gate::authorize('asset.transfer.edit');
+
+        $assetTransfer = AssetTransfer::find($assetTransfer);
+        if (! $assetTransfer) {
+            abort(404);
+        }
 
         $request->validate([
             'notes' => ['nullable', 'string'],
@@ -168,12 +181,19 @@ class AssetTransferController extends Controller
             'message' => 'Mutasi aset berhasil disetujui.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
-    public function reject(Request $request, AssetTransfer $assetTransfer): RedirectResponse
+    public function reject(string $tenant, Request $request, string $assetTransfer): RedirectResponse
     {
         Gate::authorize('asset.transfer.edit');
+
+        $assetTransfer = AssetTransfer::find($assetTransfer);
+        if (! $assetTransfer) {
+            abort(404);
+        }
 
         $request->validate([
             'notes' => ['nullable', 'string'],
@@ -191,6 +211,8 @@ class AssetTransferController extends Controller
             'message' => 'Permohonan mutasi aset ditolak.',
         ]);
 
-        return redirect()->route('asset-transfers.index');
+        return redirect()->route('tenant.asset-transfers.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 }

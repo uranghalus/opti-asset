@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -79,7 +80,7 @@ class RoleController extends Controller
     {
         Gate::authorize('role.delete');
 
-        if ($role->name === 'super-admin') {
+        if ($role->name === User::ROLE_SUPER_ADMIN) {
             return back()->withErrors(['role' => 'Peran super-admin tidak dapat dihapus.']);
         }
 

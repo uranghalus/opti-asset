@@ -11,21 +11,45 @@ class TenantFinder extends BaseFinder
 {
     public function findForRequest(Request $request): ?IsTenant
     {
-        if (! $request->hasSession()) {
+        // 1. Primary: tenant from URL segment (signed switch or direct navigation)
+        // Route parameter 'tenant' contains the `code` (slug), not the ULID
+        $routeTenantCode = $request->route('tenant');
+
+        if ($routeTenantCode) {
+            $tenant = Tenant::whereCode($routeTenantCode)->first();
+
+            if ($tenant) {
+                // Store in session for same-tab convenience (store ULID)
+                if ($request->hasSession()) {
+                    $request->session()->put('current_tenant_id', $tenant->id);
+                }
+
+                return $tenant;
+            }
+
+            // If route tenant is present but not found, do not fall back to session
             return null;
         }
 
-        $tenantId = $request->session()->get('current_tenant_id');
+        // 2. Fallback: session (for same-tab navigation after initial switch)
+        // Session stores the ULID
+        if ($request->hasSession()) {
+            $tenantId = $request->session()->get('current_tenant_id');
 
-        if ($tenantId) {
-            return Tenant::find((string) $tenantId);
+            if ($tenantId) {
+                return Tenant::find((string) $tenantId);
+            }
         }
 
-        if ($request->user()?->tenant_id) {
+        // 3. Fallback: user's home tenant (only for non-super-admin)
+        // User model stores the ULID in tenant_id
+        if ($request->user() && ! $request->user()->is_super_admin && $request->user()->tenant_id) {
             $tenant = Tenant::find((string) $request->user()->tenant_id);
 
             if ($tenant) {
-                $request->session()->put('current_tenant_id', $tenant->id);
+                if ($request->hasSession()) {
+                    $request->session()->put('current_tenant_id', $tenant->id);
+                }
 
                 return $tenant;
             }

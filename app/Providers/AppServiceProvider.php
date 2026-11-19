@@ -17,14 +17,16 @@ use App\Observers\AssetObserver;
 use App\Observers\RecordsActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Testing\TestResponse;
 use Illuminate\Validation\Rules\Password;
-use SocialiteProviders\Manager\SocialiteWasCalled;
+use OneLogin\Saml2\Auth as SamlAuth;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,7 +35,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(SamlAuth::class, function ($app) {
+            return new SamlAuth([
+                'strict' => config('saml.strict', false),
+                'debug' => config('saml.debug', false),
+                'baseurl' => config('app.url'),
+                'sp' => config('saml.sp', []),
+                'idp' => config('saml.idp', []),
+                'security' => config('saml.security', []),
+            ]);
+        });
     }
 
     /**
@@ -42,11 +53,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-        $this->registerOidcProvider();
         $this->registerActivityObservers();
         $this->registerAssetObservers();
         $this->grantSuperAdmin();
         $this->syncUserRolesOnLogin();
+
+        Authenticate::redirectUsing(fn () => route('saml.login'));
+
+        TestResponse::macro('session', function ($key = null, $default = null) {
+            $session = app('session.store');
+            if (! $session->isStarted()) {
+                $session->start();
+            }
+
+            return $key !== null ? $session->get($key, $default) : $session;
+        });
     }
 
     /**
@@ -83,20 +104,33 @@ class AppServiceProvider extends ServiceProvider
         );
     }
 
-    protected function registerOidcProvider(): void
-    {
-        Event::listen(SocialiteWasCalled::class, function (SocialiteWasCalled $event): void {
-            $event->extendSocialite('oidc', OIDCProvider::class);
-        });
-    }
-
     // Grant Super Admin role to the first user (FR-14).
     // This is a temporary solution until a proper user management system is implemented.
     // In a production environment, this should be handled with caution.
     protected function grantSuperAdmin(): void
     {
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('super-admin') ? true : null;
+            return $user?->isSuperAdmin() ? true : null;
+        });
+
+        Gate::define('super-admin.view', function ($user): bool {
+            return $user?->hasPermissionTo('super-admin.view') ?? false;
+        });
+
+        Gate::define('super-admin.grant', function ($user): bool {
+            return $user?->hasPermissionTo('super-admin.grant') ?? false;
+        });
+
+        Gate::define('super-admin.revoke', function ($user): bool {
+            return $user?->hasPermissionTo('super-admin.revoke') ?? false;
+        });
+
+        Gate::define('tenant.manage', function ($user): bool {
+            return $user?->hasPermissionTo('tenant.manage') ?? false;
+        });
+
+        Gate::define('tenant.switch', function ($user): bool {
+            return $user?->hasPermissionTo('tenant.switch') ?? false;
         });
     }
 

@@ -2,117 +2,125 @@
 
 @import 'tw-animate-css';
 
-/* Opname Field Desk v2.0 — self-hosted fonts (DESIGN.md §3.4).
-   Public Sans (UI) + Noto Sans Mono (kode aset, barcode, nilai). */
-@import '@fontsource-variable/public-sans';
-@import '@fontsource/noto-sans-mono/400.css';
-@import '@fontsource/noto-sans-mono/500.css';
-
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 @custom-variant dark (&:is(.dark *));
 
+@utility no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/*
+ * Opname Field Desk (DESIGN.md): Public Sans untuk UI, Noto Sans Mono untuk
+ * kode aset/barcode/nilai. Self-hosted, variable weight.
+ */
+@font-face {
+    font-family: 'Public Sans';
+    src: url('/fonts/public-sans/latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Mono';
+    src: url('/fonts/noto-sans-mono/latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Bayangan struktural saja (DESIGN.md — Elevation & Depth). */
 @theme {
-    --font-sans:
-        'Public Sans Variable', 'Public Sans', ui-sans-serif, system-ui,
-        'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Noto Color Emoji';
-    --font-mono:
-        'Noto Sans Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
-        monospace;
-
-    /* Opname Field Desk radii: 4px badges / 8px controls / 12px cards */
-    --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-
-    /* Brand aliases (DESIGN.md §3.1) */
-    --color-brand: #0d5c56;
-    --color-brand-hover: #0a4a45;
-    --color-brand-muted: #d8edea;
-    --color-brand-muted-border: #a7d2cc;
-    --color-paper: #f1f4f6;
-    --color-surface-sunken: #e9edf0;
-    --color-ink: #15202b;
-    --color-ink-muted: #5a6a7a;
-    --color-ink-subtle: #8593a2;
-
     --shadow-sticky: 0 1px 0 rgba(21, 32, 43, 0.08);
     --shadow-overlay: 0 8px 24px rgba(21, 32, 43, 0.14);
     --shadow-toast: 0 4px 16px rgba(21, 32, 43, 0.12);
-
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    /* Status & tipe map (DESIGN.md §3.2 — LOCKED). Light values; .dark overrides below. */
-    --color-status-act-text: #166534;
-    --color-status-act-bg: #dcfce7;
-    --color-status-act-border: #86efac;
-    --color-status-loan-text: #1e40af;
-    --color-status-loan-bg: #dbeafe;
-    --color-status-loan-border: #93c5fd;
-    --color-status-rpr-text: #92400e;
-    --color-status-rpr-bg: #fef3c7;
-    --color-status-rpr-border: #fcd34d;
-    --color-status-mut-text: #155e75;
-    --color-status-mut-bg: #cffafe;
-    --color-status-mut-border: #67e8f9;
-    --color-status-dsp-text: #9f1239;
-    --color-status-dsp-bg: #ffe4e6;
-    --color-status-dsp-border: #fda4af;
-    --color-tipe-aktiva-text: #0d5c56;
-    --color-tipe-aktiva-bg: #d8edea;
-    --color-tipe-aktiva-border: #a7d2cc;
-    --color-tipe-peralatan-text: #475569;
-    --color-tipe-peralatan-bg: #e9edf0;
-    --color-tipe-peralatan-border: #b9c4ce;
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+    --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* ── Opname Field Desk v2.0 — light theme ─────────────────────────
-   Cool paper + mineral teal. Opaque surfaces, 1px borders.
-   Values map to DESIGN.md §3.6. */
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-public-sans);
+    --font-mono: var(--font-noto-mono);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-primary-muted: var(--primary-muted);
+    --color-primary-muted-border: var(--primary-muted-border);
+    --color-border-strong: var(--border-strong);
+    /* Status map terkunci (DESIGN.md — P1); nilai bertukar otomatis via .dark. */
+    --color-status-act-text: var(--status-act-text);
+    --color-status-act-bg: var(--status-act-bg);
+    --color-status-act-border: var(--status-act-border);
+    --color-status-loan-text: var(--status-loan-text);
+    --color-status-loan-bg: var(--status-loan-bg);
+    --color-status-loan-border: var(--status-loan-border);
+    --color-status-rpr-text: var(--status-rpr-text);
+    --color-status-rpr-bg: var(--status-rpr-bg);
+    --color-status-rpr-border: var(--status-rpr-border);
+    --color-status-mut-text: var(--status-mut-text);
+    --color-status-mut-bg: var(--status-mut-bg);
+    --color-status-mut-border: var(--status-mut-border);
+    --color-status-dsp-text: var(--status-dsp-text);
+    --color-status-dsp-bg: var(--status-dsp-bg);
+    --color-status-dsp-border: var(--status-dsp-border);
+    /* Tipe aset */
+    --color-tipe-aktiva-text: var(--tipe-aktiva-text);
+    --color-tipe-aktiva-bg: var(--tipe-aktiva-bg);
+    --color-tipe-aktiva-border: var(--tipe-aktiva-border);
+    --color-tipe-peralatan-text: var(--tipe-peralatan-text);
+    --color-tipe-peralatan-bg: var(--tipe-peralatan-bg);
+    --color-tipe-peralatan-border: var(--tipe-peralatan-border);
+    /* Radius eksplisit: sm 4 / md 8 / lg 12 (DESIGN.md — Shapes). */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-3xl: 24px;
+    --radius-4xl: 28px;
+}
+
 :root {
+    --font-public-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-noto-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, monospace;
+    /* Core */
     --background: #f1f4f6;
     --foreground: #15202b;
     --card: #ffffff;
@@ -128,17 +136,48 @@
     --accent: #e9edf0;
     --accent-foreground: #15202b;
     --destructive: #b42318;
-    --destructive-foreground: #ffffff;
     --border: #d5dce3;
     --input: #d5dce3;
     --ring: #0d5c56;
+    --success: #1b7f5a;
+    --warning: #b45309;
+    --error: #b42318;
+    --radius: 12px;
+    --surface-sunken: #e9edf0;
+    --primary-muted: #d8edea;
+    --primary-muted-border: #a7d2cc;
+    --border-strong: #b9c4ce;
+    /* Status (LOCKED — P1) */
+    --status-act-text: #166534;
+    --status-act-bg: #dcfce7;
+    --status-act-border: #86efac;
+    --status-loan-text: #1e40af;
+    --status-loan-bg: #dbeafe;
+    --status-loan-border: #93c5fd;
+    --status-rpr-text: #92400e;
+    --status-rpr-bg: #fef3c7;
+    --status-rpr-border: #fcd34d;
+    --status-mut-text: #155e75;
+    --status-mut-bg: #cffafe;
+    --status-mut-border: #67e8f9;
+    --status-dsp-text: #9f1239;
+    --status-dsp-bg: #ffe4e6;
+    --status-dsp-border: #fda4af;
+    /* Tipe aset */
+    --tipe-aktiva-text: #0d5c56;
+    --tipe-aktiva-bg: #d8edea;
+    --tipe-aktiva-border: #a7d2cc;
+    --tipe-peralatan-text: #475569;
+    --tipe-peralatan-bg: #e9edf0;
+    --tipe-peralatan-border: #b9c4ce;
+    /* Chart: teal → cyan → amber → blue → slate (satu keluarga dengan warna utama) */
     --chart-1: #0d5c56;
     --chart-2: #0e7490;
     --chart-3: #b45309;
     --chart-4: #1d6a9f;
     --chart-5: #475569;
-    --radius: 0.75rem;
-    --sidebar: #ffffff;
+    /* Sidebar */
+    --sidebar: #f1f4f6;
     --sidebar-foreground: #15202b;
     --sidebar-primary: #0d5c56;
     --sidebar-primary-foreground: #ffffff;
@@ -148,10 +187,8 @@
     --sidebar-ring: #0d5c56;
 }
 
-/* ── Opname Field Desk v2.0 — dark theme ──────────────────────────
-   Cool navy desk (NO plum, NO amber). Primary lifts to #2A9B93 for AA;
-   button text on it is dark navy. Status recipes from DESIGN.md §3.2. */
 .dark {
+    /* Core — cool navy, never purple-plum */
     --background: #0b1220;
     --foreground: #e8eef2;
     --card: #1b2534;
@@ -167,16 +204,47 @@
     --accent: #1b2534;
     --accent-foreground: #e8eef2;
     --destructive: #f04438;
-    --destructive-foreground: #0b1220;
     --border: #2a3544;
+    --border-strong: #405061;
     --input: #2a3544;
     --ring: #2a9b93;
-    --chart-1: #2a9b93;
-    --chart-2: #22a7bd;
-    --chart-3: #d97706;
-    --chart-4: #4a90c2;
-    --chart-5: #8fa3b8;
-    --sidebar: #0b1220;
+    --success: #1b7f5a;
+    --warning: #b45309;
+    --error: #f04438;
+    --surface-sunken: #101827;
+    --primary-muted: rgba(42, 155, 147, 0.16);
+    --primary-muted-border: rgba(42, 155, 147, 0.4);
+    /* Status — resep dark terverifikasi ≥ 8:1 */
+    --status-act-text: #86efac;
+    --status-act-bg: #052e16;
+    --status-act-border: #052e16;
+    --status-loan-text: #93c5fd;
+    --status-loan-bg: #172554;
+    --status-loan-border: #172554;
+    --status-rpr-text: #fcd34d;
+    --status-rpr-bg: #451a03;
+    --status-rpr-border: #451a03;
+    --status-mut-text: #67e8f9;
+    --status-mut-bg: #083344;
+    --status-mut-border: #083344;
+    --status-dsp-text: #fda4af;
+    --status-dsp-bg: #4c0519;
+    --status-dsp-border: #4c0519;
+    /* Tipe aset */
+    --tipe-aktiva-text: #0d5c56;
+    --tipe-aktiva-bg: #d8edea;
+    --tipe-aktiva-border: #a7d2cc;
+    --tipe-peralatan-text: #475569;
+    --tipe-peralatan-bg: #e9edf0;
+    --tipe-peralatan-border: #b9c4ce;
+    /* Chart — nilai sama dengan light; hue netral-amian terbaca di navy */
+    --chart-1: #0d5c56;
+    --chart-2: #0e7490;
+    --chart-3: #b45309;
+    --chart-4: #1d6a9f;
+    --chart-5: #475569;
+    /* Sidebar */
+    --sidebar: #151d2a;
     --sidebar-foreground: #e8eef2;
     --sidebar-primary: #2a9b93;
     --sidebar-primary-foreground: #0b1220;
@@ -184,390 +252,142 @@
     --sidebar-accent-foreground: #e8eef2;
     --sidebar-border: #2a3544;
     --sidebar-ring: #2a9b93;
-
-    --color-status-act-text: #86efac;
-    --color-status-act-bg: #052e16;
-    --color-status-act-border: #052e16;
-    --color-status-loan-text: #93c5fd;
-    --color-status-loan-bg: #172554;
-    --color-status-loan-border: #172554;
-    --color-status-rpr-text: #fcd34d;
-    --color-status-rpr-bg: #451a03;
-    --color-status-rpr-border: #451a03;
-    --color-status-mut-text: #67e8f9;
-    --color-status-mut-bg: #083344;
-    --color-status-mut-border: #083344;
-    --color-status-dsp-text: #fda4af;
-    --color-status-dsp-bg: #4c0519;
-    --color-status-dsp-border: #4c0519;
-    --color-tipe-aktiva-text: #7dd8cc;
-    --color-tipe-aktiva-bg: #123b37;
-    --color-tipe-aktiva-border: #1e5a54;
-    --color-tipe-peralatan-text: #9aa8b5;
-    --color-tipe-peralatan-bg: #1b2534;
-    --color-tipe-peralatan-border: #2a3544;
 }
 
 @layer base {
     * {
-        @apply border-border;
+        @apply border-border outline-ring/50;
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background font-sans text-foreground;
     }
 
-    /* Kode aset, barcode, dan angka moneter selalu mono + tabular (DESIGN.md §3.4) */
-    .tabular-nums {
-        font-variant-numeric: tabular-nums;
-    }
-}
-
-@layer utilities {
-    /* Premium easing (kept — token matches DESIGN.md §3.5) */
-    .ease-premium {
-        transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-semibold;
     }
 
-    /* ── Legacy class contract (ticket 01 → 02) ────────────────────
-       Names kept for one release so ~25 screens render on-system with
-       zero TSX edits. Definitions are now the OPAQUE ledger recipes:
-       surface bg, 1px border, structural shadow. No blur, no gradient.
-       Ticket 02 removes the names entirely. */
-
-    .glass-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-    }
-
-    .dark .glass-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-    }
-
-    .glass-panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-    }
-
-    .dark .glass-panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-    }
-
-    .glass-topbar {
-        background: var(--card);
-        border-bottom: 1px solid var(--border);
-    }
-
-    .glass-header {
-        background: var(--surface-sunken, #e9edf0);
-        border-bottom: 1px solid var(--border);
-    }
-
-    .dark .glass-header {
-        background: var(--card);
-        border-bottom: 1px solid var(--border);
-    }
-
-    /* Sidebar: opaque, paper-on-paper with a single hairline. */
-    .sidebar-glass,
-    [data-slot='sidebar'][data-mobile='true'] {
-        --sidebar: var(--card);
-        --sidebar-foreground: var(--foreground);
-        --sidebar-primary: var(--primary);
-        --sidebar-primary-foreground: var(--primary-foreground);
-        --sidebar-accent: var(--secondary);
-        --sidebar-accent-foreground: var(--foreground);
-        --sidebar-border: var(--border);
-        --sidebar-ring: var(--ring);
-        color: var(--sidebar-foreground);
-    }
-
-    .sidebar-glass [data-sidebar='sidebar'],
-    [data-slot='sidebar'][data-mobile='true'] {
-        background: var(--sidebar);
-        border-right: 1px solid var(--sidebar-border);
-    }
-
-    /* Active nav item — teal treatment (DESIGN.md P1: teal is brand, not status) */
-    .sidebar-nav-active {
-        background: color-mix(in oklab, var(--primary) 10%, transparent);
-        border-left: 3px solid var(--primary);
-        color: var(--primary);
-    }
-
-    .dark .sidebar-nav-active {
-        background: color-mix(in oklab, var(--primary) 16%, transparent);
-    }
-
-    /* ── Sonner toast — solid surface, semantic accents ────────────
-       Solid (never glass): readable over any content, printable mental model. */
-    .premium-toast {
-        --toast-accent: var(--primary);
-
-        display: flex;
-        align-items: flex-start !important;
-        gap: 0.75rem;
-        padding: 0.875rem 1rem !important;
-        border-radius: 0.75rem !important;
-        background: var(--card) !important;
-        border: 1px solid var(--border) !important;
-        box-shadow: var(--shadow-overlay) !important;
-        transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .premium-toast:hover {
-        box-shadow: var(--shadow-overlay) !important;
-    }
-
-    .premium-toast[data-type='success'] {
-        --toast-accent: #1b7f5a;
-    }
-    .premium-toast[data-type='error'] {
-        --toast-accent: #b42318;
-    }
-    .premium-toast[data-type='warning'] {
-        --toast-accent: #b45309;
-    }
-    .premium-toast[data-type='info'],
-    .premium-toast[data-type='default'] {
-        --toast-accent: #1d6a9f;
-    }
-
-    .dark .premium-toast[data-type='success'] {
-        --toast-accent: #34d399;
-    }
-    .dark .premium-toast[data-type='error'] {
-        --toast-accent: #fda4af;
-    }
-    .dark .premium-toast[data-type='warning'] {
-        --toast-accent: #fbbf24;
-    }
-    .dark .premium-toast[data-type='info'],
-    .dark .premium-toast[data-type='default'] {
-        --toast-accent: #67e8f9;
-    }
-
-    /* Icon chip — the single tinted element; text stays neutral for contrast. */
-    .premium-toast [data-icon] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 1.75rem;
-        height: 1.75rem;
-        margin-top: 1px;
-        border-radius: 0.5rem;
-        color: var(--toast-accent);
-        background: color-mix(in oklab, var(--toast-accent) 14%, transparent);
-        box-shadow: inset 0 0 0 1px
-            color-mix(in oklab, var(--toast-accent) 22%, transparent);
-    }
-
-    .premium-toast [data-icon] svg {
-        width: 1rem;
-        height: 1rem;
-        stroke-width: 2.25;
-    }
-
-    .premium-toast-title {
-        font-size: 0.875rem;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        line-height: 1.35;
-    }
-
-    .premium-toast-description {
-        margin-top: 0.125rem;
-        font-size: 0.8125rem;
-        line-height: 1.45;
-        color: var(--muted-foreground) !important;
-    }
-
-    .premium-toast-action {
-        border-radius: 0.5rem;
-        font-weight: 600;
-        background: transparent !important;
-        color: var(--toast-accent) !important;
-        border: none !important;
-    }
-
-    .premium-toast-action:hover {
-        background: color-mix(
-            in oklab,
-            var(--toast-accent) 12%,
-            transparent
-        ) !important;
-    }
-
-    .premium-toast-cancel {
-        border-radius: 0.5rem;
-        font-weight: 500;
-    }
-
-    .premium-toast-close {
-        top: 0.625rem !important;
-        right: 0.625rem !important;
-        border-radius: 0.5rem;
-        opacity: 0.55;
-    }
-
-    /* Clear the mobile tab bar (hidden at lg+) and honor safe areas. */
-    @media (max-width: 1023px) {
-        [data-sonner-toaster] {
-            bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
-        }
-        .premium-toast {
-            width: min(22.25rem, calc(100vw - 1.5rem));
-        }
-    }
-
-    /* Card entrance — feedback-only motion (DESIGN.md §3.5: max 220ms) */
-    @keyframes card-enter {
-        from {
-            opacity: 0;
-            transform: translateY(6px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card-enter,
-    .animate-card-enter {
-        animation: card-enter 200ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
-    }
-
-    /* Stagger delays (kept — used across screens) */
-    .delay-100 {
-        transition-delay: 100ms;
-    }
-    .delay-150 {
-        transition-delay: 150ms;
-    }
-    .delay-200 {
-        transition-delay: 200ms;
-    }
-    .delay-300 {
-        transition-delay: 300ms;
-    }
-    .delay-400 {
-        transition-delay: 400ms;
-    }
-    .delay-500 {
-        transition-delay: 500ms;
-    }
-
-    /* Sidebar scrollbar (used by app-sidebar.tsx) */
-    .sidebar-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-thumb {
-        background: color-mix(in oklab, var(--border) 80%, transparent);
-        border-radius: 3px;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: var(--border-strong, #b9c4ce);
-    }
-
-    /* ── Manifest Deck (halaman Aset) — barcode vocabulary stays,
-       scoped to cool ledger tones ───────────────────────────────── */
-    .barcode-strip {
-        background-image: repeating-linear-gradient(
-            90deg,
-            currentColor 0 2px,
-            transparent 2px 4px,
-            currentColor 4px 7px,
-            transparent 7px 9px,
-            currentColor 9px 10px,
-            transparent 10px 14px
-        );
-    }
-
-    .manifest-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(90, 106, 122, 0.55) transparent;
-    }
-    .manifest-scroll::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .manifest-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .manifest-scroll::-webkit-scrollbar-thumb {
-        background: rgba(90, 106, 122, 0.55);
-        border-radius: 4px;
-    }
-    .dark .manifest-scroll {
-        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-    }
-    .dark .manifest-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.22);
-    }
-
-    .manifest-scope ::selection {
-        background: color-mix(in oklab, var(--primary) 28%, transparent);
-    }
-
+    /*
+   * prefers-reduced-motion (DESIGN.md — Motion): gerakan spasial (slide/zoom/
+   * flip dari tw-animate/Radix) dihilangkan — elemen muncul/hilang instan.
+   * Feedback state yang bermakna (perubahan warna, opacity, bayangan) tetap
+   * teranimasi 150ms agar perubahan status tetap terbaca. Bukan kill global:
+   * state change dipertahankan, hanya gerakannya yang dilepas.
+   */
     @media (prefers-reduced-motion: reduce) {
-        .animate-card-enter,
-        .card-enter,
-        .stamp-slam {
-            animation: none !important;
-            transition: none !important;
+        *,
+        ::before,
+        ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-property:
+                color, background-color, border-color, outline-color,
+                text-decoration-color, fill, stroke, opacity, box-shadow !important;
+            transition-duration: 150ms !important;
         }
     }
 }
 
-@keyframes stamp-slam {
-    from {
-        opacity: 0;
-        transform: scale(1.4);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-.stamp-slam {
-    animation: stamp-slam 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+/* Sembunyikan label nav saat sidebar collapsed ke ikon (dipakai nav-collapse). */
+.group[data-collapsible='icon'] .hide-menu {
+    @apply hidden;
 }
 
-/* Mobile-first tap targets: interactive elements meet the 44px minimum on touch devices */
-@media (pointer: coarse) {
-    button,
-    a,
-    [role='button'],
-    input[type='checkbox'],
-    input[type='radio'] {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    button *,
-    a * {
-        min-height: auto;
-        min-width: auto;
-    }
-    input:not([type='checkbox']):not([type='radio']),
-    select,
-    textarea {
-        min-height: 44px;
-        font-size: 16px;
-    }
-}
+/*
+ * Print / ekspor PDF dashboard. Scoped via `body:has([data-print-scope=
+ * "dashboard"])` — hanya aktif ketika halaman dashboard yang dicetak,
+ * halaman lain tidak terpengaruh.
+ *
+ * 1. Palet light dipaksa (nilai sama dengan :root) supaya cetak dari dark
+ *    mode tidak menghasilkan teks terang di atas kertas putih.
+ * 2. Gradient mesh, shadow, dan chrome aplikasi (sidebar, top bar)
+ *    dilepas; latar putih, tinta gelap, border tipis.
+ * 3. Perataan halaman (break-inside-avoid) & elemen interaktif
+ *    (print:hidden) diatur di komponen @/components/dashboard/*.
+ */
+@media print {
+    body:has([data-print-scope='dashboard']) {
+        /* Palet light — sama dengan :root di atas. */
+        --background: #ffffff;
+        --foreground: #15202b;
+        --card: #ffffff;
+        --card-foreground: #15202b;
+        --popover: #ffffff;
+        --popover-foreground: #15202b;
+        --secondary: #e9edf0;
+        --secondary-foreground: #15202b;
+        --muted: #e9edf0;
+        --muted-foreground: #5a6a7a;
+        --accent: #e9edf0;
+        --accent-foreground: #15202b;
+        --border: #d5dce3;
+        --input: #d5dce3;
+        --success: #1b7f5a;
+        --warning: #b45309;
+        --error: #b42318;
+        --surface-sunken: #e9edf0;
+        --primary-muted: #d8edea;
+        --primary-muted-border: #a7d2cc;
+        --border-strong: #b9c4ce;
+        --status-act-text: #166534;
+        --status-act-bg: #dcfce7;
+        --status-act-border: #86efac;
+        --status-loan-text: #1e40af;
+        --status-loan-bg: #dbeafe;
+        --status-loan-border: #93c5fd;
+        --status-rpr-text: #92400e;
+        --status-rpr-bg: #fef3c7;
+        --status-rpr-border: #fcd34d;
+        --status-mut-text: #155e75;
+        --status-mut-bg: #cffafe;
+        --status-mut-border: #67e8f9;
+        --status-dsp-text: #9f1239;
+        --status-dsp-bg: #ffe4e6;
+        --status-dsp-border: #fda4af;
+        --chart-1: #0d5c56;
+        --chart-2: #0e7490;
+        --chart-3: #b45309;
+        --chart-4: #1d6a9f;
+        --chart-5: #475569;
+        --primary: #0d5c56;
+        --primary-foreground: #ffffff;
+        --ring: #0d5c56;
+        --destructive: #b42318;
+        --tipe-aktiva-text: #0d5c56;
+        --tipe-aktiva-bg: #d8edea;
+        --tipe-peralatan-text: #475569;
+        --tipe-peralatan-bg: #e9edf0;
 
-/* Utility for consistent mobile card stacking */
-.mobile-stack > * + * {
-    margin-top: 0.75rem;
+        background: #ffffff;
+    }
+
+    /* Chrome aplikasi disembunyikan; konten dashboard jadi satu alur. */
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-wrapper'],
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-rail'] {
+        display: none;
+    }
+
+    body:has([data-print-scope='dashboard']) [data-slot='sidebar-inset'] {
+        margin: 0;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    body:has([data-print-scope='dashboard'])
+        [data-slot='sidebar-inset']
+        > header {
+        display: none;
+    }
+
+    /* Tanpa gradient & shadow; latar putih, teks gelap. */
+    body:has([data-print-scope='dashboard']) [data-print-scope='dashboard'] * {
+        background-image: none;
+        box-shadow: none;
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\ImportClassificationsAction;
+use App\Enums\ClassificationType;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
 use App\Models\AssetGroup;
@@ -53,6 +54,7 @@ use Inertia\Response;
  *     code: string|null,
  *     name: string,
  *     description: string|null,
+ *     classification_type: string|null,
  *     child_count: int<0, max>,
  *     level: string,
  *     children: array<int, SerializedCategory>,
@@ -74,6 +76,7 @@ class AssetClassificationController extends Controller
 
         return Inertia::render('asset-classification', [
             'groups' => $groups,
+            'classification_v2' => (bool) config('features.classification_v2'),
         ]);
     }
 
@@ -116,6 +119,7 @@ class AssetClassificationController extends Controller
             'code' => $group->code,
             'name' => $group->name,
             'description' => $group->description,
+            'classification_type' => $group->classification_type?->value,
             'child_count' => $group->categories_count,
             'level' => 'group',
             'children' => $group->categories
@@ -160,11 +164,14 @@ class AssetClassificationController extends Controller
         Gate::authorize('asset.classification.create');
 
         $validated = $request->validate([
+            'classification_type' => ['required', Rule::enum(ClassificationType::class)],
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_groups')->where(fn ($query) => $query->where('tenant_id', Tenant::current()?->id)),
+                Rule::unique('asset_groups')->where(fn ($query) => $query
+                    ->where('tenant_id', Tenant::current()?->id)
+                    ->where('classification_type', $request->input('classification_type'))),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -175,16 +182,23 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Golongan berhasil ditambahkan.');
     }
 
-    public function updateGroup(Request $request, AssetGroup $group): RedirectResponse
+    public function updateGroup(string $tenant, Request $request, string $group): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $group = AssetGroup::find($group);
+        if (! $group) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_groups')->ignore($group->id)->where(fn ($query) => $query->where('tenant_id', $group->tenant_id)),
+                Rule::unique('asset_groups')->ignore($group->id)->where(fn ($query) => $query
+                    ->where('tenant_id', $group->tenant_id)
+                    ->where('classification_type', $group->classification_type?->value)),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -195,9 +209,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Golongan berhasil diperbarui.');
     }
 
-    public function destroyGroup(AssetGroup $group): RedirectResponse
+    public function destroyGroup(string $tenant, string $group): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $group = AssetGroup::find($group);
+        if (! $group) {
+            abort(404);
+        }
 
         $group->delete();
 
@@ -210,33 +229,44 @@ class AssetClassificationController extends Controller
 
         $validated = $request->validate([
             'asset_group_id' => ['required', 'string'],
+            'classification_type' => ['required', Rule::enum(ClassificationType::class)],
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_categories')->where(fn ($query) => $query->where('asset_group_id', $request->input('asset_group_id'))),
+                Rule::unique('asset_categories')->where(fn ($query) => $query
+                    ->where('asset_group_id', $request->input('asset_group_id'))
+                    ->where('classification_type', $request->input('classification_type'))),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ]);
 
         $group = AssetGroup::whereKey($validated['asset_group_id'])->firstOrFail();
+        $this->assertChildTypeMatches($group->classification_type, $validated['classification_type'], 'golongan');
 
         $group->categories()->create($validated);
 
         return back()->with('success', 'Kategori berhasil ditambahkan.');
     }
 
-    public function updateCategory(Request $request, AssetCategory $category): RedirectResponse
+    public function updateCategory(string $tenant, Request $request, string $category): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $category = AssetCategory::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_categories')->ignore($category->id)->where(fn ($query) => $query->where('asset_group_id', $category->asset_group_id)),
+                Rule::unique('asset_categories')->ignore($category->id)->where(fn ($query) => $query
+                    ->where('asset_group_id', $category->asset_group_id)
+                    ->where('classification_type', $category->classification_type?->value)),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -247,9 +277,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    public function destroyCategory(AssetCategory $category): RedirectResponse
+    public function destroyCategory(string $tenant, string $category): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $category = AssetCategory::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $category->delete();
 
@@ -262,33 +297,44 @@ class AssetClassificationController extends Controller
 
         $validated = $request->validate([
             'asset_category_id' => ['required', 'string'],
+            'classification_type' => ['required', Rule::enum(ClassificationType::class)],
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_clusters')->where(fn ($query) => $query->where('asset_category_id', $request->input('asset_category_id'))),
+                Rule::unique('asset_clusters')->where(fn ($query) => $query
+                    ->where('asset_category_id', $request->input('asset_category_id'))
+                    ->where('classification_type', $request->input('classification_type'))),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ]);
 
         $category = AssetCategory::whereKey($validated['asset_category_id'])->firstOrFail();
+        $this->assertChildTypeMatches($category->classification_type, $validated['classification_type'], 'kategori');
 
         $category->clusters()->create($validated);
 
         return back()->with('success', 'Cluster berhasil ditambahkan.');
     }
 
-    public function updateCluster(Request $request, AssetCluster $cluster): RedirectResponse
+    public function updateCluster(string $tenant, Request $request, string $cluster): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $cluster = AssetCluster::find($cluster);
+        if (! $cluster) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_clusters')->ignore($cluster->id)->where(fn ($query) => $query->where('asset_category_id', $cluster->asset_category_id)),
+                Rule::unique('asset_clusters')->ignore($cluster->id)->where(fn ($query) => $query
+                    ->where('asset_category_id', $cluster->asset_category_id)
+                    ->where('classification_type', $cluster->classification_type?->value)),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -299,9 +345,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Cluster berhasil diperbarui.');
     }
 
-    public function destroyCluster(AssetCluster $cluster): RedirectResponse
+    public function destroyCluster(string $tenant, string $cluster): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $cluster = AssetCluster::find($cluster);
+        if (! $cluster) {
+            abort(404);
+        }
 
         $cluster->delete();
 
@@ -314,11 +365,14 @@ class AssetClassificationController extends Controller
 
         $validated = $request->validate([
             'asset_cluster_id' => ['required', 'string'],
+            'classification_type' => ['required', Rule::enum(ClassificationType::class)],
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_sub_clusters')->where(fn ($query) => $query->where('asset_cluster_id', $request->input('asset_cluster_id'))),
+                Rule::unique('asset_sub_clusters')->where(fn ($query) => $query
+                    ->where('asset_cluster_id', $request->input('asset_cluster_id'))
+                    ->where('classification_type', $request->input('classification_type'))),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -326,22 +380,30 @@ class AssetClassificationController extends Controller
         ]);
 
         $cluster = AssetCluster::whereKey($validated['asset_cluster_id'])->firstOrFail();
+        $this->assertChildTypeMatches($cluster->classification_type, $validated['classification_type'], 'cluster');
 
         $cluster->subClusters()->create($validated);
 
         return back()->with('success', 'Sub Cluster berhasil ditambahkan.');
     }
 
-    public function updateSubCluster(Request $request, AssetSubCluster $subCluster): RedirectResponse
+    public function updateSubCluster(string $tenant, Request $request, string $subCluster): RedirectResponse
     {
         Gate::authorize('asset.classification.edit');
+
+        $subCluster = AssetSubCluster::find($subCluster);
+        if (! $subCluster) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('asset_sub_clusters')->ignore($subCluster->id)->where(fn ($query) => $query->where('asset_cluster_id', $subCluster->asset_cluster_id)),
+                Rule::unique('asset_sub_clusters')->ignore($subCluster->id)->where(fn ($query) => $query
+                    ->where('asset_cluster_id', $subCluster->asset_cluster_id)
+                    ->where('classification_type', $subCluster->classification_type?->value)),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -353,9 +415,14 @@ class AssetClassificationController extends Controller
         return back()->with('success', 'Sub Cluster berhasil diperbarui.');
     }
 
-    public function destroySubCluster(AssetSubCluster $subCluster): RedirectResponse
+    public function destroySubCluster(string $tenant, string $subCluster): RedirectResponse
     {
         Gate::authorize('asset.classification.delete');
+
+        $subCluster = AssetSubCluster::find($subCluster);
+        if (! $subCluster) {
+            abort(404);
+        }
 
         $subCluster->delete();
 
@@ -392,7 +459,8 @@ class AssetClassificationController extends Controller
         $parentId = $validated['parent_id'];
 
         if ($parentId !== null) {
-            $this->resolveParent($level, $parentId);
+            $parent = $this->resolveParent($level, $parentId);
+            $this->assertReparentTypeMatches($model, $validated['ids'], $parent);
         }
 
         $this->applyOrder(
@@ -433,10 +501,32 @@ class AssetClassificationController extends Controller
     }
 
     /**
+     * The child's type must match its parent's: the composite FK would reject
+     * the insert, so reject it here with a clear message. A parent without a
+     * type (unbackfilled) cannot take typed children.
+     */
+    private function assertChildTypeMatches(?ClassificationType $parentType, string $childType, string $parentLabel): void
+    {
+        $type = ClassificationType::from($childType);
+
+        if ($parentType === null) {
+            throw ValidationException::withMessages([
+                'classification_type' => ucfirst($parentLabel).' induk belum memiliki tipe klasifikasi. Pilih induk yang sudah bertipe.',
+            ]);
+        }
+
+        if ($parentType !== $type) {
+            throw ValidationException::withMessages([
+                'classification_type' => "Tipe klasifikasi harus sama dengan {$parentLabel} induk ({$parentType->label()}).",
+            ]);
+        }
+    }
+
+    /**
      * Resolve the reparent target through the tenant scope (404 on
      * cross-tenant or missing parents instead of silent reassignment).
      */
-    private function resolveParent(string $level, string $parentId): void
+    private function resolveParent(string $level, string $parentId): AssetGroup|AssetCategory|AssetCluster
     {
         $parent = match ($level) {
             'category' => AssetGroup::whereKey($parentId)->first(),
@@ -445,8 +535,36 @@ class AssetClassificationController extends Controller
             default => null,
         };
 
-        if ($level !== 'group' && $parent === null) {
+        if ($parent === null) {
             throw ValidationException::withMessages(['parent_id' => 'Induk tidak ditemukan.']);
+        }
+
+        return $parent;
+    }
+
+    /**
+     * Every moved node must share the reparent target's type — the composite
+     * FK would reject the move, so reject it here with a clear message.
+     *
+     * @param  class-string<AssetGroup|AssetCategory|AssetCluster|AssetSubCluster>  $model
+     * @param  array<int, string>  $ids
+     */
+    private function assertReparentTypeMatches(string $model, array $ids, AssetGroup|AssetCategory|AssetCluster $parent): void
+    {
+        $nodes = $model::whereKey($ids)->get();
+
+        foreach ($nodes as $node) {
+            if ($parent->classification_type === null) {
+                throw ValidationException::withMessages([
+                    'parent_id' => 'Induk belum memiliki tipe klasifikasi. Pilih induk yang sudah bertipe.',
+                ]);
+            }
+
+            if ($node->classification_type !== $parent->classification_type) {
+                throw ValidationException::withMessages([
+                    'parent_id' => 'Tipe klasifikasi item harus sama dengan induknya.',
+                ]);
+            }
         }
     }
 
@@ -480,6 +598,7 @@ class AssetClassificationController extends Controller
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.level' => ['required', Rule::in(['group', 'category', 'cluster', 'sub-cluster'])],
             'rows.*.name' => ['required', 'string', 'max:255'],
+            'rows.*.tipe' => ['required', Rule::in(['peralatan', 'aktiva_tetap'])],
             'rows.*.code' => ['nullable', 'string', 'max:20'],
             'rows.*.description' => ['nullable', 'string'],
             'rows.*.parent_code' => ['nullable', 'string', 'max:20'],

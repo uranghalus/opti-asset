@@ -14,9 +14,14 @@ class AssetHistoryController extends Controller
     /**
      * Display a listing of the asset's history.
      */
-    public function index(Request $request, Asset $asset): Response
+    public function index(Request $request, string $tenant, string $asset): Response
     {
         Gate::authorize('asset.view');
+
+        $asset = Asset::find($asset);
+        if (! $asset) {
+            abort(404);
+        }
 
         $perPage = min((int) $request->integer('per_page', 20), 100);
 

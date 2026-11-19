@@ -1,79 +1,54 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { NavMain } from '@/components/nav-main';
+import { usePage } from '@inertiajs/react';
+
+import AppLogo from '@/components/app-logo';
+import { Badge } from '@/components/ui/badge';
+import { NavCollapse } from '@/components/nav-collapse';
 import { NavUser } from '@/components/nav-user';
-import { TenantSwitcher } from '@/components/tenant-switcher';
+
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
 } from '@/components/ui/sidebar';
+
 import { sidebarData } from '@/data/sidebar';
-import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 
-type Props = {
-    isMobile?: boolean;
-    open?: boolean;
-    onClose?: () => void;
-};
-
-export function AppSidebar({ isMobile = false, open = false }: Props) {
-    const sidebarClassName = cn(
-        'sidebar-glass ease-out-[cubic-bezier(0.16,1,0.3,1)] border-r-0 transition-all duration-300',
-        isMobile &&
-            'fixed top-0 left-0 z-50 h-full w-[300px] max-w-[85vw] shadow-2xl',
-        !open && isMobile && '-translate-x-full',
-    );
+export function AppSidebar() {
+    const page = usePage().props as { tenant?: { code?: string } | null };
+    const tenantCode = page.tenant?.code;
 
     return (
         <Sidebar
             collapsible="icon"
-            variant="sidebar"
-            className={sidebarClassName}
+            side="left"
+            className="border-r border-border bg-sidebar"
         >
-            <SidebarHeader className="h-16 shrink-0 justify-center border-b border-sidebar-border px-2">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            size="lg"
-                            asChild
-                            className="h-12 gap-3 px-2 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
-                        >
-                            <Link href={dashboard()}>
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB23E] to-[#B892FF] shadow-lg ring-1 shadow-[#B892FF]/25 ring-white/25 group-data-[collapsible=icon]:size-8">
-                                    <AppLogoIcon className="size-5 fill-white" />
-                                </div>
-                                <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                                    <span className="truncate text-sm font-bold tracking-tight text-sidebar-foreground">
-                                        Opti-Asset
-                                    </span>
-                                    <span className="truncate text-[10px] font-semibold tracking-[0.16em] text-sidebar-foreground/55 uppercase">
-                                        Asset Management
-                                    </span>
-                                </div>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+            <SidebarHeader
+                className="p-3 group-data-[state=collapsed]:px-2.5 flex flex-row items-center justify-between border-b border-border"
+            >
+                <AppLogo />
+                <Badge className="group-data-[state=collapsed]:hidden" variant="secondary">
+                    V.1.0
+                </Badge>
             </SidebarHeader>
 
-            <SidebarContent className="sidebar-scrollbar gap-1 py-2">
-                <div className="px-3 pt-1 pb-1 group-data-[collapsible=icon]:hidden">
-                    <TenantSwitcher />
-                </div>
-                <NavMain groups={sidebarData.navGroups} />
+            <SidebarContent>
+                <SidebarGroup
+                    className="flex items-center justify-center group-data-[state=collapsed]:px-2 px-3 py-4"
+                >
+                    <div className="px-0 group-data-[state=collapsed]:px-0 w-full flex flex-col gap-4">
+                        <NavCollapse groups={sidebarData.navGroups} />
+                    </div>
+                </SidebarGroup>
             </SidebarContent>
 
-            {!isMobile && (
-                <SidebarFooter className="border-t border-sidebar-border px-2 py-1.5">
+            <SidebarFooter className="p-4">
+                <div className="flex flex-col gap-2">
                     <NavUser />
-                </SidebarFooter>
-            )}
+                </div>
+            </SidebarFooter>
         </Sidebar>
     );
 }

@@ -88,18 +88,28 @@ class ItemController extends Controller
         return back();
     }
 
-    public function update(UpdateItemRequest $request, Item $item): RedirectResponse
+    public function update(string $tenant, UpdateItemRequest $request, string $item): RedirectResponse
     {
         Gate::authorize('asset.item.edit');
+
+        $item = Item::find($item);
+        if (! $item) {
+            abort(404);
+        }
 
         $item->update($request->validated());
 
         return back();
     }
 
-    public function destroy(Item $item): RedirectResponse
+    public function destroy(string $tenant, string $item): RedirectResponse
     {
         Gate::authorize('asset.item.delete');
+
+        $item = Item::find($item);
+        if (! $item) {
+            abort(404);
+        }
 
         $item->delete();
 

@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+﻿import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -14,8 +14,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
-import { index as indexRoute } from '@/routes/departments';
-import { show as showEmployee } from '@/routes/employees';
+import { index as indexRoute } from '@/routes/tenant/departments';
+import { show as showEmployee } from '@/routes/tenant/employees';
 
 type Employee = {
     id_employee: string;
@@ -97,7 +97,7 @@ function LeaderCard({ employee, role }: { employee: Employee; role: string }) {
                     {employee.nama_employee}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {employee.email ?? '—'}
+                    {employee.email ?? 'â€”'}
                 </p>
                 <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                     <UserRound className="size-3" strokeWidth={2} />
@@ -267,7 +267,7 @@ export default function DepartmentsShow() {
                                         {employee.nama_employee}
                                     </p>
                                     <p className="truncate text-xs text-muted-foreground">
-                                        {employee.email ?? '—'}
+                                        {employee.email ?? 'â€”'}
                                     </p>
                                 </div>
                             </Link>
@@ -291,3 +291,4 @@ DepartmentsShow.layout = {
         },
     ],
 };
+

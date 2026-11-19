@@ -34,5 +34,6 @@
         <env name="PULSE_ENABLED" value="false" force="true" />
         <env name="TELESCOPE_ENABLED" value="false" force="true" />
         <env name="NIGHTWATCH_ENABLED" value="false" force="true" />
+        <server name="SSO_ENABLED" value="true" force="true" />
     </php>
 </phpunit>

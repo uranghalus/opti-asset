@@ -1,9 +1,10 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+﻿import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Boxes } from 'lucide-react';
 import { AssetForm } from '@/components/assets/asset-form';
 import type { AssetInitial, AssetOption } from '@/components/assets/asset-form';
+import { Button } from '@/components/ui/button';
 import { assetListUrl } from '@/lib/asset-return';
-import { index as indexRoute } from '@/routes/assets';
+import { index as indexRoute } from '@/routes/tenant/assets';
 
 type EditProps = {
     asset: AssetInitial;
@@ -21,7 +22,7 @@ export default function AssetEdit() {
         <>
             <Head title="Edit Aset" />
 
-            <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
+            <div className="relative flex min-h-[100dvh] flex-col bg-background text-foreground p-4 md:p-8">
                 <div className="mx-auto w-full max-w-3xl">
                     <Link
                         href={assetListUrl()}
@@ -31,9 +32,9 @@ export default function AssetEdit() {
                         Kembali ke Daftar Aset
                     </Link>
 
-                    <header className="mt-5 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-sticky)]">
+                    <header className="mt-5 rounded-xl border border-border bg-card p-5 ">
                         <div className="flex items-center gap-3.5">
-                            <div className="flex size-12 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                            <div className="flex size-12 items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground">
                                 <Boxes className="size-6" strokeWidth={1.5} />
                             </div>
                             <div>
@@ -41,10 +42,15 @@ export default function AssetEdit() {
                                     Edit Aset
                                 </h1>
                                 <p className="mt-1 font-mono text-[13px] font-semibold text-foreground tabular-nums">
-                                    {props.asset.kode_asset ?? '—'}
+                                    {props.asset.kode_asset ?? 'â€”'}
                                 </p>
                             </div>
                         </div>
+                        <Button variant="soft-secondary" asChild>
+                            <Link href={indexRoute()}>
+                                Kembali ke Daftar
+                            </Link>
+                        </Button>
                     </header>
 
                     <div className="mt-4 rounded-xl border border-border bg-card p-5 md:p-6">
@@ -75,3 +81,4 @@ AssetEdit.layout = {
         },
     ],
 };
+

@@ -31,6 +31,8 @@ export type SidebarNavItem = {
         resource: string;
         actions: string[];
     };
+    /** Optional nested sub-items for collapsible sub-menus. */
+    items?: SidebarNavItem[];
 };
 
 export type SidebarNavGroup = {

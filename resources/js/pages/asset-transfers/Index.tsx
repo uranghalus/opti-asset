@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+﻿import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Filter,
     History,
@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 import {
     create as createRoute,
     index as indexRoute,
-} from '@/routes/asset-transfers';
+} from '@/routes/tenant/asset-transfers';
 
 type Asset = {
     id: string;
@@ -431,7 +431,7 @@ export default function AssetTransfersIndex() {
                                                             ?.kode_asset ??
                                                             transfer.asset
                                                                 ?.serial_number ??
-                                                            '—'}
+                                                            'â€”'}
                                                     </p>
                                                     <p className="truncate text-xs text-muted-foreground">
                                                         {transfer.asset?.brand
@@ -461,10 +461,10 @@ export default function AssetTransfersIndex() {
                                                 <MapPin className="size-3.5 shrink-0" />
                                                 <span className="truncate">
                                                     {transfer.fromLocation
-                                                        ?.name ?? '—'}
-                                                    {' → '}
+                                                        ?.name ?? 'â€”'}
+                                                    {' â†’ '}
                                                     {transfer.toLocation
-                                                        ?.name ?? '—'}
+                                                        ?.name ?? 'â€”'}
                                                 </span>
                                             </div>
 
@@ -478,7 +478,7 @@ export default function AssetTransfersIndex() {
                                                                 d.id_department ===
                                                                 transfer.to_department_id,
                                                         )?.nama_department ??
-                                                            '—'}
+                                                            'â€”'}
                                                     </span>
                                                 </div>
                                             )}
@@ -514,7 +514,7 @@ export default function AssetTransfersIndex() {
                         {transfers.last_page > 1 && (
                             <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                                 <p className="text-xs text-muted-foreground tabular-nums">
-                                    Menampilkan {transfers.from}–{transfers.to}{' '}
+                                    Menampilkan {transfers.from}â€“{transfers.to}{' '}
                                     dari {transfers.total}
                                 </p>
                                 <div className="flex items-center gap-1">
@@ -580,7 +580,7 @@ export default function AssetTransfersIndex() {
                                     </DialogTitle>
                                     <DialogDescription>
                                         {selectedTransfer
-                                            ? `Mutasi aset ${selectedTransfer.asset?.kode_asset ?? '-'} — ${statusLabels[selectedTransfer.status] ?? selectedTransfer.status}`
+                                            ? `Mutasi aset ${selectedTransfer.asset?.kode_asset ?? '-'} â€” ${statusLabels[selectedTransfer.status] ?? selectedTransfer.status}`
                                             : ''}
                                     </DialogDescription>
                                 </DialogHeader>
@@ -594,7 +594,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm font-medium text-foreground">
                                                     {selectedTransfer.asset
-                                                        ?.kode_asset ?? '—'}
+                                                        ?.kode_asset ?? 'â€”'}
                                                 </p>
                                             </div>
                                             <div>
@@ -603,7 +603,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm font-medium text-foreground">
                                                     {selectedTransfer.asset
-                                                        ?.serial_number ?? '—'}
+                                                        ?.serial_number ?? 'â€”'}
                                                 </p>
                                             </div>
                                             <div>
@@ -613,7 +613,7 @@ export default function AssetTransfersIndex() {
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer
                                                         .fromLocation?.name ??
-                                                        '—'}
+                                                        'â€”'}
                                                 </p>
                                             </div>
                                             <div>
@@ -622,7 +622,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer.toLocation
-                                                        ?.name ?? '—'}
+                                                        ?.name ?? 'â€”'}
                                                 </p>
                                             </div>
                                             <div>
@@ -631,7 +631,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer.requester
-                                                        ?.name ?? '—'}
+                                                        ?.name ?? 'â€”'}
                                                 </p>
                                             </div>
                                             <div>
@@ -684,3 +684,4 @@ AssetTransfersIndex.layout = {
         },
     ],
 };
+

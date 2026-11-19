@@ -1,141 +1,50 @@
-import { AlertTriangle, Bell, CheckCircle, Info } from 'lucide-react';
+import { useState } from 'react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-
-const notifications = [
-    {
-        id: 1,
-        title: 'Pemantauan Stok Rendah',
-        message: 'Aset PRN-00123 (Laptop Dell) stok hanya 2 unit',
-        time: '2m lalu',
-        icon: AlertTriangle,
-        type: 'warning',
-    },
-    {
-        id: 2,
-        title: 'Audit Aset Selesai',
-        message: 'Audit kuartalan Q3 2026 telah selesai',
-        time: '15m lalu',
-        icon: CheckCircle,
-        type: 'success',
-    },
-    {
-        id: 3,
-        title: 'Permohonan Mutasi Aset',
-        message: 'Tim IT memohon pemindahan 15 unit monitor ke Gedung B',
-        time: '1j lalu',
-        icon: Info,
-        type: 'info',
-    },
-    {
-        id: 4,
-        title: 'Peringatan Pemeliharaan',
-        message: 'AC Server Room jadwal pemeliharaan besok pagi',
-        time: '2j lalu',
-        icon: Info,
-        type: 'info',
-    },
-];
-
-const typeColors: Record<string, { icon: string; bg: string }> = {
-    warning: {
-        icon: 'text-amber-500',
-        bg: 'bg-amber-100 dark:bg-amber-500/15',
-    },
-    success: {
-        icon: 'text-emerald-500',
-        bg: 'bg-emerald-100 dark:bg-emerald-500/15',
-    },
-    info: { icon: 'text-sky-500', bg: 'bg-sky-100 dark:bg-sky-500/15' },
-};
 
 export function NotificationBell() {
-    const unreadCount = 5;
+    const [open, setOpen] = useState(false);
 
     return (
-        <Popover>
+        <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="relative h-9 w-9 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-expanded={open}
+                    aria-label="Notifikasi"
+                    className="size-11 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground"
                 >
-                    <Bell className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-background bg-destructive px-1 text-[10px] leading-none font-bold text-destructive-foreground">
-                            {Math.min(unreadCount, 99)}
-                        </span>
-                    )}
+                    <Bell className="size-5" aria-hidden="true" />
+                    <span className="sr-only">Notifikasi</span>
                 </Button>
             </PopoverTrigger>
 
             <PopoverContent
                 align="end"
                 sideOffset={8}
-                className="w-80 rounded-xl border border-border/60 bg-card/90 p-0 shadow-xl backdrop-blur-2xl"
+                className="w-80 rounded-lg border-border bg-popover p-0 shadow-overlay"
             >
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                <div className="border-b border-border px-4 py-3">
                     <span className="text-sm font-semibold text-foreground">
                         Notifikasi
                     </span>
-                    <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                        {unreadCount} baru
-                    </span>
                 </div>
 
-                {/* List */}
-                <div className="max-h-80 overflow-y-auto">
-                    {notifications.map((notif) => {
-                        const colors =
-                            typeColors[notif.type] ?? typeColors.info;
-
-                        return (
-                            <div
-                                key={notif.id}
-                                className="flex items-start gap-3 border-b border-border/50 px-4 py-3 transition-colors hover:bg-muted"
-                            >
-                                <div
-                                    className={cn(
-                                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                                        colors.bg,
-                                    )}
-                                >
-                                    <notif.icon
-                                        className={cn('h-4 w-4', colors.icon)}
-                                    />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <p className="text-sm font-medium text-foreground">
-                                            {notif.title}
-                                        </p>
-                                        <span className="shrink-0 text-[10px] text-muted-foreground">
-                                            {notif.time}
-                                        </span>
-                                    </div>
-                                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                                        {notif.message}
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Footer */}
-                <div className="border-t border-border/60 px-4 py-2.5">
-                    <Button
-                        variant="ghost"
-                        className="w-full text-xs font-medium text-muted-foreground hover:text-foreground"
-                    >
-                        Lihat Semua Notifikasi
-                    </Button>
+                {/* Empty state jujur — tidak ada data mock, tidak ada aksi mati */}
+                <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+                    <Bell
+                        className="size-6 text-muted-foreground"
+                        aria-hidden="true"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                        Belum ada notifikasi
+                    </p>
                 </div>
             </PopoverContent>
         </Popover>

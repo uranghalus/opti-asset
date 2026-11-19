@@ -83,9 +83,14 @@ class CategoryController extends Controller
         return back();
     }
 
-    public function update(Request $request, Category $category): RedirectResponse
+    public function update(string $tenant, Request $request, string $category): RedirectResponse
     {
         Gate::authorize('asset.category.edit');
+
+        $category = Category::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -109,9 +114,14 @@ class CategoryController extends Controller
         return back();
     }
 
-    public function destroy(Category $category): RedirectResponse
+    public function destroy(string $tenant, string $category): RedirectResponse
     {
         Gate::authorize('asset.category.delete');
+
+        $category = Category::find($category);
+        if (! $category) {
+            abort(404);
+        }
 
         $category->delete();
 

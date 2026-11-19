@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\ClassificationType;
 use App\Models\Asset;
+use App\Models\AssetGroup;
 use App\Models\CapitalizationThreshold;
 
 class AssetTypeAssigner
@@ -10,6 +12,18 @@ class AssetTypeAssigner
     public function assign(Asset $asset, ?float $thresholdAmount = null): Asset
     {
         if ($asset->type_override_reason) {
+            return $asset;
+        }
+
+        // Classification-driven: an asset with a classification chain inherits
+        // the chain root's type (single mapping point:
+        // ClassificationType::toAssetType). Capitalization thresholds only
+        // apply to unclassified assets.
+        $chainType = $this->classificationChainType($asset);
+
+        if ($chainType !== null) {
+            $asset->asset_type = $chainType->toAssetType();
+
             return $asset;
         }
 
@@ -35,20 +49,25 @@ class AssetTypeAssigner
 
         $amount = (float) ($thresholdAmount ?? $threshold->amount);
 
-        $asset->asset_type = (float) $asset->acquisition_cost >= $amount
-            ? 'fixed_asset'
-            : 'equipment';
+        $asset->asset_type = ((float) $asset->acquisition_cost >= $amount
+            ? ClassificationType::AKTIVA_TETAP
+            : ClassificationType::PERALATAN)->toAssetType();
         $asset->capitalization_threshold_id = $threshold?->id;
 
         return $asset;
     }
 
-    public function manualOverride(Asset $asset, string $type, string $reason): Asset
+    /**
+     * The classification type of the asset's chain root, or null when the
+     * asset has no classification (or the root group is still untyped).
+     */
+    private function classificationChainType(Asset $asset): ?ClassificationType
     {
-        $asset->asset_type = $type;
-        $asset->type_override_reason = $reason;
+        if ($asset->asset_group_id === null) {
+            return null;
+        }
 
-        return $asset;
+        return AssetGroup::query()->find($asset->asset_group_id)?->classification_type;
     }
 
     /**

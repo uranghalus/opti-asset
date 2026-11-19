@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+﻿import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Building2,
@@ -25,7 +25,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { VibrantBackground } from '@/components/vibrant-background';
 import { useIsProcessing } from '@/hooks/use-is-processing';
 import { cn } from '@/lib/utils';
-import { index as indexRoute, show, sync } from '@/routes/departments';
+import { index as indexRoute, show, sync } from '@/routes/tenant/departments';
 
 type Department = {
     id_department: string;
@@ -361,7 +361,7 @@ export default function DepartmentsIndex() {
                                                     <div className="min-w-0">
                                                         <h3 className="truncate text-sm font-semibold text-foreground">
                                                             {department.nama_department ??
-                                                                '—'}
+                                                                'â€”'}
                                                         </h3>
                                                         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                             {
@@ -407,7 +407,7 @@ export default function DepartmentsIndex() {
                     {departments.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {departments.from}–{departments.to}{' '}
+                                Menampilkan {departments.from}â€“{departments.to}{' '}
                                 dari {departments.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -508,3 +508,4 @@ DepartmentsIndex.layout = {
         },
     ],
 };
+

@@ -34,21 +34,6 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    'oidc' => [
-        'base_url' => env('OIDC_BASE_URL'),
-        'client_id' => env('OIDC_CLIENT_ID'),
-        'client_secret' => env('OIDC_CLIENT_SECRET'),
-        'redirect' => env('OIDC_REDIRECT_URI'),
-        'authorization_url' => env('OIDC_AUTHORIZATION_URL'),
-        'token_url' => env('OIDC_TOKEN_URL'),
-        'user_info_url' => env('OIDC_USER_INFO_URL'),
-        'userinfo_url' => env('OIDC_USER_INFO_URL'),
-        'logout_url' => env('OIDC_LOGOUT_URL'),
-        'guzzle' => [
-            'http_errors' => false,
-            'verify' => env('OIDC_VERIFY_SSL', true),
-        ],
-    ],
     'optigate_portal' => [
         'url' => env('WEB_PORTAL_URL'),
         'token' => env('WEB_PORTAL_TOKEN'),

@@ -1,0 +1,28 @@
+=== branches
+* development                                                        d9b82aa feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+  main                                                               59edbb6 Merge pull request #10 from uranghalus/development
+  remotes/origin/HEAD                                                -> origin/main
+  remotes/origin/dependabot/github_actions/github-actions-0982b03464 289582e build(deps): bump the github-actions group with 2 updates
+  remotes/origin/development                                         d9b82aa feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+  remotes/origin/main                                                59edbb6 Merge pull request #10 from uranghalus/development
+
+=== main composer.json kovah
+15:        "kovah/laravel-socialite-oidc": "^0.8.0",
+19:        "laravel/socialite": "^5.29",
+
+=== main routes oidc
+13:use App\Http\Controllers\OIDCController;
+135:    Route::get('redirect', [OIDCController::class, 'redirect'])->name('authsso');
+136:    Route::get('oidc/callback', [OIDCController::class, 'callback'])->name('ssocallback');
+137:    Route::post('oidc/logout', [OIDCController::class, 'logoutCallback'])->name('ssologoutcallback');
+
+=== main .env.example oidc
+74:# OIDC SSO (Kovah Socialite OIDC)
+75:OIDC_BASE_URL=
+76:OIDC_CLIENT_ID=
+77:OIDC_CLIENT_SECRET=
+78:OIDC_REDIRECT_URI=
+79:OIDC_AUTHORIZATION_URL=
+80:OIDC_TOKEN_URL=
+81:OIDC_USER_INFO_URL=
+82:OIDC_LOGOUT_URL=

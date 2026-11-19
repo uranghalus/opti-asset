@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+﻿import { router } from '@inertiajs/react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
     ArrowLeft,
@@ -28,7 +28,7 @@ import {
     index as indexRoute,
     scanLookup,
     show as showRoute,
-} from '@/routes/assets';
+} from '@/routes/tenant/assets';
 
 type Classification = {
     id: string;
@@ -178,11 +178,11 @@ export default function AssetScan() {
           ]
               .filter(Boolean)
               .map((level) => level?.name)
-              .join(' ▸ ')
+              .join(' â–¸ ')
         : '';
 
     return (
-        <div className="relative flex min-h-[100dvh] flex-col bg-background p-4 text-foreground md:p-8">
+        <div className="relative flex min-h-[100dvh] flex-col bg-background text-foreground p-4 md:p-8">
             <div className="mx-auto w-full max-w-3xl">
                 <button
                     type="button"
@@ -194,7 +194,7 @@ export default function AssetScan() {
                 </button>
 
                 <div className="mt-5 flex items-center gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground">
                         <ScanLine className="size-6" strokeWidth={1.5} />
                     </div>
                     <div>
@@ -220,7 +220,7 @@ export default function AssetScan() {
 
                         {!cameraActive && !startingCamera && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                                <div className="flex size-14 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                <div className="flex size-14 items-center justify-center rounded-md bg-primary-muted text-primary">
                                     <Camera
                                         className="size-6"
                                         strokeWidth={1.5}
@@ -230,6 +230,7 @@ export default function AssetScan() {
                                     Kamera belum aktif
                                 </p>
                                 <Button
+                                    variant="soft-primary"
                                     onClick={startCamera}
                                     className="gap-2 font-semibold"
                                 >
@@ -313,13 +314,13 @@ export default function AssetScan() {
 
                     {result && (
                         <div className="grid gap-4">
-                            {/* Hierarki baca F1: status terbesar → identitas → lokasi → tipe */}
+                            {/* Hierarki baca F1: status terbesar â†’ identitas â†’ lokasi â†’ tipe */}
                             <div className="flex flex-col gap-3">
                                 <StatusBadge value={result.status} />
                                 <button
                                     type="button"
                                     onClick={openDetail}
-                                    className="flex items-center gap-3.5 rounded-lg border border-border bg-surface-sunken/50 p-4 text-left transition-colors hover:bg-surface-sunken dark:bg-muted/30 dark:hover:bg-muted/60"
+                                    className="flex items-center gap-3.5 rounded-lg border border-border bg-surface-sunken/50 p-4 text-left transition-colors hover:bg-surface-sunken dark:bg-surface-sunken/30 dark:hover:bg-muted/60"
                                 >
                                     {result.photo_url?.[0] ? (
                                         <img
@@ -328,7 +329,7 @@ export default function AssetScan() {
                                             className="size-12 shrink-0 rounded-md border border-border object-cover"
                                         />
                                     ) : (
-                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground">
+                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-muted-foreground dark:bg-surface-sunken dark:text-muted-foreground">
                                             <Boxes
                                                 className="size-5"
                                                 strokeWidth={1.5}
@@ -340,7 +341,7 @@ export default function AssetScan() {
                                             {result.item?.name ?? 'Aset'}
                                         </p>
                                         <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-foreground tabular-nums">
-                                            {result.kode_asset ?? '—'}
+                                            {result.kode_asset ?? 'â€”'}
                                         </p>
                                         {chain ? (
                                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -349,10 +350,10 @@ export default function AssetScan() {
                                         ) : null}
                                     </div>
                                 </button>
-                                <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
+                                <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
                                     <MapPin className="size-4 shrink-0 text-muted-foreground" />
                                     <p className="min-w-0 truncate text-sm font-medium text-foreground">
-                                        {result.location?.name ?? 'Lokasi —'}
+                                        {result.location?.name ?? 'Lokasi â€”'}
                                     </p>
                                     <span className="ml-auto shrink-0">
                                         <TipeBadge value={result.asset_type} />
@@ -361,20 +362,20 @@ export default function AssetScan() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
+                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
                                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Kondisi
                                     </p>
                                     <p className="mt-2 text-sm font-semibold text-foreground">
-                                        {result.condition ?? '—'}
+                                        {result.condition ?? 'â€”'}
                                     </p>
                                 </div>
-                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-muted/30">
+                                <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
                                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Serial
                                     </p>
                                     <p className="mt-2 truncate font-mono text-sm font-semibold text-foreground tabular-nums">
-                                        {result.serial_number ?? '—'}
+                                        {result.serial_number ?? 'â€”'}
                                     </p>
                                 </div>
                             </div>
@@ -403,3 +404,4 @@ export default function AssetScan() {
         </div>
     );
 }
+

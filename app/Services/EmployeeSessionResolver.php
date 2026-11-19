@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Employee;
+use App\Models\User;
+use Illuminate\Support\Facades\Session;
+
+/**
+ * Resolves and persists employee data into the session at SAML login.
+ *
+ * Employee data already contains department_id, division_id, and id_position,
+ * so no separate department assignment is needed — the employee record is the
+ * single source of truth for the user's organizational context.
+ *
+ * Resolution is the persistent `employee_id` FK (User::employee(), which
+ * bypasses the Employee tenant global scope so it also resolves when no
+ * tenant is current — e.g. during SAML ACS before any tenant context
+ * exists). If the user has no linked employee, null is returned and the
+ * employee session is cleared.
+ */
+class EmployeeSessionResolver
+{
+    public const SESSION_KEY = 'employee';
+
+    /**
+     * Snapshot session `employee` dari instance Employee — kontrak tunggal
+     * untuk resolver saat login DAN refresh per-request di Inertia share().
+     *
+     * `department_id` memakai key kanonik (kolom model `id_department`);
+     * pembaca session tidak boleh melihat nama kolom mentah.
+     *
+     * @return array{id_employee: string, tenant_id: string, nik_employee: string, nama_employee: string, email: ?string, number: ?string, photo_url: ?string, department_id: ?string, division_id: ?string, id_position: ?string, last_login_ip: ?string, updated_at: string, created_at: string}
+     */
+    public static function snapshot(Employee $employee): array
+    {
+        return [
+            'id_employee' => $employee->id_employee,
+            'tenant_id' => $employee->tenant_id,
+            'nik_employee' => $employee->nik_employee,
+            'nama_employee' => $employee->nama_employee,
+            'email' => $employee->email,
+            'number' => $employee->number,
+            'photo_url' => $employee->photo_url,
+            'department_id' => $employee->id_department,
+            'division_id' => $employee->division_id,
+            'id_position' => $employee->id_position,
+            'last_login_ip' => $employee->last_login_ip,
+            'updated_at' => $employee->updated_at->toISOString(),
+            'created_at' => $employee->created_at->toISOString(),
+        ];
+    }
+
+    /**
+     * Resolve the employee for the given user and store it in the session.
+     *
+     * @return array{id_employee: string, nik_employee: string, nama_employee: string, email: string, department_id: ?string, division_id: ?string, id_position: ?string, tenant_id: string}|null
+     */
+    public function resolve(User $user): ?array
+    {
+        $employee = $user->employee;
+
+        if ($employee === null) {
+            Session::forget(self::SESSION_KEY);
+
+            return null;
+        }
+
+        Session::put(self::SESSION_KEY, self::snapshot($employee));
+
+        // Return a curated subset for the caller.
+        return [
+            'id_employee' => $employee->id_employee,
+            'nik_employee' => $employee->nik_employee,
+            'nama_employee' => $employee->nama_employee,
+            'email' => $employee->email,
+            'department_id' => $employee->id_department,
+            'division_id' => $employee->division_id,
+            'id_position' => $employee->id_position,
+            'tenant_id' => $employee->tenant_id,
+        ];
+    }
+}

@@ -1,0 +1,46 @@
+=== working tree OIDC files
+app/Http/Controllers/:
+total 184
+drwxr-xr-x 5 root root  4096 Nov 16 15:38 .
+drwxr-xr-x 5 root root  4096 Nov 16 13:24 ..
+-rw-r--r-- 1 root root  3275 Nov 16 13:24 AssetCategoryController.php
+-rw-r--r-- 1 root root 24540 Nov 16 15:38 AssetClassificationController.php
+-rw-r--r-- 1 root root 35085 Nov 16 15:38 AssetController.php
+-rw-r--r-- 1 root root 13139 Nov 16 15:38 AssetDisposalController.php
+-rw-r--r-- 1 root root  1424 Nov 16 15:38 AssetHistoryController.php
+-rw-r--r-- 1 root root  7220 Nov 16 15:38 AssetTransferController.php
+-rw-r--r-- 1 root root  1614 Nov 16 13:24 AuditLogController.php
+drwxr-xr-x 2 root root  4096 Nov 16 15:38 Auth
+-rw-r--r-- 1 root root  5975 Nov 16 15:38 CategoryController.php
+-rw-r--r-- 1 root root    77 Nov 16 13:24 Controller.php
+-rw-r--r-- 1 root root  7453 Nov 16 15:38 DashboardController.php
+-rw-r--r-- 1 root root  3657 Nov 16 15:38 ItemController.php
+-rw-r--r-- 1 root root  2194 Nov 16 15:38 LocationController.php
+drwxr-xr-x 2 root root  4096 Nov 16 15:38 Org
+-rw-r--r-- 1 root root  2896 Nov 16 13:24 PermissionController.php
+-rw-r--r-- 1 root root  8453 Nov 16 13:24 ReportController.php
+-rw-r--r-- 1 root root  3755 Nov 16 13:24 RoleController.php
+drwxr-xr-x 2 root root  4096 Nov 16 15:38 Settings
+-rw-r--r-- 1 root root  5607 Nov 16 15:38 SuperAdminGrantController.php
+-rw-r--r-- 1 root root  6091 Nov 16 15:38 TenantController.php
+-rw-r--r-- 1 root root  2987 Nov 16 15:38 TenantSwitchController.php
+
+app/Providers/:
+total 20
+drwxr-xr-x  2 root root 4096 Nov 16 15:38 .
+drwxr-xr-x 12 root root 4096 Nov 16 15:38 ..
+-rw-r--r--  1 root root 5277 Nov 16 15:38 AppServiceProvider.php
+-rw-r--r--  1 root root 1335 Nov 16 13:24 FortifyServiceProvider.php
+
+=== grep OIDC in app/ config/ routes/
+
+=== vendor kovah
+no vendor/kovah
+
+=== composer.lock kovah current
+
+=== composer.json socialite
+18:        "laravel/socialite": "^5.29",
+
+=== memory file search
+no Memory dir

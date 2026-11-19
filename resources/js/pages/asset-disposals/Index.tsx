@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+﻿import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArchiveX,
     Check,
@@ -44,7 +44,7 @@ import {
     edit as editRoute,
     index as indexRoute,
     show as showRoute,
-} from '@/routes/disposals';
+} from '@/routes/tenant/disposals';
 
 type Disposal = {
     id: number;
@@ -96,7 +96,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return '—';
+        return 'â€”';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -461,7 +461,7 @@ export default function DisposalsIndex() {
                                                 </Link>
                                                 <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                     {disposal.asset
-                                                        ?.kode_asset ?? '—'}
+                                                        ?.kode_asset ?? 'â€”'}
                                                 </p>
                                             </div>
                                         </div>
@@ -557,7 +557,7 @@ export default function DisposalsIndex() {
                                         <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
                                             <span className="truncate text-xs text-muted-foreground">
                                                 {disposal.disposedBy?.name ??
-                                                    '—'}
+                                                    'â€”'}
                                             </span>
                                             <Link
                                                 href={
@@ -614,7 +614,7 @@ export default function DisposalsIndex() {
                     {disposals.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                Menampilkan {disposals.from}–{disposals.to} dari{' '}
+                                Menampilkan {disposals.from}â€“{disposals.to} dari{' '}
                                 {disposals.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -738,3 +738,4 @@ export default function DisposalsIndex() {
         </div>
     );
 }
+

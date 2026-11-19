@@ -1,0 +1,29 @@
+=== worktree OIDC refs (app/,routes/,config/,resources/js)
+resources/js/components/ui/select.tsx:73:        avoidCollisions={false}
+
+=== config/app.php diff
+diff --git a/config/app.php b/config/app.php
+index 1f8dd27..1e0c749 100644
+--- a/config/app.php
++++ b/config/app.php
+@@ -13,7 +13,7 @@
+     |
+     */
+ 
+-    'name' => env('APP_NAME', 'Laravel'),
++    'name' => env('APP_NAME', 'opti-asset'),
+ 
+     /*
+     |--------------------------------------------------------------------------
+
+=== APP timezone
+
+ app.timezone .. UTC 
+
+
+=== routes: saml
+ GET|HEAD auth/saml/denied .. saml.denied › routes/web.php:183
+ GET|HEAD auth/saml/login .. saml.login › Auth\SamlController@redirect
+ POST auth/saml/opti-saml-acs .. saml.acs › Auth\SamlController@acs
+ GET|HEAD auth/saml/opti-saml-logout saml.logout › Auth\SamlController@logo…
+ GET|HEAD auth/saml/opti-saml-metadata saml.metadata › Auth\SamlController@…

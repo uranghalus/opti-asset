@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+﻿import { router, useForm, usePage } from '@inertiajs/react';
 import {
     CalendarClock,
     Inbox,
@@ -38,7 +38,7 @@ import {
     index as indexRoute,
     store,
     update,
-} from '@/routes/locations';
+} from '@/routes/tenant/locations';
 
 type Location = {
     id: string;
@@ -75,8 +75,8 @@ type PageProps = {
 
 const SORT_OPTIONS = [
     { value: '', label: 'Terbaru' },
-    { value: 'name', label: 'Nama (A–Z)' },
-    { value: '-name', label: 'Nama (Z–A)' },
+    { value: 'name', label: 'Nama (Aâ€“Z)' },
+    { value: '-name', label: 'Nama (Zâ€“A)' },
 ];
 
 const ACCENTS = [
@@ -477,7 +477,7 @@ export default function LocationsIndex() {
                     {locations.last_page > 1 && (
                         <div className="card-enter mt-6 flex flex-col items-center justify-between gap-3 delay-200 sm:flex-row">
                             <p className="text-xs text-muted-foreground">
-                                Menampilkan {locations.from}–{locations.to} dari{' '}
+                                Menampilkan {locations.from}â€“{locations.to} dari{' '}
                                 {locations.total}
                             </p>
                             <div className="flex items-center gap-1">
@@ -632,3 +632,4 @@ LocationsIndex.layout = {
         },
     ],
 };
+

@@ -30,7 +30,7 @@ class DepartmentTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
@@ -91,7 +91,7 @@ class DepartmentTest extends TestCase
         Department::create(['kode_department' => 'HRD', 'nama_department' => 'SDM']);
 
         $this->actingAs($this->user)
-            ->get(route('departments.index'))
+            ->get(route('tenant.departments.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Departments/Index')
@@ -105,7 +105,7 @@ class DepartmentTest extends TestCase
         Department::create(['kode_department' => 'HRD', 'nama_department' => 'Sumber Daya Manusia']);
 
         $this->actingAs($this->user)
-            ->get(route('departments.index', ['search' => 'Teknologi']))
+            ->get(route('tenant.departments.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Teknologi'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('departments.total', 1)
                 ->where('departments.data.0.nama_department', 'Teknologi')
@@ -122,7 +122,7 @@ class DepartmentTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('departments.show', $department))
+            ->get('/'.$this->tenant->code.'/departments/'.$department->id_department)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Departments/Show')
@@ -140,9 +140,10 @@ class DepartmentTest extends TestCase
             'hod_user_id' => $hod->id_employee,
             'manager_user_id' => $manager->id_employee,
         ]);
+        $departmentId = Department::where('tenant_id', $this->tenant->id)->latest()->first()->getKey();
 
         $this->actingAs($this->user)
-            ->get(route('departments.show', $department))
+            ->get('/'.$this->tenant->code.'/departments/'.$departmentId)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('department.hod.nama_employee', 'Kepala')
@@ -166,8 +167,8 @@ class DepartmentTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('departments.sync'))
-            ->assertRedirect(route('departments.index'));
+            ->post(route('tenant.departments.sync', ['tenant' => $this->tenant->code]))
+            ->assertRedirect(route('tenant.departments.index', ['tenant' => $this->tenant->code]));
 
         $it = Department::where('kode_department', 'IT')->first();
         $this->assertNotNull($it);
@@ -224,8 +225,8 @@ class DepartmentTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('departments.sync'))
-            ->assertRedirect(route('departments.index'));
+            ->post(route('tenant.departments.sync', ['tenant' => $this->tenant->code]))
+            ->assertRedirect(route('tenant.departments.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseCount('tb_department', 0);
     }

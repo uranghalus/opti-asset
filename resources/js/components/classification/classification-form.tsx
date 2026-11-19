@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -23,17 +23,19 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import type {
     ClassificationFormValues,
     ClassificationLevel,
     ClassificationNode,
 } from '@/types/classification';
-import { LEVEL_LABELS } from '@/types/classification';
+import { LEVEL_LABELS, TIPE_LABELS } from '@/types/classification';
 
-type RouteFn = (id: string) => { url: string; method: string };
-type StoreRouteFn = () => { url: string; method: string };
+type RouteFn = (
+    args?: any,
+) => { url: string; method: string };
 
-const STORE: Record<ClassificationLevel, StoreRouteFn> = {
+const STORE: Record<ClassificationLevel, RouteFn> = {
     group: storeGroup,
     category: storeCategory,
     cluster: storeCluster,
@@ -47,16 +49,26 @@ const UPDATE: Record<ClassificationLevel, RouteFn> = {
     'sub-cluster': updateSubCluster,
 };
 
+const ROUTE_PARAM: Record<ClassificationLevel, string> = {
+    group: 'group',
+    category: 'category',
+    cluster: 'cluster',
+    'sub-cluster': 'subCluster',
+};
+
 const PARENT_FIELD: Partial<Record<ClassificationLevel, string>> = {
     category: 'asset_group_id',
     cluster: 'asset_category_id',
     'sub-cluster': 'asset_cluster_id',
 };
 
+const TIPE_OPTIONS = ['peralatan', 'aktiva_tetap'] as const;
+
 type FormProps = {
     level: ClassificationLevel;
     parentId: string | null;
     parentName: string | null;
+    parentType: string | null;
     item: ClassificationNode | null;
     onClose: () => void;
 };
@@ -65,9 +77,12 @@ export function ClassificationForm({
     level,
     parentId,
     parentName,
+    parentType,
     item,
     onClose,
 }: FormProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const isEditing = item !== null;
     const parentField = PARENT_FIELD[level];
 
@@ -76,10 +91,13 @@ export function ClassificationForm({
         name: item?.name ?? '',
         description: item?.description ?? '',
         notes: item?.notes ?? '',
+        classification_type:
+            level === 'group' ? (item?.classification_type ?? '') : (parentType ?? ''),
     });
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!tenantCode) return;
 
         const options = {
             only: ['groups'],
@@ -96,20 +114,35 @@ export function ClassificationForm({
         };
 
         // Moves happen via reorder only: the PATCH validators whitelist
-        // code/name/description/notes, so the parent id is sent on create
-        // (where the store validators require it) but never on update.
+        // code/name/description/notes, so the parent id and tipe are sent on
+        // create (where the store validators require them) but never on
+        // update — a node's type is immutable after creation.
         form.transform((data) => ({
             code: data.code || null,
             name: data.name,
             description: data.description || null,
             ...(!isEditing && parentField ? { [parentField]: parentId } : {}),
+            ...(!isEditing
+                ? {
+                      classification_type:
+                          level === 'group'
+                              ? (data.classification_type || null)
+                              : (parentType || null),
+                  }
+                : {}),
             ...(level === 'sub-cluster' ? { notes: data.notes || null } : {}),
         }));
 
         if (isEditing) {
-            form.patch(UPDATE[level](item.id).url, options);
+            form.patch(
+                UPDATE[level]({
+                    tenant: tenantCode,
+                    [ROUTE_PARAM[level]]: item.id,
+                }).url,
+                options,
+            );
         } else {
-            form.post(STORE[level]().url, options);
+            form.post(STORE[level]({ tenant: tenantCode }).url, options);
         }
     };
 
@@ -135,6 +168,70 @@ export function ClassificationForm({
                             <div className="grid gap-2">
                                 <Label>Parent</Label>
                                 <Input value={parentName ?? ''} disabled />
+                            </div>
+                        )}
+
+                        {!isEditing && level === 'group' && (
+                            <div className="grid gap-2">
+                                <Label>Tipe Klasifikasi</Label>
+                                <div
+                                    role="radiogroup"
+                                    aria-label="Tipe Klasifikasi"
+                                    className="grid grid-cols-2 gap-2"
+                                >
+                                    {TIPE_OPTIONS.map((tipe) => {
+                                        const selected =
+                                            form.data.classification_type ===
+                                            tipe;
+
+                                        return (
+                                            <button
+                                                key={tipe}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={selected}
+                                                onClick={() =>
+                                                    form.setData(
+                                                        'classification_type',
+                                                        tipe,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    'flex h-11 items-center justify-center rounded-lg border text-sm font-medium transition-colors duration-150',
+                                                    selected
+                                                        ? 'border-primary-muted-border bg-primary-muted text-primary'
+                                                        : 'border-border bg-surface-sunken text-muted-foreground hover:border-border-strong hover:text-foreground',
+                                                )}
+                                            >
+                                                {TIPE_LABELS[tipe]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {form.errors.classification_type && (
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.classification_type}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {!isEditing && level !== 'group' && (
+                            <div className="grid gap-2">
+                                <Label>Tipe Klasifikasi</Label>
+                                <Input
+                                    value={
+                                        parentType
+                                            ? (TIPE_LABELS[parentType] ??
+                                              parentType)
+                                            : ''
+                                    }
+                                    disabled
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Tipe mengikuti induk — node baru berada di
+                                    dalam pohon yang sama.
+                                </p>
                             </div>
                         )}
 

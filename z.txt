@@ -1,0 +1,34 @@
+=== working tree OIDC files
+ls: cannot access 'app/Providers/OIDCProvider.php': No such file or directory
+ls: cannot access 'app/Http/Controllers/OIDCController.php': No such file or directory
+
+=== dev log
+d9b82aa feat(layout): lengkapi blok dashboard-layout-01 (scroll-area, dropdown bahasa, nav-main referensi)
+b162377 feat(layout): token --color-success dan utility .hide-menu untuk blok dashboard layout
+0806c9c feat(layout): dashboard-layout jadi layout default, ganti AppSidebarLayout
+4f81987 feat(layout): header dashboard baru (search, tenant, notifikasi, tema, profil)
+1d5d3a2 feat(layout): sidebar blok memakai navigasi tenant-aware app
+272eb50 feat(layout): helper tautan sidebar ter-flatten ber-prefix tenant
+07a724c feat(layout): izinkan ProfileDropdown blok menerima user, link, dan sign-out nyata
+9e87252 feat(layout): izinkan Search blok menerima daftar tautan dari app
+
+=== composer.json/lock diff main..dev
+ app/Providers/OIDCProvider.php | 138 -----------------------
+ composer.json                  |   2 +-
+ composer.lock                  | 250 ++++++++++++++++++-----------------------
+ config/services.php            |  15 ---
+ 4 files changed, 108 insertions(+), 297 deletions(-)
+
+=== grep network-path in vendor
+vendor/guzzlehttp/psr7/src/Message.php
+vendor/guzzlehttp/psr7/src/Uri.php
+vendor/guzzlehttp/psr7/README.md
+vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php
+vendor/guzzlehttp/guzzle/src/Handler/StreamHandler.php
+vendor/phpstan/phpstan/phpstan.phar
+
+=== composer cache kovah
+total 24
+drwxr-xr-x 2 root root  4096 Nov 16 13:24 .
+drwxr-xr-x 3 root root  4096 Nov 16 13:24 ..
+-rw-r--r-- 1 root root 13832 Nov 16 13:24 1e475875a560b36e53ae5b988ba3daf154acab26.zip

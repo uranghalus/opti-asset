@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ClassificationType;
 use App\Models\AssetCluster;
 use App\Models\AssetSubCluster;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,6 +21,14 @@ class AssetSubClusterFactory extends Factory
             'description' => fake()->optional()->sentence(),
             'notes' => fake()->optional()->sentence(),
             'type' => 'PERALATAN',
+            'classification_type' => ClassificationType::AKTIVA_TETAP->value,
         ];
+    }
+
+    public function peralatan(): static
+    {
+        return $this->state(fn (): array => [
+            'classification_type' => ClassificationType::PERALATAN->value,
+        ]);
     }
 }

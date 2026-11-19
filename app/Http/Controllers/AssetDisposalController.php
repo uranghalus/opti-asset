@@ -107,15 +107,22 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dibuat.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(AssetDisposal $disposal): Response
+    public function show(string $tenant, string $disposal): Response
     {
         Gate::authorize('asset.disposal.view');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         $disposal->load(['asset:id,kode_asset,serial_number,item_id', 'asset.item:id,name,code', 'disposedBy:id,name']);
 
@@ -127,14 +134,21 @@ class AssetDisposalController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(AssetDisposal $disposal): Response|RedirectResponse
+    public function edit(string $tenant, string $disposal): Response|RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diedit.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $disposal->load(['asset:id,kode_asset,item_id', 'asset.item:id,name,code']);
@@ -158,14 +172,21 @@ class AssetDisposalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAssetDisposalRequest $request, AssetDisposal $disposal): RedirectResponse
+    public function update(string $tenant, UpdateAssetDisposalRequest $request, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat diperbarui.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $validated = $request->validated();
@@ -204,20 +225,29 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil diperbarui.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AssetDisposal $disposal): RedirectResponse
+    public function destroy(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.delete');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat dihapus.']);
 
-            return redirect()->route('disposals.index');
+            return redirect()->route('tenant.disposals.index', [
+                'tenant' => Tenant::current()?->code,
+            ]);
         }
 
         $assetId = $disposal->asset_id;
@@ -235,15 +265,22 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan berhasil dihapus.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
      * Approve a disposal request.
      */
-    public function approve(AssetDisposal $disposal): RedirectResponse
+    public function approve(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat disetujui.']);
@@ -269,15 +306,22 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan disetujui; aset ditandai dihapus.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
      * Reject a disposal request.
      */
-    public function reject(AssetDisposal $disposal): RedirectResponse
+    public function reject(string $tenant, string $disposal): RedirectResponse
     {
         Gate::authorize('asset.disposal.edit');
+
+        $disposal = AssetDisposal::find($disposal);
+        if (! $disposal) {
+            abort(404);
+        }
 
         if ($disposal->status !== AssetDisposalStatus::Pending) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'Hanya pengajuan berstatus menunggu yang dapat ditolak.']);
@@ -295,7 +339,9 @@ class AssetDisposalController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Pengajuan penghapusan ditolak.']);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 
     /**
@@ -345,6 +391,8 @@ class AssetDisposalController extends Controller
             'message' => $pendingIds->count().' pengajuan penghapusan berhasil dihapus.',
         ]);
 
-        return redirect()->route('disposals.index');
+        return redirect()->route('tenant.disposals.index', [
+            'tenant' => Tenant::current()?->code,
+        ]);
     }
 }

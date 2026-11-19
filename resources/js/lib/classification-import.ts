@@ -9,6 +9,7 @@ export type ImportRow = {
     code: string;
     description: string;
     parent_code: string;
+    tipe: string;
 };
 
 /**
@@ -50,7 +51,7 @@ export function rowsFromSheet(data: string[][]): ImportRow[] {
 
     const hasColumn = (name: string) => header.includes(name);
 
-    // Legacy flat format: level / name / code / description / parent_code
+    // Legacy flat format: level / name / code / description / parent_code / tipe
     if (hasColumn('level') && hasColumn('name')) {
         const indexOf = (name: string) => header.indexOf(name);
 
@@ -68,6 +69,7 @@ export function rowsFromSheet(data: string[][]): ImportRow[] {
                     code: at('code'),
                     description: at('description'),
                     parent_code: at('parent_code'),
+                    tipe: at('tipe'),
                 };
             })
             .filter((row) => row.name !== '');
@@ -87,6 +89,7 @@ export function rowsFromSheet(data: string[][]): ImportRow[] {
 
     const uraianIndex = header.indexOf('uraian');
     const keteranganIndex = header.indexOf('keterangan');
+    const tipeIndex = header.indexOf('tipe');
 
     return data
         .slice(headerIndex + 1)
@@ -127,6 +130,8 @@ export function rowsFromSheet(data: string[][]): ImportRow[] {
                         ? ''
                         : (cells[keteranganIndex]?.trim() ?? ''),
                 parent_code: parentPath,
+                tipe:
+                    tipeIndex === -1 ? '' : (cells[tipeIndex]?.trim() ?? ''),
             };
         })
         .filter((row): row is ImportRow => row !== null && row.name !== '');

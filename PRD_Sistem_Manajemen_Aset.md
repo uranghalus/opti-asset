@@ -518,9 +518,9 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 | FR-08 | Riwayat Aset (History)                                           | ✅ Selesai  | Model, controller (`AssetHistoryController`), route (`assets/{asset}/history`), halaman React `asset-history/Index.tsx`, dan test sudah lengkap.                         |
 | FR-09 | Manajemen Status Aset                                            | ✅ Selesai  | Migrasi `update_asset_status_values` + enum status ada.                                                                                                                  |
 | FR-10 | Dashboard & Pelaporan                                            | 🟡 Sebagian | Dashboard ada; laporan mutasi/disposal + ekspor (FR-10.6) belum.                                                                                                         |
-| FR-11 | Manajemen Pengguna & Hak Akses                                   | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada.                                                                                                           |
+| FR-11 | Manajemen Pengguna & Hak Akses                                   | ✅ Selesai  | Roles, permissions, employees, departments, organizations ada. FR-11.3: `Gate::authorize('asset.view/create/edit/delete')` diverifikasi di AssetController (16 metode AssetTransfer + 10 AssetDisposal sudah terpasang; uji gate 403/200 lolos).                                                                                                           |
 | FR-12 | Audit Trail                                                      | ✅ Selesai  | `ActivityLog` model + observer + controller + UI halaman `/audit-logs` + tests.                                                                                          |
-| FR-13 | Manajemen Tipe Aset (Aktiva Tetap/Peralatan) + data akuntansi    | 🟡 Sebagian | Migrasi, model, `AssetTypeAssigner` (otomatis via ambang batas aktif), observer snapshot nilai buku harian, field akuntansi pada form (tampil hanya untuk Aktiva Tetap), override manual + alasan, filter tipe di daftar aset, halaman pengaturan ambang batas (`settings/capitalization-threshold`, izin `setting.edit`, audit log), hitung ulang massal (FR-13.11), test suite `CapitalizationThresholdTest`. Sisa: FR-13.8 breakdown dashboard per tipe; kalkulasi penyusutan otomatis dari metode terpilih. |
+| FR-13 | Manajemen Tipe Aset (Aktiva Tetap/Peralatan) + data akuntansi    | ✅ Selesai  | Migrasi, model `AssetBookValue`, `AssetTypeAssigner` (otomatis via ambang batas aktif), `DepreciationCalculator` + `AssetObserver` (penyusutan SL/200% DDB, floors at zero, snapshot nilai buku per periode), field akuntansi pada form (tampil hanya untuk Aktiva Tetap), override manual + alasan, riwayat tipe/override, filter tipe, halaman pengaturan ambang batas, hitung ulang massal (FR-13.11), book-value history UI pada Show, breakdown dashboard per tipe (FR-13.8), uji fitur lengkap lolos. |
 
 | Kode | Fitur Tambahan (diluar FR awal)     | Status     | Keterangan                                                                  |
 | ---- | ----------------------------------- | ---------- | --------------------------------------------------------------------------- |
@@ -542,10 +542,10 @@ Status implementasi fitur berdasarkan PRD vs kondisi terkini repo `opti‑asset`
 
 ### 12.3 Rencana Selanjutnya (Prioritas)
 
-1. **FR-13.8** — ringkasan/breakdown jumlah & nilai aset per Tipe Aset pada dashboard.
-2. **FR-11.3** — terapkan `Gate::authorize` (`asset.view/create/edit/delete`) di `AssetController` (saat ini belum ada pemeriksaan otorisasi di controller aset).
-3. **Kalkulasi penyusutan otomatis** — akumulasi penyusutan saat ini input manual; metode tersimpan tetapi belum dipakai menghitung.
-4. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill _impeccable_.
+1. **FR-13.8** — ringkasan/breakdown jumlah & nilai aset per Tipe Aset pada dashboard. ✅ Selesai (`TypeBreakdownCard` + uji fitur lolos).
+2. **FR-11.3** — terapkan `Gate::authorize` (`asset.view/create/edit/delete`) di `AssetController`. ✅ Selesai (uji gate 403/200 lolos).
+3. **Kalkulasi penyusutan otomatis** — `DepreciationCalculator` (SL + 200% DDB, floored at zero) + `AssetObserver` snapshot per periode. ✅ Selesai (terpadu di `AssetObserver`, uji lolos).
+4. **Polish UI** mengikuti `DESIGN.md` (glassmorphism, warna, tipografi) dengan bantuan skill _impeccable_. 🟡 Belum selesai.
 
 ---
 

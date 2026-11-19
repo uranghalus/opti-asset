@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+﻿import { router, usePage } from '@inertiajs/react';
 import { jsPDF } from 'jspdf';
 import {
     ArrowLeft,
@@ -24,7 +24,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { index as indexRoute } from '@/routes/assets';
+import { index as indexRoute } from '@/routes/tenant/assets';
 
 type PageProps = {
     assets: LabelAsset[];
@@ -137,11 +137,11 @@ export default function AssetLabelsBatch() {
 
                 const meta = [
                     asset.serial_number ? `SN: ${asset.serial_number}` : null,
-                    [asset.brand, asset.model].filter(Boolean).join(' · ') ||
+                    [asset.brand, asset.model].filter(Boolean).join(' Â· ') ||
                         null,
                 ]
                     .filter(Boolean)
-                    .join(' · ');
+                    .join(' Â· ');
 
                 if (meta) {
                     pdf.setFontSize(5.5);
@@ -229,7 +229,7 @@ export default function AssetLabelsBatch() {
                         </Select>
                     </div>
                     <p className="text-sm text-slate-500">
-                        {assets.length} total · {batches.length} batch
+                        {assets.length} total Â· {batches.length} batch
                     </p>
                 </div>
 
@@ -291,3 +291,4 @@ export default function AssetLabelsBatch() {
         </div>
     );
 }
+

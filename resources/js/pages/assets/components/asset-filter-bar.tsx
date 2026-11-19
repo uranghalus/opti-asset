@@ -104,7 +104,7 @@ export function AssetFilterBar({
                             type="button"
                             onClick={onSearchClear}
                             aria-label="Bersihkan pencarian"
-                            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                             <X className="size-4" />
                         </button>
@@ -198,7 +198,7 @@ export function AssetFilterBar({
                         <button
                             type="button"
                             onClick={onClearFilters}
-                            className="inline-flex h-7 items-center rounded-sm px-2 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="inline-flex h-7 items-center rounded-sm px-2 text-xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                             Bersihkan semua
                         </button>
@@ -232,7 +232,7 @@ function FilterPanelButton({
             <summary
                 className={cn(
                     'inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors',
-                    'hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                    'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                     'marker:hidden [&::-webkit-details-marker]:hidden',
                 )}
             >
@@ -243,7 +243,7 @@ function FilterPanelButton({
                     </span>
                 )}
             </summary>
-            <div className="absolute right-0 z-30 mt-2 w-72 rounded-lg border border-border bg-card p-4 shadow-[var(--shadow-overlay)]">
+            <div className="absolute right-0 z-30 mt-2 w-72 rounded-lg border border-border bg-card p-4 shadow-overlay">
                 <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                     Filter
                 </p>

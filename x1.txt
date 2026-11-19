@@ -1,0 +1,2626 @@
+=== working tree diff (tracked)
+diff --git a/.opencode/plugins/graphify.js b/.opencode/plugins/graphify.js
+index 4260730..953df79 100644
+--- a/.opencode/plugins/graphify.js
++++ b/.opencode/plugins/graphify.js
+@@ -1,35 +1,62 @@
+ // graphify OpenCode plugin
+-// Injects a knowledge graph reminder before bash tool calls when the graph exists.
++// Injects a knowledge graph reminder before the first shell command of a
++// session when the graph exists.
++//
++// One file for both runtimes. OpenCode 2 reads `id` and `setup()` from the
++// default export; OpenCode 1 (1.3.4 and later) reads `server()` from it. Each
++// ignores the other's function. Nothing is imported from an opencode package:
++// a plain file in .opencode/plugins/ cannot resolve one.
+ //
+ // IMPORTANT: keep the reminder string free of backticks and $(...) constructs.
+-// The hook prepends `echo "<reminder>" && <cmd>` to the user's bash command;
+-// backticks inside the double-quoted echo trigger bash command substitution,
++// The hook prepends `echo "<reminder>" ; <cmd>` to the user's shell command;
++// backticks inside the double-quoted echo trigger command substitution,
+ // which both corrupts tool output and silently executes the very graphify
+ // command we are only suggesting. Plain words render fine in opencode's TUI.
+ import { existsSync } from "fs";
+ import { join } from "path";
+ 
+-export const GraphifyPlugin = async ({ directory }) => {
+-  let reminded = false;
+-
+-  return {
+-    "tool.execute.before": async (input, output) => {
+-      if (reminded) {
+-return;
+-}
+-
+-      if (!existsSync(join(directory, "graphify-out", "graph.json"))) {
+-return;
+-}
+-
+-      if (input.tool === "bash") {
+-        // ';' not '&&' — Windows PowerShell 5.1 rejects '&&' as a statement
+-        // separator, breaking the first bash command of the session (#1646).
+-        output.args.command =
+-          'echo "[graphify] knowledge graph at graphify-out/. For focused questions, run graphify query with your question (scoped subgraph, usually much smaller than GRAPH_REPORT.md) instead of grepping raw files. Read GRAPH_REPORT.md only for broad architecture context." ; ' +
+-          output.args.command;
+-        reminded = true;
+-      }
+-    },
+-  };
++// ';' not '&&' — Windows PowerShell 5.1 rejects '&&' as a statement
++// separator, breaking the first shell command of the session (#1646).
++const REMINDER =
++  'echo "[graphify] knowledge graph at graphify-out/. For focused questions, run graphify query with your question (scoped subgraph, usually much smaller than GRAPH_REPORT.md) instead of grepping raw files. Read GRAPH_REPORT.md only for broad architecture context." ; ';
++
++const hasGraph = (directory) => existsSync(join(directory, "graphify-out", "graph.json"));
++
++// A project and a directory above it (often ~) can each hold a copy of this
++// file, and OpenCode loads both. OpenCode 2 fails the second plugin with the
++// same id ("Duplicate plugin ID"), so the id carries this file's location. The
++// copies share one record of who was reminded, so a command gets one reminder.
++const location = [...import.meta.url].reduce((hash, ch) => (Math.imul(hash, 31) + ch.charCodeAt(0)) >>> 0, 7);
++const reminded = (globalThis.__graphifyReminded ??= new Set());
++
++export default {
++  id: `graphify-${location.toString(16)}`,
++
++  // OpenCode 2: the command tool is "shell", and one server outlives many
++  // sessions, so the reminder is tracked per session.
++  async setup(ctx) {
++    await ctx.tool.hook("execute.before", (event) => {
++      if (event.tool !== "shell" || typeof event.input?.command !== "string") return;
++      if (reminded.has(event.sessionID)) return;
++      if (!hasGraph(ctx.location.directory)) return;
++
++      event.input = { ...event.input, command: REMINDER + event.input.command };
++      reminded.add(event.sessionID);
++    });
++  },
++
++  // OpenCode 1: the command tool is "bash", and the server lives as long as
++  // the session, so the reminder is tracked per project directory.
++  async server({ directory }) {
++    return {
++      "tool.execute.before": async (input, output) => {
++        if (input.tool !== "bash" || typeof output.args?.command !== "string") return;
++        if (reminded.has(directory)) return;
++        if (!hasGraph(directory)) return;
++
++        output.args.command = REMINDER + output.args.command;
++        reminded.add(directory);
++      },
++    };
++  },
+ };
+diff --git a/config/app.php b/config/app.php
+index 1f8dd27..1e0c749 100644
+--- a/config/app.php
++++ b/config/app.php
+@@ -13,7 +13,7 @@
+     |
+     */
+ 
+-    'name' => env('APP_NAME', 'Laravel'),
++    'name' => env('APP_NAME', 'opti-asset'),
+ 
+     /*
+     |--------------------------------------------------------------------------
+diff --git a/resources/css/app.css b/resources/css/app.css
+index 7da8b70..af8db7a 100644
+--- a/resources/css/app.css
++++ b/resources/css/app.css
+@@ -16,37 +16,39 @@ @utility no-scrollbar {
+   }
+ }
+ 
++/*
++ * Opname Field Desk (DESIGN.md): Public Sans untuk UI, Noto Sans Mono untuk
++ * kode aset/barcode/nilai. Self-hosted, variable weight.
++ */
+ @font-face {
+-  font-family: 'Geist';
+-  src: url('/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
++  font-family: 'Public Sans';
++  src: url('/fonts/public-sans/latin-wght-normal.woff2') format('woff2');
+   font-weight: 100 900;
+   font-style: normal;
+   font-display: swap;
+ }
+ 
+ @font-face {
+-  font-family: 'Geist Mono';
+-  src: url('/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2');
++  font-family: 'Noto Sans Mono';
++  src: url('/fonts/noto-sans-mono/latin-wght-normal.woff2') format('woff2');
+   font-weight: 100 900;
+   font-style: normal;
+   font-display: swap;
+ }
+ 
++/* Bayangan struktural saja (DESIGN.md — Elevation & Depth). */
+ @theme {
+-  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+-  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+-  --shadow-md: 0 1px 4px rgba(133, 146, 173, 0.2);
+-  --shadow-btn-shadow: 0 9px 17.5px rgba(0, 0, 0, 0.05);
+-  --radius-lg: 7px;
+-  --margin-30: 30px;
+-  --text-40: 40px;
++  --shadow-sticky: 0 1px 0 rgba(21, 32, 43, 0.08);
++  --shadow-overlay: 0 8px 24px rgba(21, 32, 43, 0.14);
++  --shadow-toast: 0 4px 16px rgba(21, 32, 43, 0.12);
++  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+ }
+ 
+ @theme inline {
+   --color-background: var(--background);
+   --color-foreground: var(--foreground);
+-  --font-sans: var(--font-geist);
+-  --font-mono: var(--font-geist-mono);
++  --font-sans: var(--font-public-sans);
++  --font-mono: var(--font-noto-mono);
+   --color-sidebar-ring: var(--sidebar-ring);
+   --color-sidebar-border: var(--sidebar-border);
+   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+@@ -77,87 +79,169 @@ @theme inline {
+   --color-popover: var(--popover);
+   --color-card-foreground: var(--card-foreground);
+   --color-card: var(--card);
+-  --radius-sm: calc(var(--radius) - 4px);
+-  --radius-md: calc(var(--radius) - 2px);
+-  --radius-lg: var(--radius);
+-  --radius-xl: calc(var(--radius) + 4px);
+-  --radius-2xl: calc(var(--radius) + 8px);
+-  --radius-3xl: calc(var(--radius) + 12px);
+-  --radius-4xl: calc(var(--radius) + 16px);
++  --color-surface-sunken: var(--surface-sunken);
++  --color-primary-muted: var(--primary-muted);
++  --color-primary-muted-border: var(--primary-muted-border);
++  /* Status map terkunci (DESIGN.md — P1); nilai bertukar otomatis via .dark. */
++  --color-status-act-text: var(--status-act-text);
++  --color-status-act-bg: var(--status-act-bg);
++  --color-status-act-border: var(--status-act-border);
++  --color-status-loan-text: var(--status-loan-text);
++  --color-status-loan-bg: var(--status-loan-bg);
++  --color-status-loan-border: var(--status-loan-border);
++  --color-status-rpr-text: var(--status-rpr-text);
++  --color-status-rpr-bg: var(--status-rpr-bg);
++  --color-status-rpr-border: var(--status-rpr-border);
++  --color-status-mut-text: var(--status-mut-text);
++  --color-status-mut-bg: var(--status-mut-bg);
++  --color-status-mut-border: var(--status-mut-border);
++  --color-status-dsp-text: var(--status-dsp-text);
++  --color-status-dsp-bg: var(--status-dsp-bg);
++  --color-status-dsp-border: var(--status-dsp-border);
++  /* Tipe aset */
++  --color-tipe-aktiva-text: var(--tipe-aktiva-text);
++  --color-tipe-aktiva-bg: var(--tipe-aktiva-bg);
++  --color-tipe-peralatan-text: var(--tipe-peralatan-text);
++  --color-tipe-peralatan-bg: var(--tipe-peralatan-bg);
++  /* Radius eksplisit: sm 4 / md 8 / lg 12 (DESIGN.md — Shapes). */
++  --radius-sm: 4px;
++  --radius-md: 8px;
++  --radius-lg: 12px;
++  --radius-xl: 16px;
++  --radius-2xl: 20px;
++  --radius-3xl: 24px;
++  --radius-4xl: 28px;
+ }
+ 
+ :root {
+-  --font-geist: 'Geist', sans-serif;
+-  --font-geist-mono: 'Geist Mono', monospace;
+-  --background: oklch(1 0 0);
+-  --foreground: oklch(0.145 0 0);
+-  --card: oklch(1 0 0);
+-  --card-foreground: oklch(0.145 0 0);
+-  --popover: oklch(1 0 0);
+-  --popover-foreground: oklch(0.145 0 0);
+-  --primary: oklch(0.205 0 0);
+-  --primary-foreground: oklch(0.985 0 0);
+-  --secondary: oklch(0.97 0 0);
+-  --secondary-foreground: oklch(0.205 0 0);
+-  --muted: oklch(0.97 0 0);
+-  --muted-foreground: oklch(0.556 0 0);
+-  --accent: oklch(0.97 0 0);
+-  --accent-foreground: oklch(0.205 0 0);
+-  --destructive: oklch(0.577 0.245 27.325);
+-  --border: oklch(0.922 0 0);
+-  --input: oklch(0.922 0 0);
+-  --ring: oklch(0.708 0 0);
+-  --chart-1: oklch(0.646 0.222 41.116);
+-  --chart-2: oklch(0.6 0.118 184.704);
+-  --chart-3: oklch(0.398 0.07 227.392);
+-  --chart-4: oklch(0.828 0.189 84.429);
+-  --chart-5: oklch(0.769 0.188 70.08);
+-  --success: oklch(0.627 0.194 149.214);
+-  --warning: oklch(0.795 0.184 86.047);
+-  --error: oklch(0.577 0.245 27.325);
+-  --radius: 8px;
+-  --sidebar: oklch(0.985 0 0);
+-  --sidebar-foreground: oklch(0.145 0 0);
+-  --sidebar-primary: oklch(0.205 0 0);
+-  --sidebar-primary-foreground: oklch(0.985 0 0);
+-  --sidebar-accent: oklch(0.97 0 0);
+-  --sidebar-accent-foreground: oklch(0.205 0 0);
+-  --sidebar-border: oklch(0.922 0 0);
+-  --sidebar-ring: oklch(0.708 0 0);
++  --font-public-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
++  --font-noto-mono: 'Noto Sans Mono', ui-monospace, SFMono-Regular, monospace;
++  /* Core */
++  --background: #f1f4f6;
++  --foreground: #15202b;
++  --card: #ffffff;
++  --card-foreground: #15202b;
++  --popover: #ffffff;
++  --popover-foreground: #15202b;
++  --primary: #0d5c56;
++  --primary-foreground: #ffffff;
++  --secondary: #e9edf0;
++  --secondary-foreground: #15202b;
++  --muted: #e9edf0;
++  --muted-foreground: #5a6a7a;
++  --accent: #e9edf0;
++  --accent-foreground: #15202b;
++  --destructive: #b42318;
++  --border: #d5dce3;
++  --input: #d5dce3;
++  --ring: #0d5c56;
++  --success: #1b7f5a;
++  --warning: #b45309;
++  --error: #b42318;
++  --radius: 12px;
++  --surface-sunken: #e9edf0;
++  --primary-muted: #d8edea;
++  --primary-muted-border: #a7d2cc;
++  /* Status (LOCKED — P1) */
++  --status-act-text: #166534;
++  --status-act-bg: #dcfce7;
++  --status-act-border: #86efac;
++  --status-loan-text: #1e40af;
++  --status-loan-bg: #dbeafe;
++  --status-loan-border: #93c5fd;
++  --status-rpr-text: #92400e;
++  --status-rpr-bg: #fef3c7;
++  --status-rpr-border: #fcd34d;
++  --status-mut-text: #155e75;
++  --status-mut-bg: #cffafe;
++  --status-mut-border: #67e8f9;
++  --status-dsp-text: #9f1239;
++  --status-dsp-bg: #ffe4e6;
++  --status-dsp-border: #fda4af;
++  /* Tipe aset */
++  --tipe-aktiva-text: #0d5c56;
++  --tipe-aktiva-bg: #d8edea;
++  --tipe-peralatan-text: #475569;
++  --tipe-peralatan-bg: #e9edf0;
++  /* Chart: teal → cyan → amber → blue → slate */
++  --chart-1: #0d5c56;
++  --chart-2: #0e7490;
++  --chart-3: #b45309;
++  --chart-4: #1d6a9f;
++  --chart-5: #475569;
++  /* Sidebar */
++  --sidebar: #f1f4f6;
++  --sidebar-foreground: #15202b;
++  --sidebar-primary: #0d5c56;
++  --sidebar-primary-foreground: #ffffff;
++  --sidebar-accent: #e9edf0;
++  --sidebar-accent-foreground: #15202b;
++  --sidebar-border: #d5dce3;
++  --sidebar-ring: #0d5c56;
+ }
+ 
+ .dark {
+-  --background: oklch(0.145 0 0);
+-  --foreground: oklch(0.985 0 0);
+-  --card: oklch(0.205 0 0);
+-  --card-foreground: oklch(0.985 0 0);
+-  --popover: oklch(0.205 0 0);
+-  --popover-foreground: oklch(0.985 0 0);
+-  --primary: oklch(0.922 0 0);
+-  --primary-foreground: oklch(0.205 0 0);
+-  --secondary: oklch(0.269 0 0);
+-  --secondary-foreground: oklch(0.985 0 0);
+-  --muted: oklch(0.269 0 0);
+-  --muted-foreground: oklch(0.708 0 0);
+-  --accent: oklch(0.269 0 0);
+-  --accent-foreground: oklch(0.985 0 0);
+-  --destructive: oklch(0.704 0.191 22.216);
+-  --border: oklch(1 0 0 / 10%);
+-  --input: oklch(1 0 0 / 15%);
+-  --ring: oklch(0.556 0 0);
+-  --chart-1: oklch(0.646 0.222 41.116);
+-  --chart-2: oklch(0.6 0.118 184.704);
+-  --chart-3: oklch(0.398 0.07 227.392);
+-  --chart-4: oklch(0.828 0.189 84.429);
+-  --chart-5: oklch(0.769 0.188 70.08);
+-  --sidebar: oklch(0.205 0 0);
+-  --sidebar-foreground: oklch(0.985 0 0);
+-  --sidebar-primary: oklch(0.488 0.243 264.376);
+-  --sidebar-primary-foreground: oklch(0.985 0 0);
+-  --sidebar-accent: oklch(0.269 0 0);
+-  --sidebar-accent-foreground: oklch(0.985 0 0);
+-  --sidebar-border: oklch(1 0 0 / 10%);
+-  --sidebar-ring: oklch(0.556 0 0);
++  /* Core — cool navy, never purple-plum */
++  --background: #0b1220;
++  --foreground: #e8eef2;
++  --card: #1b2534;
++  --card-foreground: #e8eef2;
++  --popover: #1b2534;
++  --popover-foreground: #e8eef2;
++  --primary: #2a9b93;
++  --primary-foreground: #0b1220;
++  --secondary: #1b2534;
++  --secondary-foreground: #e8eef2;
++  --muted: #1b2534;
++  --muted-foreground: #9aa8b5;
++  --accent: #1b2534;
++  --accent-foreground: #e8eef2;
++  --destructive: #f04438;
++  --border: #2a3544;
++  --input: #2a3544;
++  --ring: #2a9b93;
++  --success: #1b7f5a;
++  --warning: #b45309;
++  --error: #f04438;
++  --surface-sunken: #101827;
++  --primary-muted: rgba(42, 155, 147, 0.16);
++  --primary-muted-border: rgba(42, 155, 147, 0.4);
++  /* Status — resep dark terverifikasi ≥ 8:1 */
++  --status-act-text: #86efac;
++  --status-act-bg: #052e16;
++  --status-act-border: #052e16;
++  --status-loan-text: #93c5fd;
++  --status-loan-bg: #172554;
++  --status-loan-border: #172554;
++  --status-rpr-text: #fcd34d;
++  --status-rpr-bg: #451a03;
++  --status-rpr-border: #451a03;
++  --status-mut-text: #67e8f9;
++  --status-mut-bg: #083344;
++  --status-mut-border: #083344;
++  --status-dsp-text: #fda4af;
++  --status-dsp-bg: #4c0519;
++  --status-dsp-border: #4c0519;
++  /* Tipe aset */
++  --tipe-aktiva-text: #0d5c56;
++  --tipe-aktiva-bg: #d8edea;
++  --tipe-peralatan-text: #475569;
++  --tipe-peralatan-bg: #e9edf0;
++  /* Chart */
++  --chart-1: #0d5c56;
++  --chart-2: #0e7490;
++  --chart-3: #b45309;
++  --chart-4: #1d6a9f;
++  --chart-5: #475569;
++  /* Sidebar */
++  --sidebar: #151d2a;
++  --sidebar-foreground: #e8eef2;
++  --sidebar-primary: #2a9b93;
++  --sidebar-primary-foreground: #0b1220;
++  --sidebar-accent: #1b2534;
++  --sidebar-accent-foreground: #e8eef2;
++  --sidebar-border: #2a3544;
++  --sidebar-ring: #2a9b93;
+ }
+ 
+ @layer base {
+@@ -179,7 +263,7 @@ @layer base {
+   }
+ }
+ 
+-/* dashboard-layout-01 block: hide secondary nav labels when the sidebar collapses to icons */
++/* Sembunyikan label nav saat sidebar collapsed ke ikon (dipakai nav-collapse). */
+ .group[data-collapsible='icon'] .hide-menu {
+     @apply hidden;
+ }
+diff --git a/resources/js/app.tsx b/resources/js/app.tsx
+index dc71a3b..c137925 100644
+--- a/resources/js/app.tsx
++++ b/resources/js/app.tsx
+@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
+ import SettingsLayout from '@/layouts/settings/layout';
+ import { setUrlDefaults } from '@/wayfinder';
+ 
+-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
++const appName = import.meta.env.VITE_APP_NAME || 'opti-asset';
+ 
+ // Wayfinder tenant default URL parameter setup
+ let activeTenantCode: string | null = null;
+@@ -84,7 +84,7 @@ createInertiaApp({
+         );
+     },
+     progress: {
+-        color: 'oklch(0.52 0.15 245)',
++        color: '#0D5C56',
+         includeCSS: true,
+         delay: 250,
+     },
+diff --git a/resources/js/components/app-logo.tsx b/resources/js/components/app-logo.tsx
+index 19d48c7..6b38910 100644
+--- a/resources/js/components/app-logo.tsx
++++ b/resources/js/components/app-logo.tsx
+@@ -7,19 +7,15 @@ export default function AppLogo() {
+     return (
+         <>
+             {/* Logo Icon Container */}
+-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md ring-1 shadow-blue-500/20 ring-black/5 transition-transform duration-200 group-hover:scale-105 dark:ring-white/10">
+-                <AppLogoIcon className="size-5 fill-current drop-shadow-sm" />
++            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground ring-1 ring-primary/20">
++                <AppLogoIcon className="size-5 fill-current" />
+             </div>
+ 
+             {/* Text Container */}
+-            <div className="ml-2 grid flex-1 text-left text-sm transition-opacity duration-200 group-hover:opacity-90">
++            <div className="ml-2 grid flex-1 text-left text-sm">
+                 <span className="truncate font-bold tracking-tight text-foreground">
+                     {name}
+                 </span>
+-                {/* Opsional: Buka komentar di bawah jika Anda ingin menambahkan subtitle */}
+-                {/* <span className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+-                    Workspaces
+-                </span> */}
+             </div>
+         </>
+     );
+diff --git a/resources/js/components/app-sidebar-header.tsx b/resources/js/components/app-sidebar-header.tsx
+index f13fe10..a915932 100644
+--- a/resources/js/components/app-sidebar-header.tsx
++++ b/resources/js/components/app-sidebar-header.tsx
+@@ -1,48 +1,125 @@
+ import { PanelLeft } from 'lucide-react';
+-import { Separator } from '@/components/ui/separator';
++import { Palette, ShieldCheck, User } from 'lucide-react';
++import { router, usePage } from '@inertiajs/react';
++import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+ import { Button } from '@/components/ui/button';
++import { Separator } from '@/components/ui/separator';
+ import { useSidebar } from '@/components/ui/sidebar';
++import { Breadcrumbs } from '@/components/breadcrumbs';
++import { ProfileDropdown } from '@/components/profile-dropdown';
++import { useInitials } from '@/hooks/use-initials';
+ import { cn } from '@/lib/utils';
++import { logout } from '@/routes';
++import { edit as editAppearance } from '@/routes/appearance';
++import { edit as editProfile } from '@/routes/profile';
++import { edit as editSecurity } from '@/routes/security';
+ import { SearchBar } from './search-bar';
+ import { ThemeToggle } from './theme-toggle';
+ import { NotificationBell } from './notification-bell';
+ import { TenantSelector } from './tenant-selector';
++import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
++import type { User as AuthUser } from '@/types/auth';
++
++type PageProps = {
++    auth: {
++        user: AuthUser | null;
++    };
++};
+ 
+-export function AppSidebarHeader() {
++export function AppSidebarHeader({
++    breadcrumbs = [],
++}: {
++    breadcrumbs?: BreadcrumbItemType[];
++}) {
+     const { toggleSidebar } = useSidebar();
++    const { auth } = usePage().props as unknown as PageProps;
++    const user = auth.user;
++    const getInitials = useInitials();
++
++    const profileLinks = [
++        {
++            label: 'Profil Saya',
++            icon: User,
++            href: editProfile().url,
++        },
++        {
++            label: 'Keamanan',
++            icon: ShieldCheck,
++            href: editSecurity().url,
++        },
++        {
++            label: 'Tampilan',
++            icon: Palette,
++            href: editAppearance().url,
++        },
++    ];
+ 
+     return (
+         <header
+             className={cn('sticky top-0 z-2 bg-background border-b border-border')}
+         >
+             <nav>
+-                <div className="mx-auto flex flex-wrap items-center justify-between p-2">
+-                    <div className="flex gap-2 items-center">
+-                        <Button
+-                            variant="ghost"
+-                            size="icon"
+-                            className="p-2 hover:bg-primary/5 rounded-full transition cursor-pointer"
+-                            onClick={toggleSidebar}
+-                            aria-label="Buka menu navigasi"
+-                        >
+-                            <PanelLeft size={21} />
+-                        </Button>
+-
+-                        <Separator
+-                            orientation="vertical"
+-                            className="h-4 mr-4 w-px ml-2 bg-border self-center max-lg:hidden"
+-                        />
++                <div className="flex h-14 items-center gap-2 px-4">
++                    <Button
++                        variant="ghost"
++                        size="icon"
++                        className="size-10 shrink-0 cursor-pointer rounded-md transition hover:bg-primary/5"
++                        onClick={toggleSidebar}
++                        aria-label="Buka menu navigasi"
++                    >
++                        <PanelLeft size={21} />
++                    </Button>
+ 
+-                        <div className="sm:block hidden">
+-                            <SearchBar />
+-                        </div>
++                    <Separator
++                        orientation="vertical"
++                        className="h-4 w-px shrink-0 bg-border max-sm:hidden"
++                    />
++
++                    <div className="min-w-0 max-md:hidden">
++                        <Breadcrumbs breadcrumbs={breadcrumbs} />
+                     </div>
+ 
+-                    <div className="flex gap-2 items-center">
+-                        <TenantSelector />
+-                        <ThemeToggle />
+-                        <NotificationBell />
++                    <div className="flex-1" />
++
++                    <div className="hidden sm:block">
++                        <SearchBar />
+                     </div>
++
++                    <TenantSelector />
++                    <ThemeToggle />
++                    <NotificationBell />
++
++                    {user && (
++                        <ProfileDropdown
++                            trigger={
++                                <button
++                                    id="profile-dropdown-trigger"
++                                    aria-label="Menu pengguna"
++                                    className="cursor-pointer rounded-full"
++                                >
++                                    <Avatar className="size-8 rounded-full">
++                                        {user.avatar ? (
++                                            <AvatarImage
++                                                src={user.avatar}
++                                                alt={user.name}
++                                            />
++                                        ) : null}
++                                        <AvatarFallback>
++                                            {getInitials(user.name)}
++                                        </AvatarFallback>
++                                    </Avatar>
++                                </button>
++                            }
++                            user={{
++                                name: user.name,
++                                email: user.email,
++                                initials: getInitials(user.name),
++                                avatarUrl: user.avatar ?? null,
++                            }}
++                            links={profileLinks}
++                            onSignOut={() => router.post(logout.url())}
++                        />
++                    )}
+                 </div>
+             </nav>
+         </header>
+diff --git a/resources/js/components/app-sidebar.tsx b/resources/js/components/app-sidebar.tsx
+index 3be9da0..44dd9e8 100644
+--- a/resources/js/components/app-sidebar.tsx
++++ b/resources/js/components/app-sidebar.tsx
+@@ -1,11 +1,8 @@
+ import { usePage } from '@inertiajs/react';
+ 
+-import SimpleBar from 'simplebar-react';
+-
+ import AppLogo from '@/components/app-logo';
+ import { Badge } from '@/components/ui/badge';
+ import { NavCollapse } from '@/components/nav-collapse';
+-import { NavSecondary } from '@/components/nav-secondary';
+ import { NavUser } from '@/components/nav-user';
+ 
+ import {
+@@ -24,10 +21,9 @@ export function AppSidebar() {
+ 
+     return (
+         <Sidebar
+-            variant="inset"
+             collapsible="icon"
+             side="left"
+-            className="border-r border-border bg-background"
++            className="border-r border-border bg-sidebar"
+         >
+             <SidebarHeader
+                 className="p-3 group-data-[state=collapsed]:px-2.5 flex flex-row items-center justify-between border-b border-border"
+@@ -39,20 +35,17 @@ export function AppSidebar() {
+             </SidebarHeader>
+ 
+             <SidebarContent>
+-                <SimpleBar style={{ height: '100%' }}>
+-                    <SidebarGroup
+-                        className="flex items-center justify-center group-data-[state=collapsed]:px-2 px-3 py-4"
+-                    >
+-                        <div className="px-0 group-data-[state=collapsed]:px-0 w-full flex flex-col gap-4">
+-                            <NavCollapse groups={sidebarData.navGroups} />
+-                        </div>
+-                    </SidebarGroup>
+-                </SimpleBar>
++                <SidebarGroup
++                    className="flex items-center justify-center group-data-[state=collapsed]:px-2 px-3 py-4"
++                >
++                    <div className="px-0 group-data-[state=collapsed]:px-0 w-full flex flex-col gap-4">
++                        <NavCollapse groups={sidebarData.navGroups} />
++                    </div>
++                </SidebarGroup>
+             </SidebarContent>
+ 
+             <SidebarFooter className="p-4">
+                 <div className="flex flex-col gap-2">
+-                    <NavSecondary />
+                     <NavUser />
+                 </div>
+             </SidebarFooter>
+diff --git a/resources/js/components/dashboard-layout-header.tsx b/resources/js/components/dashboard-layout-header.tsx
+deleted file mode 100644
+index 0568511..0000000
+--- a/resources/js/components/dashboard-layout-header.tsx
++++ /dev/null
+@@ -1,105 +0,0 @@
+-import { router, usePage } from '@inertiajs/react';
+-import { Palette, ShieldCheck, User } from 'lucide-react';
+-import { NotificationBell } from '@/components/notification-bell';
+-import ProfileDropdown from '@/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile';
+-import type { ProfileLink } from '@/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile';
+-import Search from '@/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/search';
+-import { TenantSelector } from '@/components/tenant-selector';
+-import { ThemeToggle } from '@/components/theme-toggle';
+-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+-import { SidebarTrigger } from '@/components/ui/sidebar';
+-import { useInitials } from '@/hooks/use-initials';
+-import { getSidebarLinks } from '@/lib/sidebar-links';
+-import { logout } from '@/routes';
+-import { edit as editAppearance } from '@/routes/appearance';
+-import { edit } from '@/routes/profile';
+-import { edit as editSecurity } from '@/routes/security';
+-import type { User as AuthUser } from '@/types/auth';
+-
+-type DashboardHeaderProps = {
+-    auth: {
+-        user: AuthUser | null;
+-    };
+-    tenant?: {
+-        code?: string;
+-    } | null;
+-};
+-
+-const profileLinks: ProfileLink[] = [
+-    {
+-        label: 'Profil Saya',
+-        icon: User,
+-        href: edit().url,
+-    },
+-    {
+-        label: 'Keamanan',
+-        icon: ShieldCheck,
+-        href: editSecurity().url,
+-    },
+-    {
+-        label: 'Tampilan',
+-        icon: Palette,
+-        href: editAppearance().url,
+-    },
+-];
+-
+-/**
+- * Header sticky layout `dashboard-layout-01`: pemicu sidebar di kiri, kontrol
+- * aplikasi (search, tenant, notifikasi, tema) plus dropdown profil di kanan.
+- *
+- * Harus dipakai di dalam `SidebarProvider` karena memakai `SidebarTrigger`.
+- */
+-export function DashboardLayoutHeader() {
+-    const page = usePage();
+-    const { auth, tenant } = page.props as unknown as DashboardHeaderProps;
+-    const user = auth.user;
+-    const tenantCode = tenant?.code ?? null;
+-    const getInitials = useInitials();
+-
+-    return (
+-        <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-background px-4">
+-            <SidebarTrigger
+-                aria-label="Buka menu navigasi"
+-                className="cursor-pointer"
+-            />
+-
+-            <div className="flex items-center gap-4">
+-                <Search links={getSidebarLinks(tenantCode)} />
+-                <TenantSelector />
+-                <NotificationBell />
+-                <ThemeToggle />
+-
+-                {user && (
+-                    <ProfileDropdown
+-                        trigger={
+-                            <div
+-                                id="profile-dropdown-trigger"
+-                                className="cursor-pointer rounded-full"
+-                            >
+-                                <Avatar className="size-7 rounded-full">
+-                                    {user.avatar ? (
+-                                        <AvatarImage
+-                                            src={user.avatar}
+-                                            alt={user.name}
+-                                        />
+-                                    ) : null}
+-                                    <AvatarFallback>
+-                                        {getInitials(user.name)}
+-                                    </AvatarFallback>
+-                                </Avatar>
+-                            </div>
+-                        }
+-                        user={{
+-                            name: user.name,
+-                            email: user.email,
+-                            initials: getInitials(user.name),
+-                            avatarUrl: user.avatar ?? null,
+-                        }}
+-                        links={profileLinks}
+-                        onSignOut={() => router.post(logout.url())}
+-                    />
+-                )}
+-            </div>
+-        </header>
+-    );
+-}
+diff --git a/resources/js/components/nav-collapse.tsx b/resources/js/components/nav-collapse.tsx
+index 332d7b6..3b1468b 100644
+--- a/resources/js/components/nav-collapse.tsx
++++ b/resources/js/components/nav-collapse.tsx
+@@ -1,5 +1,4 @@
+ import { Link, usePage } from '@inertiajs/react';
+-import { ChevronRight } from 'lucide-react';
+ import { useCurrentUrl } from '@/hooks/use-current-url';
+ import { useSidebar } from '@/components/ui/sidebar';
+ import {
+@@ -38,28 +37,14 @@ export function NavCollapse({ groups, className }: NavCollapseProps) {
+         <>
+             {groups.map((group) => (
+                 <div key={group.title}>
+-                    {/* Heading */}
+-                    <span
+-                        className={cn(
+-                            'text-xs uppercase block font-semibold text-muted-foreground mb-2 transition-all duration-200',
+-                            isCollapse
+-                                ? 'text-center group-hover:text-start group-data-[state=expanded]:text-start'
+-                                : ''
+-                        )}
+-                    >
+-                        {isCollapse ? (
+-                            <>
+-                                <span className="group-hover:hidden group-data-[state=expanded]:hidden">
+-                                    ...
+-                                </span>
+-                                <span className="hidden group-hover:inline group-data-[state=expanded]:inline">
+-                                    {group.title}
+-                                </span>
+-                            </>
+-                        ) : (
+-                            group.title
+-                        )}
+-                    </span>
++                    {/* Saat collapsed, judul tetap ada untuk screen reader */}
++                    {isCollapse ? (
++                        <span className="sr-only">{group.title}</span>
++                    ) : (
++                        <span className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
++                            {group.title}
++                        </span>
++                    )}
+ 
+                     <SidebarMenu className="space-y-1">
+                         {group.items.map((item) => {
+@@ -69,28 +54,31 @@ export function NavCollapse({ groups, className }: NavCollapseProps) {
+                                 <SidebarMenuItem key={item.url}>
+                                     <SidebarMenuButton
+                                         asChild
++                                        tooltip={item.title}
+                                         className={cn(
+-                                            'flex items-center gap-3 w-full group relative group-data-[state=collapsed]:px-2.5 px-3 py-2 my-0.5 transition-all duration-200 rounded-md',
+-                                            active && 'bg-primary text-background font-medium',
+-                                            className
++                                            'flex w-full items-center gap-3 rounded-md border px-3 py-2 transition-colors duration-150 group-data-[state=collapsed]:px-2.5',
++                                            active
++                                                ? 'border-primary-muted-border bg-primary-muted font-medium text-primary'
++                                                : 'border-transparent hover:bg-accent',
++                                            className,
+                                         )}
+                                     >
+                                         <Link href={tenantUrl(item.url)} prefetch>
+-                                            <div className="flex items-center gap-3 w-full">
++                                            <div className="flex w-full items-center gap-3">
+                                                 {item.icon && (
+                                                     <item.icon
+                                                         className={cn(
+                                                             'h-4 w-4 shrink-0',
+                                                             active
+-                                                                ? 'text-background'
+-                                                                : 'text-muted-foreground'
++                                                                ? 'text-primary'
++                                                                : 'text-muted-foreground',
+                                                         )}
+                                                     />
+                                                 )}
+                                                 <span
+                                                     className={cn(
+-                                                        'font-medium hide-menu whitespace-nowrap',
+-                                                        active ? 'font-bold' : ''
++                                                        'hide-menu whitespace-nowrap font-medium',
++                                                        active && 'font-semibold',
+                                                     )}
+                                                 >
+                                                     {item.title}
+diff --git a/resources/js/components/nav-secondary.tsx b/resources/js/components/nav-secondary.tsx
+deleted file mode 100644
+index b571b40..0000000
+--- a/resources/js/components/nav-secondary.tsx
++++ /dev/null
+@@ -1,11 +0,0 @@
+-import { Badge } from '@/components/ui/badge';
+-
+-export function NavSecondary() {
+-    return (
+-        <div className="-mx-4 border-t border-border px-5 py-5">
+-            <Badge variant="secondary" className="text-xs">
+-                v1.0.0
+-            </Badge>
+-        </div>
+-    );
+-}
+diff --git a/resources/js/components/nav-user.tsx b/resources/js/components/nav-user.tsx
+index 836a702..5490102 100644
+--- a/resources/js/components/nav-user.tsx
++++ b/resources/js/components/nav-user.tsx
+@@ -1,50 +1,147 @@
+-import { LifeBuoy, BookOpen } from 'lucide-react';
+-import { Link } from '@inertiajs/react';
+ import {
+-    SidebarGroup,
+-    SidebarGroupContent,
++    ChevronDown,
++    LogOut,
++    Palette,
++    ShieldCheck,
++    User,
++} from 'lucide-react';
++import { Link, router, usePage } from '@inertiajs/react';
++import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
++import {
++    DropdownMenu,
++    DropdownMenuContent,
++    DropdownMenuGroup,
++    DropdownMenuItem,
++    DropdownMenuLabel,
++    DropdownMenuSeparator,
++    DropdownMenuTrigger,
++} from '@/components/ui/dropdown-menu';
++import {
+     SidebarMenu,
+-    SidebarMenuItem,
+     SidebarMenuButton,
++    SidebarMenuItem,
+ } from '@/components/ui/sidebar';
+-import { cn } from '@/lib/utils';
++import { useInitials } from '@/hooks/use-initials';
++import { logout } from '@/routes';
++import { edit as editAppearance } from '@/routes/appearance';
++import { edit as editProfile } from '@/routes/profile';
++import { edit as editSecurity } from '@/routes/security';
++import type { User as AuthUser } from '@/types/auth';
+ 
+ export function NavUser() {
+-    const navItems = [
+-        {
+-            title: 'Pusat Bantuan',
+-            url: '/help',
+-            icon: LifeBuoy,
+-        },
+-        {
+-            title: 'Dokumentasi',
+-            url: '/docs',
+-            icon: BookOpen,
+-        },
++    const { auth } = usePage().props as unknown as {
++        auth: { user: AuthUser | null };
++    };
++    const user = auth.user;
++    const getInitials = useInitials();
++
++    if (!user) {
++        return null;
++    }
++
++    const profileLinks = [
++        { label: 'Profil Saya', icon: User, href: editProfile().url },
++        { label: 'Keamanan', icon: ShieldCheck, href: editSecurity().url },
++        { label: 'Tampilan', icon: Palette, href: editAppearance().url },
+     ];
+ 
+     return (
+-        <SidebarGroup className="mt-auto p-0">
+-            <SidebarGroupContent>
+-                <SidebarMenu className="space-y-1">
+-                    {navItems.map((item) => (
+-                        <SidebarMenuItem key={item.title}>
+-                            <SidebarMenuButton asChild className="h-full cursor-pointer">
+-                                <Link href={item.url} prefetch>
+-                                    <div className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md">
+-                                        <item.icon
+-                                            className="size-5 shrink-0 text-muted-foreground"
++        <SidebarMenu>
++            <SidebarMenuItem>
++                <DropdownMenu>
++                    <DropdownMenuTrigger asChild>
++                        <SidebarMenuButton
++                            size="lg"
++                            className="cursor-pointer"
++                            aria-label="Menu pengguna"
++                        >
++                            <Avatar className="size-8 rounded-full">
++                                {user.avatar ? (
++                                    <AvatarImage
++                                        src={user.avatar}
++                                        alt={user.name}
++                                    />
++                                ) : null}
++                                <AvatarFallback>
++                                    {getInitials(user.name)}
++                                </AvatarFallback>
++                            </Avatar>
++                            <div className="grid flex-1 text-left text-sm leading-tight">
++                                <span className="truncate font-medium">
++                                    {user.name}
++                                </span>
++                                <span className="truncate text-xs text-muted-foreground">
++                                    {user.email}
++                                </span>
++                            </div>
++                            <ChevronDown
++                                className="ml-auto size-4 text-muted-foreground"
++                                aria-hidden="true"
++                            />
++                        </SidebarMenuButton>
++                    </DropdownMenuTrigger>
++
++                    <DropdownMenuContent
++                        side="top"
++                        align="end"
++                        sideOffset={8}
++                        className="w-64"
++                    >
++                        <DropdownMenuLabel className="flex items-center gap-3 px-3 py-2.5 font-normal">
++                            <Avatar className="size-9">
++                                {user.avatar ? (
++                                    <AvatarImage
++                                        src={user.avatar}
++                                        alt={user.name}
++                                    />
++                                ) : null}
++                                <AvatarFallback>
++                                    {getInitials(user.name)}
++                                </AvatarFallback>
++                            </Avatar>
++                            <div className="flex min-w-0 flex-col">
++                                <span className="truncate text-sm font-semibold text-foreground">
++                                    {user.name}
++                                </span>
++                                <span className="truncate text-xs text-muted-foreground">
++                                    {user.email}
++                                </span>
++                            </div>
++                        </DropdownMenuLabel>
++
++                        <DropdownMenuSeparator />
++
++                        <DropdownMenuGroup>
++                            {profileLinks.map(({ label, icon: Icon, href }) => (
++                                <DropdownMenuItem
++                                    key={label}
++                                    asChild
++                                    className="cursor-pointer gap-3 px-3 py-2 text-sm"
++                                >
++                                    <Link href={href} prefetch>
++                                        <Icon
++                                            size={18}
++                                            className="text-foreground"
+                                         />
+-                                        <span className="truncate font-medium text-muted-foreground whitespace-nowrap">
+-                                            {item.title}
+-                                        </span>
+-                                    </div>
+-                                </Link>
+-                            </SidebarMenuButton>
+-                        </SidebarMenuItem>
+-                    ))}
+-                </SidebarMenu>
+-            </SidebarGroupContent>
+-        </SidebarGroup>
++                                        <span>{label}</span>
++                                    </Link>
++                                </DropdownMenuItem>
++                            ))}
++                        </DropdownMenuGroup>
++
++                        <DropdownMenuSeparator />
++
++                        <DropdownMenuItem
++                            variant="destructive"
++                            className="cursor-pointer gap-3 px-3 py-2 text-sm"
++                            onSelect={() => router.post(logout.url())}
++                        >
++                            <LogOut size={18} />
++                            <span>Keluar</span>
++                        </DropdownMenuItem>
++                    </DropdownMenuContent>
++                </DropdownMenu>
++            </SidebarMenuItem>
++        </SidebarMenu>
+     );
+ }
+diff --git a/resources/js/components/notification-bell.tsx b/resources/js/components/notification-bell.tsx
+index cea0691..f9fa74c 100644
+--- a/resources/js/components/notification-bell.tsx
++++ b/resources/js/components/notification-bell.tsx
+@@ -1,109 +1,26 @@
+ import { useState } from 'react';
+-import { AlertTriangle, Bell, CheckCircle, Info } from 'lucide-react';
++import { Bell } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+ import {
+     Popover,
+     PopoverContent,
+     PopoverTrigger,
+ } from '@/components/ui/popover';
+-import { cn } from '@/lib/utils';
+-
+-const notifications = [
+-    {
+-        id: 1,
+-        title: 'Pemantauan Stok Rendah',
+-        message: 'Aset PRN-00123 (Laptop Dell) stok hanya 2 unit',
+-        time: '2m lalu',
+-        icon: AlertTriangle,
+-        type: 'warning',
+-        unread: true,
+-    },
+-    {
+-        id: 2,
+-        title: 'Audit Aset Selesai',
+-        message: 'Audit kuartalan Q3 2026 telah selesai dikonfirmasi',
+-        time: '15m lalu',
+-        icon: CheckCircle,
+-        type: 'success',
+-        unread: true,
+-    },
+-    {
+-        id: 3,
+-        title: 'Permohonan Mutasi Aset',
+-        message: 'Tim IT memohon pemindahan 15 unit monitor ke Gedung B',
+-        time: '1j lalu',
+-        icon: Info,
+-        type: 'info',
+-        unread: false,
+-    },
+-    {
+-        id: 4,
+-        title: 'Peringatan Pemeliharaan',
+-        message: 'AC Server Room jadwal pemeliharaan rutin besok pagi',
+-        time: '2j lalu',
+-        icon: Info,
+-        type: 'info',
+-        unread: false,
+-    },
+-];
+-
+-const typeStyles: Record<
+-    string,
+-    { iconColor: string; bgGradient: string; ringColor: string }
+-> = {
+-    warning: {
+-        iconColor: 'text-amber-500 dark:text-amber-400',
+-        bgGradient: 'from-amber-500/20 to-amber-500/5',
+-        ringColor: 'ring-amber-500/20',
+-    },
+-    success: {
+-        iconColor: 'text-emerald-500 dark:text-emerald-400',
+-        bgGradient: 'from-emerald-500/20 to-emerald-500/5',
+-        ringColor: 'ring-emerald-500/20',
+-    },
+-    info: {
+-        iconColor: 'text-[#2D82B7] dark:text-sky-300',
+-        bgGradient: 'from-[#2D82B7]/20 to-[#2D82B7]/5',
+-        ringColor: 'ring-[#2D82B7]/20',
+-    },
+-};
+ 
+ export function NotificationBell() {
+-    const unreadCount = notifications.filter((n) => n.unread).length;
+     const [open, setOpen] = useState(false);
+ 
+     return (
+-        <Popover onOpenChange={setOpen}>
++        <Popover open={open} onOpenChange={setOpen}>
+             <PopoverTrigger asChild>
+                 <Button
+                     variant="ghost"
+                     size="icon"
+                     aria-expanded={open}
+                     aria-label="Notifikasi"
+-                    className={cn(
+-                        'group relative size-10 rounded-2xl transition-all duration-300',
+-                        'bg-slate-100/80 dark:bg-slate-800/60',
+-                        'border border-slate-200/80 dark:border-slate-700/50',
+-                        'shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_8px_rgba(0,0,0,0.04)]',
+-                        'dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_4px_12px_rgba(0,0,0,0.3)]',
+-                        'hover:-translate-y-0.5 hover:border-[#2D82B7]/40 hover:bg-white dark:hover:bg-slate-800',
+-                        'hover:shadow-[0_6px_20px_-4px_rgba(45,130,183,0.25)]',
+-                        'data-[state=open]:border-[#2D82B7] data-[state=open]:bg-white dark:data-[state=open]:bg-slate-800',
+-                        'data-[state=open]:ring-4 data-[state=open]:ring-[#2D82B7]/15',
+-                        'data-[state=open]:shadow-[0_8px_24px_-4px_rgba(45,130,183,0.3)]'
+-                    )}
++                    className="size-10 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors duration-150 hover:bg-primary/5 hover:text-foreground data-[state=open]:bg-primary/5 data-[state=open]:text-foreground"
+                 >
+-                    {/* Soft Icon Badge Container */}
+-                    <div className="flex size-7 items-center justify-center rounded-xl bg-gradient-to-br from-[#2D82B7]/20 to-[#2D82B7]/5 text-[#2D82B7] ring-1 ring-[#2D82B7]/20 transition-transform duration-300 group-hover:scale-110 dark:from-[#2D82B7]/30 dark:to-[#2D82B7]/10 dark:text-sky-300">
+-                        <Bell className="size-4" />
+-                    </div>
+-
+-                    {/* Unread Glowing Pill Badge */}
+-                    {unreadCount > 0 && (
+-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-rose-600 px-1 text-[9px] font-extrabold text-white shadow-[0_2px_8px_rgba(244,63,94,0.5)] ring-2 ring-white dark:ring-slate-900">
+-                            {unreadCount > 9 ? '9+' : unreadCount}
+-                        </span>
+-                    )}
++                    <Bell className="size-5" aria-hidden="true" />
+                     <span className="sr-only">Notifikasi</span>
+                 </Button>
+             </PopoverTrigger>
+@@ -111,91 +28,25 @@ export function NotificationBell() {
+             <PopoverContent
+                 align="end"
+                 sideOffset={8}
+-                className={cn(
+-                    'w-80 sm:w-96 overflow-hidden rounded-2xl p-1.5 backdrop-blur-xl',
+-                    'border border-slate-200/80 bg-white/95 dark:border-slate-800/80 dark:bg-slate-900/95',
+-                    'shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.04)]',
+-                    'dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6)]'
+-                )}
++                className="w-80 rounded-lg border-border bg-popover p-0 shadow-overlay"
+             >
+-                {/* Header dengan Inset Soft Card */}
+-                <div className="flex items-center justify-between rounded-xl bg-slate-100/70 p-3 dark:bg-slate-800/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)]">
+-                    <div className="flex items-center gap-2">
+-                        <span className="font-heading text-xs font-extrabold text-slate-800 dark:text-slate-100">
+-                            Notifikasi
+-                        </span>
+-                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-extrabold text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
+-                            {unreadCount} baru
+-                        </span>
+-                    </div>
+-                    <button className="text-[10px] font-bold text-[#2D82B7] transition-colors hover:underline dark:text-sky-300">
+-                        Tandai Dibaca
+-                    </button>
+-                </div>
+-
+-                {/* Scrollable Notification List */}
+-                <div className="max-h-80 space-y-1 overflow-y-auto p-1 py-1.5 sidebar-scrollbar">
+-                    {notifications.map((notif) => {
+-                        const style =
+-                            typeStyles[notif.type] ?? typeStyles.info;
+-
+-                        return (
+-                            <div
+-                                key={notif.id}
+-                                className={cn(
+-                                    'group flex items-start gap-3 rounded-xl p-2.5 transition-all duration-200 cursor-pointer',
+-                                    'hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:translate-x-0.5',
+-                                    notif.unread &&
+-                                    'bg-[#2D82B7]/5 dark:bg-[#2D82B7]/10'
+-                                )}
+-                            >
+-                                {/* Soft Gradient Icon Badge */}
+-                                <div
+-                                    className={cn(
+-                                        'flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ring-1 transition-transform duration-200 group-hover:scale-105',
+-                                        style.bgGradient,
+-                                        style.ringColor
+-                                    )}
+-                                >
+-                                    <notif.icon
+-                                        className={cn('size-4', style.iconColor)}
+-                                    />
+-                                </div>
+-
+-                                {/* Content Details */}
+-                                <div className="min-w-0 flex-1">
+-                                    <div className="flex items-center justify-between gap-2">
+-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+-                                            {notif.title}
+-                                        </p>
+-                                        <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+-                                            {notif.time}
+-                                        </span>
+-                                    </div>
+-                                    <p className="mt-0.5 line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+-                                        {notif.message}
+-                                    </p>
+-                                </div>
+-
+-                                {/* Active Glowing Dot Indicator */}
+-                                {notif.unread && (
+-                                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#2D82B7] shadow-[0_0_6px_rgba(45,130,183,0.8)] dark:bg-sky-400" />
+-                                )}
+-                            </div>
+-                        );
+-                    })}
++                <div className="border-b border-border px-4 py-3">
++                    <span className="text-sm font-semibold text-foreground">
++                        Notifikasi
++                    </span>
+                 </div>
+ 
+-                {/* Soft Footer Button */}
+-                <div className="mt-1 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+-                    <Button
+-                        variant="ghost"
+-                        className="w-full justify-center rounded-xl py-2 text-xs font-bold text-[#2D82B7] transition-all duration-200 hover:bg-[#2D82B7]/10 dark:text-sky-300 dark:hover:bg-[#2D82B7]/20"
+-                    >
+-                        Lihat Semua Notifikasi
+-                    </Button>
++                {/* Empty state jujur — tidak ada data mock, tidak ada aksi mati */}
++                <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
++                    <Bell
++                        className="size-6 text-muted-foreground"
++                        aria-hidden="true"
++                    />
++                    <p className="text-sm text-muted-foreground">
++                        Belum ada notifikasi
++                    </p>
+                 </div>
+             </PopoverContent>
+         </Popover>
+     );
+-}
+\ No newline at end of file
++}
+diff --git a/resources/js/components/search-bar.tsx b/resources/js/components/search-bar.tsx
+index 764b23c..546f104 100644
+--- a/resources/js/components/search-bar.tsx
++++ b/resources/js/components/search-bar.tsx
+@@ -1,43 +1,65 @@
+ import { Search } from 'lucide-react';
++import { useEffect, useRef, type FormEvent } from 'react';
++import { router, usePage } from '@inertiajs/react';
++import { browse } from '@/routes/tenant/assets';
+ import { cn } from '@/lib/utils';
+ 
++type PageProps = {
++    tenant?: { code?: string } | null;
++};
++
+ export function SearchBar({ className }: { className?: string }) {
+-    return (
+-        <div className={cn('ml-2 min-w-48 flex-1 max-w-[360px] lg:ml-6', className)}>
+-            <div
+-                className={cn(
+-                    'group relative flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 transition-all duration-300',
+-                    // Soft UI Inset Surface Base
+-                    'bg-slate-100/80 dark:bg-slate-800/60',
+-                    'border border-slate-200/80 dark:border-slate-700/50',
+-                    'shadow-[inset_0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(255,255,255,0.8)]',
+-                    'dark:shadow-[inset_0_1px_3px_rgba(0,0,0,0.4),0_1px_1px_rgba(255,255,255,0.05)]',
+-                    // Interactive Focus Ring & Soft Glow Halo
+-                    'focus-within:border-[#2D82B7] focus-within:bg-white dark:focus-within:bg-slate-800',
+-                    'focus-within:ring-4 focus-within:ring-[#2D82B7]/15',
+-                    'focus-within:shadow-[0_8px_20px_-4px_rgba(45,130,183,0.25)]'
+-                )}
+-            >
+-                {/* Soft UI Icon Container */}
+-                <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-slate-200/60 text-slate-400 transition-colors duration-200 group-focus-within:bg-[#2D82B7]/15 group-focus-within:text-[#2D82B7] dark:bg-slate-700/50 dark:text-slate-500 dark:group-focus-within:text-sky-300">
+-                    <Search className="size-3.5 transition-transform duration-200 group-focus-within:scale-110" />
+-                </div>
++    const inputRef = useRef<HTMLInputElement>(null);
++    const page = usePage().props as unknown as PageProps;
++    const tenantCode = page.tenant?.code;
++
++    useEffect(() => {
++        const onKeyDown = (event: KeyboardEvent) => {
++            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
++                event.preventDefault();
++                inputRef.current?.focus();
++            }
++        };
++
++        window.addEventListener('keydown', onKeyDown);
++        return () => window.removeEventListener('keydown', onKeyDown);
++    }, []);
+ 
+-                {/* Input Text Field */}
++    const handleSubmit = (event: FormEvent) => {
++        event.preventDefault();
++        const value = inputRef.current?.value.trim();
++        if (!value || !tenantCode) {
++            return;
++        }
++        router.visit(
++            browse.url({ tenant: tenantCode }, { query: { search: value } }),
++        );
++    };
++
++    return (
++        <form
++            onSubmit={handleSubmit}
++            className={cn('min-w-48 max-w-[360px] flex-1', className)}
++        >
++            <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-card px-3 transition-colors duration-150 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
++                <Search
++                    className="size-4 shrink-0 text-muted-foreground"
++                    aria-hidden="true"
++                />
+                 <input
++                    ref={inputRef}
+                     type="text"
+                     name="search"
+                     id="search-aset"
++                    maxLength={100}
+                     aria-label="Cari aset, kode, atau barcode"
+                     placeholder="Cari aset, kode, atau barcode…"
+-                    className="w-full border-none bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
++                    className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none focus:outline-none"
+                 />
+-
+-                {/* Soft Elevated KBD Badge */}
+-                <kbd className="hidden shrink-0 items-center gap-0.5 rounded-lg border border-slate-200/90 bg-white/80 px-2 py-0.5 text-[10px] font-bold text-slate-500 shadow-[0_1px_3px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)] backdrop-blur-md md:flex dark:border-slate-700 dark:bg-slate-700/80 dark:text-slate-300 dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
++                <kbd className="hidden shrink-0 items-center gap-0.5 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground md:flex">
+                     <span className="text-[11px]">⌘</span>K
+                 </kbd>
+             </div>
+-        </div>
++        </form>
+     );
+-}
+\ No newline at end of file
++}
+diff --git a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/app-sidebar.tsx b/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/app-sidebar.tsx
+deleted file mode 100644
+index a1dffde..0000000
+--- a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/app-sidebar.tsx
++++ /dev/null
+@@ -1,118 +0,0 @@
+-import { Rocket, LifeBuoy, BookOpen } from 'lucide-react';
+-import AppLogo from '@/components/app-logo';
+-import { NavCollapse } from '@/components/nav-collapse';
+-import { Button } from '@/components/ui/button';
+-import { ScrollArea } from '@/components/ui/scroll-area';
+-import {
+-    Sidebar,
+-    SidebarContent,
+-    SidebarGroup,
+-    SidebarGroupContent,
+-    SidebarHeader,
+-    SidebarMenu,
+-    SidebarMenuButton,
+-    SidebarMenuItem,
+-} from '@/components/ui/sidebar';
+-import { sidebarData } from '@/data/sidebar';
+-
+-const navItems = [
+-    {
+-        title: 'Help Center',
+-        url: '/theme-pages/faq',
+-        icon: LifeBuoy,
+-    },
+-    {
+-        title: 'Documentation',
+-        url: '#',
+-        icon: BookOpen,
+-    },
+-];
+-
+-export function AppSidebar() {
+-    return (
+-        <Sidebar className="h-full px-0 **:data-[slot=sidebar-inner]:h-full **:data-[slot=sidebar-inner]:bg-background">
+-            <div className="flex flex-col gap-2">
+-                {/* ---------------- Header ---------------- */}
+-                <SidebarHeader className="px-4 py-4">
+-                    <SidebarMenu>
+-                        <SidebarMenuItem>
+-                            <a href="/" className="h-full w-full">
+-                                <AppLogo />
+-                            </a>
+-                        </SidebarMenuItem>
+-                    </SidebarMenu>
+-                </SidebarHeader>
+-
+-                {/* ---------------- Content ---------------- */}
+-                <SidebarContent className="overflow-hidden">
+-                    <ScrollArea className="h-[calc(100vh-100px)]">
+-                        <div className="px-4">
+-                            <NavCollapse groups={sidebarData.navGroups} />
+-                        </div>
+-                        {/* card */}
+-                        <div className="px-4 pt-5">
+-                            <div className="-mx-4 border-t border-b border-border px-5 py-5">
+-                                <div className="flex flex-col gap-5">
+-                                    {/* Plan info */}
+-                                    <div className="flex flex-col gap-2">
+-                                        <div className="flex flex-col gap-4">
+-                                            {/* Header row */}
+-                                            <div className="flex items-center justify-between">
+-                                                <div className="flex items-center gap-2">
+-                                                    <Rocket className="size-5 shrink-0" />
+-                                                    <span className="text-base leading-6 font-medium text-foreground">
+-                                                        Basic Plan
+-                                                    </span>
+-                                                </div>
+-                                                <span className="text-base leading-6 font-medium text-foreground">
+-                                                    70%
+-                                                </span>
+-                                            </div>
+-                                            {/* Progress bar */}
+-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+-                                                <div className="h-full w-[70%] rounded-full bg-foreground" />
+-                                            </div>
+-                                        </div>
+-                                        {/* Usage text */}
+-                                        <p className="text-center text-sm leading-5 font-normal text-muted-foreground">
+-                                            68/100 monthly limit used
+-                                        </p>
+-                                    </div>
+-                                    {/* Upgrade button */}
+-                                    <Button className="h-9 w-full cursor-pointer rounded-lg bg-foreground text-sm font-medium text-background hover:bg-foreground/90">
+-                                        Upgrade
+-                                    </Button>
+-                                </div>
+-                            </div>
+-                            <SidebarGroup className="mt-auto pt-4">
+-                                <SidebarGroupContent>
+-                                    <SidebarMenu className="">
+-                                        {navItems.map((item) => (
+-                                            <SidebarMenuItem key={item.title}>
+-                                                <SidebarMenuButton
+-                                                    size="lg"
+-                                                    className="h-full cursor-pointer"
+-                                                >
+-                                                    <a href={item.url}>
+-                                                        <div className="flex w-full items-center gap-3">
+-                                                            <item.icon className="size-5 shrink-0 shadow-none" />
+-                                                            <div className="hide-menu flex flex-1 flex-col text-left text-sm leading-tight whitespace-nowrap">
+-                                                                <span className="truncate font-medium">
+-                                                                    {item.title}
+-                                                                </span>
+-                                                            </div>
+-                                                        </div>
+-                                                    </a>
+-                                                </SidebarMenuButton>
+-                                            </SidebarMenuItem>
+-                                        ))}
+-                                    </SidebarMenu>
+-                                </SidebarGroupContent>
+-                            </SidebarGroup>
+-                        </div>
+-                    </ScrollArea>
+-                </SidebarContent>
+-            </div>
+-        </Sidebar>
+-    );
+-}
+diff --git a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-language.tsx b/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-language.tsx
+deleted file mode 100644
+index c32b053..0000000
+--- a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-language.tsx
++++ /dev/null
+@@ -1,84 +0,0 @@
+-import { useState } from 'react';
+-import type { ReactElement } from 'react';
+-import {
+-    DropdownMenu,
+-    DropdownMenuContent,
+-    DropdownMenuRadioGroup,
+-    DropdownMenuRadioItem,
+-    DropdownMenuTrigger,
+-} from '@/components/ui/dropdown-menu';
+-
+-type Props = {
+-    trigger: ReactElement;
+-    defaultOpen?: boolean;
+-    align?: 'start' | 'center' | 'end';
+-};
+-
+-type Language = {
+-    value: string;
+-    label: string;
+-    icon: string;
+-};
+-
+-const LANGUAGES: Language[] = [
+-    {
+-        value: 'english',
+-        label: 'English (UK)',
+-        icon: 'https://images.shadcnspace.com/assets/flags/flag-us.svg',
+-    },
+-    {
+-        value: 'chinese',
+-        label: '中国人 (Chinese)',
+-        icon: 'https://images.shadcnspace.com/assets/flags/flag-china.svg',
+-    },
+-    {
+-        value: 'french',
+-        label: 'français (French)',
+-        icon: 'https://images.shadcnspace.com/assets/flags/flag-france.svg',
+-    },
+-    {
+-        value: 'arabic',
+-        label: 'عربي (Arabic)',
+-        icon: 'https://images.shadcnspace.com/assets/flags/flag-australia.svg',
+-    },
+-];
+-
+-const itemClass =
+-    'cursor-pointer gap-2 pl-2 text-sm data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground [&>span]:hidden';
+-
+-const LanguageDropdown = ({ trigger, defaultOpen, align = 'end' }: Props) => {
+-    const [language, setLanguage] = useState(LANGUAGES[0].value);
+-
+-    return (
+-        <DropdownMenu defaultOpen={defaultOpen}>
+-            <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+-
+-            <DropdownMenuContent className="w-50" align={align}>
+-                <DropdownMenuRadioGroup
+-                    value={language}
+-                    onValueChange={setLanguage}
+-                    className="flex flex-col gap-2"
+-                >
+-                    {LANGUAGES.map(({ value, label, icon }) => (
+-                        <DropdownMenuRadioItem
+-                            key={value}
+-                            value={value}
+-                            className={itemClass}
+-                        >
+-                            <img
+-                                src={icon}
+-                                alt={label}
+-                                width={16}
+-                                height={16}
+-                                className="rounded-full"
+-                            />
+-                            {label}
+-                        </DropdownMenuRadioItem>
+-                    ))}
+-                </DropdownMenuRadioGroup>
+-            </DropdownMenuContent>
+-        </DropdownMenu>
+-    );
+-};
+-
+-export default LanguageDropdown;
+diff --git a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile.tsx b/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile.tsx
+deleted file mode 100644
+index 7215d0d..0000000
+--- a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/dropdown-profile.tsx
++++ /dev/null
+@@ -1,177 +0,0 @@
+-import { Link } from '@inertiajs/react';
+-import { Bookmark, LogOut, ReceiptText, Settings, User } from 'lucide-react';
+-import type { LucideIcon } from 'lucide-react';
+-import type { ReactElement } from 'react';
+-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+-import {
+-    DropdownMenu,
+-    DropdownMenuContent,
+-    DropdownMenuGroup,
+-    DropdownMenuItem,
+-    DropdownMenuLabel,
+-    DropdownMenuSeparator,
+-    DropdownMenuTrigger,
+-} from '@/components/ui/dropdown-menu';
+-
+-export type ProfileLink = {
+-    label: string;
+-    icon: LucideIcon;
+-    href: string;
+-};
+-
+-type ProfileUser = {
+-    name: string;
+-    email: string;
+-    initials: string;
+-    avatarUrl?: string | null;
+-};
+-
+-type Props = {
+-    trigger: ReactElement;
+-    defaultOpen?: boolean;
+-    align?: 'start' | 'center' | 'end';
+-    user?: ProfileUser;
+-    links?: ProfileLink[];
+-    settingsLinks?: ProfileLink[];
+-    onSignOut?: () => void;
+-};
+-
+-type MenuItem = {
+-    label: string;
+-    icon: LucideIcon;
+-    destructive?: boolean;
+-};
+-
+-const PROFILE_ITEMS: MenuItem[] = [
+-    { label: 'My Profile', icon: User },
+-    { label: 'My Subscription', icon: Bookmark },
+-    { label: 'My Invoice', icon: ReceiptText },
+-];
+-
+-const SETTINGS_ITEMS: MenuItem[] = [
+-    { label: 'Account Settings', icon: Settings },
+-];
+-
+-const LOGOUT_ITEM: MenuItem = {
+-    label: 'Signout',
+-    icon: LogOut,
+-    destructive: true,
+-};
+-
+-const STATIC_USER: ProfileUser = {
+-    name: 'David McMichael',
+-    email: 'david.mcmichael@example.com',
+-    initials: 'DM',
+-    avatarUrl: 'https://images.shadcnspace.com/assets/profiles/user-11.jpg',
+-};
+-
+-const itemClass = 'px-4 py-2.5 text-base cursor-pointer gap-3';
+-
+-const userInfoClass = 'flex items-center gap-4 px-4 py-2.5 font-normal';
+-
+-const renderStaticItems = (items: MenuItem[]) =>
+-    items.map(({ label, icon: Icon }) => (
+-        <DropdownMenuItem key={label} className={itemClass}>
+-            <Icon size={20} className="text-foreground" />
+-            <span>{label}</span>
+-        </DropdownMenuItem>
+-    ));
+-
+-const renderLinkItems = (items: ProfileLink[]) =>
+-    items.map(({ label, icon: Icon, href }) => (
+-        <DropdownMenuItem key={label} asChild className={itemClass}>
+-            <Link href={href} prefetch>
+-                <Icon size={20} className="text-foreground" />
+-                <span>{label}</span>
+-            </Link>
+-        </DropdownMenuItem>
+-    ));
+-
+-const ProfileDropdown = ({
+-    trigger,
+-    defaultOpen,
+-    align = 'end',
+-    user,
+-    links,
+-    settingsLinks,
+-    onSignOut,
+-}: Props) => {
+-    const userInfo = user ?? STATIC_USER;
+-
+-    return (
+-        <DropdownMenu defaultOpen={defaultOpen}>
+-            <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+-
+-            <DropdownMenuContent className="w-80" align={align}>
+-                <DropdownMenuGroup>
+-                    {/* User Info */}
+-                    <DropdownMenuLabel className={userInfoClass}>
+-                        <div className="relative">
+-                            <Avatar className="size-10">
+-                                {userInfo.avatarUrl ? (
+-                                    <AvatarImage
+-                                        src={userInfo.avatarUrl}
+-                                        alt={userInfo.name}
+-                                    />
+-                                ) : null}
+-                                <AvatarFallback>
+-                                    {userInfo.initials}
+-                                </AvatarFallback>
+-                            </Avatar>
+-                            <span className="absolute right-0 bottom-0 size-2 rounded-full bg-success ring-2 ring-card" />
+-                        </div>
+-
+-                        <div className="flex flex-col">
+-                            <span className="text-lg font-semibold text-foreground">
+-                                {userInfo.name}
+-                            </span>
+-                            <span className="text-sm text-muted-foreground">
+-                                {userInfo.email}
+-                            </span>
+-                        </div>
+-                    </DropdownMenuLabel>
+-
+-                    <DropdownMenuSeparator />
+-
+-                    {/* Main Links */}
+-                    {links
+-                        ? renderLinkItems(links)
+-                        : renderStaticItems(PROFILE_ITEMS)}
+-
+-                    <DropdownMenuSeparator />
+-
+-                    {/* Settings */}
+-                    <DropdownMenuGroup>
+-                        {settingsLinks
+-                            ? renderLinkItems(settingsLinks)
+-                            : renderStaticItems(SETTINGS_ITEMS)}
+-                    </DropdownMenuGroup>
+-
+-                    <DropdownMenuSeparator />
+-
+-                    {/* Logout */}
+-                    {onSignOut ? (
+-                        <DropdownMenuItem
+-                            variant="destructive"
+-                            className={itemClass}
+-                            onSelect={onSignOut}
+-                        >
+-                            <LogOut size={20} />
+-                            <span>Keluar</span>
+-                        </DropdownMenuItem>
+-                    ) : (
+-                        <DropdownMenuItem
+-                            variant="destructive"
+-                            className={itemClass}
+-                        >
+-                            <LOGOUT_ITEM.icon size={20} />
+-                            <span>{LOGOUT_ITEM.label}</span>
+-                        </DropdownMenuItem>
+-                    )}
+-                </DropdownMenuGroup>
+-            </DropdownMenuContent>
+-        </DropdownMenu>
+-    );
+-};
+-
+-export default ProfileDropdown;
+diff --git a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/nav-main.tsx b/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/nav-main.tsx
+deleted file mode 100644
+index b306635..0000000
+--- a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/nav-main.tsx
++++ /dev/null
+@@ -1,276 +0,0 @@
+-import { ChevronRight } from 'lucide-react';
+-import type { LucideIcon } from 'lucide-react';
+-import * as React from 'react';
+-import {
+-    Collapsible,
+-    CollapsibleTrigger,
+-    CollapsibleContent,
+-} from '@/components/ui/collapsible';
+-import {
+-    SidebarGroup,
+-    SidebarGroupLabel,
+-    SidebarMenu,
+-    SidebarMenuButton,
+-    SidebarMenuItem,
+-    SidebarMenuSub,
+-    SidebarMenuSubItem,
+-    SidebarMenuSubButton,
+-    useSidebar,
+-} from '@/components/ui/sidebar';
+-import {
+-    Tooltip,
+-    TooltipContent,
+-    TooltipTrigger,
+-} from '@/components/ui/tooltip';
+-import { cn } from '@/lib/utils';
+-
+-export type NavItem = {
+-    label?: string;
+-    isSection?: boolean;
+-    title?: string;
+-    icon?: LucideIcon;
+-    href?: string;
+-    children?: NavItem[];
+-};
+-
+-export function NavMain({ items }: { items: NavItem[] }) {
+-    const [activeParent, setActiveParent] = React.useState<string | null>(
+-        items.find((i) => !i.isSection)?.title || null,
+-    );
+-    const [activeChild, setActiveChild] = React.useState<string | null>(null);
+-
+-    return (
+-        <>
+-            {items.map((item, index) => (
+-                <NavMainItem
+-                    key={item.title || item.label || index}
+-                    item={item}
+-                    activeParent={activeParent}
+-                    setActiveParent={setActiveParent}
+-                    activeChild={activeChild}
+-                    setActiveChild={setActiveChild}
+-                />
+-            ))}
+-        </>
+-    );
+-}
+-
+-function NavMainItem({
+-    item,
+-    activeParent,
+-    setActiveParent,
+-    activeChild,
+-    setActiveChild,
+-}: {
+-    item: NavItem;
+-    activeParent: string | null;
+-    activeChild: string | null;
+-    setActiveParent: (val: string) => void;
+-    setActiveChild: (val: string | null) => void;
+-}) {
+-    const hasChildren = !!item.children?.length;
+-    const isParentActive = activeParent === item.title;
+-    // Falls back to the active parent until the user toggles it manually.
+-    const [openOverride, setOpenOverride] = React.useState<boolean | null>(
+-        null,
+-    );
+-    const isOpen = openOverride ?? isParentActive;
+-    const { state, isMobile } = useSidebar();
+-    const isCollapsed = state === 'collapsed';
+-
+-    // Section label
+-    if (item.isSection && item.label) {
+-        return (
+-            <SidebarGroup className="p-0 pt-5 first:pt-0">
+-                <SidebarGroupLabel className="p-0 text-xs font-medium text-sidebar-foreground uppercase">
+-                    {item.label}
+-                </SidebarGroupLabel>
+-            </SidebarGroup>
+-        );
+-    }
+-
+-    // Item with children → collapsible
+-    if (hasChildren && item.title) {
+-        return (
+-            <SidebarGroup className="p-0">
+-                <SidebarMenu>
+-                    <Collapsible open={isOpen} onOpenChange={setOpenOverride}>
+-                        <SidebarMenuItem>
+-                            <Tooltip>
+-                                <TooltipTrigger asChild>
+-                                    <CollapsibleTrigger asChild>
+-                                        <SidebarMenuButton
+-                                            id={`nav-main-trigger-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+-                                            isActive={isParentActive}
+-                                            onClick={() =>
+-                                                setActiveParent(item.title!)
+-                                            }
+-                                            className={cn(
+-                                                'h-9 w-full cursor-pointer px-3 py-2 text-sm font-medium transition-colors',
+-                                                isParentActive
+-                                                    ? 'bg-primary! text-primary-foreground!'
+-                                                    : '',
+-                                            )}
+-                                        >
+-                                            {item.icon && (
+-                                                <item.icon size={16} />
+-                                            )}
+-                                            <span>{item.title}</span>
+-                                            <ChevronRight
+-                                                className={cn(
+-                                                    'ml-auto transition-transform duration-200',
+-                                                    isOpen && 'rotate-90',
+-                                                )}
+-                                            />
+-                                        </SidebarMenuButton>
+-                                    </CollapsibleTrigger>
+-                                </TooltipTrigger>
+-                                <TooltipContent
+-                                    side="right"
+-                                    align="center"
+-                                    hidden={!isCollapsed || isMobile}
+-                                >
+-                                    {item.title}
+-                                </TooltipContent>
+-                            </Tooltip>
+-                            <CollapsibleContent>
+-                                <SidebarMenuSub className="me-0 pe-0">
+-                                    {item.children!.map((child, index) => (
+-                                        <NavMainSubItem
+-                                            key={child.title || index}
+-                                            item={child}
+-                                            activeParent={activeParent}
+-                                            setActiveParent={setActiveParent}
+-                                            activeChild={activeChild}
+-                                            setActiveChild={setActiveChild}
+-                                            parentTitle={item.title}
+-                                        />
+-                                    ))}
+-                                </SidebarMenuSub>
+-                            </CollapsibleContent>
+-                        </SidebarMenuItem>
+-                    </Collapsible>
+-                </SidebarMenu>
+-            </SidebarGroup>
+-        );
+-    }
+-
+-    // Item without children
+-    if (item.title) {
+-        return (
+-            <SidebarGroup className="p-0">
+-                <SidebarMenu>
+-                    <SidebarMenuItem>
+-                        <SidebarMenuButton
+-                            id={`nav-main-button-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+-                            tooltip={item.title}
+-                            isActive={isParentActive}
+-                            onClick={() => {
+-                                setActiveParent(item.title!);
+-                                setActiveChild(null);
+-                            }}
+-                            className={cn(
+-                                'h-9 cursor-pointer px-3 py-2 text-sm font-medium transition-colors',
+-                                isParentActive
+-                                    ? 'bg-primary! text-primary-foreground!'
+-                                    : '',
+-                            )}
+-                            asChild
+-                        >
+-                            <a href={item.href ?? '#'}>
+-                                {item.icon && <item.icon />}
+-                                {item.title}
+-                            </a>
+-                        </SidebarMenuButton>
+-                    </SidebarMenuItem>
+-                </SidebarMenu>
+-            </SidebarGroup>
+-        );
+-    }
+-
+-    return null;
+-}
+-
+-function NavMainSubItem({
+-    item,
+-    activeParent,
+-    setActiveParent,
+-    activeChild,
+-    setActiveChild,
+-    parentTitle,
+-}: {
+-    item: NavItem;
+-    activeParent: string | null;
+-    activeChild: string | null;
+-    setActiveParent: (val: string) => void;
+-    setActiveChild: (val: string | null) => void;
+-    parentTitle?: string;
+-}) {
+-    const hasChildren = !!item.children?.length;
+-    const [isOpen, setIsOpen] = React.useState(false);
+-
+-    if (hasChildren && item.title) {
+-        return (
+-            <SidebarMenuSubItem>
+-                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+-                    <CollapsibleTrigger asChild className="w-full">
+-                        <SidebarMenuSubButton
+-                            id={`nav-sub-trigger-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+-                            className="h-9 px-3 py-2 text-sm font-medium"
+-                        >
+-                            {item.icon && <item.icon />}
+-                            <span>{item.title}</span>
+-                            <ChevronRight
+-                                className={cn(
+-                                    'ml-auto transition-transform duration-200',
+-                                    isOpen && 'rotate-90',
+-                                )}
+-                            />
+-                        </SidebarMenuSubButton>
+-                    </CollapsibleTrigger>
+-                    <CollapsibleContent>
+-                        <SidebarMenuSub className="me-0 pe-0">
+-                            {item.children!.map((child, index) => (
+-                                <NavMainSubItem
+-                                    key={child.title || index}
+-                                    item={child}
+-                                    activeParent={activeParent}
+-                                    setActiveParent={setActiveParent}
+-                                    activeChild={activeChild}
+-                                    setActiveChild={setActiveChild}
+-                                    parentTitle={parentTitle}
+-                                />
+-                            ))}
+-                        </SidebarMenuSub>
+-                    </CollapsibleContent>
+-                </Collapsible>
+-            </SidebarMenuSubItem>
+-        );
+-    }
+-
+-    if (item.title) {
+-        return (
+-            <SidebarMenuSubItem className="w-full">
+-                <SidebarMenuSubButton
+-                    id={`nav-sub-button-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+-                    className={cn(
+-                        'w-full transition-colors',
+-                        activeChild === item.title
+-                            ? 'bg-muted! text-foreground!'
+-                            : '',
+-                    )}
+-                    isActive={activeChild === item.title}
+-                    onClick={() => {
+-                        setActiveParent(parentTitle || '');
+-                        setActiveChild(item.title!);
+-                    }}
+-                    asChild
+-                >
+-                    <a href={item.href ?? '#'}>{item.title}</a>
+-                </SidebarMenuSubButton>
+-            </SidebarMenuSubItem>
+-        );
+-    }
+-
+-    return null;
+-}
+diff --git a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/search.tsx b/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/search.tsx
+deleted file mode 100644
+index 354a4b2..0000000
+--- a/resources/js/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/search.tsx
++++ /dev/null
+@@ -1,103 +0,0 @@
+-import { SearchIcon } from 'lucide-react';
+-import { useState } from 'react';
+-import SimpleBar from 'simplebar-react';
+-import 'simplebar-react/dist/simplebar.min.css';
+-import {
+-    Dialog,
+-    DialogContent,
+-    DialogTitle,
+-    DialogTrigger,
+-} from '@/components/ui/dialog';
+-import { Input } from '@/components/ui/input';
+-
+-interface SearchType {
+-    href: string;
+-    title: string;
+-}
+-
+-const SearchLinks: SearchType[] = [
+-    {
+-        title: 'Modern',
+-        href: '/',
+-    },
+-    {
+-        title: 'eCommerce',
+-        href: '/dashboards/eCommerce',
+-    },
+-    {
+-        title: 'General',
+-        href: '/dashboards/general',
+-    },
+-    {
+-        title: 'Music',
+-        href: '/dashboards/music',
+-    },
+-    {
+-        title: 'General',
+-        href: '/dashboards/general',
+-    },
+-];
+-
+-interface SearchProps {
+-    links?: SearchType[];
+-}
+-
+-const Search = ({ links }: SearchProps) => {
+-    const [openModal, setOpenModal] = useState(false);
+-    const items = links ?? SearchLinks;
+-
+-    return (
+-        <Dialog open={openModal} onOpenChange={setOpenModal}>
+-            <DialogTrigger asChild>
+-                <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-accent sm:w-auto sm:min-w-48 sm:justify-start sm:gap-2 sm:rounded-md sm:border sm:border-border sm:px-4 sm:py-1.5 sm:hover:bg-transparent">
+-                    <SearchIcon
+-                        size={16}
+-                        className="shrink-0 text-muted-foreground"
+-                    />
+-                    <span className="hidden text-sm font-normal text-muted-foreground sm:block">
+-                        Type to search...
+-                    </span>
+-                </button>
+-            </DialogTrigger>
+-            <DialogContent className="w-full max-w-2xl gap-0 p-0 sm:max-w-2xl [&>button]:hidden">
+-                <DialogTitle className="sr-only">Search</DialogTitle>
+-                <div className="border-b border-border p-6">
+-                    <Input
+-                        placeholder="Search links..."
+-                        className="flex-1 rounded-md pl-4 focus-visible:shadow-none focus-visible:ring-0"
+-                    />
+-                </div>
+-
+-                <div className="flex-1 overflow-auto pt-0">
+-                    <SimpleBar className="max-h-72 px-6">
+-                        <h5 className="pt-5 text-lg font-medium">
+-                            Quick Page Links
+-                        </h5>
+-                        {items.length > 0 ? (
+-                            items.map((link, index) => (
+-                                <a
+-                                    href={link.href}
+-                                    className="group relative px-3 py-1"
+-                                    key={index}
+-                                >
+-                                    <h6 className="mb-1 text-sm font-medium group-hover:text-primary">
+-                                        {link.title}
+-                                    </h6>
+-                                    <p className="text-xs font-medium text-muted-foreground">
+-                                        {link.href}
+-                                    </p>
+-                                </a>
+-                            ))
+-                        ) : (
+-                            <p className="py-4 text-center text-sm text-muted-foreground">
+-                                No results found.
+-                            </p>
+-                        )}
+-                    </SimpleBar>
+-                </div>
+-            </DialogContent>
+-        </Dialog>
+-    );
+-};
+-
+-export default Search;
+diff --git a/resources/js/components/tenant-selector.tsx b/resources/js/components/tenant-selector.tsx
+index a94b6bc..2d15c3a 100644
+--- a/resources/js/components/tenant-selector.tsx
++++ b/resources/js/components/tenant-selector.tsx
+@@ -92,7 +92,7 @@ export function TenantSelector() {
+                         className={cn(
+                             'flex items-center gap-2 px-4 py-2 text-sm',
+                             currentTenant?.code === tenant.code
+-                                ? 'bg-primary text-primary-foreground'
++                                ? 'bg-primary-muted text-primary'
+                                 : '',
+                         )}
+                         onClick={() => handleSwitch(tenant.code)}
+@@ -101,7 +101,7 @@ export function TenantSelector() {
+                         {currentTenant?.code === tenant.code && (
+                             <span className="ml-auto text-xs">
+                                 <span className="flex items-center gap-1">
+-                                    <span className="size-2 rounded-full bg-green-500" />
++                                    <span className="size-2 rounded-full bg-primary" />
+                                     Aktif
+                                 </span>
+                             </span>
+diff --git a/resources/js/components/theme-toggle.tsx b/resources/js/components/theme-toggle.tsx
+index 3905b30..ff75c06 100644
+--- a/resources/js/components/theme-toggle.tsx
++++ b/resources/js/components/theme-toggle.tsx
+@@ -11,61 +11,26 @@ export function ThemeToggle() {
+         setIsMounted(true);
+     }, []);
+ 
+-    const toggleTheme = () => {
+-        const next = resolvedAppearance === 'light' ? 'dark' : 'light';
+-        const toggleMode = () => updateAppearance(next);
+-
+-        if (!(document as Document & { startViewTransition?: (cb: () => void) => void }).startViewTransition) {
+-            toggleMode();
+-            return;
+-        }
+-
+-        const transition = (
+-            document as Document & {
+-                startViewTransition: (cb: () => void) => { ready: Promise<void> };
+-            }
+-        ).startViewTransition(toggleMode);
+-
+-        transition.ready.then(() => {
+-            document.documentElement.animate(
+-                {
+-                    clipPath: ['inset(0 0 100% 0)', 'inset(0)'],
+-                },
+-                {
+-                    duration: 800,
+-                    easing: 'ease-in-out',
+-                    pseudoElement: '::view-transition-new(root)',
+-                },
+-            );
+-        });
+-    };
+-
+     if (!isMounted) {
+-        // Render nothing on the server to avoid hydration mismatch
+-        return null;
++        // Placeholder ukuran tetap agar tidak ada layout shift saat mount
++        return <div className="size-10 shrink-0" aria-hidden="true" />;
+     }
+ 
++    const isDark = appearance === 'dark' || resolvedAppearance === 'dark';
++
+     return (
+-        <div>
+-            {appearance === 'dark' || resolvedAppearance === 'dark' ? (
+-                <Button
+-                    variant="ghost"
+-                    className="h-10 w-10 hover:bg-primary/5 rounded-full cursor-pointer"
+-                    onClick={toggleTheme}
+-                    aria-label="Ganti Tema Terang"
+-                >
+-                    <Sun className="size-5" />
+-                </Button>
++        <Button
++            variant="ghost"
++            size="icon"
++            className="size-10 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors duration-150 hover:bg-primary/5 hover:text-foreground"
++            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
++            aria-label={isDark ? 'Ganti Tema Terang' : 'Ganti Tema Gelap'}
++        >
++            {isDark ? (
++                <Sun className="size-5" aria-hidden="true" />
+             ) : (
+-                <Button
+-                    variant="ghost"
+-                    className="h-10 w-10 hover:bg-primary/5 rounded-full cursor-pointer"
+-                    onClick={toggleTheme}
+-                    aria-label="Ganti Tema Gelap"
+-                >
+-                    <Moon className="size-5" />
+-                </Button>
++                <Moon className="size-5" aria-hidden="true" />
+             )}
+-        </div>
++        </Button>
+     );
+ }
+diff --git a/resources/js/components/ui/input.tsx b/resources/js/components/ui/input.tsx
+index 434597b..5fddcbb 100644
+--- a/resources/js/components/ui/input.tsx
++++ b/resources/js/components/ui/input.tsx
+@@ -8,8 +8,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+       type={type}
+       data-slot="input"
+       className={cn(
+-        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-surface-sunken px-3 py-1 text-base shadow-inset transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+-        "focus-visible:border-brand focus-visible:shadow-glow-primary",
++        "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-card px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
++        "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40",
+         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+         className
+       )}
+diff --git a/resources/js/layouts/app/dashboard-layout.tsx b/resources/js/layouts/app/dashboard-layout.tsx
+index 5f9277f..477ed28 100644
+--- a/resources/js/layouts/app/dashboard-layout.tsx
++++ b/resources/js/layouts/app/dashboard-layout.tsx
+@@ -1,10 +1,47 @@
+-import type { ReactNode } from 'react';
++import { isValidElement, type ReactNode } from 'react';
++import { usePage } from '@inertiajs/react';
+ import { AppContent } from '@/components/app-content';
+ import { AppShell } from '@/components/app-shell';
+-import { DashboardLayoutHeader } from '@/components/dashboard-layout-header';
+-import { AppSidebar } from '@/components/shadcn-dashboard/blocks/dashboard-layout/dashboard-layout-01/app-sidebar';
++import { AppSidebar } from '@/components/app-sidebar';
++import { AppSidebarHeader } from '@/components/app-sidebar-header';
++import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
++
++type PageLayoutMeta = {
++    breadcrumbs?: BreadcrumbItemType[];
++};
++
++/**
++ * Membaca metadata `breadcrumbs` dari static `Page.layout` (konvensi halaman:
++ * `PageName.layout = { breadcrumbs: [...] }` atau fungsi yang menerima page props).
++ */
++function resolveBreadcrumbs(
++    children: ReactNode,
++    pageProps: Record<string, unknown>,
++): BreadcrumbItemType[] {
++    if (!isValidElement(children)) {
++        return [];
++    }
++
++    const layout = (children.type as { layout?: unknown }).layout;
++    if (!layout) {
++        return [];
++    }
++
++    const meta = (
++        typeof layout === 'function'
++            ? (layout as (props: Record<string, unknown>) => PageLayoutMeta)(
++                  pageProps,
++              )
++            : layout
++    ) as PageLayoutMeta | null;
++
++    return Array.isArray(meta?.breadcrumbs) ? meta.breadcrumbs : [];
++}
+ 
+ export default function DashboardLayout({ children }: { children: ReactNode }) {
++    const { props } = usePage();
++    const breadcrumbs = resolveBreadcrumbs(children, props);
++
+     return (
+         <AppShell variant="sidebar">
+             <AppSidebar />
+@@ -12,7 +49,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
+                 variant="sidebar"
+                 className="overflow-x-hidden bg-transparent"
+             >
+-                <DashboardLayoutHeader />
++                <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                 {children}
+             </AppContent>
+         </AppShell>
+diff --git a/resources/js/lib/sidebar-links.ts b/resources/js/lib/sidebar-links.ts
+deleted file mode 100644
+index 0642bee..0000000
+--- a/resources/js/lib/sidebar-links.ts
++++ /dev/null
+@@ -1,58 +0,0 @@
+-import { sidebarData } from '@/data/sidebar';
+-import type { SidebarNavGroup, SidebarNavItem } from '@/types/navigation';
+-
+-export type SidebarLink = {
+-    title: string;
+-    href: string;
+-};
+-
+-/**
+- * Prepends the active tenant code to an app path so links stay scoped to
+- * the current tenant: `/assets` with tenant `acme` becomes `/acme/assets`.
+- *
+- * Without an active tenant (super admin) the URL is returned untouched, and
+- * redundant slashes are trimmed so `/`, `` and `//foo` never produce `//`.
+- */
+-export function toTenantUrl(url: string, tenantCode: string | null): string {
+-    if (!tenantCode) {
+-        return url;
+-    }
+-
+-    const path = url.replace(/^\/+|\/+$/g, '');
+-
+-    if (path === '') {
+-        return `/${tenantCode}`;
+-    }
+-
+-    return `/${tenantCode}/${path}`;
+-}
+-
+-/**
+- * Flattens every sidebar item — including nested sub-items on `items` —
+- * into plain `{ title, href }` links carrying the tenant prefix.
+- *
+- * Items without a `url` (group labels, icon-only entries) are skipped so the
+- * result never contains an undefined `href`.
+- */
+-export function getSidebarLinks(tenantCode: string | null): SidebarLink[] {
+-    const links: SidebarLink[] = [];
+-
+-    const collect = (item: SidebarNavItem): void => {
+-        if (item.url) {
+-            links.push({
+-                title: item.title,
+-                href: toTenantUrl(item.url, tenantCode),
+-            });
+-        }
+-
+-        if (item.items?.length) {
+-            item.items.forEach(collect);
+-        }
+-    };
+-
+-    sidebarData.navGroups.forEach((group: SidebarNavGroup) => {
+-        group.items.forEach(collect);
+-    });
+-
+-    return links;
+-}
+diff --git a/routes/web.php b/routes/web.php
+index 5d09c63..9b9f8ea 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -191,7 +191,7 @@
+ Route::get('auth/error', function () {
+     $message = session('error', 'Terjadi kesalahan saat login SSO.');
+ 
+-    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 500)
++    return response("<h1>Login Gagal</h1><p>{$message}</p><p><a href='/auth/saml/login'>Coba lagi</a></p>", 401)
+         ->header('Content-Type', 'text/html');
+ })->name('auth.error');
+ 
+
+=== main OIDCController
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Actions\CreateTenantAction;
+use App\Models\Department;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Providers\OIDCProvider;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
+class OIDCController extends Controller
+{
+    public function __construct(
+        private CreateTenantAction $createTenant,
+    ) {}
+
+    public function redirect(): RedirectResponse
+    {
+        return Socialite::driver('oidc')->redirect();
+    }
+
+    public function callback(Request $request): RedirectResponse
+    {
+        try {
+            /** @var OIDCProvider $driver */
+            $driver = Socialite::driver('oidc');
+            $ssoUser = $driver->stateless()->user();
+
+            $rawData = $ssoUser->user;
+            $ssoCompanyId = $rawData['company'] ?? null;
+            Log::info('OIDC Raw Data:', $rawData);
+            $ssoDepartmentName = is_array($rawData['department'] ?? null)
+                ? ($rawData['department']['name'] ?? $rawData['department']['id'] ?? null)
+                : ($rawData['department'] ?? null);
+
+            $user = User::where('email', $ssoUser->getEmail())->first();
+
+            $departmentId = null;
+            if (! empty($ssoDepartmentName)) {
+                try {
+                    if ($user?->tenant_id) {
+                        $departmentId = Tenant::find($user->tenant_id)
+                            ?->execute(fn () => $this->findDepartmentId($ssoDepartmentName));
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('SSO Callback: Gagal query Department — '.$e->getMessage());
+                }
+            }
+
+            $user = User::updateOrCreate(
+                ['email' => $ssoUser->getEmail()],
+                [
+                    'name' => $ssoUser->getName(),
+                    'email' => $ssoUser->getEmail(),
+                    'password' => null,
+                    'department' => $departmentId,
+                    'oidc_id' => $ssoUser->getId(),
+                    'last_login_at' => now(),
+                    'last_login_ip' => request()->ip(),
+                ]
+            );
+
+            if ($user->tenant_id !== null && $ssoCompanyId !== null) {
+                $tenant = Tenant::find((string) $ssoCompanyId);
+                if ($tenant) {
+                    $user->update(['tenant_id' => $tenant->id]);
+                    $user->tenants()->syncWithoutDetaching([$tenant->id]);
+                } else {
+                    $this->createTenant->execute($user);
+                }
+            } elseif ($user->tenant_id === null) {
+                $this->createTenant->execute($user);
+            }
+
+            $request->session()->put('current_tenant_id', $user->tenant_id);
+
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            // ponytail: store raw id_token for RP-initiated logout. Add column if IdP rotates tokens frequently.
+            $idToken = $ssoUser->accessTokenResponseBody['id_token'] ?? null;
+            $request->session()->put('oidc_id_token', $idToken);
+
+            return redirect()->route('dashboard');
+        } catch (\Exception $e) {
+            Log::error('OIDC SSO Callback Error: '.$e->getMessage());
+
+            return redirect('/')->with('error', 'Terjadi kesalahan saat login SSO: '.$e->getMessage());
+        }
+    }
+
+    public function logoutCallback(Request $request): JsonResponse
+    {
+        // ponytail: grab id_token BEFORE session clear for RP-initiated logout
+        Log::info('Received logout request. Session ID: ', $request->all());
+        $idToken = $request->input('logout_token');
+
+        if (! $idToken) {
+            Log::error('Missing logout_token in SLO request');
+
+            return response()->json(['error' => 'Missing logout_token'], 400);
+        }
+
+        try {
+            $tokenParts = explode('.', $idToken);
+            if (count($tokenParts) !== 3) {
+                return response()->json(['error' => 'Invalid token format'], 400);
+            }
+            $payload = json_decode(base64_decode(strtr($tokenParts[1], '-_', '+/')));
+
+            if (! $payload || ! isset($payload->sub)) {
+                return response()->json(['error' => 'Invalid token payload'], 400);
+            }
+            $oidcId = $payload->sub;
+            $user = User::where('oidc_id', $oidcId)->first();
+            if ($user) {
+                $user->forceFill(['remember_token' => null])->save();
+                $user->save();
+                if (config('session.driver') === 'redis') {
+                    $handler = session()->getHandler();
+                    $authKey = Auth::getName();
+                    $keys = (array) Redis::connection()->command('keys', ['*']);
+                    foreach ($keys as $key) {
+                        if (preg_match('/([a-zA-Z0-9]{40})$/', $key, $matches)) {
+                            $sessionId = $matches[1];
+                            $sessionData = $handler->read($sessionId);
+                            if ($sessionData) {
+                                $data = json_decode($sessionData, true);
+                                if (is_array($data) && isset($data[$authKey]) && $data[$authKey] == $user->id) {
+                                    $handler->destroy($sessionId);
+                                }
+                            }
+                        }
+                    }
+                }
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+
+            return response()->json(['message' => 'Successfully logged out']);
+        } catch (\Throwable $th) {
+            Log::error('OIDC Backchannel Logout Error: '.$th->getMessage());
+
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
+    }
+
+    private function findDepartmentId(string $ssoDepartmentName): ?string
+    {
+        $department = Str::isUuid($ssoDepartmentName)
+            ? Department::find($ssoDepartmentName)
+            : Department::where('nama_department', $ssoDepartmentName)->first();
+
+        if (! $department) {
+            Log::warning("SSO Callback: Department '{$ssoDepartmentName}' tidak ditemukan di tabel lokal.");
+
+            return null;
+        }
+
+        return $department->id_department;
+    }
+}

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+﻿import { useForm, usePage } from '@inertiajs/react';
 import {
     Boxes,
     Building2,
@@ -33,7 +33,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { currentReturnTo } from '@/lib/asset-return';
 import { cn } from '@/lib/utils';
-import { store, update } from '@/routes/assets';
+import { store, update } from '@/routes/tenant/assets';
 
 export type AssetOption = {
     id: string;
@@ -147,6 +147,8 @@ export function AssetForm({
     employees,
     nextSequences,
 }: AssetFormProps) {
+    const page = usePage().props as { tenant?: { code: string } | null };
+    const tenantCode = page.tenant?.code;
     const [photoBusy, setPhotoBusy] = useState(false);
     const [docBusy, setDocBusy] = useState(false);
 
@@ -202,6 +204,7 @@ export function AssetForm({
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!tenantCode) return;
 
         if (mediaBusy) {
             toast.info('Tunggu hingga seluruh file selesai diunggah.');
@@ -233,8 +236,10 @@ export function AssetForm({
 
             form.patch(
                 update(
-                    asset.id,
-                    returnTo ? { query: { return_to: returnTo } } : undefined,
+                    { tenant: tenantCode, asset: asset.id },
+                    returnTo
+                        ? { query: { return_to: returnTo } }
+                        : undefined,
                 ).url,
                 options,
             );
@@ -242,8 +247,10 @@ export function AssetForm({
             const returnTo = currentReturnTo();
 
             form.post(
-                store(returnTo ? { query: { return_to: returnTo } } : undefined)
-                    .url,
+                store(
+                    { tenant: tenantCode },
+                    returnTo ? { query: { return_to: returnTo } } : undefined,
+                ).url,
                 options,
             );
         }
@@ -291,7 +298,7 @@ export function AssetForm({
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code} — {item.name}
+                                                {item.code} â€” {item.name}
                                             </SelectItem>
                                         ))
                                     )}
@@ -314,7 +321,7 @@ export function AssetForm({
                                 'flex size-8 shrink-0 items-center justify-center rounded-md border',
                                 previewCode
                                     ? 'border-primary/30 bg-primary/15 text-primary'
-                                    : 'border-border bg-surface-sunken text-ink-muted dark:bg-muted dark:text-muted-foreground',
+                                    : 'border-border bg-surface-sunken text-muted-foreground dark:bg-muted dark:text-muted-foreground',
                             )}
                         >
                             <Tags className="size-4" strokeWidth={1.75} />
@@ -331,7 +338,7 @@ export function AssetForm({
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {previewCode || '—'}
+                                {previewCode || 'â€”'}
                             </p>
                             {previewCode ? (
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1007,3 +1014,4 @@ export function AssetForm({
         </form>
     );
 }
+

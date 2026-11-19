@@ -21,7 +21,7 @@ class RoleFilterLevelTest extends TestCase
     {
         parent::setUp();
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
@@ -40,7 +40,7 @@ class RoleFilterLevelTest extends TestCase
     {
         $this->user->assignRole('super-admin');
 
-        $response = $this->actingAs($this->user)->get(route('assets.index'));
+        $response = $this->actingAs($this->user)->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'cluster'));
@@ -50,7 +50,7 @@ class RoleFilterLevelTest extends TestCase
     {
         $this->user->assignRole('staff-asset');
 
-        $response = $this->actingAs($this->user)->get(route('assets.index'));
+        $response = $this->actingAs($this->user)->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'category'));
@@ -60,7 +60,7 @@ class RoleFilterLevelTest extends TestCase
     {
         $this->user->assignRole('akunting');
 
-        $response = $this->actingAs($this->user)->get(route('assets.index'));
+        $response = $this->actingAs($this->user)->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'category'));
@@ -70,7 +70,7 @@ class RoleFilterLevelTest extends TestCase
     {
         $this->user->assignRole('some-other-role');
 
-        $response = $this->actingAs($this->user)->get(route('assets.index'));
+        $response = $this->actingAs($this->user)->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page->where('filters.initialLevel', 'cluster'));
@@ -78,7 +78,7 @@ class RoleFilterLevelTest extends TestCase
 
     public function test_guest_gets_redirect(): void
     {
-        $response = $this->get(route('assets.index'));
+        $response = $this->get(route('tenant.assets.index', ['tenant' => $this->tenant->code]));
         $response->assertRedirect();
     }
 }

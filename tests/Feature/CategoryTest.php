@@ -33,7 +33,7 @@ class CategoryTest extends TestCase
             DB::statement('PRAGMA foreign_keys = ON');
         }
 
-        $this->tenant = Tenant::create(['id' => 'acme', 'name' => 'Acme Corp']);
+        $this->tenant = Tenant::create(['id' => 'acme', 'code' => 'acme', 'name' => 'Acme Corp']);
         $this->tenant->makeCurrent();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -56,7 +56,7 @@ class CategoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('categories.index'))
+            ->get(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('categories/Index')
@@ -79,14 +79,14 @@ class CategoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('categories.index', ['search' => 'Komputer']))
+            ->get(route('tenant.categories.index', array_merge(['tenant' => $this->tenant->code], ['search' => 'Komputer'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('categories.total', 1)
                 ->where('categories.data.0.name', 'Komputer & Laptop')
                 ->where('filters.search', 'Komputer'));
 
         $this->actingAs($this->user)
-            ->get(route('categories.index', ['search' => '01.02']))
+            ->get(route('tenant.categories.index', array_merge(['tenant' => $this->tenant->code], ['search' => '01.02'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('categories.total', 1)
                 ->where('categories.data.0.code', '01.02'));
@@ -98,13 +98,13 @@ class CategoryTest extends TestCase
         Category::factory()->create(['name' => 'Alpha', 'code' => '01']);
 
         $this->actingAs($this->user)
-            ->get(route('categories.index', ['sort' => 'name']))
+            ->get(route('tenant.categories.index', array_merge(['tenant' => $this->tenant->code], ['sort' => 'name'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('categories.data.0.name', 'Alpha')
                 ->where('categories.data.1.name', 'Zulu'));
 
         $this->actingAs($this->user)
-            ->get(route('categories.index', ['sort' => '-code']))
+            ->get(route('tenant.categories.index', array_merge(['tenant' => $this->tenant->code], ['sort' => '-code'])))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('categories.data.0.code', '02')
                 ->where('categories.data.1.code', '01'));
@@ -119,7 +119,7 @@ class CategoryTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->get(route('categories.index'))
+            ->get(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page->where('categories.total', 1));
     }
 
@@ -132,7 +132,7 @@ class CategoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('categories.index'))
+            ->get(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(
                 fn (Assert $page) => $page
                     ->has('optionCategories', 1)
@@ -167,7 +167,7 @@ class CategoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('categories.index'))
+            ->get(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('categories.data.0.classification_type', 'SUBCLUSTER')
                 ->where('categories.data.0.chain.0.name', 'Elektronik')
@@ -180,7 +180,7 @@ class CategoryTest extends TestCase
     {
         $group = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
 
-        $this->actingAs($this->user)->post(route('categories.store'), [
+        $this->actingAs($this->user)->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
             'name' => 'Elektronik',
             'classification_type' => ClassificationLevel::GROUP->value,
             'classification_id' => $group->id,
@@ -204,7 +204,7 @@ class CategoryTest extends TestCase
             'code' => '01',
         ]);
 
-        $this->actingAs($this->user)->post(route('categories.store'), [
+        $this->actingAs($this->user)->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
             'name' => 'Komputer',
             'classification_type' => ClassificationLevel::CATEGORY->value,
             'classification_id' => $category->id,
@@ -218,8 +218,8 @@ class CategoryTest extends TestCase
         $group = AssetGroup::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->post(route('categories.store'), [
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
                 'name' => '',
                 'classification_type' => ClassificationLevel::GROUP->value,
                 'classification_id' => $group->id,
@@ -232,8 +232,8 @@ class CategoryTest extends TestCase
         $group = AssetGroup::factory()->create();
 
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->post(route('categories.store'), [
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
                 'name' => 'X',
                 'classification_type' => 'BOGUS',
                 'classification_id' => $group->id,
@@ -244,8 +244,8 @@ class CategoryTest extends TestCase
     public function test_category_classification_id_is_required(): void
     {
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->post(route('categories.store'), [
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
                 'name' => 'X',
                 'classification_type' => ClassificationLevel::GROUP->value,
                 'classification_id' => '',
@@ -256,8 +256,8 @@ class CategoryTest extends TestCase
     public function test_category_cannot_point_to_a_missing_classification_node(): void
     {
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->post(route('categories.store'), [
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
                 'name' => 'X',
                 'classification_type' => ClassificationLevel::GROUP->value,
                 'classification_id' => (string) fake()->uuid(),
@@ -272,8 +272,8 @@ class CategoryTest extends TestCase
         $foreignGroup->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->post(route('categories.store'), [
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.store', ['tenant' => $this->tenant->code]), [
                 'name' => 'X',
                 'classification_type' => ClassificationLevel::GROUP->value,
                 'classification_id' => $foreignGroup->id,
@@ -297,7 +297,7 @@ class CategoryTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->patch(route('categories.update', $category->id), [
+            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, 'category' => $category->id]), [
                 'name' => 'Baru',
                 'classification_type' => ClassificationLevel::CATEGORY->value,
                 'classification_id' => $categoryNode->id,
@@ -318,7 +318,7 @@ class CategoryTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->patch(route('categories.update', $foreign->id), [
+            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, 'category' => $foreign->id]), [
                 'name' => 'X',
                 'classification_type' => ClassificationLevel::GROUP->value,
                 'classification_id' => $foreign->classification_id,
@@ -331,7 +331,7 @@ class CategoryTest extends TestCase
         $category = Category::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('categories.destroy', $category->id))
+            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, 'category' => $category->id]))
             ->assertRedirect();
 
         $this->assertSame(0, Category::withoutGlobalScopes()->count());
@@ -344,7 +344,7 @@ class CategoryTest extends TestCase
         $foreign->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->delete(route('categories.destroy', $foreign->id))
+            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, 'category' => $foreign->id]))
             ->assertNotFound();
 
         $this->assertSame(1, Category::withoutGlobalScopes()->count());
@@ -356,8 +356,8 @@ class CategoryTest extends TestCase
         $ids = Category::query()->pluck('id')->all();
 
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->delete(route('categories.destroy-bulk'), ['ids' => $ids])
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.categories.destroy-bulk', ['tenant' => $this->tenant->code]), ['ids' => $ids])
             ->assertRedirect();
 
         $this->assertSame(0, Category::withoutGlobalScopes()->count());
@@ -366,8 +366,8 @@ class CategoryTest extends TestCase
     public function test_bulk_delete_requires_ids(): void
     {
         $this->actingAs($this->user)
-            ->from(route('categories.index'))
-            ->delete(route('categories.destroy-bulk'), ['ids' => []])
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->delete(route('tenant.categories.destroy-bulk', ['tenant' => $this->tenant->code]), ['ids' => []])
             ->assertSessionHasErrors(['ids']);
 
         $this->assertSame(0, Category::withoutGlobalScopes()->count());

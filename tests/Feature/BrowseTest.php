@@ -67,7 +67,7 @@ class BrowseTest extends TestCase
 
         $this->user->update(['employee_id' => $employee->id_employee]);
 
-        (new EmployeeSessionResolver())->resolve($this->user);
+        (new EmployeeSessionResolver)->resolve($this->user);
 
         $this->departmentId = $department->id_department;
     }

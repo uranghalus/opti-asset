@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GenerateCategoriesFromClassificationsAction;
 use App\Enums\ClassificationLevel;
 use App\Models\AssetCategory;
 use App\Models\AssetCluster;
@@ -55,6 +56,18 @@ class CategoryController extends Controller
                 'sort' => $sort,
             ],
         ]);
+    }
+
+    public function generate(GenerateCategoriesFromClassificationsAction $action): RedirectResponse
+    {
+        Gate::authorize('asset.category.create');
+
+        $summary = $action->handle();
+
+        return Inertia::flash([
+            'success' => $this->generateSummaryMessage($summary),
+            'generate_summary' => $summary,
+        ])->back();
     }
 
     public function store(Request $request): RedirectResponse
@@ -140,6 +153,24 @@ class CategoryController extends Controller
         Category::query()->whereKey($validated['ids'])->delete();
 
         return back();
+    }
+
+    /**
+     * @param  array{created: int, skipped: int, total: int}  $summary
+     */
+    private function generateSummaryMessage(array $summary): string
+    {
+        if ($summary['total'] === 0) {
+            return 'Tidak ada klasifikasi aset yang bisa dijadikan kategori. Impor klasifikasi aset terlebih dahulu.';
+        }
+
+        $message = "{$summary['created']} kategori dibuat";
+
+        if ($summary['skipped'] > 0) {
+            $message .= ", {$summary['skipped']} dilewati karena sudah ada";
+        }
+
+        return $message.'.';
     }
 
     /**

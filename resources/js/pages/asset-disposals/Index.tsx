@@ -161,7 +161,7 @@ export default function DisposalsIndex() {
         }
 
         setDeletingState(true);
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ disposal: deleting.id }).url, {
             only: ['disposals'],
             preserveState: true,
             preserveScroll: true,

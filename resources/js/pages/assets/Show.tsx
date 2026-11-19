@@ -366,7 +366,7 @@ export default function AssetShow() {
     const handleDelete = () => {
         setDeleting(true);
 
-        router.delete(destroy(asset.id).url, {
+        router.delete(destroy({ asset: asset.id }).url, {
             onSuccess: () => {
                 setDeleting(false);
                 setDeleteOpen(false);

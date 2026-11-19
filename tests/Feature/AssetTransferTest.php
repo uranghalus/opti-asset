@@ -71,7 +71,7 @@ class AssetTransferTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertForbidden();
 
         $this->assertSame(AssetTransferStatus::Pending, $transfer->refresh()->status);
@@ -329,7 +329,7 @@ class AssetTransferTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseHas('asset_histories', [

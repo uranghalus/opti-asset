@@ -84,7 +84,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $this->user->revokePermissionTo('asset.transfer.view');
 
         $this->actingAs($this->user)
-            ->get(route('tenant.asset-transfers.show', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->get(route('tenant.asset-transfers.show', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertForbidden();
     }
 
@@ -100,7 +100,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.asset-transfers.show', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->get(route('tenant.asset-transfers.show', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertOk();
     }
 
@@ -172,7 +172,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertForbidden();
 
         $this->assertSame(AssetTransferStatus::Pending, $transfer->refresh()->status);
@@ -185,7 +185,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.reject', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.reject', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertForbidden();
 
         $this->assertSame(AssetTransferStatus::Pending, $transfer->refresh()->status);
@@ -206,7 +206,7 @@ class AssetTransferDisposalGateTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.approve', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(AssetTransferStatus::Approved, $transfer->refresh()->status);
@@ -217,7 +217,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $transfer = AssetTransfer::factory()->create();
 
         $this->actingAs($this->user)
-            ->post(route('tenant.asset-transfers.reject', ['tenant' => $this->tenant->code, '$transfer' => $transfer]))
+            ->post(route('tenant.asset-transfers.reject', ['tenant' => $this->tenant->code, 'assetTransfer' => $transfer]))
             ->assertRedirect(route('tenant.asset-transfers.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame(AssetTransferStatus::Rejected, $transfer->refresh()->status);
@@ -240,7 +240,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $this->user->revokePermissionTo('asset.disposal.view');
 
         $this->actingAs($this->user)
-            ->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertForbidden();
     }
 
@@ -256,7 +256,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create();
 
         $this->actingAs($this->user)
-            ->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->get(route('tenant.disposals.show', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertOk();
     }
 
@@ -323,7 +323,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->get(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->get(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertForbidden();
     }
 
@@ -335,7 +335,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $newAsset = $this->activeAsset();
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, '$disposal' => $disposal]), [
+            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, 'disposal' => $disposal]), [
                 'asset_id' => $newAsset->id,
                 'reason' => 'Tidak boleh diubah',
                 'disposal_date' => now()->toDateString(),
@@ -352,7 +352,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertForbidden();
 
         $this->assertSame('pending', $disposal->refresh()->status->value);
@@ -365,7 +365,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertForbidden();
 
         $this->assertSame('pending', $disposal->refresh()->status->value);
@@ -376,8 +376,10 @@ class AssetTransferDisposalGateTest extends TestCase
         AssetDisposal::factory()->create(['status' => 'pending']);
         $this->activeAsset();
 
+        $disposal = AssetDisposal::first();
+
         $this->actingAs($this->user)
-            ->get(route('disposals.edit', AssetDisposal::first()))
+            ->get(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertOk();
     }
 
@@ -387,8 +389,8 @@ class AssetTransferDisposalGateTest extends TestCase
         $newAsset = $this->activeAsset();
 
         $this->actingAs($this->user)
-            ->from(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
-            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, '$disposal' => $disposal]), [
+            ->from(route('tenant.disposals.edit', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
+            ->patch(route('tenant.disposals.update', ['tenant' => $this->tenant->code, 'disposal' => $disposal]), [
                 'asset_id' => $newAsset->id,
                 'reason' => 'Diperbarui lewat uji gate',
                 'disposal_date' => now()->addDays(5)->toDateString(),
@@ -406,7 +408,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal->asset->update(['status' => AssetStatus::ACTIVE->value]);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->post(route('tenant.disposals.approve', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('approved', $disposal->refresh()->status->value);
@@ -418,7 +420,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->post(route('tenant.disposals.reject', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('rejected', $disposal->refresh()->status->value);
@@ -433,7 +435,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('asset_disposals', ['id' => $disposal->id]);
@@ -457,7 +459,7 @@ class AssetTransferDisposalGateTest extends TestCase
         $disposal = AssetDisposal::factory()->create(['status' => 'pending']);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, '$disposal' => $disposal]))
+            ->delete(route('tenant.disposals.destroy', ['tenant' => $this->tenant->code, 'disposal' => $disposal]))
             ->assertRedirect(route('tenant.disposals.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('asset_disposals', ['id' => $disposal->id]);

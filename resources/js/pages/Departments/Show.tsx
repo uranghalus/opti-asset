@@ -37,6 +37,7 @@ type DepartmentDetail = {
 
 type PageProps = {
     department: DepartmentDetail;
+    tenant?: { code: string | number } | null;
 };
 
 function formatDate(value: string): string {
@@ -109,7 +110,9 @@ function LeaderCard({ employee, role }: { employee: Employee; role: string }) {
 }
 
 export default function DepartmentsShow() {
-    const { department } = usePage().props as unknown as PageProps;
+    const page = usePage().props as unknown as PageProps;
+    const { department } = page;
+    const tenantCode = page.tenant?.code as string | number; // Assert exists - backend provides it
 
     const stats = [
         {
@@ -139,7 +142,7 @@ export default function DepartmentsShow() {
             <VibrantBackground variant="amber" />
             <div className="mx-auto w-full max-w-5xl">
                 <Link
-                    href={indexRoute().url}
+                    href={indexRoute({ tenant: tenantCode }).url}
                     className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
@@ -215,7 +218,7 @@ export default function DepartmentsShow() {
                             {leaders.map(({ role, employee }) => (
                                 <Link
                                     key={role}
-                                    href={showEmployee(employee).url}
+                                    href={showEmployee({ tenant: tenantCode, employee: employee.id_employee }).url}
                                     className="transition-transform duration-200 hover:-translate-y-0.5"
                                 >
                                     <LeaderCard
@@ -258,7 +261,7 @@ export default function DepartmentsShow() {
                         {department.employees.map((employee) => (
                             <Link
                                 key={employee.id_employee}
-                                href={showEmployee(employee).url}
+                                href={showEmployee({ tenant: tenantCode, employee: employee.id_employee }).url}
                                 className="flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-card/60"
                             >
                                 <EmployeeAvatar employee={employee} />
@@ -279,16 +282,16 @@ export default function DepartmentsShow() {
     );
 }
 
-DepartmentsShow.layout = {
+DepartmentsShow.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Department',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
         {
             title: 'Detail',
             href: '#',
         },
     ],
-};
+});
 

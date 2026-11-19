@@ -106,7 +106,7 @@ export default function DisposalShow() {
         }
 
         setDeletingState(true);
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ disposal: deleting.id }).url, {
             only: ['disposal'],
             preserveState: true,
             preserveScroll: true,

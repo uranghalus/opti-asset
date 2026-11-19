@@ -208,7 +208,7 @@ export default function LocationsIndex() {
         };
 
         if (editing) {
-            form.patch(update(editing.id).url, options);
+            form.patch(update({ location: editing.id }).url, options);
         } else {
             form.post(store().url, options);
         }
@@ -219,7 +219,7 @@ export default function LocationsIndex() {
             return;
         }
 
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ location: deleting.id }).url, {
             only: ['locations', 'filters'],
             preserveState: true,
             preserveScroll: true,

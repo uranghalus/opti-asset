@@ -363,6 +363,131 @@ class CategoryTest extends TestCase
         $this->assertSame(0, Category::withoutGlobalScopes()->count());
     }
 
+    public function test_generate_creates_one_category_for_each_leaf_node(): void
+    {
+        $groupA = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
+        $categoryA = AssetCategory::factory()->create([
+            'asset_group_id' => $groupA->id,
+            'code' => '01',
+            'name' => 'Komputer',
+        ]);
+        $clusterA = AssetCluster::factory()->create([
+            'asset_category_id' => $categoryA->id,
+            'code' => '01',
+            'name' => 'Laptop',
+        ]);
+        AssetSubCluster::factory()->create([
+            'asset_cluster_id' => $clusterA->id,
+            'code' => '01',
+            'name' => 'Notebook',
+        ]);
+        AssetSubCluster::factory()->create([
+            'asset_cluster_id' => $clusterA->id,
+            'code' => '02',
+            'name' => 'Ultrabook',
+        ]);
+
+        // Golongan tanpa kategori.
+        AssetGroup::factory()->create(['code' => '02', 'name' => 'Furnitur']);
+
+        // Kategori tanpa cluster.
+        $groupC = AssetGroup::factory()->create(['code' => '03', 'name' => 'Kendaraan']);
+        AssetCategory::factory()->create([
+            'asset_group_id' => $groupC->id,
+            'code' => '01',
+            'name' => 'Motor',
+        ]);
+
+        // Cluster tanpa sub-cluster.
+        $groupD = AssetGroup::factory()->create(['code' => '04', 'name' => 'Gedung']);
+        $categoryD = AssetCategory::factory()->create([
+            'asset_group_id' => $groupD->id,
+            'code' => '01',
+            'name' => 'Ruang',
+        ]);
+        AssetCluster::factory()->create([
+            'asset_category_id' => $categoryD->id,
+            'code' => '01',
+            'name' => 'Lobby',
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.generate', ['tenant' => $this->tenant->code]))
+            ->assertRedirect()
+            ->assertInertiaFlash('generate_summary.created', 5)
+            ->assertInertiaFlash('generate_summary.skipped', 0)
+            ->assertInertiaFlash('generate_summary.total', 5);
+
+        $this->assertSame(5, Category::query()->count());
+        $this->assertSame(
+            ['01.01.01.01', '01.01.01.02', '02', '03.01', '04.01.01'],
+            Category::query()->orderBy('code')->pluck('code')->all(),
+        );
+
+        $notebook = Category::query()->where('code', '01.01.01.01')->firstOrFail();
+        $this->assertSame('Notebook', $notebook->name);
+        $this->assertSame(ClassificationLevel::SUBCLUSTER, $notebook->classification_type);
+
+        $furniture = Category::query()->where('code', '02')->firstOrFail();
+        $this->assertSame(ClassificationLevel::GROUP, $furniture->classification_type);
+
+        $lobby = Category::query()->where('code', '04.01.01')->firstOrFail();
+        $this->assertSame(ClassificationLevel::CLUSTER, $lobby->classification_type);
+    }
+
+    public function test_generate_skips_categories_that_already_exist(): void
+    {
+        $existingGroup = AssetGroup::factory()->create(['code' => '01', 'name' => 'Elektronik']);
+        Category::factory()->create([
+            'name' => 'Elektronik',
+            'code' => '01',
+            'classification_id' => $existingGroup->id,
+            'classification_type' => ClassificationLevel::GROUP,
+        ]);
+
+        $group = AssetGroup::factory()->create(['code' => '02', 'name' => 'Furnitur']);
+        AssetCategory::factory()->create([
+            'asset_group_id' => $group->id,
+            'code' => '01',
+            'name' => 'Meja',
+        ]);
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.generate', ['tenant' => $this->tenant->code]))
+            ->assertRedirect()
+            ->assertInertiaFlash('generate_summary.created', 1)
+            ->assertInertiaFlash('generate_summary.skipped', 1);
+
+        $this->assertSame(2, Category::query()->count());
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.generate', ['tenant' => $this->tenant->code]))
+            ->assertRedirect()
+            ->assertInertiaFlash('generate_summary.created', 0)
+            ->assertInertiaFlash('generate_summary.skipped', 2);
+
+        $this->assertSame(2, Category::query()->count());
+    }
+
+    public function test_generate_only_uses_the_current_tenants_classification(): void
+    {
+        Tenant::create(['id' => 'other', 'name' => 'Other Corp']);
+        $foreignGroup = AssetGroup::factory()->create(['code' => '01', 'name' => 'Asing']);
+        $foreignGroup->forceFill(['tenant_id' => 'other'])->save();
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.categories.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.categories.generate', ['tenant' => $this->tenant->code]))
+            ->assertRedirect()
+            ->assertInertiaFlash('generate_summary.created', 0)
+            ->assertInertiaFlash('generate_summary.total', 0);
+
+        $this->assertSame(0, Category::query()->count());
+    }
+
     public function test_bulk_delete_requires_ids(): void
     {
         $this->actingAs($this->user)

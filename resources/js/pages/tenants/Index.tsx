@@ -195,15 +195,16 @@ export default function TenantsIndex() {
 
                 {/* Search */}
                 <div className="flex gap-2">
-                    <Input
-                        ref={searchInputRef}
-                        placeholder="Cari nama atau kode tenant..."
-                        value={search}
-                        onChange={handleSearch}
-                        className="w-full sm:w-80"
-                    >
-                        <Search className="ml-3 h-4 w-4 text-muted-foreground" />
-                    </Input>
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            ref={searchInputRef}
+                            placeholder="Cari nama atau kode tenant..."
+                            value={search}
+                            onChange={handleSearch}
+                            className="w-full sm:w-80 pl-10"
+                        />
+                    </div>
                 </div>
 
                 {/* Sync error alert */}

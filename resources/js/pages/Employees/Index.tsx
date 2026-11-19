@@ -87,6 +87,7 @@ type PageProps = {
     departments: DepartmentOption[];
     roles: RoleOption[];
     filters: { search: string | null; department: string | null };
+    tenant?: { code: string | number } | null;
 };
 
 const ROLE_ACCENTS = [
@@ -111,12 +112,14 @@ function formatDate(value: string): string {
 }
 
 export default function EmployeesIndex() {
+    const page = usePage().props as unknown as PageProps;
     const {
         employees,
         departments,
         roles: allRoles,
         filters,
-    } = usePage().props as unknown as PageProps;
+    } = page;
+    const tenantCode = page.tenant?.code as string | number;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [department, setDepartment] = useState(filters.department ?? 'all');
@@ -186,7 +189,7 @@ export default function EmployeesIndex() {
         }
 
         router.get(
-            indexRoute().url,
+            indexRoute({ tenant: tenantCode }).url,
             { ...params, ...overrides },
             {
                 preserveState: true,
@@ -224,7 +227,7 @@ export default function EmployeesIndex() {
         setSyncing(true);
         setSyncOpen(false);
         router.post(
-            sync().url,
+            sync({ tenant: tenantCode }).url,
             {},
             {
                 preserveScroll: true,
@@ -251,7 +254,7 @@ export default function EmployeesIndex() {
             return;
         }
 
-        assignPost(updateRoles(assignTarget.id_employee).url, {
+        assignPost(updateRoles({ tenant: tenantCode, employee: assignTarget.id_employee }).url, {
             preserveScroll: true,
             onSuccess: () => closeAssign(),
         });
@@ -455,7 +458,7 @@ export default function EmployeesIndex() {
                                     className="glass-card ease-premium group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]"
                                 >
                                     <Link
-                                        href={show(employee).url}
+                                        href={show({ tenant: tenantCode, employee: employee.id_employee }).url}
                                         className="flex flex-1 flex-col"
                                     >
                                         <div className="flex items-start justify-between gap-3">
@@ -760,12 +763,12 @@ export default function EmployeesIndex() {
     );
 }
 
-EmployeesIndex.layout = {
+EmployeesIndex.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Karyawan',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
     ],
-};
+});
 

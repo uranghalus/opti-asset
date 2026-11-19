@@ -55,6 +55,7 @@ type PaginatedData<T> = {
 type PageProps = {
     departments: PaginatedData<Department>;
     filters: { search: string | null };
+    tenant?: { code: string | number } | null;
 };
 
 const ACCENTS = [
@@ -90,7 +91,9 @@ function formatDate(value: string): string {
 }
 
 export default function DepartmentsIndex() {
-    const { departments, filters } = usePage().props as unknown as PageProps;
+    const page = usePage().props as unknown as PageProps;
+    const { departments, filters } = page;
+    const tenantCode = page.tenant?.code as string | number; // Assert exists - backend provides it
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [prevSearch, setPrevSearch] = useState(filters.search);
@@ -141,7 +144,7 @@ export default function DepartmentsIndex() {
         }
 
         router.get(
-            indexRoute().url,
+            indexRoute({ tenant: tenantCode }).url,
             { ...params, ...overrides },
             {
                 preserveState: true,
@@ -173,7 +176,7 @@ export default function DepartmentsIndex() {
         setSyncing(true);
         setSyncOpen(false);
         router.post(
-            sync().url,
+            sync({ tenant: tenantCode }).url,
             {},
             {
                 preserveScroll: true,
@@ -327,7 +330,7 @@ export default function DepartmentsIndex() {
                                 return (
                                     <Link
                                         key={department.id_department}
-                                        href={show(department).url}
+                                        href={show({ tenant: tenantCode, department: department.id_department }).url}
                                         className="group block"
                                     >
                                         <div className="glass-card ease-premium relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:scale-[0.99]">
@@ -500,12 +503,12 @@ export default function DepartmentsIndex() {
     );
 }
 
-DepartmentsIndex.layout = {
+DepartmentsIndex.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Department',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
     ],
-};
+});
 

@@ -9,6 +9,7 @@ import {
     Pencil,
     Plus,
     Search,
+    Sparkles,
     Tags,
     Trash2,
     X,
@@ -41,6 +42,7 @@ import { cn } from '@/lib/utils';
 import {
     destroy,
     destroyBulk,
+    generate,
     index as indexRoute,
     store,
     update,
@@ -103,6 +105,13 @@ type PageProps = {
     optionClusters: ClassificationOption[];
     optionSubClusters: ClassificationOption[];
     filters: Filters;
+    tenant?: { code: string | number } | null;
+};
+
+type GenerateSummary = {
+    created: number;
+    skipped: number;
+    total: number;
 };
 
 const SORT_OPTIONS = [
@@ -165,6 +174,7 @@ const EMPTY_FORM: CategoryForm = {
 };
 
 export default function CategoriesIndex() {
+    const page = usePage().props as unknown as PageProps;
     const {
         categories,
         groups,
@@ -172,7 +182,9 @@ export default function CategoriesIndex() {
         optionClusters,
         optionSubClusters,
         filters,
-    } = usePage().props as unknown as PageProps;
+        tenant,
+    } = page;
+    const tenantCode = tenant?.code as string | number;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [sort, setSort] = useState(filters.sort ?? '');
@@ -183,6 +195,8 @@ export default function CategoriesIndex() {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [generateOpen, setGenerateOpen] = useState(false);
+    const [generating, setGenerating] = useState(false);
     const [selGroup, setSelGroup] = useState('');
     const [selCategory, setSelCategory] = useState('');
     const [selCluster, setSelCluster] = useState('');
@@ -354,7 +368,7 @@ export default function CategoriesIndex() {
             params.sort = currentSort;
         }
 
-        router.get(indexRoute().url, params, {
+        router.get(indexRoute({ tenant: tenantCode }).url, params, {
             preserveState: true,
             replace: true,
             only: [
@@ -447,9 +461,9 @@ export default function CategoriesIndex() {
         };
 
         if (editing) {
-            form.patch(update(editing.id).url, options);
+            form.patch(update({ tenant: tenantCode, category: editing.id }).url, options);
         } else {
-            form.post(store().url, options);
+            form.post(store({ tenant: tenantCode }).url, options);
         }
     };
 
@@ -458,7 +472,7 @@ export default function CategoriesIndex() {
             return;
         }
 
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ tenant: tenantCode, category: deleting.id }).url, {
             only: ['categories', 'groups', 'filters'],
             preserveState: true,
             preserveScroll: true,
@@ -479,7 +493,7 @@ export default function CategoriesIndex() {
 
         setBulkDeleting(true);
 
-        router.delete(destroyBulk().url, {
+        router.delete(destroyBulk({ tenant: tenantCode }).url, {
             data: { ids: Array.from(selected) },
             only: ['categories', 'groups', 'filters'],
             preserveState: true,
@@ -495,6 +509,65 @@ export default function CategoriesIndex() {
                 toast.error('Gagal menghapus kategori.');
             },
         });
+    };
+
+    const handleGenerate = () => {
+        if (!tenant) {
+            toast.error('Tenant tidak ditemukan.');
+
+            return;
+        }
+
+        setGenerating(true);
+
+        router.post(
+            generate({ tenant: tenant.code }).url,
+            {},
+            {
+                only: [
+                    'categories',
+                    'groups',
+                    'filters',
+                    'optionCategories',
+                    'optionClusters',
+                    'optionSubClusters',
+                ],
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    setGenerating(false);
+                    setGenerateOpen(false);
+
+                    const flash = (
+                        page as unknown as {
+                            flash?: {
+                                success?: string;
+                                generate_summary?: GenerateSummary;
+                            };
+                        }
+                    ).flash;
+                    const summary = flash?.generate_summary;
+
+                    if (summary && summary.created === 0) {
+                        toast.info(
+                            flash?.success ??
+                                'Tidak ada kategori baru yang dibuat.',
+                        );
+
+                        return;
+                    }
+
+                    toast.success(
+                        flash?.success ??
+                            `${summary?.created ?? 0} kategori berhasil dibuat.`,
+                    );
+                },
+                onError: () => {
+                    setGenerating(false);
+                    toast.error('Gagal membuat kategori dari klasifikasi.');
+                },
+            },
+        );
     };
 
     const goToPage = (url: string | null) => {
@@ -540,16 +613,33 @@ export default function CategoriesIndex() {
                             </div>
                         </div>
 
-                        <Button
-                            size="sm"
-                            onClick={openCreate}
-                            className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
-                        >
-                            <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
-                                <Plus className="size-3.5" strokeWidth={2.25} />
-                            </span>
-                            Tambah Kategori
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setGenerateOpen(true)}
+                                className="ease-premium h-auto gap-2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
+                            >
+                                <Sparkles
+                                    className="size-4"
+                                    strokeWidth={1.75}
+                                />
+                                Generate dari Klasifikasi
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={openCreate}
+                                className="group ease-premium h-auto gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                            >
+                                <span className="ease-premium flex size-5 items-center justify-center rounded-lg bg-white/20 transition-transform duration-200 group-hover:scale-110">
+                                    <Plus
+                                        className="size-3.5"
+                                        strokeWidth={2.25}
+                                    />
+                                </span>
+                                Tambah Kategori
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="glass-panel card-enter mt-7 flex flex-col gap-3 rounded-2xl p-3 delay-100 lg:flex-row lg:items-center lg:gap-4">
@@ -922,6 +1012,66 @@ export default function CategoriesIndex() {
             </div>
 
             <Dialog
+                open={generateOpen}
+                onOpenChange={(open) => !generating && setGenerateOpen(open)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Generate Kategori dari Klasifikasi
+                        </DialogTitle>
+                        <DialogDescription>
+                            Satu kategori dibuat untuk setiap node terdalam
+                            (daun) pada klasifikasi aset. Kategori yang sudah
+                            tertaut ke node yang sama akan dilewati.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/15 text-primary">
+                            <Sparkles className="size-4" strokeWidth={1.75} />
+                        </span>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                            <p className="font-semibold text-foreground">
+                                Sub cluster, cluster tanpa sub cluster, kategori
+                                tanpa cluster, dan golongan tanpa kategori akan
+                                dijadikan kategori.
+                            </p>
+                            <p>
+                                Aman dijalankan berulang: kategori yang sudah
+                                ada tidak diduplikasi.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setGenerateOpen(false)}
+                            disabled={generating}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleGenerate}
+                            disabled={generating}
+                            className="min-w-28"
+                        >
+                            {generating ? (
+                                <Spinner className="mr-2 size-4" />
+                            ) : (
+                                <Sparkles
+                                    className="mr-2 size-4"
+                                    strokeWidth={1.75}
+                                />
+                            )}
+                            Generate
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
                 open={formOpen}
                 onOpenChange={(open) => !open && setFormOpen(false)}
             >
@@ -1241,12 +1391,11 @@ export default function CategoriesIndex() {
     );
 }
 
-CategoriesIndex.layout = {
+CategoriesIndex.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Kategori',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
     ],
-};
-
+});

@@ -119,6 +119,7 @@ class AssetSeeder extends Seeder
             for ($i = 0; $i < $assetsPerTenant; $i++) {
                 // Buat item dulu
                 $item = Item::create([
+                    'tenant_id' => $tenant->id,
                     'code' => 'ITM-'.strtoupper($tenant->code).'-'.str_pad($this->assetCounter, 4, '0', STR_PAD_LEFT),
                     'name' => fake()->words(2, true),
                     'description' => fake()->optional()->sentence(),

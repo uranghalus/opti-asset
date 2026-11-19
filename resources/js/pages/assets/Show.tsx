@@ -1,4 +1,4 @@
-﻿import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
     ArrowLeft,
@@ -135,7 +135,7 @@ const CHAIN_LEVELS: ClassificationLevel[] = [
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return 'â€”';
+        return '-';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -179,7 +179,7 @@ const HISTORY_ICON: Record<
 };
 
 const HISTORY_TINT: Record<HistoryCategory, { icon: string; dot: string }> = {
-    /* Kategori riwayat bukan status aset â€” memakai warna netral/aksen
+    /* Kategori riwayat bukan status aset - memakai warna netral/aksen
        chart (Â§3.2 chart ramp), bukan hue status (P1: warna status terkunci). */
     created: {
         icon: 'bg-surface-sunken text-muted-foreground ring-border dark:bg-muted dark:text-muted-foreground',
@@ -244,7 +244,7 @@ function formatHistoryDate(value: string): string {
 
 function formatPrice(value: string | null): string {
     if (value === null || value === '') {
-        return 'â€”';
+        return '-';
     }
 
     return new Intl.NumberFormat('id-ID', {
@@ -418,12 +418,12 @@ export default function AssetShow() {
                                 <StatusBadge value={asset.status} />
                             </div>
                             <p className="mt-1 truncate font-mono text-sm font-bold text-foreground tabular-nums">
-                                {asset.kode_asset ?? 'â€”'}
+                                {asset.kode_asset ?? '-'}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
                                 {[asset.brand, asset.model]
                                     .filter(Boolean)
-                                    .join(' Â· ') || 'â€”'}
+                                    .join(' Â· ') || '-'}
                             </p>
                         </div>
                     </div>
@@ -498,7 +498,7 @@ export default function AssetShow() {
                                     <span className="truncate">
                                         {[level.code, level.name]
                                             .filter(Boolean)
-                                            .join(' â€” ')}
+                                            .join(' - ')}
                                     </span>
                                 </span>
                             );
@@ -583,35 +583,35 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={Tags}
                                     label="Item"
-                                    value={asset.item?.name ?? 'â€”'}
+                                    value={asset.item?.name ?? '-'}
                                 />
                                 <DetailItem
                                     icon={Hash}
                                     label="Kode Aset"
-                                    value={asset.kode_asset ?? 'â€”'}
+                                    value={asset.kode_asset ?? '-'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Serial Number"
-                                    value={asset.serial_number ?? 'â€”'}
+                                    value={asset.serial_number ?? '-'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={Package}
                                     label="Part Number"
-                                    value={asset.part_number ?? 'â€”'}
+                                    value={asset.part_number ?? '-'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Brand"
-                                    value={asset.brand ?? 'â€”'}
+                                    value={asset.brand ?? '-'}
                                 />
                                 <DetailItem
                                     icon={ShieldCheck}
                                     label="Model"
-                                    value={asset.model ?? 'â€”'}
+                                    value={asset.model ?? '-'}
                                 />
                             </div>
                         </Section>
@@ -635,19 +635,19 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={UserRound}
                                     label="Vendor"
-                                    value={asset.vendor_name ?? 'â€”'}
+                                    value={asset.vendor_name ?? '-'}
                                 />
                                 <DetailItem
                                     icon={MapPin}
                                     label="Lokasi"
-                                    value={asset.location?.name ?? 'â€”'}
+                                    value={asset.location?.name ?? '-'}
                                 />
                                 <DetailItem
                                     icon={Building2}
                                     label="Department"
                                     value={
                                         asset.department?.nama_department ??
-                                        'â€”'
+                                        '-'
                                     }
                                 />
                             </div>
@@ -688,7 +688,7 @@ export default function AssetShow() {
                                     value={
                                         asset.useful_life_years
                                             ? `${asset.useful_life_years} Tahun`
-                                            : 'â€”'
+                                            : '-'
                                     }
                                 />
                                 <DetailItem
@@ -704,7 +704,7 @@ export default function AssetShow() {
                                               : asset.depreciation_method ===
                                                   'none'
                                                 ? 'Tidak Disusutkan'
-                                                : 'â€”'
+                                                : '-'
                                     }
                                 />
                                 <DetailItem
@@ -731,7 +731,7 @@ export default function AssetShow() {
                                                           ),
                                                   ),
                                               )
-                                            : 'â€”'
+                                            : '-'
                                     }
                                     mono
                                 />
@@ -857,7 +857,7 @@ export default function AssetShow() {
                                             ] ?? CONDITION_FALLBACK,
                                         )}
                                     >
-                                        {asset.condition ?? 'â€”'}
+                                        {asset.condition ?? '-'}
                                     </span>
                                 </div>
                             </div>
@@ -881,13 +881,13 @@ export default function AssetShow() {
                                 <DetailItem
                                     icon={FileText}
                                     label="No. SPB"
-                                    value={asset.no_spb ?? 'â€”'}
+                                    value={asset.no_spb ?? '-'}
                                     mono
                                 />
                                 <DetailItem
                                     icon={FileText}
                                     label="Nomor Dokumen"
-                                    value={asset.document_number ?? 'â€”'}
+                                    value={asset.document_number ?? '-'}
                                     mono
                                 />
                                 <div>
@@ -1150,7 +1150,7 @@ export default function AssetShow() {
                                                                 ) : (
                                                                     <span className="font-medium text-foreground">
                                                                         {entry.new_value ??
-                                                                            'â€”'}
+                                                                            '-'}
                                                                     </span>
                                                                 )}
                                                             </div>

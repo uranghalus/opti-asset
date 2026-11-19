@@ -2130,9 +2130,9 @@
     "semantic_hash": ""
   },
   "resources/js/pages/assets/Show.tsx": {
-    "mtime": 1795068831.5021932,
-    "seen": 1795068893.0915546,
-    "ast_hash": "d255569bca15784334c496ef9cc8c02a",
+    "mtime": 1795069588.7120662,
+    "seen": 1795069641.4313283,
+    "ast_hash": "81e24d00dd73bd81a3d374f80676d8fb",
     "semantic_hash": ""
   },
   "resources/js/pages/assets/components/asset-breadcrumb.tsx": {

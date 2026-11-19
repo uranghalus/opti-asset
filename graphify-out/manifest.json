@@ -2298,9 +2298,9 @@
     "semantic_hash": ""
   },
   "resources/js/pages/tenants/Index.tsx": {
-    "mtime": 1794814732.9069111,
-    "seen": 1794893536.4815419,
-    "ast_hash": "86682703a93f562bb21ed0d7fbbda009",
+    "mtime": 1795054147.9590364,
+    "seen": 1795054354.988982,
+    "ast_hash": "3f7348db0bb8025acfe44248fe9a00ff",
     "semantic_hash": ""
   },
   "resources/js/types/auth.ts": {

@@ -829,7 +829,7 @@ export default function CategoriesIndex() {
                                                                     ),
                                                                 )
                                                             ) : (
-                                                                <span>â€”</span>
+                                                                <span>-</span>
                                                             )}
                                                         </p>
                                                     </div>
@@ -877,7 +877,7 @@ export default function CategoriesIndex() {
                                                           category
                                                               .classification_type
                                                       ]
-                                                    : 'â€”'}
+                                                    : '-'}
                                             </span>
                                             <p
                                                 className={cn(
@@ -907,7 +907,7 @@ export default function CategoriesIndex() {
                                                     className="size-3"
                                                     strokeWidth={2.25}
                                                 />
-                                                {category.code ?? 'â€”'}
+                                                {category.code ?? '-'}
                                             </span>
                                         </div>
                                     </div>
@@ -1127,7 +1127,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} â€” `
+                                                        ? `${item.code} - `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1169,7 +1169,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} â€” `
+                                                        ? `${item.code} - `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1206,7 +1206,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} â€” `
+                                                        ? `${item.code} - `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1243,7 +1243,7 @@ export default function CategoriesIndex() {
                                             >
                                                 <div className="max-w-full truncate">
                                                     {item.code
-                                                        ? `${item.code} â€” `
+                                                        ? `${item.code} - `
                                                         : ''}
                                                     {item.name}
                                                 </div>
@@ -1267,7 +1267,7 @@ export default function CategoriesIndex() {
                                         Kode Kategori Otomatis
                                     </p>
                                     <p className="truncate font-mono text-sm font-bold text-primary tabular-nums">
-                                        {selectedCode || 'â€”'}
+                                        {selectedCode || '-'}
                                     </p>
                                 </div>
                             </div>

@@ -6,6 +6,7 @@ import { assetListUrl } from '@/lib/asset-return';
 import { index as indexRoute } from '@/routes/tenant/assets';
 
 type CreateProps = {
+    tenant?: { code: string | number } | null;
     items: AssetOption[];
     locations: { id: string; name: string }[];
     departments: { id_department: string; nama_department: string }[];
@@ -14,6 +15,8 @@ type CreateProps = {
 };
 
 export default function AssetCreate() {
+    const { tenant } = usePage().props as unknown as { tenant?: { code: string | number } | null };
+    const tenantCode = tenant?.code as string | number;
     const props = usePage().props as unknown as CreateProps;
 
     return (

@@ -157,7 +157,7 @@ const SEARCH_FOCUS_CLASSES =
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return 'â€”';
+        return '-';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -180,7 +180,7 @@ export default function ReportsIndex() {
     const dTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isProcessing = useIsProcessing();
 
-    // Sinkronkan state lokal saat filter server berubah (partial reload) â€”
+    // Sinkronkan state lokal saat filter server berubah (partial reload) -
     // pola "adjust state during render" (React docs): setState hanya saat
     // props berubah, langsung saat render tanpa effect.
     if (filters !== prevFilters) {
@@ -513,7 +513,7 @@ export default function ReportsIndex() {
                                                                     ?.kode_asset ??
                                                                     t.asset
                                                                         ?.serial_number ??
-                                                                    'â€”'}
+                                                                    '-'}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 {t.asset?.brand}{' '}
@@ -525,10 +525,10 @@ export default function ReportsIndex() {
                                                         <TableCell className="text-muted-foreground">
                                                             {t.fromLocation
                                                                 ?.name ??
-                                                                'â€”'}{' '}
+                                                                '-'}{' '}
                                                             â†’{' '}
                                                             {t.toLocation
-                                                                ?.name ?? 'â€”'}
+                                                                ?.name ?? '-'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <span
@@ -748,16 +748,16 @@ export default function ReportsIndex() {
                                                             <p className="font-medium text-foreground">
                                                                 {d.asset
                                                                     ?.kode_asset ??
-                                                                    'â€”'}
+                                                                    '-'}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 {d.asset?.item
                                                                     ?.name ??
-                                                                    'â€”'}
+                                                                    '-'}
                                                             </p>
                                                         </TableCell>
                                                         <TableCell className="line-clamp-2 text-muted-foreground">
-                                                            {d.reason ?? 'â€”'}
+                                                            {d.reason ?? '-'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <span

@@ -29,7 +29,7 @@ type Crumb = {
 };
 
 /**
- * Kepala halaman Aset â€” identitas scope sekali di sini (ADR 0001):
+ * Kepala halaman Aset - identitas scope sekali di sini (ADR 0001):
  * induk scope sebagai eyebrow, node aktif sebagai H1 (+ kode mono + label
  * level). Baris kedua = hitungan hasil, bukan pengulangan scope.
  * Navigasi/import tidak berubah.

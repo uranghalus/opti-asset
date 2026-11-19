@@ -18,10 +18,10 @@ import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
 
 /**
- * Kartu aset â€” komponen tanda tangan sistem (DESIGN.md Â§7).
+ * Kartu aset - komponen tanda tangan sistem (DESIGN.md Â§7).
  * Hierarki baca: status â†’ nama â†’ kode (mono) â†’ lokasi/departemen.
  * Chain klasifikasi scope-relative (ADR 0002): hanya level di bawah
- * scope, kode mono-first, wrap dua baris â€” truncation tidak pernah
+ * scope, kode mono-first, wrap dua baris - truncation tidak pernah
  * mengenai kode.
  */
 export function AssetCard({
@@ -80,7 +80,7 @@ export function AssetCard({
                 isDisposed && 'opacity-70 saturate-[0.6]',
             )}
         >
-            {/* Pilihan â€” target 44px, jelas di kedua tema */}
+            {/* Pilihan - target 44px, jelas di kedua tema */}
             <label className="flex shrink-0 cursor-pointer items-start pt-0.5">
                 <Checkbox
                     checked={selected}
@@ -90,7 +90,7 @@ export function AssetCard({
                 />
             </label>
 
-            {/* Thumbnail â€” identitas visual, bukan spanduk */}
+            {/* Thumbnail - identitas visual, bukan spanduk */}
             <Link
                 href={withReturnTo(show.url({ asset: asset.id }))}
                 aria-hidden={photoUrl ? undefined : true}
@@ -126,7 +126,7 @@ export function AssetCard({
                             {asset.item?.name ?? 'Tanpa nama'}
                         </Link>
                         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                            {asset.kode_asset ?? 'â€”'}
+                            {asset.kode_asset ?? '-'}
                         </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
@@ -169,7 +169,7 @@ export function AssetCard({
                         <span className="inline-flex min-w-0 items-center gap-1.5">
                             <MapPin aria-hidden className="size-3.5 shrink-0" />
                             <span className="truncate">
-                                {asset.location?.name ?? 'â€”'}
+                                {asset.location?.name ?? '-'}
                             </span>
                         </span>
                         <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -178,12 +178,12 @@ export function AssetCard({
                                 className="size-3.5 shrink-0"
                             />
                             <span className="truncate">
-                                {asset.department?.nama_department ?? 'â€”'}
+                                {asset.department?.nama_department ?? '-'}
                             </span>
                         </span>
                     </div>
 
-                    {/* Aksi selalu terlihat â€” target 44px */}
+                    {/* Aksi selalu terlihat - target 44px */}
                     <span className="flex shrink-0 items-center gap-0.5">
                         <Link
                             href={withReturnTo(show.url({ asset: asset.id }))}

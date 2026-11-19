@@ -17,7 +17,7 @@ import { destroy, destroyBulk, importMethod } from '@/routes/tenant/assets';
 import type { Asset } from './types';
 
 /**
- * Cap peringatan hapus â€” surat perintah kaca dengan kode pos
+ * Cap peringatan hapus - surat perintah kaca dengan kode pos
  * yang dibatalkan dari manifest. Alur hapus tidak berubah.
  */
 export function AssetDeleteDialog({
@@ -186,7 +186,7 @@ export function AssetImportDialog({
     const [itemId, setItemId] = useState('');
     const [importing, setImporting] = useState(false);
 
-    // `items` dimuat lazy (Inertia optional prop) â€” ambil saat dialog
+    // `items` dimuat lazy (Inertia optional prop) - ambil saat dialog
     // dibuka pertama kali lewat partial reload, bukan di setiap kunjungan.
     useEffect(() => {
         if (open && items.length === 0) {
@@ -302,10 +302,10 @@ export function AssetImportDialog({
                                 onChange={(e) => setItemId(e.target.value)}
                                 className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 focus:outline-none"
                             >
-                                <option value="">â€” Pilih item â€”</option>
+                                <option value="">- Pilih item -</option>
                                 {items.map((i) => (
                                     <option key={i.id} value={i.id}>
-                                        {i.code} â€” {i.name}
+                                        {i.code} - {i.name}
                                     </option>
                                 ))}
                             </select>

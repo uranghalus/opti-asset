@@ -364,7 +364,7 @@ export default function DepartmentsIndex() {
                                                     <div className="min-w-0">
                                                         <h3 className="truncate text-sm font-semibold text-foreground">
                                                             {department.nama_department ??
-                                                                'â€”'}
+                                                                '-'}
                                                         </h3>
                                                         <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                             {

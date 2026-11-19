@@ -134,7 +134,7 @@ export default function EmployeeShow() {
     const stats = [
         {
             label: 'NIK',
-            value: employee.nik_employee ?? 'â€”',
+            value: employee.nik_employee ?? '-',
             icon: Hash,
             accent: 'text-sky-600 dark:text-sky-400',
         },
@@ -143,19 +143,19 @@ export default function EmployeeShow() {
             value:
                 employee.department?.nama_department ??
                 employee.department?.kode_department ??
-                'â€”',
+                '-',
             icon: Building2,
             accent: 'text-emerald-600 dark:text-emerald-400',
         },
         {
             label: 'Email',
-            value: employee.email ?? 'â€”',
+            value: employee.email ?? '-',
             icon: Mail,
             accent: 'text-amber-600 dark:text-amber-400',
         },
         {
             label: 'No. WhatsApp',
-            value: employee.number ?? 'â€”',
+            value: employee.number ?? '-',
             icon: Phone,
             accent: 'text-rose-600 dark:text-rose-400',
         },
@@ -207,7 +207,7 @@ export default function EmployeeShow() {
                                         className="size-3.5 text-sky-500"
                                         strokeWidth={2}
                                     />
-                                    {employee.nik_employee ?? 'â€”'}
+                                    {employee.nik_employee ?? '-'}
                                 </p>
                             </div>
                         </div>

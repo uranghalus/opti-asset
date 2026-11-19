@@ -491,7 +491,7 @@ export default function EmployeesIndex() {
                                                     </h3>
                                                     <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                         {employee.nik_employee ??
-                                                            'â€”'}
+                                                            '-'}
                                                     </p>
                                                 </div>
                                             </div>

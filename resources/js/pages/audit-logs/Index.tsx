@@ -80,7 +80,7 @@ function formatDateTime(value: string): string {
 
 function formatValue(value: unknown): string {
     if (value === null || value === undefined || value === '') {
-        return 'â€”';
+        return '-';
     }
 
     if (typeof value === 'boolean') {
@@ -338,7 +338,7 @@ export default function AuditLogsIndex() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <p className="font-medium text-foreground">
-                                                    {log.subject_label ?? 'â€”'}
+                                                    {log.subject_label ?? '-'}
                                                 </p>
                                                 <p className="text-[11px] text-muted-foreground">
                                                     {log.subject_type}
@@ -471,7 +471,7 @@ function PropertyList({
                 )}
                 {!['created', 'updated'].includes(log.action) &&
                     log.action !== 'deleted' &&
-                    'â€”'}
+                    '-'}
             </span>
         );
     }

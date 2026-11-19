@@ -24,7 +24,7 @@ const VIEW_OPTIONS: {
 ];
 
 /**
- * Badan daftar aset â€” Kartu (<1280) atau Tabel ledger (â‰¥1280, default).
+ * Badan daftar aset - Kartu (<1280) atau Tabel ledger (â‰¥1280, default).
  * Kondisi kosong dan paginasi sama di kedua tampilan.
  */
 export function AssetCardGrid({
@@ -120,7 +120,7 @@ export function AssetCardGrid({
 
     return (
         <div className="flex min-h-[500px] flex-1 flex-col">
-            {/* Saklar tampilan â€” hanya relevan di lebar tabel (xl) */}
+            {/* Saklar tampilan - hanya relevan di lebar tabel (xl) */}
             <div className="hidden items-center justify-end gap-1 border-b border-border px-4 py-2 xl:flex">
                 <span className="mr-auto text-xs text-muted-foreground">
                     Tampilan

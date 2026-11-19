@@ -43,6 +43,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 export default function AssetLabelsBatch() {
+    const { tenant } = usePage().props as unknown as { tenant?: { code: string | number } | null };
+    const tenantCode = tenant?.code as string | number;
     const { assets } = usePage().props as unknown as PageProps;
     const [batchSize, setBatchSize] = useState(12);
     const [batchIndex, setBatchIndex] = useState(0);
@@ -165,7 +167,7 @@ export default function AssetLabelsBatch() {
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <button
                             type="button"
-                            onClick={() => router.visit(indexRoute().url)}
+                            onClick={() => router.visit(indexRoute({ tenant: tenantCode }).url)}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
                         >
                             <ArrowLeft className="size-4" />

@@ -18,6 +18,8 @@ type PageProps = {
 };
 
 export default function AssetLabels() {
+    const { tenant } = usePage().props as unknown as { tenant?: { code: string | number } | null };
+    const tenantCode = tenant?.code as string | number;
     const { assets } = usePage().props as unknown as PageProps;
     const [exporting, setExporting] = useState(false);
 
@@ -131,7 +133,7 @@ export default function AssetLabels() {
                         <div className="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => router.visit(indexRoute().url)}
+                                onClick={() => router.visit(indexRoute({ tenant: tenantCode }).url)}
                                 className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
                             >
                                 <ArrowLeft className="size-4" />

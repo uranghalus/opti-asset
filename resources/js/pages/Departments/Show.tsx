@@ -98,7 +98,7 @@ function LeaderCard({ employee, role }: { employee: Employee; role: string }) {
                     {employee.nama_employee}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {employee.email ?? 'â€”'}
+                    {employee.email ?? '-'}
                 </p>
                 <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                     <UserRound className="size-3" strokeWidth={2} />
@@ -270,7 +270,7 @@ export default function DepartmentsShow() {
                                         {employee.nama_employee}
                                     </p>
                                     <p className="truncate text-xs text-muted-foreground">
-                                        {employee.email ?? 'â€”'}
+                                        {employee.email ?? '-'}
                                     </p>
                                 </div>
                             </Link>

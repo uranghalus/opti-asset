@@ -56,6 +56,8 @@ type ScannedAsset = {
 const SCANNER_ID = 'asset-scanner-region';
 
 export default function AssetScan() {
+    const { tenant } = usePage().props as unknown as { tenant?: { code: string | number } | null };
+    const tenantCode = tenant?.code as string | number;
     const [cameraActive, setCameraActive] = useState(false);
     const [startingCamera, setStartingCamera] = useState(false);
     const [manualCode, setManualCode] = useState('');
@@ -186,7 +188,7 @@ export default function AssetScan() {
             <div className="mx-auto w-full max-w-3xl">
                 <button
                     type="button"
-                    onClick={() => router.visit(indexRoute().url)}
+                    onClick={() => router.visit(indexRoute({ tenant: tenantCode }).url)}
                     className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
@@ -341,7 +343,7 @@ export default function AssetScan() {
                                             {result.item?.name ?? 'Aset'}
                                         </p>
                                         <p className="mt-0.5 truncate font-mono text-[13px] font-bold text-foreground tabular-nums">
-                                            {result.kode_asset ?? 'â€”'}
+                                            {result.kode_asset ?? '-'}
                                         </p>
                                         {chain ? (
                                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -353,7 +355,7 @@ export default function AssetScan() {
                                 <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
                                     <MapPin className="size-4 shrink-0 text-muted-foreground" />
                                     <p className="min-w-0 truncate text-sm font-medium text-foreground">
-                                        {result.location?.name ?? 'Lokasi â€”'}
+                                        {result.location?.name ?? 'Lokasi -'}
                                     </p>
                                     <span className="ml-auto shrink-0">
                                         <TipeBadge value={result.asset_type} />
@@ -367,7 +369,7 @@ export default function AssetScan() {
                                         Kondisi
                                     </p>
                                     <p className="mt-2 text-sm font-semibold text-foreground">
-                                        {result.condition ?? 'â€”'}
+                                        {result.condition ?? '-'}
                                     </p>
                                 </div>
                                 <div className="rounded-lg border border-border bg-surface-sunken/50 p-3 dark:bg-surface-sunken/30">
@@ -375,7 +377,7 @@ export default function AssetScan() {
                                         Serial
                                     </p>
                                     <p className="mt-2 truncate font-mono text-sm font-semibold text-foreground tabular-nums">
-                                        {result.serial_number ?? 'â€”'}
+                                        {result.serial_number ?? '-'}
                                     </p>
                                 </div>
                             </div>

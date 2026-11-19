@@ -11,9 +11,9 @@ import type { ClassificationLevel } from '@/types/classification';
 import type { Asset } from './types';
 
 /**
- * Cakupan aktif (ADR 0002): baris hanya merender level DI BAWAH scope â€”
+ * Cakupan aktif (ADR 0002): baris hanya merender level DI BAWAH scope -
  * node scope sendiri tidak diulang di setiap baris. Kolom menyusut jadi
- * satu; kode klasifikasi mono-first, wrap dua baris â€” truncation tidak
+ * satu; kode klasifikasi mono-first, wrap dua baris - truncation tidak
  * pernah mengenai kode.
  */
 export function scopeColumns(
@@ -48,7 +48,7 @@ function ScopeCells({
     };
 
     if (columns.length === 0) {
-        return <td className="px-3 py-2.5 text-xs text-muted-foreground">â€”</td>;
+        return <td className="px-3 py-2.5 text-xs text-muted-foreground">-</td>;
     }
 
     return (
@@ -181,7 +181,7 @@ export function AssetLedgerTable({
                                     />
                                 </td>
                                 <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tabular-nums">
-                                    {asset.kode_asset ?? 'â€”'}
+                                    {asset.kode_asset ?? '-'}
                                 </td>
                                 <td className="max-w-[240px] px-3 py-2.5">
                                     <Link
@@ -211,13 +211,13 @@ export function AssetLedgerTable({
                                 <ScopeCells asset={asset} columns={scopeCols} />
                                 <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
-                                        {asset.location?.name ?? 'â€”'}
+                                        {asset.location?.name ?? '-'}
                                     </span>
                                 </td>
                                 <td className="max-w-[160px] px-3 py-2.5 text-xs text-muted-foreground">
                                     <span className="block truncate">
                                         {asset.department?.nama_department ??
-                                            'â€”'}
+                                            '-'}
                                     </span>
                                 </td>
                                 <td

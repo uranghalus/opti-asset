@@ -298,7 +298,7 @@ export function AssetForm({
                                                 key={item.id}
                                                 value={item.id}
                                             >
-                                                {item.code} â€” {item.name}
+                                                {item.code} - {item.name}
                                             </SelectItem>
                                         ))
                                     )}
@@ -338,7 +338,7 @@ export function AssetForm({
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {previewCode || 'â€”'}
+                                {previewCode || '-'}
                             </p>
                             {previewCode ? (
                                 <p className="mt-0.5 text-xs text-muted-foreground">

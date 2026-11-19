@@ -7,6 +7,8 @@ import { assetListUrl } from '@/lib/asset-return';
 import { index as indexRoute } from '@/routes/tenant/assets';
 
 type EditProps = {
+    tenant?: { code: string | number } | null;
+
     asset: AssetInitial;
     items: AssetOption[];
     locations: { id: string; name: string }[];
@@ -16,7 +18,8 @@ type EditProps = {
 };
 
 export default function AssetEdit() {
-    const props = usePage().props as unknown as EditProps;
+    const { asset, tenant } = usePage().props as unknown as EditProps;
+    const tenantCode = tenant?.code as string | number;
 
     return (
         <>
@@ -42,12 +45,12 @@ export default function AssetEdit() {
                                     Edit Aset
                                 </h1>
                                 <p className="mt-1 font-mono text-[13px] font-semibold text-foreground tabular-nums">
-                                    {props.asset.kode_asset ?? 'â€”'}
+                                    {props.asset.kode_asset ?? '-'}
                                 </p>
                             </div>
                         </div>
                         <Button variant="soft-secondary" asChild>
-                            <Link href={indexRoute()}>
+                            <Link href={indexRoute({ tenant: tenantCode })}>
                                 Kembali ke Daftar
                             </Link>
                         </Button>
@@ -70,15 +73,17 @@ export default function AssetEdit() {
     );
 }
 
-AssetEdit.layout = {
+AssetEdit.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Daftar Aset',
-            href: indexRoute().url,
+            href: props.tenant?.code
+                ? indexRoute({ tenant: props.tenant.code }).url
+                : '/',
         },
         {
             title: 'Edit Aset',
         },
     ],
-};
+});
 

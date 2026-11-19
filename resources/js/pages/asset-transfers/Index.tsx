@@ -431,7 +431,7 @@ export default function AssetTransfersIndex() {
                                                             ?.kode_asset ??
                                                             transfer.asset
                                                                 ?.serial_number ??
-                                                            'â€”'}
+                                                            '-'}
                                                     </p>
                                                     <p className="truncate text-xs text-muted-foreground">
                                                         {transfer.asset?.brand
@@ -461,10 +461,10 @@ export default function AssetTransfersIndex() {
                                                 <MapPin className="size-3.5 shrink-0" />
                                                 <span className="truncate">
                                                     {transfer.fromLocation
-                                                        ?.name ?? 'â€”'}
+                                                        ?.name ?? '-'}
                                                     {' â†’ '}
                                                     {transfer.toLocation
-                                                        ?.name ?? 'â€”'}
+                                                        ?.name ?? '-'}
                                                 </span>
                                             </div>
 
@@ -478,7 +478,7 @@ export default function AssetTransfersIndex() {
                                                                 d.id_department ===
                                                                 transfer.to_department_id,
                                                         )?.nama_department ??
-                                                            'â€”'}
+                                                            '-'}
                                                     </span>
                                                 </div>
                                             )}
@@ -580,7 +580,7 @@ export default function AssetTransfersIndex() {
                                     </DialogTitle>
                                     <DialogDescription>
                                         {selectedTransfer
-                                            ? `Mutasi aset ${selectedTransfer.asset?.kode_asset ?? '-'} â€” ${statusLabels[selectedTransfer.status] ?? selectedTransfer.status}`
+                                            ? `Mutasi aset ${selectedTransfer.asset?.kode_asset ?? '-'} - ${statusLabels[selectedTransfer.status] ?? selectedTransfer.status}`
                                             : ''}
                                     </DialogDescription>
                                 </DialogHeader>
@@ -594,7 +594,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm font-medium text-foreground">
                                                     {selectedTransfer.asset
-                                                        ?.kode_asset ?? 'â€”'}
+                                                        ?.kode_asset ?? '-'}
                                                 </p>
                                             </div>
                                             <div>
@@ -603,7 +603,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm font-medium text-foreground">
                                                     {selectedTransfer.asset
-                                                        ?.serial_number ?? 'â€”'}
+                                                        ?.serial_number ?? '-'}
                                                 </p>
                                             </div>
                                             <div>
@@ -613,7 +613,7 @@ export default function AssetTransfersIndex() {
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer
                                                         .fromLocation?.name ??
-                                                        'â€”'}
+                                                        '-'}
                                                 </p>
                                             </div>
                                             <div>
@@ -622,7 +622,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer.toLocation
-                                                        ?.name ?? 'â€”'}
+                                                        ?.name ?? '-'}
                                                 </p>
                                             </div>
                                             <div>
@@ -631,7 +631,7 @@ export default function AssetTransfersIndex() {
                                                 </p>
                                                 <p className="mt-1 text-sm text-foreground">
                                                     {selectedTransfer.requester
-                                                        ?.name ?? 'â€”'}
+                                                        ?.name ?? '-'}
                                                 </p>
                                             </div>
                                             <div>

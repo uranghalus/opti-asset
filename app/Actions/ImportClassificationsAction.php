@@ -23,12 +23,19 @@ class ImportClassificationsAction
      */
     public function fromFile(string $filePath): array
     {
-        $rows = SimpleExcelReader::create($filePath)
-            ->getRows()
-            ->map(fn (array $row): array => $this->normalizeRow($row))
-            ->filter(fn (array $row): bool => $row['name'] !== '')
-            ->values()
-            ->all();
+        // NOTE: a foreach (not Collection::map with an arrow function) is used
+        // here on purpose — arrow functions capture by value, which would
+        // reset the carry state for every row.
+        $carryCodes = [null, null, null, null];
+        $rows = [];
+
+        foreach (SimpleExcelReader::create($filePath)->getRows() as $rawRow) {
+            $row = $this->normalizeRow($rawRow, $carryCodes);
+
+            if ($row['name'] !== '') {
+                $rows[] = $row;
+            }
+        }
 
         return $this->fromRows($rows);
     }
@@ -55,10 +62,12 @@ class ImportClassificationsAction
             return $summary;
         }
 
+        $collection = collect($this->inferMissingTypes($collection->all()));
+
         $validRows = [];
         foreach ($collection as $row) {
-            if ($row['tipe'] === null) {
-                $summary['skipped'][] = "'{$row['name']}' (kolom tipe wajib diisi: peralatan atau aktiva_tetap).";
+            if ($row['tipe'] === null || $row['tipe'] === '') {
+                $summary['skipped'][] = "'{$row['name']}' (tipe tidak bisa ditentukan: isi kolom tipe atau pastikan cabangnya punya satu tipe yang sama).";
 
                 continue;
             }
@@ -363,10 +372,16 @@ class ImportClassificationsAction
     /**
      * Parse row from SimpleExcel (snake_case headers) into our normalized format.
      *
+     * Hierarchy sheets are often "ragged": a category row may only fill the
+     * Bidang/Kategori column and inherit its golongan from the row above.
+     * $carryCodes keeps the last seen code per hierarchy level so those rows
+     * keep their full ancestor path.
+     *
      * @param  array<string, mixed>  $row
+     * @param  array<int, string|null>  $carryCodes  position => last seen value
      * @return ClassificationRow
      */
-    private function normalizeRow(array $row): array
+    private function normalizeRow(array $row, array &$carryCodes): array
     {
         $normalized = [];
         foreach ($row as $key => $value) {
@@ -397,10 +412,19 @@ class ImportClassificationsAction
         ];
 
         $filled = [];
-        foreach ($columns as $col) {
+        foreach ($columns as $index => $col) {
             $value = $this->valueOrNull($normalized[$col['key']] ?? null);
+
             if ($value !== null) {
-                $filled[] = ['level' => $col['level'], 'value' => $value];
+                $carryCodes[$index] = $value;
+
+                for ($deeper = $index + 1; $deeper < count($columns); $deeper++) {
+                    $carryCodes[$deeper] = null;
+                }
+            }
+
+            if ($carryCodes[$index] !== null) {
+                $filled[] = ['level' => $col['level'], 'value' => $carryCodes[$index]];
             }
         }
 
@@ -413,14 +437,98 @@ class ImportClassificationsAction
             ? collect($filled)->slice(0, -1)->pluck('value')->implode('.')
             : '';
 
+        // Keterangan carries the classification type in the Rekap sheets
+        // ("Aktiva Tetap"); only treat it as tipe when it matches a known
+        // value, otherwise keep it as the description.
+        $description = $this->valueOrNull($normalized['keterangan'] ?? null);
+        $tipe = $this->castTipe((string) ($normalized['tipe'] ?? $normalized['tipe_klasifikasi'] ?? $normalized['classification_type'] ?? ''));
+
+        if ($tipe === null && $description !== null) {
+            $derivedTipe = $this->castTipe($description);
+
+            if ($derivedTipe !== null) {
+                $tipe = $derivedTipe;
+                $description = null;
+            }
+        }
+
         return [
             'level' => $node['level'],
             'name' => $this->valueOrNull($normalized['uraian'] ?? null) ?? '',
             'code' => $node['value'],
-            'description' => $this->valueOrNull($normalized['keterangan'] ?? null),
+            'description' => $description,
             'parent_code' => $parentPath ?: null,
-            'tipe' => $this->castTipe((string) ($normalized['tipe'] ?? $normalized['tipe_klasifikasi'] ?? $normalized['classification_type'] ?? '')),
+            'tipe' => $tipe,
         ];
+    }
+
+    /**
+     * Fill a missing tipe from the rows under the same branch.
+     *
+     * Real spreadsheets only mark the leaf rows ("Aktiva Tetap") and leave the
+     * golongan/kategori/cluster blank. A node gets a type only when every typed
+     * row below it agrees; mixed branches stay null and are reported as
+     * undeterminable instead of guessing.
+     *
+     * @param  array<int, ClassificationRow>  $rows
+     * @return array<int, ClassificationRow>
+     */
+    private function inferMissingTypes(array $rows): array
+    {
+        /** @var array<string, array<string, true>> $typesByPrefix */
+        $typesByPrefix = [];
+
+        foreach ($rows as $row) {
+            $path = $this->pathOf($row);
+            $tipe = $row['tipe'] ?? null;
+
+            if ($path === null || $tipe === null || $tipe === '') {
+                continue;
+            }
+
+            $parts = explode('.', $path);
+
+            for ($depth = 1; $depth <= count($parts); $depth++) {
+                $prefix = implode('.', array_slice($parts, 0, $depth));
+                $typesByPrefix[$prefix][$tipe] = true;
+            }
+        }
+
+        foreach ($rows as $index => $row) {
+            if (($row['tipe'] ?? null) !== null && $row['tipe'] !== '') {
+                continue;
+            }
+
+            $path = $this->pathOf($row);
+
+            if ($path === null) {
+                continue;
+            }
+
+            $types = array_keys($typesByPrefix[$path] ?? []);
+
+            if (count($types) === 1) {
+                $rows[$index]['tipe'] = $types[0];
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build the full dotted code path so ancestor inference can match rows
+     * regardless of how the sheet splits codes across columns.
+     *
+     * @param  ClassificationRow  $row
+     */
+    private function pathOf(array $row): ?string
+    {
+        $segments = array_values(array_filter(
+            $this->codeSegments($row),
+            static fn (?string $segment): bool => $segment !== null && $segment !== '',
+        ));
+
+        return $segments === [] ? null : implode('.', $segments);
     }
 
     /**

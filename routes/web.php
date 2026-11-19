@@ -81,6 +81,7 @@ Route::middleware(['web', 'auth', 'tenant.access'])->group(function () {
 
         Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::post('categories/generate', [CategoryController::class, 'generate'])->name('categories.generate');
         Route::delete('categories/bulk', [CategoryController::class, 'destroyBulk'])->name('categories.destroy-bulk');
         Route::patch('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');

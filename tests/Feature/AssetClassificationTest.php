@@ -160,7 +160,7 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['code' => '01']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $group->id]), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'group' => $group->id]), [
                 'code' => '01',
                 'name' => 'Tetap',
             ])
@@ -172,7 +172,7 @@ class AssetClassificationTest extends TestCase
         $group = AssetGroup::factory()->create(['name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $group->id]), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'group' => $group->id]), [
                 'name' => 'Baru',
             ])
             ->assertRedirect();
@@ -187,7 +187,7 @@ class AssetClassificationTest extends TestCase
         $foreignGroup->forceFill(['tenant_id' => 'other'])->save();
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'id' => $foreignGroup->id]), [
+            ->patch(route('tenant.asset-classification.groups.update', ['tenant' => $this->tenant->code, 'group' => $foreignGroup->id]), [
                 'name' => 'X',
             ])
             ->assertNotFound();
@@ -267,7 +267,7 @@ class AssetClassificationTest extends TestCase
         AssetSubCluster::factory()->create(['asset_cluster_id' => $cluster->id]);
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.asset-classification.groups.destroy', ['tenant' => $this->tenant->code, 'id' => $group->id]))
+            ->delete(route('tenant.asset-classification.groups.destroy', ['tenant' => $this->tenant->code, 'group' => $group->id]))
             ->assertRedirect();
 
         $this->assertSame(0, AssetGroup::withoutGlobalScopes()->count());
@@ -633,6 +633,67 @@ class AssetClassificationTest extends TestCase
         $this->assertSame(1, AssetGroup::count());
     }
 
+    public function test_import_hierarchy_spreadsheet_derives_tipe_from_keterangan_and_carries_parent_codes(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'rekap').'.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($path);
+        // Header mengikuti file "Rekap aset": tanpa kolom Tipe, tipe hanya
+        // ditulis di kolom Keterangan pada baris daun.
+        $writer->addRow(Row::fromValues(['Golongan Aset ', 'Bidang/ Kategori Aset', 'Kelompok Aset', 'Sub. Kelompok Aset', 'Uraian', 'Keterangan']));
+        $writer->addRow(Row::fromValues(['01', '', '', '', 'Golongan Tanah', '']));
+        $writer->addRow(Row::fromValues(['', '01', '', '', 'Kategori Tanah', '']));
+        $writer->addRow(Row::fromValues(['', '', '01', '', 'Cluster Tanah', '']));
+        $writer->addRow(Row::fromValues(['01', '01', '01', '01', 'Tanah', 'Aktiva Tetap']));
+        $writer->close();
+
+        $file = new UploadedFile($path, 'rekap.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['file' => $file])
+            ->assertRedirect()
+            ->assertInertiaFlash('import_summary.created', 4)
+            ->assertInertiaFlash('import_summary.skipped', []);
+
+        $this->assertSame(1, AssetGroup::where('code', '01')->count());
+        $this->assertSame(1, AssetCategory::where('code', '01')->count());
+        $this->assertSame(1, AssetCluster::where('code', '01')->count());
+        $this->assertSame(1, AssetSubCluster::where('code', '01')->count());
+
+        $group = AssetGroup::where('code', '01')->firstOrFail();
+        $this->assertSame('aktiva_tetap', $group->classification_type?->value);
+        $this->assertSame('Tanah', AssetSubCluster::firstOrFail()->name);
+    }
+
+    public function test_import_reports_rows_with_undeterminable_tipe_as_skipped(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'rekap').'.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $writer->addRow(Row::fromValues(['Golongan Aset ', 'Bidang/ Kategori Aset', 'Kelompok Aset', 'Sub. Kelompok Aset', 'Uraian', 'Keterangan']));
+        $writer->addRow(Row::fromValues(['02', '', '', '', 'Golongan Tanpa Tipe', '']));
+        $writer->close();
+
+        $file = new UploadedFile($path, 'rekap.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $this->actingAs($this->user)
+            ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
+            ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['file' => $file])
+            ->assertRedirect()
+            ->assertInertiaFlash('import_summary.created', 0)
+            ->assertInertiaFlash('import_summary.skipped_count', 1);
+
+        $flash = session('inertia.flash_data');
+        $message = (string) ($flash['success'] ?? '');
+
+        $this->assertStringContainsString('0 dibuat', $message);
+        $this->assertStringContainsString('Dilewati', $message);
+        $this->assertStringContainsString('tipe tidak bisa ditentukan', $message);
+
+        $this->assertSame(0, AssetGroup::withoutGlobalScopes()->count());
+    }
+
     public function test_import_rejects_invalid_file(): void
     {
         $file = UploadedFile::fake()->create('data.txt', 10, 'text/plain');
@@ -660,9 +721,9 @@ class AssetClassificationTest extends TestCase
             ->from(route('tenant.asset-classification.index', ['tenant' => $this->tenant->code]))
             ->post(route('tenant.asset-classification.import', ['tenant' => $this->tenant->code]), ['file' => $file])
             ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertInertiaFlash('success');
 
-        $flash = session('success');
+        $flash = session('inertia.flash_data.success');
         $this->assertStringContainsString('3 dibuat', (string) $flash);
 
         $this->assertSame(1, AssetGroup::where('code', '05')->count());

@@ -545,7 +545,7 @@ export default function RolesIndex() {
         };
 
         if (editing) {
-            form.patch(update(editing.id).url, options);
+            form.patch(update({ role: editing.id }).url, options);
         } else {
             form.post(store().url, options);
         }
@@ -556,7 +556,7 @@ export default function RolesIndex() {
             return;
         }
 
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ role: deleting.id }).url, {
             only: ['roles', 'filters'],
             preserveState: true,
             preserveScroll: true,

@@ -79,6 +79,14 @@ import { LEVEL_LABELS } from '@/types/classification';
 type PageProps = {
     groups: ClassificationNode[];
     classification_v2: boolean;
+    tenant?: { code: string | number } | null;
+};
+
+type ImportSummary = {
+    created: number;
+    updated: number;
+    skipped: string[];
+    skipped_count: number;
 };
 
 type FormState = {
@@ -91,23 +99,29 @@ type DeleteState = {
     item: ClassificationNode;
 };
 
-type RouteFn = (id?: any) => { url: string; method: string };
+type DestroyRouteFn = (
+    tenant: string | number,
+    id: string,
+) => { url: string; method: string };
 
-const DESTROY: Record<ClassificationLevel, RouteFn> = {
-    group: destroyGroup,
-    category: destroyCategory,
-    cluster: destroyCluster,
-    'sub-cluster': destroySubCluster,
+type StoreRouteFn = (tenant: string | number) => {
+    url: string;
+    method: string;
 };
 
-const STORE: Record<
-    ClassificationLevel,
-    () => { url: string; method: string }
-> = {
-    group: storeGroup,
-    category: storeCategory,
-    cluster: storeCluster,
-    'sub-cluster': storeSubCluster,
+const DESTROY: Record<ClassificationLevel, DestroyRouteFn> = {
+    group: (tenant, id) => destroyGroup({ tenant, group: id }),
+    category: (tenant, id) => destroyCategory({ tenant, category: id }),
+    cluster: (tenant, id) => destroyCluster({ tenant, cluster: id }),
+    'sub-cluster': (tenant, id) =>
+        destroySubCluster({ tenant, subCluster: id }),
+};
+
+const STORE: Record<ClassificationLevel, StoreRouteFn> = {
+    group: (tenant) => storeGroup({ tenant }),
+    category: (tenant) => storeCategory({ tenant }),
+    cluster: (tenant) => storeCluster({ tenant }),
+    'sub-cluster': (tenant) => storeSubCluster({ tenant }),
 };
 
 const PARENT_FIELD: Partial<Record<ClassificationLevel, string>> = {
@@ -163,10 +177,7 @@ function ancestorsOf(
     return walk(nodes, []) ?? [];
 }
 
-function rootTypeOf(
-    nodes: ClassificationNode[],
-    id: string,
-): string | null {
+function rootTypeOf(nodes: ClassificationNode[], id: string): string | null {
     let current = findInfo(nodes, id);
 
     while (current?.parent) {
@@ -231,8 +242,9 @@ function descendantBreakdown(item: ClassificationNode) {
 }
 
 export default function AssetClassification() {
-    const { groups, classification_v2: groupedByType } =
-        usePage().props as unknown as PageProps;
+    const page = usePage().props as unknown as PageProps;
+    const { groups, classification_v2: groupedByType } = page;
+    const tenantCode = page.tenant?.code as string | number;
 
     const [query, setQuery] = useState('');
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -394,7 +406,7 @@ export default function AssetClassification() {
             list: ClassificationNode[],
         ) => {
             router.post(
-                reorder().url,
+                reorder({ tenant: tenantCode }).url,
                 {
                     level,
                     parent_id: parentId ?? null,
@@ -472,7 +484,7 @@ export default function AssetClassification() {
                 payload[parentField] = info.parent.id;
             }
 
-            router.post(STORE[level]().url, payload, {
+            router.post(STORE[level](tenantCode).url, payload, {
                 only: ['groups'],
                 preserveState: true,
                 onSuccess: () => {
@@ -492,7 +504,7 @@ export default function AssetClassification() {
 
         setDeletingId(item.id);
 
-        router.delete(DESTROY[levelKey](item.id).url, {
+        router.delete(DESTROY[levelKey](tenantCode, item.id).url, {
             only: ['groups'],
             preserveState: true,
             onSuccess: () => {
@@ -579,7 +591,7 @@ export default function AssetClassification() {
         setDeletingId(topmost[0] ?? null);
 
         router.post(
-            destroyBulk().url,
+            destroyBulk({ tenant: tenantCode }).url,
             { level, ids: topmost },
             {
                 only: ['groups'],
@@ -707,15 +719,42 @@ export default function AssetClassification() {
         const data = new FormData();
         data.append('file', importFile);
 
-        router.post(importMethod().url, data, {
+        router.post(importMethod({ tenant: tenantCode }).url, data, {
             forceFormData: true,
             only: ['groups'],
             preserveState: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setImporting(false);
                 setImportRows(null);
                 setImportFile(null);
-                toast.success(`${importRows.length} baris berhasil diimpor.`);
+
+                const flash = (
+                    page as unknown as {
+                        flash?: {
+                            success?: string;
+                            import_summary?: ImportSummary;
+                        };
+                    }
+                ).flash;
+                const summary = flash?.import_summary;
+
+                // The row count shown in the preview is what the client
+                // parsed, not what the server actually wrote. Anchor the
+                // toast to the backend summary so skipped rows are never
+                // reported as imported.
+                if (summary && summary.created + summary.updated === 0) {
+                    toast.warning(
+                        flash?.success ??
+                            'Tidak ada data yang diimpor. Periksa kembali format file.',
+                    );
+
+                    return;
+                }
+
+                toast.success(
+                    flash?.success ??
+                        `${summary?.created ?? importRows.length} baris berhasil diimpor.`,
+                );
             },
             onError: () => {
                 setImporting(false);
@@ -877,8 +916,9 @@ export default function AssetClassification() {
                                         Klasifikasi Asset
                                     </h1>
                                     <p className="mt-0.5 text-sm text-muted-foreground">
-                                        Kelola hierarki master data: Golongan â†’
-                                        Kategori â†’ Cluster â†’ Sub Cluster.
+                                        Kelola hierarki master data: Golongan
+                                        â†’ Kategori â†’ Cluster â†’ Sub
+                                        Cluster.
                                     </p>
                                 </div>
                             </div>
@@ -1296,8 +1336,7 @@ export default function AssetClassification() {
                         formState.item
                             ? rootTypeOf(
                                   groups,
-                                  selectedInfo?.parent?.id ??
-                                      formState.item.id,
+                                  selectedInfo?.parent?.id ?? formState.item.id,
                               )
                             : rootTypeOf(groups, selectedInfo?.node.id ?? '')
                     }
@@ -1465,12 +1504,15 @@ export default function AssetClassification() {
     );
 }
 
-AssetClassification.layout = {
+AssetClassification.layout = (props: {
+    tenant?: { code: string | number } | null;
+}) => ({
     breadcrumbs: [
         {
             title: 'Klasifikasi Asset',
-            href: index().url,
+            href: props.tenant?.code
+                ? index({ tenant: props.tenant.code }).url
+                : '/',
         },
     ],
-};
-
+});

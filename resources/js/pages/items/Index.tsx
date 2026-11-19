@@ -102,6 +102,7 @@ type PageProps = {
     categories: Category[];
     departments: Department[];
     filters: Filters;
+    tenant?: { code: string | number } | null;
 };
 
 const SORT_OPTIONS = [
@@ -163,8 +164,9 @@ const EMPTY_FORM: ItemForm = {
 };
 
 export default function ItemsIndex() {
-    const { items, categories, departments, filters } = usePage()
-        .props as unknown as PageProps;
+    const page = usePage().props as unknown as PageProps;
+    const { items, categories, departments, filters } = page;
+    const tenantCode = page.tenant?.code as string | number;
 
     const [search, setSearch] = useState(filters.search);
     const [sort, setSort] = useState(filters.sort);
@@ -246,7 +248,7 @@ export default function ItemsIndex() {
         }
 
         router.get(
-            indexRoute().url,
+            indexRoute({ tenant: tenantCode }).url,
             { ...params, ...overrides },
             {
                 preserveState: true,
@@ -333,9 +335,9 @@ export default function ItemsIndex() {
         };
 
         if (editing) {
-            form.patch(update(editing.id).url, options);
+            form.patch(update({ tenant: tenantCode, item: editing.id }).url, options);
         } else {
-            form.post(store().url, options);
+            form.post(store({ tenant: tenantCode }).url, options);
         }
     };
 
@@ -345,7 +347,7 @@ export default function ItemsIndex() {
         }
 
         setDeletingState(true);
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ tenant: tenantCode, item: deleting.id }).url, {
             only: ['items', 'filters'],
             preserveState: true,
             preserveScroll: true,
@@ -1255,12 +1257,12 @@ export default function ItemsIndex() {
     );
 }
 
-ItemsIndex.layout = {
+ItemsIndex.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Master Item',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
     ],
-};
+});
 

@@ -391,7 +391,7 @@ class CapitalizationThresholdTest extends TestCase
 
         $this->actingAs($this->superAdmin)
             ->from(route('tenant.assets.index', ['tenant' => $this->tenant->code]))
-            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, '$asset' => $asset]), [
+            ->patch(route('tenant.assets.update', ['tenant' => $this->tenant->code, 'asset' => $asset]), [
                 'asset_type' => 'equipment',
                 'type_override_reason' => 'Kebijakan internal perusahaan',
             ])

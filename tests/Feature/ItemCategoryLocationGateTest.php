@@ -138,7 +138,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $item = Item::factory()->create(['name' => 'Nama Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, '$item' => $item]), [
+            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, 'item' => $item]), [
                 'code' => $item->code,
                 'name' => 'Tidak Boleh Diubah',
             ])
@@ -154,7 +154,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $item = Item::factory()->create(['name' => 'Nama Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, '$item' => $item]), [
+            ->patch(route('tenant.items.update', ['tenant' => $this->tenant->code, 'item' => $item]), [
                 'code' => $item->code,
                 'name' => 'Nama Baru',
             ])
@@ -172,7 +172,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $item = Item::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.items.destroy', ['tenant' => $this->tenant->code, '$item' => $item]))
+            ->delete(route('tenant.items.destroy', ['tenant' => $this->tenant->code, 'item' => $item]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('items', ['id' => $item->id]);
@@ -185,7 +185,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $item = Item::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.items.destroy', ['tenant' => $this->tenant->code, '$item' => $item]))
+            ->delete(route('tenant.items.destroy', ['tenant' => $this->tenant->code, 'item' => $item]))
             ->assertRedirect(route('tenant.items.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('items', ['id' => $item->id]);
@@ -253,7 +253,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $group = AssetGroup::factory()->create();
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, '$category' => $category]), [
+            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, 'category' => $category]), [
                 'name' => 'Tidak Boleh Diubah',
                 'classification_type' => 'GROUP',
                 'classification_id' => $group->id,
@@ -271,7 +271,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $group = AssetGroup::factory()->create();
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, '$category' => $category]), [
+            ->patch(route('tenant.categories.update', ['tenant' => $this->tenant->code, 'category' => $category]), [
                 'name' => 'Nama Baru',
                 'classification_type' => 'GROUP',
                 'classification_id' => $group->id,
@@ -290,7 +290,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $category = Category::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, '$category' => $category]))
+            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, 'category' => $category]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('categories', ['id' => $category->id]);
@@ -303,7 +303,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $category = Category::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, '$category' => $category]))
+            ->delete(route('tenant.categories.destroy', ['tenant' => $this->tenant->code, 'category' => $category]))
             ->assertRedirect(route('tenant.categories.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('categories', ['id' => $category->id]);
@@ -386,7 +386,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $location = Location::factory()->create(['name' => 'Nama Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, '$location' => $location]), ['name' => 'Tidak Boleh Diubah'])
+            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, 'location' => $location]), ['name' => 'Tidak Boleh Diubah'])
             ->assertForbidden();
 
         $this->assertSame('Nama Awal', $location->refresh()->name);
@@ -399,7 +399,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $location = Location::factory()->create(['name' => 'Nama Awal']);
 
         $this->actingAs($this->user)
-            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, '$location' => $location]), ['name' => 'Nama Baru'])
+            ->patch(route('tenant.locations.update', ['tenant' => $this->tenant->code, 'location' => $location]), ['name' => 'Nama Baru'])
             ->assertRedirect(route('tenant.locations.index', ['tenant' => $this->tenant->code]));
 
         $this->assertSame('Nama Baru', $location->refresh()->name);
@@ -414,7 +414,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, '$location' => $location]))
+            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, 'location' => $location]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('locations', ['id' => $location->id]);
@@ -427,7 +427,7 @@ class ItemCategoryLocationGateTest extends TestCase
         $location = Location::factory()->create();
 
         $this->actingAs($this->user)
-            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, '$location' => $location]))
+            ->delete(route('tenant.locations.destroy', ['tenant' => $this->tenant->code, 'location' => $location]))
             ->assertRedirect(route('tenant.locations.index', ['tenant' => $this->tenant->code]));
 
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);

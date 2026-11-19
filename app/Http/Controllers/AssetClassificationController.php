@@ -591,7 +591,7 @@ class AssetClassificationController extends Controller
                 Storage::disk('local')->delete($tempPath);
             }
 
-            return back()->with('success', $this->importSummaryMessage($summary));
+            return $this->flashedImportSummary($summary);
         }
 
         $validated = $request->validate([
@@ -606,7 +606,27 @@ class AssetClassificationController extends Controller
 
         $summary = $action->fromRows($validated['rows']);
 
-        return back()->with('success', $this->importSummaryMessage($summary));
+        return $this->flashedImportSummary($summary);
+    }
+
+    /**
+     * Send both the human message and the machine-readable counts so the
+     * client can render an honest success/warning toast. Skipped reasons are
+     * capped so a mostly-invalid sheet cannot bloat the redirect payload.
+     *
+     * @param  array{created: int, updated: int, skipped: array<int, string>}  $summary
+     */
+    private function flashedImportSummary(array $summary): RedirectResponse
+    {
+        return Inertia::flash([
+            'success' => $this->importSummaryMessage($summary),
+            'import_summary' => [
+                'created' => $summary['created'],
+                'updated' => $summary['updated'],
+                'skipped' => array_slice($summary['skipped'], 0, 3),
+                'skipped_count' => count($summary['skipped']),
+            ],
+        ])->back();
     }
 
     /**

@@ -367,7 +367,7 @@ export default function PermissionsIndex() {
             return;
         }
 
-        editForm.patch(update(editing.id).url, {
+        editForm.patch(update({ permission: editing.id }).url, {
             only: ['permissions', 'filters', 'groups'],
             preserveState: true,
             preserveScroll: true,
@@ -386,7 +386,7 @@ export default function PermissionsIndex() {
             return;
         }
 
-        router.delete(destroy(deleting.id).url, {
+        router.delete(destroy({ permission: deleting.id }).url, {
             only: ['permissions', 'filters', 'groups'],
             preserveState: true,
             preserveScroll: true,

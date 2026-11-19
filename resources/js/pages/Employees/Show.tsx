@@ -54,6 +54,7 @@ type EmployeeDetail = {
 type PageProps = {
     employee: EmployeeDetail;
     roles: RoleOption[];
+    tenant?: { code: string | number } | null;
 };
 
 const ROLE_ACCENTS: string[] = [
@@ -78,8 +79,9 @@ function formatDate(value: string): string {
 }
 
 export default function EmployeeShow() {
-    const { employee, roles: allRoles } = usePage()
-        .props as unknown as PageProps;
+    const page = usePage().props as unknown as PageProps;
+    const { employee, roles: allRoles } = page;
+    const tenantCode = page.tenant?.code as string | number;
     const [assignOpen, setAssignOpen] = useState(false);
     const [assigning, setAssigning] = useState(false);
 
@@ -116,7 +118,7 @@ export default function EmployeeShow() {
 
     const handleAssign = () => {
         setAssigning(true);
-        assignPost(updateRoles(employee.id_employee).url, {
+        assignPost(updateRoles({ tenant: tenantCode, employee: employee.id_employee }).url, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Role karyawan berhasil diperbarui.');
@@ -164,7 +166,7 @@ export default function EmployeeShow() {
             <VibrantBackground variant="amber" />
             <div className="mx-auto w-full max-w-5xl">
                 <Link
-                    href={indexRoute().url}
+                    href={indexRoute({ tenant: tenantCode }).url}
                     className="group inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
@@ -429,12 +431,12 @@ export default function EmployeeShow() {
     );
 }
 
-EmployeeShow.layout = {
+EmployeeShow.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Anggota',
-            href: indexRoute().url,
+            href: indexRoute({ tenant: props.tenant?.code! }).url,
         },
     ],
-};
+});
 

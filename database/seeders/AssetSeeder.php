@@ -114,6 +114,9 @@ class AssetSeeder extends Seeder
         $totalAssets = $tenants->count() * $assetsPerTenant;
 
         foreach ($tenants as $tenant) {
+            // Set tenant context untuk observer ActivityLog
+            Tenant::setCurrent($tenant);
+
             $this->command->info("Membuat {$assetsPerTenant} aset untuk tenant: {$tenant->name}");
 
             for ($i = 0; $i < $assetsPerTenant; $i++) {

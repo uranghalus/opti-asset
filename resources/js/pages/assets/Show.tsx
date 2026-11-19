@@ -112,6 +112,7 @@ type HistoryEntry = {
 
 type PageProps = {
     asset: AssetDetail;
+    tenant?: { code: string | number } | null;
 };
 
 const CONDITION_STYLES: Record<string, string> = {
@@ -300,7 +301,7 @@ function Section({
     return (
         <section className="rounded-xl border border-border bg-card p-5 md:p-6">
             <div className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                     <Icon className="size-4 text-primary" strokeWidth={1.75} />
                 </div>
                 <div>
@@ -320,7 +321,8 @@ function Section({
 }
 
 export default function AssetShow() {
-    const { asset } = usePage().props as unknown as PageProps;
+    const { asset, tenant } = usePage().props as unknown as PageProps;
+    const tenantCode = tenant?.code as string | number;
 
     const [photoIndex, setPhotoIndex] = useState(0);
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -366,7 +368,7 @@ export default function AssetShow() {
     const handleDelete = () => {
         setDeleting(true);
 
-        router.delete(destroy({ asset: asset.id }).url, {
+        router.delete(destroy({ tenant: tenantCode, asset: asset.id }).url, {
             onSuccess: () => {
                 setDeleting(false);
                 setDeleteOpen(false);
@@ -428,7 +430,7 @@ export default function AssetShow() {
 
                     <div className="mt-4 flex shrink-0 flex-wrap gap-2">
                         <Link
-                            href={labelsRoute().url}
+                            href={labelsRoute({ tenant: tenantCode }).url}
                             data={{ ids: [asset.id] }}
                             className="inline-flex"
                         >
@@ -441,7 +443,14 @@ export default function AssetShow() {
                                 Cetak Barcode
                             </Button>
                         </Link>
-                        <Link href={editRoute(asset.id).url}>
+                        <Link
+                            href={
+                                editRoute({
+                                    tenant: tenantCode,
+                                    asset: asset.id,
+                                }).url
+                            }
+                        >
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -514,7 +523,7 @@ export default function AssetShow() {
                         >
                             {hasPhotos ? (
                                 <div className="space-y-3">
-                                    <div className="overflow-hidden rounded-xl border border-border/70 bg-card ">
+                                    <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
                                         <img
                                             src={asset.photo_url[photoIndex]}
                                             alt="Foto aset"
@@ -637,7 +646,8 @@ export default function AssetShow() {
                                     icon={Building2}
                                     label="Department"
                                     value={
-                                        asset.department?.nama_department ?? 'â€”'
+                                        asset.department?.nama_department ??
+                                        'â€”'
                                     }
                                 />
                             </div>
@@ -779,7 +789,7 @@ export default function AssetShow() {
                     <div className="space-y-4">
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                     <Barcode
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -814,7 +824,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -855,7 +865,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                     <FileText
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -917,7 +927,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                     <UserRound
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -955,7 +965,7 @@ export default function AssetShow() {
 
                         <section className="rounded-xl border border-border bg-card p-5">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                     <ClipboardList
                                         className="size-4 text-primary"
                                         strokeWidth={1.75}
@@ -985,7 +995,7 @@ export default function AssetShow() {
                 <section className="mt-4 rounded-xl border border-border bg-card p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted ">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-primary-muted-border bg-primary-muted">
                                 <History
                                     className="size-4 text-primary"
                                     strokeWidth={1.75}
@@ -1214,12 +1224,13 @@ export default function AssetShow() {
     );
 }
 
-AssetShow.layout = {
+AssetShow.layout = (props: { tenant?: { code: string | number } | null }) => ({
     breadcrumbs: [
         {
             title: 'Daftar Aset',
-            href: indexRoute().url,
+            href: props.tenant?.code
+                ? indexRoute({ tenant: props.tenant.code }).url
+                : '/',
         },
     ],
-};
-
+});

@@ -20,6 +20,7 @@
         "laravel/wayfinder": "^0.1.14",
         "onelogin/php-saml": "^4.0",
         "opcodesio/log-viewer": "^3.24",
+        "phpoffice/phpspreadsheet": "^5.11",
         "spatie/laravel-multitenancy": "^4.1",
         "spatie/laravel-permission": "^8.3",
         "spatie/simple-excel": "^3.10"

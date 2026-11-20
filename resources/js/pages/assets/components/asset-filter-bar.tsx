@@ -41,6 +41,9 @@ export function AssetFilterBar({
     location,
     onLocationChange,
     hasAssets,
+    items = [],
+    itemId,
+    onItemIdChange,
 }: {
     search: string;
     onSearchChange: (value: string) => void;
@@ -55,6 +58,9 @@ export function AssetFilterBar({
     location: string;
     onLocationChange: (value: string) => void;
     hasAssets: boolean;
+    items?: { id: string; code: string; name: string }[];
+    itemId?: string;
+    onItemIdChange?: (value: string) => void;
 }) {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
 
@@ -81,6 +87,15 @@ export function AssetFilterBar({
             label:
                 locations.find((loc) => loc.id === location)?.name ?? 'Lokasi',
             onRemove: () => onLocationChange(''),
+        });
+    }
+
+    if (itemId && onItemIdChange) {
+        const item = items?.find(i => i.id === itemId);
+        chips.push({
+            key: 'item_id',
+            label: item ? `${item.code} - ${item.name}` : 'Item',
+            onRemove: () => onItemIdChange(''),
         });
     }
 
@@ -149,6 +164,9 @@ export function AssetFilterBar({
                                 location={location}
                                 onLocationChange={onLocationChange}
                                 activeFilterCount={activeFilterCount}
+                                items={items}
+                                itemId={itemId}
+                                onItemIdChange={onItemIdChange}
                             />
                         </div>
                     )}
@@ -217,6 +235,9 @@ function FilterPanelButton({
     location,
     onLocationChange,
     activeFilterCount,
+    items = [],
+    itemId,
+    onItemIdChange,
 }: {
     status: string;
     onStatusChange: (status: string) => void;
@@ -224,8 +245,11 @@ function FilterPanelButton({
     location: string;
     onLocationChange: (value: string) => void;
     activeFilterCount: number;
+    items?: { id: string; code: string; name: string }[];
+    itemId?: string;
+    onItemIdChange?: (value: string) => void;
 }) {
-    const panelCount = (status ? 1 : 0) + (location ? 1 : 0);
+    const panelCount = (status ? 1 : 0) + (location ? 1 : 0) + (itemId ? 1 : 0);
 
     return (
         <details className="group relative">
@@ -248,6 +272,29 @@ function FilterPanelButton({
                     Filter
                 </p>
                 <div className="flex flex-col gap-3">
+                    {onItemIdChange && (
+                        <label className="flex flex-col gap-1">
+                            <span className="text-xs font-medium text-foreground">
+                                Item
+                            </span>
+                            <Select
+                                value={itemId || 'all'}
+                                onValueChange={(v) => onItemIdChange(v === 'all' ? '' : v)}
+                            >
+                                <SelectTrigger className="h-9" aria-label="Filter item">
+                                    <SelectValue placeholder="Semua Item" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Item</SelectItem>
+                                    {items.map((it) => (
+                                        <SelectItem key={it.id} value={it.id}>
+                                            {it.code} - {it.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </label>
+                    )}
                     <label className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-foreground">
                             Status
@@ -314,6 +361,7 @@ function FilterPanelButton({
                         onClick={() => {
                             onStatusChange('');
                             onLocationChange('');
+                            onItemIdChange?.('');
                         }}
                     >
                         Reset panel

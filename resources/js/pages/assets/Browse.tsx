@@ -62,6 +62,7 @@ export default function Browse({ pageProps }: BrowseProps) {
         filters.location ?? '',
     );
     const [conditionFilter, setConditionFilter] = useState(filters.condition);
+    const [itemIdFilter, setItemIdFilter] = useState(filters.item_id ?? '');
     const [treeSearch, setTreeSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(
         serverSelected?.id ?? null,
@@ -134,6 +135,8 @@ export default function Browse({ pageProps }: BrowseProps) {
             departmentFilter,
             conditionFilter,
             locationFilter,
+            assetTypeFilter,
+            itemIdFilter,
         ].filter(Boolean).length +
         (search ? 1 : 0) +
         (selectedId ? 1 : 0);
@@ -194,6 +197,10 @@ export default function Browse({ pageProps }: BrowseProps) {
             p.condition = conditionFilter;
         }
 
+        if (itemIdFilter) {
+            p.item_id = itemIdFilter;
+        }
+
         return p;
     };
 
@@ -223,6 +230,7 @@ export default function Browse({ pageProps }: BrowseProps) {
         setDepartmentFilter('');
         setLocationFilter('');
         setConditionFilter('');
+        setItemIdFilter('');
         navigate(currentParams());
     };
 
@@ -379,6 +387,12 @@ export default function Browse({ pageProps }: BrowseProps) {
                                     reload(
                                         v ? { location: v } : { location: '' },
                                     );
+                                }}
+                                items={items ?? []}
+                                itemId={itemIdFilter}
+                                onItemIdChange={(v) => {
+                                    setItemIdFilter(v);
+                                    reload(v ? { item_id: v } : { item_id: '' });
                                 }}
                                 hasAssets={safeAssets.data.length > 0}
                             />

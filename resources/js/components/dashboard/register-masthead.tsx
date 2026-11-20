@@ -104,7 +104,7 @@ export function RegisterMasthead({
                             <TooltipTrigger asChild>
                                 <p
                                     aria-label={`Total aset tercatat: ${num(total)}`}
-                                    className="mt-1 w-fit text-[32px] leading-none font-extrabold tracking-tight break-words text-primary tabular-nums sm:text-4xl lg:text-5xl"
+                                    className="mt-1 w-fit text-4xl leading-none font-extrabold tracking-tight break-words text-primary tabular-nums sm:text-4xl lg:text-5xl"
                                 >
                                     {num(total)}
                                 </p>

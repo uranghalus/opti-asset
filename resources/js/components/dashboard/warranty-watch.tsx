@@ -94,7 +94,7 @@ function AssetRow({ asset }: { asset: WarrantyAsset }) {
 
             <div className="flex shrink-0 flex-col items-end gap-1">
                 <DaysBadge days={Math.round(asset.days_until ?? 0)} />
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[12px] text-muted-foreground">
                     Berakhir {fullDate(asset.warranty_expire)}
                 </span>
             </div>

@@ -229,7 +229,7 @@ function Feed({ items }: { items: FeedItem[] }) {
 
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <span className="mt-1 block w-fit text-[11px] text-muted-foreground">
+                                    <span className="mt-1 block w-fit text-[12px] text-muted-foreground">
                                         {relTime(item.date)}
                                     </span>
                                 </TooltipTrigger>

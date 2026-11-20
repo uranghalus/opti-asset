@@ -152,7 +152,7 @@ export function RankedList({
                             <span className="block text-sm font-semibold text-foreground tabular-nums">
                                 {num(item.value)}
                             </span>
-                            <span className="block text-[11px] text-muted-foreground">
+                            <span className="block text-[12px] text-muted-foreground">
                                 {unit}
                             </span>
                         </div>

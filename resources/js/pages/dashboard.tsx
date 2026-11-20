@@ -8,7 +8,6 @@ import { RegisterSection } from '@/components/dashboard/register-section';
 import { RegisterStrip } from '@/components/dashboard/register-strip';
 import type { DashboardPageProps } from '@/components/dashboard/register-types';
 import { StatusLedger } from '@/components/dashboard/status-ledger';
-import { ValueLedger } from '@/components/dashboard/value-ledger';
 import { WarrantyWatch } from '@/components/dashboard/warranty-watch';
 import { dashboard } from '@/routes/tenant';
 import { index as transfersIndex } from '@/routes/tenant/asset-transfers';
@@ -114,12 +113,7 @@ export default function Dashboard() {
                 />
 
                 <div className="order-4 grid gap-4 md:gap-5 lg:order-3 lg:grid-cols-5">
-                    <StatusLedger stats={stats} className="lg:col-span-2" />
-
-                    <ValueLedger
-                        slices={typeSlices}
-                        className="lg:col-span-3"
-                    />
+                    <StatusLedger stats={stats} className="lg:col-span-5" />
                 </div>
 
                 <div className="order-5 grid gap-4 md:grid-cols-2 md:gap-5 lg:order-4">

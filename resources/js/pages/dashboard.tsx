@@ -116,7 +116,7 @@ export default function Dashboard() {
                     <StatusLedger stats={stats} className="lg:col-span-5" />
                 </div>
 
-                <div className="order-5 grid gap-4 md:grid-cols-2 md:gap-5 lg:order-4">
+                <div className="order-5 grid gap-4 md:grid-cols-1 md:gap-5 lg:order-4">
                     <RegisterSection
                         title="Aset per Klasifikasi"
                         description="Golongan dengan jumlah aset terbanyak"
@@ -133,24 +133,6 @@ export default function Dashboard() {
                             allDescription="Seluruh golongan beserta jumlah aset tercatat."
                             emptyTitle="Belum ada klasifikasi berisi"
                             emptyDescription="Aset yang sudah dikelompokkan ke golongan akan muncul di sini."
-                        />
-                    </RegisterSection>
-
-                    <RegisterSection
-                        title="Aset per Lokasi"
-                        description="Lokasi dengan aset terbanyak"
-                        icon={MapPin}
-                    >
-                        <RankedList
-                            items={locations.map((slice) => ({
-                                label: slice.name ?? '—',
-                                value: Number(slice.count) || 0,
-                            }))}
-                            mobileLimit={5}
-                            allTitle="Semua Lokasi"
-                            allDescription="Seluruh lokasi beserta jumlah aset tercatat."
-                            emptyTitle="Belum ada lokasi berisi"
-                            emptyDescription="Aset dengan lokasi terisi akan muncul di sini."
                         />
                     </RegisterSection>
                 </div>

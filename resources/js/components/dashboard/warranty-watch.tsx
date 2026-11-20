@@ -126,7 +126,7 @@ export function WarrantyWatch({
 
     return (
         <RegisterSection
-            title="Garansi"
+            title="Peringatan Garansi"
             description="Batas waktu garansi dalam 30 hari ke depan"
             icon={ShieldCheck}
             className={className}
@@ -147,7 +147,7 @@ export function WarrantyWatch({
                                 strokeWidth={2}
                                 aria-hidden="true"
                             />
-                            {expired} kedaluwarsa
+                            {expired} habis
                         </Badge>
                     ) : null}
 
@@ -166,7 +166,7 @@ export function WarrantyWatch({
                                 strokeWidth={2}
                                 aria-hidden="true"
                             />
-                            {soon} segera
+                            {soon} segera habis
                         </Badge>
                     ) : null}
                 </div>
@@ -183,7 +183,7 @@ export function WarrantyWatch({
                 >
                     <AlertTriangle aria-hidden="true" />
                     <AlertTitle className="font-semibold">
-                        {expired} aset garansi kedaluwarsa
+                        {expired} aset garansi sudah habis
                     </AlertTitle>
                     <AlertDescription className="opacity-80">
                         Klaim garansi kemungkinan tidak lagi dapat diproses

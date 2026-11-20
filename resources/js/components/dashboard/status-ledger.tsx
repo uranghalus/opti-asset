@@ -152,7 +152,7 @@ export function StatusLedger({
                         <span className="text-2xl font-bold text-foreground tabular-nums">
                             {num(total)}
                         </span>
-                        <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+                        <span className="text-[12px] tracking-wide text-muted-foreground uppercase">
                             Aset
                         </span>
                     </div>

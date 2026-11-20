@@ -80,22 +80,8 @@ export function RegisterStrip({
 
     const kpis: KpiDef[] = [
         {
-            key: 'warranty-expired',
-            label: 'Garansi Kedaluwarsa',
-            value: expired,
-            sub:
-                expired > 0
-                    ? 'Perlu tindakan segera'
-                    : 'Semua garansi masih aktif',
-            href: hrefs?.assets,
-            accent: 'dsp',
-            icon: ShieldAlert,
-            tooltip:
-                'Jumlah aset dengan tanggal garansi sudah lewat dari hari ini.',
-        },
-        {
             key: 'pending-transfers',
-            label: 'Mutasi Menunggu',
+            label: 'Mutasi Belum Disetujui',
             value: pendingTransfers,
             sub:
                 pendingTransfers > 0
@@ -108,7 +94,7 @@ export function RegisterStrip({
         },
         {
             key: 'pending-disposals',
-            label: 'Disposal Menunggu',
+            label: 'Penghapusan Belum Disetujui',
             value: pendingDisposals,
             sub:
                 pendingDisposals > 0
@@ -121,17 +107,17 @@ export function RegisterStrip({
         },
         {
             key: 'warranty-30',
-            label: 'Garansi ≤ 30 Hari',
+            label: 'Garansi Akan Habis',
             value: expiring30,
             sub:
                 expiring30 > 0
-                    ? 'Termasuk yang sudah kedaluwarsa'
+                    ? 'Termasuk yang sudah habis'
                     : 'Tidak ada dalam 30 hari',
             href: hrefs?.assets,
             accent: 'primary',
             icon: Clock,
             tooltip:
-                'Aset dengan garansi berakhir dalam 30 hari ke depan, termasuk yang sudah kedaluwarsa.',
+                'Aset dengan garansi berakhir dalam 30 hari ke depan, termasuk yang sudah habis.',
         },
     ];
 

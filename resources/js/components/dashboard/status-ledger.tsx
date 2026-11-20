@@ -93,7 +93,7 @@ export function StatusLedger({
             icon={PieIcon}
             className={className}
         >
-            <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
+            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
                 <div className="relative mx-auto h-40 w-40 shrink-0 sm:h-44 sm:w-44">
                     <ChartContainer
                         config={config}
@@ -158,7 +158,7 @@ export function StatusLedger({
                     </div>
                 </div>
 
-                <ul className="flex w-full min-w-0 flex-1 flex-col gap-2">
+                <ul className="flex w-full max-w-[320px] min-w-0 flex-1 flex-col gap-2">
                     {entries.map((entry) => (
                         <li
                             key={entry.key}

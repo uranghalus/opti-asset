@@ -84,7 +84,7 @@ export function RegisterSection({
                             id={headingId}
                             role="heading"
                             aria-level={2}
-                            className="truncate text-[15px] font-semibold text-foreground"
+                            className="truncate text-[14px] font-semibold text-foreground"
                         >
                             {title}
                         </CardTitle>
@@ -152,7 +152,7 @@ export function ActionButton({
                     </TooltipContent>
                 </Tooltip>
 
-                <span className="text-[11px] text-muted-foreground sm:hidden">
+                <span className="text-[12px] text-muted-foreground sm:hidden">
                     Pilih tenant aktif untuk membuka halaman ini.
                 </span>
             </span>

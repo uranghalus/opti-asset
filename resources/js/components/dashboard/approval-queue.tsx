@@ -223,7 +223,7 @@ export function ApprovalQueue({
                     </Tooltip>
 
                     {/* Tooltip tak bisa di-hover di layar sentuh. */}
-                    <span className="text-[11px] text-muted-foreground md:hidden">
+                    <span className="text-[12px] text-muted-foreground md:hidden">
                         {reason}
                     </span>
                 </div>

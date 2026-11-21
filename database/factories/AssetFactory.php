@@ -43,6 +43,7 @@ class AssetFactory extends Factory
             'asset_category_id' => null,
             'asset_cluster_id' => null,
             'asset_sub_cluster_id' => null,
+            'asset_type' => fake()->randomElement(['fixed_asset', 'equipment']),
         ];
     }
 }

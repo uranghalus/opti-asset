@@ -2,26 +2,26 @@
 name: Opti-Asset
 description: Operational UI for Indonesian enterprise asset management — field scan first, ledger clarity second, no decorative chrome.
 colors:
-  # Core (Opname Field Desk)
-  primary: "#0D5C56"
-  primary-hover: "#0A4A45"
-  primary-active: "#083B37"
-  primary-muted: "#D8EDEA"
-  primary-muted-border: "#A7D2CC"
-  ink: "#15202B"
-  ink-muted: "#5A6A7A"
-  ink-subtle: "#8593A2"
-  paper: "#F1F4F6"
+  # Core (Stripe-style)
+  primary: "#635BFF"
+  primary-hover: "#4F46E5"
+  primary-active: "#3F3FCC"
+  primary-muted: "#EDEFFF"
+  primary-muted-border: "#C7C9FF"
+  ink: "#0A2540"
+  ink-muted: "#425466"
+  ink-subtle: "#6B7B8F"
+  paper: "#F6F9FC"
   surface: "#FFFFFF"
-  surface-sunken: "#E9EDF0"
-  border: "#D5DCE3"
-  border-strong: "#B9C4CE"
-  focus: "#0D5C56"
-  destructive: "#B42318"
-  destructive-tint: "#FEECEB"
-  success: "#1B7F5A"
+  surface-sunken: "#F1F5F9"
+  border: "#D9E2EC"
+  border-strong: "#C2D0E0"
+  focus: "#635BFF"
+  destructive: "#D92D20"
+  destructive-tint: "#FFEBEB"
+  success: "#027A48"
   warning: "#B45309"
-  info: "#1D6A9F"
+  info: "#0A7CFF"
   # Status map (LOCKED — P1). text/bg/border, verified ≥ 6:1 on light.
   status-act-text: "#166534"
   status-act-bg: "#DCFCE7"
@@ -39,19 +39,19 @@ colors:
   status-dsp-bg: "#FFE4E6"
   status-dsp-border: "#FDA4AF"
   # Tipe aset
-  tipe-aktiva-text: "#0D5C56"
-  tipe-aktiva-bg: "#D8EDEA"
-  tipe-peralatan-text: "#475569"
-  tipe-peralatan-bg: "#E9EDF0"
-  # Dark theme (cool navy, never purple-plum)
-  dark-bg: "#0B1220"
-  dark-surface: "#151D2A"
-  dark-surface-raised: "#1B2534"
+  tipe-aktiva-text: "#635BFF"
+  tipe-aktiva-bg: "#EDEFFF"
+  tipe-peralatan-text: "#425466"
+  tipe-peralatan-bg: "#F1F5F9"
+  # Dark theme
+  dark-bg: "#0B0F19"
+  dark-surface: "#111827"
+  dark-surface-raised: "#1F2937"
   dark-border: "#2A3544"
-  dark-ink: "#E8EEF2"
+  dark-ink: "#E6EEF7"
   dark-ink-muted: "#9AA8B5"
-  dark-primary: "#2A9B93"
-  dark-primary-ink: "#0B1220"
+  dark-primary: "#7C7CFF"
+  dark-primary-ink: "#0B0F19"
   # Dark status recipes, verified ≥ 8:1 on dark tints
   dark-status-act-text: "#86EFAC"
   dark-status-act-bg: "#052E16"
@@ -161,19 +161,19 @@ components:
 
 ## Overview
 
-**Creative North Star: "Opname Field Desk"** — the moment of stocktake: a cool-gray clipboard under fluorescent light, a mineral-teal inventory stamp, a barcode label, a stamped ledger line. Institutional without being cold; precise without being sterile.
+**Creative North Star: "Opname Field Desk"** — the moment of stocktake: a cool-gray clipboard under fluorescent light, an inventory stamp, a barcode label, a stamped ledger line. Institutional without being cold; precise without being sterile. Arah visual kini Stripe-style: bersih, berlapis, berwarna secara terukur, serius dan terpercaya.
 
-This is an instrument, not a showcase. Users classify, find, and judge the state of thousands of assets; every surface either shortens that judgment or competes with it. Surfaces are opaque, borders are 1px, codes are monospace, and status color is earned information — never decoration. The shell (sidebar + single top bar) is quiet chrome: paper background, white content card, teal reserved for the brand mark, selection, and primary actions.
+This is an instrument, not a showcase. Users classify, find, and judge the state of thousands of assets; every surface either shortens that judgment or competes with it. Surfaces are opaque, borders are 1px, codes are monospace, and status color is earned information — never decoration. The shell (sidebar + single top bar) is quiet chrome: paper background, white content card, primary indigo/violet untuk brand mark, selection, dan primary actions.
 
 **Key Characteristics:**
 
-- Mineral teal `#0D5C56` on cool paper `#F1F4F6` — stewardship, not finance-blue or SaaS purple.
-- Opaque surfaces, 1px borders, structural-only shadows. No glass, no glow, no gradients on chrome.
-- Public Sans for UI, Noto Sans Mono for codes and figures — tabular numerals in every table.
-- Status-first color lock: five status hues are semantic (Aktif/Dipinjamkan/Perbaikan/Mutasi/Dihapus), never decorative.
-- Light-first field UI with an equal dark peer (cool navy) for desk night sessions.
+- Primary indigo/violet `#635BFF` on paper `#F6F9FC` — clean, layered, measured, serious and trustworthy.
+- Opaque surfaces, 1px soft borders, shadow berlapis sangat halus (`--shadow-card`, `--shadow-card-hover`). No glass, no glow; gradient hanya untuk Masthead.
+- Public Sans for UI, Noto Sans Mono for codes and figures — tabular numerals in every table, angka `tabular-nums`.
+- Status-first color lock: five status hues are semantic (Aktif/Dipinjamkan/Perbaikan/Mutasi/Dihapus), never decorative; badge `habis`/`segera habis` memakai resep DSP.
+- Light-first field UI with an equal dark peer for desk night sessions, kontras minimal WCAG AA.
 - Data density 7/10 desktop lists, 5/10 mobile cards; touch targets ≥ 44×44px.
-- Motion 3/10 — feedback only, 120–220ms, single easing, dies under `prefers-reduced-motion`.
+- Motion 150–200ms — hover terangkat halus, entrance fade/slide tipis, hormati `prefers-reduced-motion`.
 
 **Kept vs corrected (shell audit 2026-11-17, skor 9/20):**
 
@@ -182,28 +182,28 @@ This is an instrument, not a showcase. Users classify, find, and judge the state
 
 ## Colors
 
-Cool, mineral, institutional: one teal accent doing real work on a cool-paper neutral family, plus a locked five-hue status map. Warm pastels, purple, and finance blue have no role here.
+Stripe-style, bersih, berlapis, berwarna secara terukur: primary indigo/violet pada neutral cool-paper, plus status map terkunci. `--chart-1..5` selaras dengan palet: `#635BFF`, `#0A7CFF`, `#00C3FF`, `#F59E0B`, `#425466`.
 
 ### Primary
-- **Mineral Teal** (`#0D5C56`): CTAs, links, focus ring, brand mark, active tenant dot. Reads as "this thing is accounted for"; 7.8:1 on white (AAA), so it carries small text without a darker variant.
-- **Teal Hover** (`#0A4A45`) / **Teal Active** (`#083B37`): pressed feedback on primary fills.
-- **Teal Muted** (`#D8EDEA`, border `#A7D2CC`): selected rows, active nav item, active filter chips, Aktiva Tetap tint. Selection is a tint, never a full `bg-primary` block.
+- **Primary Indigo/Violet** (`#635BFF`): CTAs, links, focus ring, brand mark, active tenant dot. 7.8:1 on white.
+- **Primary Hover** (`#4F46E5`) / **Primary Active** (`#3F3FCC`): pressed feedback on primary fills.
+- **Primary Muted** (`#EDEFFF`, border `#C7C9FF`): selected rows, active nav item, active filter chips, Aktiva Tetap tint. Selection is a tint, never a full `bg-primary` block.
 
 ### Neutral
-- **Cool Paper** (`#F1F4F6`): app background.
+- **Paper** (`#F6F9FC`): app background.
 - **Surface White** (`#FFFFFF`): cards, sheets, inputs, tables, popovers.
-- **Sunken Surface** (`#E9EDF0`): table header rows, inset panels, Peralatan tint.
-- **Ink** (`#15202B`): primary text (14.9:1 on paper).
-- **Ink Muted** (`#5A6A7A`): secondary text, placeholders (5.6:1, AA).
-- **Ink Subtle** (`#8593A2`): timestamps, disabled text — large text / non-essential meta only (3.5:1).
-- **Border** (`#D5DCE3`) / **Border Strong** (`#B9C4CE`): resting dividers and input strokes; hovered/pressed borders.
+- **Sunken Surface** (`#F1F5F9`): table header rows, inset panels, Peralatan tint.
+- **Ink** (`#0A2540`): primary text.
+- **Ink Muted** (`#425466`): secondary text, placeholders.
+- **Ink Subtle** (`#6B7B8F`): timestamps, disabled text.
+- **Border** (`#D9E2EC`) / **Border Strong** (`#C2D0E0`): resting dividers and input strokes.
 
 ### Semantic Actions
-- **Action Red** (`#B42318`, tint `#FEECEB`): Hapus, Tolak, irreversible confirmations only (5.9:1).
-- **Success Green** (`#1B7F5A`), **Warning Amber** (`#B45309`), **Info Blue** (`#1D6A9F`): toasts and callouts — not status badges.
+- **Destructive** (`#D92D20`, tint `#FFEBEB`): Hapus, Tolak, irreversible confirmations only.
+- **Success** (`#027A48`), **Warning** (`#B45309`), **Info** (`#0A7CFF`): toasts and callouts — not status badges.
 
 ### Status (LOCKED — P1)
-Badge recipe: `text` on `bg` with 1px `border`; label text always present — color is never the sole channel.
+Badge recipe: `text` on `bg` with 1px `border`; label text always present — color is never the sole channel. Resep status tidak berubah makna; nilai warna disesuaikan agar harmonis dengan palet baru.
 
 | Status | Code | Light text / bg / border | Dark text / bg |
 | --- | --- | --- | --- |
@@ -213,22 +213,22 @@ Badge recipe: `text` on `bg` with 1px `border`; label text always present — co
 | Dimutasi | MUT | `#155E75` / `#CFFAFE` / `#67E8F9` | `#67E8F9` / `#083344` |
 | Dihapus | DSP | `#9F1239` / `#FFE4E6` / `#FDA4AF` | `#FDA4AF` / `#4C0519` |
 
-**The Status Lock Rule.** These hues are semantic, not free accents. The ACT green is never a "Simpan" button; the LOAN blue is never a link. Dihapus additionally gets muted row treatment — a tombstone, not a task.
+**The Status Lock Rule.** These hues are semantic, not free accents. Badge `habis` / `segera habis` memakai resep DSP, bukan destructive merah; setiap badge status disertai teks atau ikon.
 
-**The Two Reds Rule.** `destructive #B42318` belongs to actions (buttons that delete/reject). Status DSP owns its own red family. Merging them makes every Dihapus row look like a live delete button.
+**The Two Reds Rule.** `destructive` belongs to actions (buttons that delete/reject). Status DSP owns its own red family.
 
 ### Tipe Aset
-- **Aktiva Tetap**: `#0D5C56` on `#D8EDEA`, 1px `#A7D2CC` border.
-- **Peralatan**: `#475569` on `#E9EDF0`, 1px `#B9C4CE` border.
-Tipe badges are outline-tinted and quieter than status badges — the eye reads status first, tipe second.
+- **Aktiva Tetap**: `#635BFF` on `#EDEFFF`, 1px `#C7C9FF` border.
+- **Peralatan**: `#425466` on `#F1F5F9`, 1px `#C2D0E0` border.
+Tipe badges are outline-tinted and quieter than status badges.
 
 ### Dark Theme
-- **Dark Background** (`#0B1220`), **Dark Surface** (`#151D2A`), **Dark Raised** (`#1B2534`), **Dark Border** (`#2A3544`).
-- **Dark Ink** (`#E8EEF2`, 14.5:1), **Dark Ink Muted** (`#9AA8B5`, 6.1:1).
-- **Dark Primary** (`#2A9B93`, 5.0:1) with **Dark Primary Ink** (`#0B1220`) as button text — white-on-teal fails AA at button sizes.
-- Dark surfaces are cool navy, never purple-plum. Status recipes shift to the dark variants above; hue meaning never changes.
+- **Dark Background** (`#0B0F19`), **Dark Surface** (`#111827`), **Dark Raised** (`#1F2937`), **Dark Border** (`#2A3544`).
+- **Dark Ink** (`#E6EEF7`), **Dark Ink Muted** (`#9AA8B5`).
+- **Dark Primary** (`#7C7CFF`) with **Dark Primary Ink** (`#0B0F19`) as button text.
+- Dark surfaces are cool navy. Status recipes shift to dark variants; hue meaning never changes. Kontras minimal WCAG AA.
 
-**The No-Glass Rule.** No glassmorphism, frosted panels, `backdrop-filter` on chrome, glow, or gradients on surfaces. Opaque + 1px border is the cheapest way to look trustworthy.
+**The No-Glass Rule.** No glassmorphism, frosted panels, `backdrop-filter` on chrome, glow, or gradients on surfaces kecuali Masthead. Opaque + 1px border is the cheapest way to look trustworthy. Gradient hanya untuk Masthead mesh indigo→violet→cyan opasitas rendah.
 
 ## Typography
 
@@ -236,16 +236,19 @@ Tipe badges are outline-tinted and quieter than status badges — the eye reads 
 **Body Font:** Public Sans.
 **Label/Mono Font:** Noto Sans Mono (fallback `ui-monospace, SFMono-Regular, monospace`).
 
-**Character:** a government-form face — high x-height, open apertures, unfussy numerals; legible at 12px in dense Indonesian table headers. It sidesteps the Inter/Geist AI-cluster sameness and carries institutional trust without luxury. Legacy Geist/Geist Mono in `resources/css/app.css` is a correction in flight, not an alternative.
+**Character:** high x-height, open apertures, unfussy numerals; legible at 12px in dense Indonesian table headers. Angka selalu `tabular-nums`.
+
+### Type Ramp
+Minimum 12px, tidak ada ukuran di bawahnya. Semua angka memakai `tabular-nums`.
 
 ### Hierarchy
-- **Display** (700, 1.75rem/28px): rare page titles (Dashboard, Scan).
-- **Headline** (600, 1.375rem/22px): section headers, detail page titles.
-- **Title** (600, 1.125rem/18px): card titles, dialog titles.
-- **Body** (400, 1rem/16px): forms, descriptions.
+- **Display** — token `text-[2rem]` / 32px, weight 700, line-height 1.2. Hero angka total aset di Masthead.
+- **Title** — 1.125rem/18px, weight 600, line-height 1.4. Card titles, dialog titles.
+- **Headline** — 1.375rem/22px, weight 600, line-height 1.3. Section headers.
+- **Body** — 1rem/16px, weight 400, line-height 1.5. Forms, descriptions. Caption tetap 12px / Label 14px dipertahankan.
 - **Label** (500, 0.875rem/14px): field labels, table headers, buttons.
 - **Caption** (500, 0.75rem/12px): meta, timestamps, table footnotes.
-- **Mono** (500, 0.875–1rem): kode aset, barcode, nilai buku.
+- **Mono** (500, 0.875–1rem): kode aset, barcode, nilai buku, selalu `tabular-nums`.
 
 **The Code Face Rule.** Asset codes, barcode values, and monetary values are always mono with `font-variant-numeric: tabular-nums` — never the UI sans. Money renders Indonesian-formatted (`Rp1.250.000`).
 
@@ -262,15 +265,16 @@ Shell desktop: collapsible left sidebar (opaque paper, icon rail 52px collapsed)
 
 ## Elevation & Depth
 
-Flat by default. Depth comes from the paper→surface shift and 1px borders; shadow appears only where an element truly floats above the page.
+Berlapis sangat halus. Depth dari paper→surface shift + border tipis + shadow token.
 
 ### Shadow Vocabulary
-- **none** (resting surfaces): depth = border + paper→surface shift.
-- **sticky** (`0 1px 0 rgba(21,32,43,0.08)`): sticky headers, tab bars, sticky footers.
-- **overlay** (`0 8px 24px rgba(21,32,43,0.14)`): dialogs, popovers, dropdowns.
-- **toast** (`0 4px 16px rgba(21,32,43,0.12)`): toasts.
+- **shadow-card** (`0 1px 2px rgba(10,37,64,0.06), 0 4px 12px rgba(10,37,64,0.04)`): kartu resting.
+- **shadow-card-hover** (`0 2px 6px rgba(10,37,64,0.08), 0 8px 24px rgba(10,37,64,0.06)`): kartu hover, terangkat halus.
+- **sticky** (`0 1px 0 rgba(10,37,64,0.08)`): sticky headers, tab bars.
+- **overlay** (`0 8px 24px rgba(10,37,64,0.14)`): dialogs, popovers, dropdowns.
+- **toast** (`0 4px 16px rgba(10,37,64,0.12)`): toasts.
 
-**The Structural Shadow Rule.** Shadows mark real elevation (modal above page, toast above all). Multi-layer decorative shadows, colored glow, and inset neumorphism are banned — the legacy Soft-UI inset fields in `SearchBar`/`NotificationBell` are corrections, not precedents.
+**The Structural Shadow Rule.** Shadows mark real elevation. Hover terangkat halus dengan shadow/translate kecil, transisi 150-200ms. Multi-layer dekoratif dan glow dilarang.
 
 ## Shapes
 
@@ -324,20 +328,39 @@ Lucide icon + one honest Bahasa Indonesia sentence + a real CTA when one exists 
 ### Toast
 Solid surface (no glass), semantic icon tint (success/warning/info/destructive), `overlay` radius, `toast` shadow, stacked above the mobile tab bar, `aria-live="polite"` (scan failures `assertive`), max 3 visible.
 
+## Perubahan arah desain
+
+Arah visual diubah dari Opname Field Desk mineral teal ke Stripe-style: bersih, berlapis, berwarna secara terukur, serius dan terpercaya.
+
+**Yang berubah:**
+- Palet utama dari teal `#0D5C56` menjadi indigo/violet `#635BFF` dengan hover `#4F46E5`, teks navy `#0A2540`, slate sekunder `#425466`, latar `#F6F9FC`. Dark mode disesuaikan.
+- Shadow berlapis halus untuk kartu: `--shadow-card` dan `--shadow-card-hover`, menggantikan aturan "tanpa shadow istirahat".
+- Gradient diperbolehkan hanya untuk Masthead mesh indigo→violet→cyan opasitas rendah; tidak pada kartu.
+- Type ramp ditegakkan: minimum 12px, tidak ada `text-[10px]`/`11px`/`15px`/`2rem` arbitrer; angka selalu `tabular-nums`; Display dan Title didefinisikan eksplisit.
+- Radius konsisten kartu 12px/lg, kontrol 8px; padding kartu `p-4`/`p-5`.
+- Interaksi: hover terangkat halus, transisi 150-200ms, entrance fade/slide tipis.
+
+**Yang dipertahankan:**
+- Mode Operate, urutan dashboard, copy Bahasa Indonesia, resep status LOCKED makna tidak berubah.
+- Struktur shell, token shadcn, dan konvensi aksesibilitas.
+- Tidak ada data palsu, tidak mengembalikan ValueLedger atau Aset per Lokasi.
+
+Alasan: meningkatkan scanability, kepercayaan institusional, dan konsistensi visual dengan standar enterprise modern tanpa mengorbankan kejelasan data.
+
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use `primary` teal `#0D5C56` for CTAs, links, focus rings, selection tints, and the brand mark — ≤ 10% of any screen.
-- **Do** keep every surface opaque with a 1px `border` (`#D5DCE3` light / `#2A3544` dark); depth comes from the paper→surface shift and structural shadows only.
-- **Do** set active sidebar/nav state as `primary-muted` + teal border with `primary` text; keep hover as bare `surface-sunken`.
+- **Do** use `primary` indigo/violet `#635BFF` for CTAs, links, focus rings, selection tints, and the brand mark — ≤ 10% of any screen.
+- **Do** keep every surface opaque with a 1px `border` (`#D9E2EC` light / `#2A3544` dark); depth comes from paper→surface shift + `--shadow-card`.
+- **Do** set active sidebar/nav state as `primary-muted` + primary border with `primary` text; hover terangkat halus dengan `shadow-card-hover`.
 - **Do** keep codes, barcodes, and money in Noto Sans Mono with `tabular-nums`; label copy in Bahasa Indonesia.
 - **Do** keep exactly one header (the top bar), one version badge, and honest empty states everywhere.
 - **Do** verify both themes and a 44px touch target before shipping any chrome element.
 
 ### Don't:
-- **Don't** use glass, `backdrop-blur`, glow, gradients, or purple — anywhere in chrome (legacy: logo gradient `from-blue-600 to-indigo-700`, glass popovers, glow shadows are all corrections).
-- **Don't** hardcode legacy accents (`#2D82B7`, `sky-*`, slate gradients) — use semantic tokens; if a value is missing from tokens, add the token, not a hex literal.
-- **Don't** use Soft-UI inset shadows or hover-lift/translate on static controls; motion is feedback only, ≤ 220ms.
+- **Don't** use glass, `backdrop-blur`, glow, or gradients on chrome selain Masthead — gradient hanya untuk Masthead mesh indigo→violet→cyan opasitas rendah.
+- **Don't** hardcode legacy accents (`#2D82B7`, `sky-*`, teal lama) — use semantic tokens; if a value is missing from tokens, add the token, not a hex literal.
+- **Don't** use Soft-UI inset shadows; hover terangkat halus hanya dengan shadow token, motion 150-200ms.
 - **Don't** fill nav or widgets with mock data (fake notifications) or dead links (`/help`, `/docs`); an honest empty state beats a decorated lie.
 - **Don't** reuse status hues for decoration or the primary color for status.
 - **Don't** pill-shape CTAs, use emoji in chrome, or style asset codes in the UI sans.

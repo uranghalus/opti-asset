@@ -127,7 +127,7 @@ export default function AssetDisposalsCreate() {
                                                     <span className="text-xs text-muted-foreground">
                                                         {asset.kode_asset ??
                                                             asset.item?.code ??
-                                                            'â€”'}
+                                                            '-'}
                                                     </span>
                                                 </div>
                                             </SelectItem>

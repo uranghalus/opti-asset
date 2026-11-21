@@ -16,6 +16,9 @@ import {
     ShieldCheck,
     KeyRound,
     Shield,
+    ShieldAlert,
+    Users,
+    FileDown,
 } from 'lucide-react';
 
 import type { SidebarData } from '@/types/navigation';
@@ -111,6 +114,25 @@ export const sidebarData: SidebarData = {
                     },
                 },
                 {
+                    title: 'Laporan',
+                    url: '/reports',
+                    icon: FileDown,
+                    permission: {
+                        resource: 'report',
+                        actions: ['view'],
+                    },
+                    items: [
+                        {
+                            title: 'Laporan Mutasi & Penghapusan',
+                            url: '/reports',
+                        },
+                        {
+                            title: 'Laporan Daftar Aset',
+                            url: '/reports/assets',
+                        },
+                    ],
+                },
+                {
                     title: 'Audit Log',
                     url: '/audit-logs',
                     icon: History,
@@ -119,10 +141,19 @@ export const sidebarData: SidebarData = {
                         actions: ['view'],
                     },
                 },
+                {
+                    title: 'Hak Akses SuperAdmin',
+                    url: '/super-admin-grants',
+                    icon: Shield,
+                    permission: {
+                        resource: 'super-admin',
+                        actions: ['view'],
+                    },
+                },
             ],
         },
 
-        // // ---------- INVENTORY ----------
+        // ---------- INVENTORY ----------
         // {
         //   title: 'Persediaan',
         //   items: [
@@ -136,116 +167,62 @@ export const sidebarData: SidebarData = {
         //       },
         //     },
         //     {
-        //       title: 'Transaksi Stok',
-        //       url: '/stock-transactions',
-        //       icon: ClipboardList,
+        //       title: 'Pemrosesan',
+        //       url: '/processing',
+        //       icon: Factory,
         //       permission: {
-        //         resource: 'inventory',
+        //         resource: 'inventory.processing',
         //         actions: ['view'],
         //       },
         //     },
         //   ],
         // },
 
-        // // // ---------- OPERASIONAL ----------
-        // {
-        //   title: 'Operasional',
-        //   items: [
-        //     {
-        //       title: 'Peminjaman Aset',
-        //       url: '/asset-loans',
-        //       icon: Handshake,
-        //       permission: {
-        //         resource: 'asset.loan',
-        //         actions: ['view'],
-        //       },
-        //     },
-        //     // {
-        //     //   title: 'Perawatan Aset',
-        //     //   url: '/maintenances',
-        //     //   icon: Wrench,
-        //     //   permission: {
-        //     //     resource: 'asset.maintenance',
-        //     //     actions: ['view'],
-        //     //   },
-        //     // },
-        //     // {
-        //     //   title: 'Jadwal Perawatan',
-        //     //   url: '/maintenance-schedules',
-        //     //   icon: Clock,
-        //     //   permission: {
-        //     //     resource: 'asset.maintenance',
-        //     //     actions: ['view'],
-        //     //   },
-        //     // },
-        //     {
-        //       title: 'Persetujuan',
-        //       url: '/approvals',
-        //       icon: CheckSquare,
-        //       permission: {
-        //         resource: 'asset.transfer',
-        //         actions: ['approve'],
-        //       },
-        //     },
-        //   ],
-        // },
-
-        // ---------- ORGANISASI ----------
+        // ---------- USER ----------
         {
-            title: 'Organisasi',
+            title: 'Pengguna',
             items: [
                 {
-                    title: 'Organisasi',
-                    url: '/organizations',
-                    icon: Building2,
-                    permission: {
-                        resource: 'organization',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Department',
-                    url: '/departments',
-                    icon: Network,
-                    permission: {
-                        resource: 'department',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Karyawan',
+                    title: 'Pegawai',
                     url: '/employees',
-                    icon: UserCircle,
+                    icon: Users,
                     permission: {
                         resource: 'employee',
                         actions: ['view'],
                     },
                 },
                 {
-                    title: 'Role',
+                    title: 'Departemen',
+                    url: '/departments',
+                    icon: Building2,
+                    permission: {
+                        resource: 'organization.department',
+                        actions: ['view'],
+                    },
+                },
+            ],
+        },
+
+        // ---------- PERIZINAN ----------
+        {
+            title: 'Perizinan',
+            items: [
+                {
+                    title: 'Peran',
                     url: '/roles',
                     icon: ShieldCheck,
                     permission: {
                         resource: 'role',
-                        actions: ['view'],
+                        actions: ['view', 'create', 'update', 'delete'],
                     },
                 },
                 {
-                    title: 'Izin',
+                    title: 'Hak Akses',
                     url: '/permissions',
                     icon: KeyRound,
                     permission: {
                         resource: 'permission',
-                        actions: ['view'],
-                    },
-                },
-                {
-                    title: 'Hak Akses SuperAdmin',
-                    url: '/super-admin-grants',
-                    icon: Shield,
-                    permission: {
-                        resource: 'super-admin',
-                        actions: ['view'],
+                        actions: ['view', 'create', 'update', 'delete'],
                     },
                 },
             ],
@@ -278,10 +255,6 @@ export const sidebarData: SidebarData = {
                     title: 'Impor & Ekspor',
                     url: '/settings/import-export',
                     icon: Upload,
-                    permission: {
-                        resource: 'asset',
-                        actions: ['create'],
-                    },
                 },
             ],
         },

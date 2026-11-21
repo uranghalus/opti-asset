@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="Akun Demo">
+  <Table>
+   <Row>
+    <Cell><Data ss:Type="String">Nama</Data></Cell>
+    <Cell><Data ss:Type="String">Email</Data></Cell>
+    <Cell><Data ss:Type="String">Password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant</Data></Cell>
+    <Cell><Data ss:Type="String">Department</Data></Cell>
+    <Cell><Data ss:Type="String">Role</Data></Cell>
+    <Cell><Data ss:Type="String">Super Admin</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Super Admin Demo</Data></Cell>
+    <Cell><Data ss:Type="String">superadmin@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Platform</Data></Cell>
+    <Cell><Data ss:Type="String">-</Data></Cell>
+    <Cell><Data ss:Type="String">super-admin</Data></Cell>
+    <Cell><Data ss:Type="String">Ya</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Admin Teknologi Informasi Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">admin.IT.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Teknologi Informasi</Data></Cell>
+    <Cell><Data ss:Type="String">administrator</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Manager Teknologi Informasi Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">mgr.IT.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Teknologi Informasi</Data></Cell>
+    <Cell><Data ss:Type="String">manager</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Staff Asset Teknologi Informasi Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">staff.IT.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Teknologi Informasi</Data></Cell>
+    <Cell><Data ss:Type="String">staff-asset</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akunting Teknologi Informasi Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">akun.IT.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Teknologi Informasi</Data></Cell>
+    <Cell><Data ss:Type="String">akunting</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Admin Sumber Daya Manusia Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">admin.HR.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Sumber Daya Manusia</Data></Cell>
+    <Cell><Data ss:Type="String">administrator</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Manager Sumber Daya Manusia Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">mgr.HR.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Sumber Daya Manusia</Data></Cell>
+    <Cell><Data ss:Type="String">manager</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Staff Asset Sumber Daya Manusia Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">staff.HR.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Sumber Daya Manusia</Data></Cell>
+    <Cell><Data ss:Type="String">staff-asset</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akunting Sumber Daya Manusia Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">akun.HR.tenant-a@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant A Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Sumber Daya Manusia</Data></Cell>
+    <Cell><Data ss:Type="String">akunting</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Admin Gudang Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">admin.GUDANG.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Gudang</Data></Cell>
+    <Cell><Data ss:Type="String">administrator</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Manager Gudang Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">mgr.GUDANG.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Gudang</Data></Cell>
+    <Cell><Data ss:Type="String">manager</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Staff Asset Gudang Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">staff.GUDANG.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Gudang</Data></Cell>
+    <Cell><Data ss:Type="String">staff-asset</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akunting Gudang Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">akun.GUDANG.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Gudang</Data></Cell>
+    <Cell><Data ss:Type="String">akunting</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Admin Keuangan Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">admin.KEUANGAN.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Keuangan</Data></Cell>
+    <Cell><Data ss:Type="String">administrator</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Manager Keuangan Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">mgr.KEUANGAN.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Keuangan</Data></Cell>
+    <Cell><Data ss:Type="String">manager</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Staff Asset Keuangan Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">staff.KEUANGAN.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Keuangan</Data></Cell>
+    <Cell><Data ss:Type="String">staff-asset</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akunting Keuangan Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">akun.KEUANGAN.tenant-b@opti-asset.local</Data></Cell>
+    <Cell><Data ss:Type="String">password</Data></Cell>
+    <Cell><Data ss:Type="String">Tenant B Demo</Data></Cell>
+    <Cell><Data ss:Type="String">Keuangan</Data></Cell>
+    <Cell><Data ss:Type="String">akunting</Data></Cell>
+    <Cell><Data ss:Type="String">Tidak</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <TableStyle RowBanding="1"/>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>

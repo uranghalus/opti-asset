@@ -145,7 +145,7 @@ export default function AssetDisposalsEdit() {
                                                     <span className="text-xs text-muted-foreground">
                                                         {asset.kode_asset ??
                                                             asset.item?.code ??
-                                                            'â€”'}
+                                                            '-'}
                                                     </span>
                                                 </div>
                                             </SelectItem>

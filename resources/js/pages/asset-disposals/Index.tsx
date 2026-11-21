@@ -96,7 +96,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return 'â€”';
+        return '-';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -461,7 +461,7 @@ export default function DisposalsIndex() {
                                                 </Link>
                                                 <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                                                     {disposal.asset
-                                                        ?.kode_asset ?? 'â€”'}
+                                                        ?.kode_asset ?? '-'}
                                                 </p>
                                             </div>
                                         </div>
@@ -557,7 +557,7 @@ export default function DisposalsIndex() {
                                         <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
                                             <span className="truncate text-xs text-muted-foreground">
                                                 {disposal.disposedBy?.name ??
-                                                    'â€”'}
+                                                    '-'}
                                             </span>
                                             <Link
                                                 href={

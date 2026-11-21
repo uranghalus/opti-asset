@@ -67,7 +67,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(value: string | null): string {
     if (!value) {
-        return 'â€”';
+        return '-';
     }
 
     return new Date(value).toLocaleDateString('id-ID', {
@@ -212,7 +212,7 @@ export default function DisposalShow() {
                                         {disposal.asset?.nama_asset ?? 'Aset'}
                                     </h2>
                                     <p className="mt-0.5 font-mono text-sm text-muted-foreground">
-                                        {disposal.asset?.kode_asset ?? 'â€”'}
+                                        {disposal.asset?.kode_asset ?? '-'}
                                     </p>
                                     {disposal.asset?.serial_number && (
                                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -259,7 +259,7 @@ export default function DisposalShow() {
                                     Diajukan Oleh
                                 </p>
                                 <p className="text-sm text-foreground">
-                                    {disposal.disposedBy?.name ?? 'â€”'}
+                                    {disposal.disposedBy?.name ?? '-'}
                                 </p>
                             </div>
 

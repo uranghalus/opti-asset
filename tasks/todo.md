@@ -1,47 +1,160 @@
-# TODO — PRD Gap Closure
+# Task List: Fitur Laporan Aset
 
-Plan: `tasks/plan.md` · Approved 2026-09-16 · Scope: full gap closure
+## Implementation Plan: Asset Report Feature
 
-## Phase 1: Security
+### Phase 1: Backend - Controller Methods
 
-- [ ] Task 1: Gates on AssetController + AssetHistoryController (`asset.view/create/edit/delete`) + tests
-- [ ] Task 2: Gates on AssetTransferController + AssetDisposalController + tests
-- [ ] Task 3: `asset.item.*` permissions + gates on Item/Category/Location controllers + sidebar gating
-- [ ] Task 4: `audit.view` gate on AuditLogController + sidebar link
-- [ ] Task 5: FR-07.6 disposed-asset guard (transfer store + asset edit/delete paths) + tests
+#### Task 1.1: Tambah method report() di AssetController
+**Description:** Buat method `report()` untuk menampilkan halaman laporan aset dengan filter dari Create.tsx sebagai basis.
 
-## Checkpoint: Security
+**Acceptance criteria:**
+- [ ] Method `report()` ada di AssetController.php
+- [ ] Menggunakan Gate::authorize('asset.view')
+- [ ] Mengembalikan Inertia response ke 'assets/Report'
+- [ ] Mengirim data: assets (paginated), filters, summary, items, locations, departments, employees
+- [ ] Menerapkan department filter seperti di method lain (applyDepartmentFilter)
 
-- [ ] Focused test runs green; 403 for users without permissions; sidebar respects permissions
+**Verification:**
+- [ ] Tests pass: `php artisan test --filter=AssetReportTest::test_report_shows_page`
+- [ ] Build succeeds: `npm run build`
+- [ ] Manual check: Buka route `/{tenant}/assets/report`
 
-## Phase 2: FR-13 Completion
+**Files touched:**
+- `app/Http/Controllers/AssetController.php`
 
-- [ ] Task 6: DepreciationCalculator (monthly straight-line + 200% DDB floored at zero) wired into AssetObserver; forms show derived accumulation
-- [ ] Task 7: Monthly book-value snapshots (replace daily dedup) + tests
-- [ ] Task 8: FR-13.10 book-value history UI on asset Show page (impeccable craft-floor)
-- [ ] Task 9: FR-13.9 record asset_type/override changes in RecordAssetHistoryAction + tests
+**Estimated scope:** Small (1 file)
 
-## Checkpoint: FR-13 Complete
+#### Task 1.2: Tambah method exportReport() di AssetController
+**Description:** Buat method untuk export laporan aset ke format XLSX dan PDF dengan filter yang sama.
 
-- [ ] Hand-verified depreciation examples pass; FR-13.1–13.11 all demonstrably met
+**Acceptance criteria:**
+- [ ] Method `exportReport()` ada di AssetController.php
+- [ ] Menerima parameter format (xlsx, pdf)
+- [ ] Menggunakan filter yang sama dengan method report()
+- [ ] Mengembalikan file download dengan nama yang tepat
+- [ ] Menerapkan department filter dan tenant scope
 
-## Phase 3: Dashboard & Filters
+**Verification:**
+- [ ] Tests pass: `php artisan test --filter=AssetReportTest::test_export_xlsx`
+- [ ] Tests pass: `php artisan test --filter=AssetReportTest::test_export_pdf`
+- [ ] Manual check: Download file XLSX/PDF
 
-- [ ] Task 10: FR-13.8 dashboard breakdown per asset type (count + value) (impeccable craft-floor) + tests
-- [ ] Task 11: FR-04 Browse location filter + item-name search + tests
+**Files touched:**
+- `app/Http/Controllers/AssetController.php`
 
-## Checkpoint: Features Complete
+**Estimated scope:** Small (1 file)
 
-- [ ] Dashboard type card + Browse filters verified
+### Phase 2: Routes
 
-## Phase 4: CI Green
+#### Task 2.1: Tambah routes di web.php
+**Description:** Tambahkan routes untuk asset report di routes/web.php.
 
-- [ ] Task 12: ESLint --fix + Pint + format residuals
-- [ ] Task 13: PHPStan level 7 → 0 errors
-- [ ] Task 14: Full `composer ci:check` green + PRD §12 update + Memory update + graphify update
+**Acceptance criteria:**
+- [ ] Route GET `/{tenant}/assets/report` dengan name `assets.report`
+- [ ] Route GET `/{tenant}/assets/report/export` dengan name `assets.report.export`
+- [ ] Routes menggunakan AssetController yang sama
 
-## Checkpoints
+**Verification:**
+- [ ] `php artisan route:list` menampilkan routes baru
+- [ ] Tests pass routing
 
-- [ ] After Phase 1: security tests green
-- [ ] After Phase 2: depreciation hand-checks pass
-- [ ] After Phase 4: `composer ci:check` fully green; PRD + memory updated
+**Files touched:**
+- `routes/web.php`
+
+**Estimated scope:** XS (1 file)
+
+#### Task 2.2: Regenerate Wayfinder routes
+**Description:** Jalankan perintah Wayfinder untuk membuat TypeScript route functions.
+
+**Acceptance criteria:**
+- [ ] File routes/tenant/assets/index.ts terupdate
+- [ ] Ada export `report` dan `reportExport` route functions
+- [ ] TypeScript tidak error
+
+**Verification:**
+- [ ] Build succeeds
+- [ ] TypeScript compilation passes
+
+**Estimated scope:** XS (generated file)
+
+### Phase 3: Frontend - Report Page
+
+#### Task 3.1: Buat komponen Report.tsx
+**Description:** Buat halaman laporan dengan filter form dan tabel data.
+
+**Acceptance criteria:**
+- [ ] Komponen `resources/js/pages/assets/Report.tsx` dibuat
+- [ ] Menggunakan filter props dari Create.tsx sebagai referensi
+- [ ] Tampilkan form filter dengan: Item, Location, Department, Status, Condition, Asset Type, dll
+- [ ] Tampilkan tabel hasil dengan kolom: Kode Aset, Item, Brand/Model, Serial, Status, Kondisi, Lokasi, Department, Vendor, Foto, Dokumen
+- [ ] Tambahkan export buttons (XLSX, PDF)
+- [ ] Tambahkan summary cards
+
+**Verification:**
+- [ ] Build succeeds
+- [ ] Manual check: Buka halaman laporan
+
+**Files touched:**
+- `resources/js/pages/assets/Report.tsx`
+
+**Estimated scope:** Medium (1-2 files)
+
+#### Task 3.2: UI/UX - Form Filter & Layout
+**Description:** Implementasikan tampilan filter yang responsif dan konsisten dengan design system.
+
+**Acceptance criteria:**
+- [ ] Filter form responsif di desktop/mobile
+- [ ] Menggunakan komponen UI yang ada (Select, Input, DatePicker, Button, etc.)
+- [ ] Tabel data dapat discroll horizontal pada mobile
+- [ ] Pagination berfungsi dengan benar
+- [ ] Export buttons diarahkan ke route yang benar
+
+**Verification:**
+- [ ] Build succeeds
+- [ ] Manual check: UI responsif
+
+**Estimated scope:** Medium
+
+### Phase 4: Testing
+
+#### Task 4.1: Buat test untuk AssetReport
+**Description:** Buat test unit untuk memverifikasi fitur laporan berfungsi dengan benar.
+
+**Acceptance criteria:**
+- [ ] Test untuk menampilkan halaman laporan
+- [ ] Test untuk filter status
+- [ ] Test untuk filter asset type
+- [ ] Test untuk export XLSX
+- [ ] Test untuk export PDF
+- [ ] Test untuk department filtering
+
+**Verification:**
+- [ ] `php artisan test --filter=AssetReportTest` semua test passing
+
+**Files touched:**
+- `tests/Feature/AssetReportTest.php`
+
+**Estimated scope:** Medium (1 file)
+
+## Checkpoint: Setelah Tasks 1.1-1.2
+- [ ] Semua method controller berfungsi
+- [ ] Routes terdaftar dengan benar
+- [ ] Tests mendasar passing
+
+## Checkpoint: Setelah Tasks 2.1-2.2
+- [ ] Wayfinder routes tergenerate
+- [ ] TypeScript tidak error
+
+## Checkpoint: Setelah Tasks 3.1-3.2
+- [ ] Halaman laporan dapat diakses
+- [ ] Filter form berfungsi
+- [ ] Export buttons berfungsi
+
+## Checkpoint: Setelah Tasks 4.1
+- [ ] Semua test passing
+- [ ] Code coverage mencukupi
+- [ ] Ready untuk review
+
+---
+
+**Total Estimated Scope:** Medium-Large (bisa dibagi menjadi 2 sesi)

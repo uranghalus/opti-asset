@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetClassificationController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetReportController;
 use App\Http\Controllers\AssetDisposalController;
 use App\Http\Controllers\AssetHistoryController;
 use App\Http\Controllers\AssetTransferController;
@@ -111,9 +112,6 @@ Route::middleware(['web', 'auth', 'tenant.access'])->group(function () {
         Route::patch('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
         Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
 
-        // Asset Report routes
-        Route::get('assets/report', [AssetController::class, 'report'])->name('assets.report');
-        Route::get('assets/report/export', [AssetController::class, 'exportReport'])->name('assets.report.export');
 
         Route::get('asset-transfers', [AssetTransferController::class, 'index'])->name('asset-transfers.index');
         Route::get('asset-transfers/create', [AssetTransferController::class, 'create'])->name('asset-transfers.create');
@@ -145,8 +143,8 @@ Route::middleware(['web', 'auth', 'tenant.access'])->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/export/transfers', [ReportController::class, 'exportTransfers'])->name('reports.export.transfers');
         Route::get('reports/export/disposals', [ReportController::class, 'exportDisposals'])->name('reports.export.disposals');
-        Route::get('reports/assets', [ReportController::class, 'assets'])->name('reports.assets.index');
-        Route::get('reports/assets/export', [ReportController::class, 'exportAssets'])->name('reports.assets.export');
+        Route::get('reports/assets', [AssetReportController::class, 'index'])->name('reports.assets.index');
+        Route::get('reports/assets/export', [AssetReportController::class, 'export'])->name('reports.assets.export');
     });
 
     // Global routes — not tenant-scoped (D2: Role, Permission, Profile, organization excluded from {tenant} prefix)

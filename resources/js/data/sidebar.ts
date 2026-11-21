@@ -118,7 +118,7 @@ export const sidebarData: SidebarData = {
                     url: '/reports',
                     icon: FileDown,
                     permission: {
-                        resource: 'report',
+                        resource: 'asset',
                         actions: ['view'],
                     },
                     items: [

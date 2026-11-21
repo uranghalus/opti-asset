@@ -1,109 +1,122 @@
 @php
-use Illuminate\Support\Number;
-use App\Enums\AssetStatus;
+    /** @var array<int, array<int, string>> $rows */
+    /** @var array<int, array{label: string, align: string}> $columnMeta */
+    /** @var array<string, string> $filterSummary */
 @endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Daftar Aset</title>
     <style>
+        @page {
+            size: A4 {{ $orientation }};
+            margin: 12mm;
+        }
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 10pt;
+            font-family: DejaVu Sans, system-ui, -apple-system, sans-serif;
+            font-size: 7pt;
             color: #111;
-            margin: 0 2cm;
+            margin: 0;
         }
+
         h1 {
-            font-size: 18pt;
-            text-align: center;
-            margin: 1em 0;
-            color: #333;
+            font-size: 13pt;
+            margin: 0 0 2mm;
         }
-        h2 {
-            font-size: 12pt;
-            margin: 1em 0 0.5em;
+
+        .meta {
+            font-size: 7pt;
             color: #555;
+            margin-bottom: 2mm;
         }
+
+        .filters {
+            font-size: 6.5pt;
+            color: #333;
+            margin-bottom: 3mm;
+            line-height: 1.5;
+        }
+
+        .filters span {
+            display: inline-block;
+            margin-right: 4mm;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 0.5em;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px 8px;
+
+        thead th {
+            background-color: #f3f4f6;
+            border: 0.4pt solid #d1d5db;
+            padding: 2mm 1.5mm;
             text-align: left;
-            font-size: 8pt;
+            font-size: 6.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: #4b5563;
         }
-        th {
-            background-color: #f5f5f5;
-            font-weight: bold;
+
+        tbody td {
+            border: 0.4pt solid #e5e7eb;
+            padding: 1.6mm 1.5mm;
+            vertical-align: top;
+            font-size: 6.8pt;
         }
-        tr:nth-child(even) {
+
+        tbody tr:nth-child(even) td {
             background-color: #fafafa;
         }
-        .text-right {
-            text-align: right;
-        }
-        .text-center {
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .empty {
             text-align: center;
-        }
-        .page-break {
-            page-break-after: always;
+            color: #6b7280;
+            padding: 6mm;
         }
     </style>
 </head>
 <body>
     <h1>Laporan Daftar Aset</h1>
-    
-    <p>Tanggal cetak: {{ now()->format('d F Y') }}</p>
-    
-    <h2>Daftar Aset ({{ $assets->count() ?? $assets->total() ?? 0 }} item)</h2>
-    
+
+    <div class="meta">
+        Dicetak {{ $printedAt->format('d/m/Y H:i') }} &middot; Total {{ number_format($total, 0, ',', '.') }} aset
+    </div>
+
+    @if (! empty($filterSummary))
+        <div class="filters">
+            @foreach ($filterSummary as $label => $value)
+                <span><strong>{{ $label }}:</strong> {{ $value }}</span>
+            @endforeach
+        </div>
+    @endif
+
     <table>
         <thead>
             <tr>
-                <th>Kode</th>
-                <th>Item</th>
-                <th>Brand/Model</th>
-                <th>Serial</th>
-                <th>Status</th>
-                <th>Kondisi</th>
-                <th>Lokasi</th>
-                <th>Dept</th>
-                <th>Tgl Beli</th>
-                <th>Harga</th>
+                @foreach ($columnMeta as $meta)
+                    <th class="text-{{ $meta['align'] }}">{{ $meta['label'] }}</th>
+                @endforeach
             </tr>
         </thead>
         <tbody>
-            @foreach ($assets as $asset)
+            @forelse ($rows as $row)
                 <tr>
-                    <td>{{ $asset->kode_asset ?? '-' }}</td>
-                    <td>{{ $asset->item->code ?? '' }} - {{ $asset->item->name ?? '-' }}</td>
-                    <td>{{ $asset->brand ?? '' }}/{{ $asset->model ?? '' }}</td>
-                    <td>{{ $asset->serial_number ?? '-' }}</td>
-                    <td>{{ $asset->status->label() ?? $asset->status ?? '-' }}</td>
-                    <td>{{ $asset->condition ?? '-' }}</td>
-                    <td>{{ $asset->location->name ?? '-' }}</td>
-                    <td>{{ $asset->department->nama_department ?? '-' }}</td>
-                    <td class="text-right">{{ $asset->purchase_date?->format('d/m/Y') ?? '-' }}</td>
-                    <td class="text-right">@if($asset->purchase_price) Rp {{ Number::format($asset->purchase_price) }} @else - @endif</td>
+                    @foreach ($row as $index => $value)
+                        <td class="text-{{ $columnMeta[$index]['align'] }}">{{ $value }}</td>
+                    @endforeach
                 </tr>
-            @endforeach
-            @if ($assets->isEmpty())
+            @empty
                 <tr>
-                    <td colspan="10" class="text-center">Tidak ada data</td>
+                    <td class="empty" colspan="{{ count($columnMeta) }}">Tidak ada data</td>
                 </tr>
-            @endif
+            @endforelse
         </tbody>
     </table>
-    
-    @if(isset($assets->lastPage) && $assets->hasPages())
-        <div style="margin-top: 1em; font-size: 9pt;">
-            Halaman {{ $assets->currentPage() }} dari {{ $assets->lastPage }}
-        </div>
-    @endif
 </body>
 </html>
